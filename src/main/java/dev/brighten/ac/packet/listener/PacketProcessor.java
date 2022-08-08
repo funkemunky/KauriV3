@@ -162,7 +162,7 @@ public class PacketProcessor {
             });
         }
 
-        if(processors.containsKey(type)) {
+        if(processors.containsKey(type) || processors.containsKey(PacketType.NONE)) {
             val list = MiscUtils.combine(processors.get(type), processors.get(PacketType.NONE));
 
             boolean cancelled = false;

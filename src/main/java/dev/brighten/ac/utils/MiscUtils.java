@@ -207,11 +207,13 @@ public class MiscUtils {
     }
 
     public static <T> List<T> combine(List<T> one, List<T> two) {
+        List<T> newList = new ArrayList<>();
         if(one != null)
-            one.addAll(two);
-        else return two;
+            newList.addAll(one);
+        if(two != null)
+            newList.addAll(two);
 
-        return one;
+        return newList;
     }
 
     public static void printToConsole(String string, Object... objects) {

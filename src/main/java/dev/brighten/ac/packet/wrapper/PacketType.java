@@ -12,6 +12,20 @@ public enum PacketType {
 
     USE_ENTITY("PacketPlayInUseEntity"),
 
+    CLIENT_ABILITIES("PacketPlayInAbilities"),
+
+    ARM_ANIMATION("PacketPlayInArmAnimation"),
+
+    BLOCK_DIG("PacketPlayInBlockDig"),
+
+    BLOCK_PLACE("PacketPlayInBlockPlace"),
+
+    CHAT("PacketPlayInChat"),
+
+    CLIENT_COMMAND("PacketPlayInCommand"),
+
+    CLOSE_WINDOW("PacketPlayInCloseWindow"),
+
     NONE();
 
     PacketType(String... packetIds) {
