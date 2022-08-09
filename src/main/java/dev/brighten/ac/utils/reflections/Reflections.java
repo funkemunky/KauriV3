@@ -9,7 +9,6 @@
 package dev.brighten.ac.utils.reflections;
 
 import dev.brighten.ac.packet.ProtocolVersion;
-import dev.brighten.ac.utils.ClassScanner;
 import dev.brighten.ac.utils.objects.QuadFunction;
 import dev.brighten.ac.utils.objects.TriFunction;
 import dev.brighten.ac.utils.reflections.types.WrappedClass;
@@ -22,18 +21,14 @@ import java.lang.invoke.LambdaMetafactory;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.Method;
-import java.util.Collections;
-import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-import java.util.regex.Pattern;
 
 @Getter
 public class Reflections {
     private static final String craftBukkitString;
     private static final String netMinecraftServerString;
     private static MethodHandles.Lookup lookup = MethodHandles.lookup();
-    private static Set<String> classNames;
     public static String OBC_PREFIX = Bukkit.getServer().getClass().getPackage().getName();
     public static String VERSION = OBC_PREFIX.replace("org.bukkit.craftbukkit", "")
             .replace(".", "");
@@ -42,13 +37,6 @@ public class Reflections {
         String version = Bukkit.getServer().getClass().getPackage().getName().split("\\.")[3];
         craftBukkitString = "org.bukkit.craftbukkit." + version + ".";
         netMinecraftServerString = "net.minecraft.server." + version + ".";
-
-        try {
-            classNames = ClassScanner.scanFile2(null,
-                    Class.forName("org.bukkit.craftbukkit.Main"));
-        } catch(ClassNotFoundException e) {
-            classNames = Collections.emptySet();
-        }
     }
 
     public static boolean classExists(String name) {
@@ -69,16 +57,12 @@ public class Reflections {
         try {
             return getClass(netMinecraftServerString + name);
         } catch(Throwable e) {
-            Pattern toTest = Pattern.compile("\\." + name.replace("$", ".") + "$");
-            for (String className : classNames) {
-                if(!className.startsWith("net.minecraft")) continue;
-
-                if(toTest.matcher(className).find()) {
-                    return getClass(className);
-                }
-            }
             throw new ClassNotFoundException(name);
         }
+    }
+
+    public void hi() {
+        System.out.println("hi");
     }
 
     public static WrappedClass getClass(String name) {

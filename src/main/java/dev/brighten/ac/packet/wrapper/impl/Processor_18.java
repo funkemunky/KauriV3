@@ -3,6 +3,7 @@ package dev.brighten.ac.packet.wrapper.impl;
 import dev.brighten.ac.packet.wrapper.PacketConverter;
 import dev.brighten.ac.packet.wrapper.in.*;
 import dev.brighten.ac.packet.wrapper.objects.WrappedEnumDirection;
+import dev.brighten.ac.packet.wrapper.out.WPacketPlayOutEntityEffect;
 import dev.brighten.ac.utils.math.IntVector;
 import dev.brighten.ac.utils.reflections.types.WrappedClass;
 import dev.brighten.ac.utils.reflections.types.WrappedField;
@@ -67,7 +68,7 @@ public class Processor_18 implements PacketConverter {
         BlockPosition pos = packet.a();
 
         return WPacketPlayInBlockPlace.builder().blockPos(new IntVector(pos.getX(), pos.getY(), pos.getZ()))
-                .direction(WrappedEnumDirection.values()[packet.getFace()])
+                .direction(WrappedEnumDirection.values()[Math.min(packet.getFace(), 5)])
                 .itemStack(CraftItemStack.asCraftMirror(packet.getItemStack()))
                 .vecX(packet.d()).vecY(packet.e()).vecZ(packet.f())
                 .build();
@@ -75,11 +76,39 @@ public class Processor_18 implements PacketConverter {
 
 
     private static final WrappedClass classCloseWindow = new WrappedClass(PacketPlayInCloseWindow.class);
-    private static final WrappedField fieldWindowId = classAbilities.getFieldByType(int.class, 0);
+    private static final WrappedField fieldWindowId = classCloseWindow.getFieldByType(int.class, 0);
     @Override
     public WPacketPlayInCloseWindow processCloseWindow(Object object) {
         PacketPlayInCloseWindow packet = (PacketPlayInCloseWindow) object;
 
         return WPacketPlayInCloseWindow.builder().id(fieldWindowId.get(packet)).build();
+    }
+
+    @Override
+    public WPacketPlayInEntityAction processEntityAction(Object object) {
+        PacketPlayInEntityAction packet = (PacketPlayInEntityAction) object;
+
+        return WPacketPlayInEntityAction.builder().action(WPacketPlayInEntityAction.EnumPlayerAction
+                .valueOf(packet.b().name())).build();
+    }
+
+    private static final WrappedClass classEntityEffect = new WrappedClass(PacketPlayOutEntityEffect.class);
+    private static final WrappedField fieldEntityId2, fieldEffectId, fieldAmplifier, fieldDuration, fieldFlags;
+
+    static {
+        fieldEntityId2 = classEntityEffect.getFieldByType(Integer.TYPE, 0);
+        fieldEffectId = classEntityEffect.getFieldByType(Byte.TYPE, 0);
+        fieldAmplifier = classEntityEffect.getFieldByType(Byte.TYPE, 1);
+        fieldDuration = classEntityEffect.getFieldByType(Integer.TYPE, 1);
+        fieldFlags = classEntityEffect.getFieldByType(Byte.TYPE, 2);
+    }
+
+    @Override
+    public WPacketPlayOutEntityEffect processEntityEffect(Object object) {
+        return WPacketPlayOutEntityEffect.builder().effectId(fieldEffectId.get(object))
+                .amplifier(fieldAmplifier.get(object))
+                .flags(fieldFlags.get(object))
+                .entityId(fieldEntityId2.get(object))
+                .duration(fieldDuration.get(object)).build();
     }
 }

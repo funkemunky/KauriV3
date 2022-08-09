@@ -1,5 +1,6 @@
 package dev.brighten.ac.packet.wrapper;
 
+import dev.brighten.ac.Anticheat;
 import lombok.Getter;
 
 import java.util.Optional;
@@ -25,6 +26,10 @@ public enum PacketType {
     CLIENT_COMMAND("PacketPlayInCommand"),
 
     CLOSE_WINDOW("PacketPlayInCloseWindow"),
+
+    ENTITY_ACTION("PacketPlayInEntityAction"),
+
+    ENTITY_EFFECT("PacketPlayOutEntityEffect"),
 
     NONE();
 
@@ -91,6 +96,37 @@ public enum PacketType {
         public static final String PING = "PacketStatusInPing";
         public static final String STATUS_START = "PacketStatusInStart";
         public static final String LOGIN_START = "PacketLoginInStart";
+    }
+
+    public static Object processType(PacketType type, Object object) {
+        PacketConverter convert = Anticheat.INSTANCE.getPacketProcessor().getPacketConverter();
+
+        switch (type) {
+            case FLYING: {
+                return convert.processFlying(object);
+            }
+            case CHAT:
+                break;
+            case BLOCK_DIG:
+                return convert.processBlockDig(object);
+            case USE_ENTITY:
+                return convert.processUseEntity(object);
+            case BLOCK_PLACE:
+                return convert.processBlockPlace(object);
+            case CLOSE_WINDOW:
+                return convert.processCloseWindow(object);
+            case ARM_ANIMATION:
+                return convert.processAnimation(object);
+            case ENTITY_ACTION:
+                return convert.processEntityAction(object);
+            case CLIENT_ABILITIES:
+                return convert.processAbilities(object);
+            case ENTITY_EFFECT:
+                return convert.processEntityEffect(object);
+            default:
+                return object;
+        }
+        return object;
     }
 }
 

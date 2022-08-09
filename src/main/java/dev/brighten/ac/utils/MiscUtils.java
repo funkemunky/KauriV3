@@ -6,10 +6,14 @@ import dev.brighten.ac.utils.reflections.impl.CraftReflection;
 import dev.brighten.ac.utils.reflections.impl.MinecraftReflection;
 import dev.brighten.ac.utils.reflections.types.WrappedClass;
 import dev.brighten.ac.utils.reflections.types.WrappedField;
+import dev.brighten.ac.utils.world.types.SimpleCollisionBox;
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.World;
+import org.bukkit.block.Block;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.command.SimpleCommandMap;
@@ -40,6 +44,54 @@ public class MiscUtils {
 
     public static boolean containsIgnoreCase(String toCheck, String contains) {
         return toCheck.toLowerCase().contains(contains.toLowerCase());
+    }
+
+    public static boolean isInMaterialBB(World world, SimpleCollisionBox entityBox, XMaterial xmaterial) {
+        int startX = MathHelper.floor_double(entityBox.xMin);
+        int startY = MathHelper.floor_double(entityBox.yMin);
+        int startZ = MathHelper.floor_double(entityBox.zMin);
+        int endX = MathHelper.floor_double(entityBox.xMax + 1D);
+        int endY = MathHelper.floor_double(entityBox.yMax + 1D);
+        int endZ = MathHelper.floor_double(entityBox.zMax + 1D);
+
+        for(int x = startX ; x < endX ; x++) {
+            for(int y = startY ; y < endY ; y++) {
+                for(int z = startZ ; z < endZ ; z++) {
+                    Location loc = new Location(world, x, y, z);
+                    Optional<Block> op = BlockUtils.getBlockAsync(loc);
+
+                    if(op.isPresent()) {
+                        if(XMaterial.matchXMaterial(op.get().getType()).equals(xmaterial))
+                            return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    public static boolean isInMaterialBB(World world, SimpleCollisionBox entityBox, int bitmask) {
+        int startX = MathHelper.floor_double(entityBox.xMin);
+        int startY = MathHelper.floor_double(entityBox.yMin);
+        int startZ = MathHelper.floor_double(entityBox.zMin);
+        int endX = MathHelper.floor_double(entityBox.xMax + 1D);
+        int endY = MathHelper.floor_double(entityBox.yMax + 1D);
+        int endZ = MathHelper.floor_double(entityBox.zMax + 1D);
+
+        for(int x = startX ; x < endX ; x++) {
+            for(int y = startY ; y < endY ; y++) {
+                for(int z = startZ ; z < endZ ; z++) {
+                    Location loc = new Location(world, x, y, z);
+                    Optional<Block> op = BlockUtils.getBlockAsync(loc);
+
+                    if(op.isPresent()) {
+                        if(Materials.checkFlag(op.get().getType(), bitmask))
+                            return true;
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     public static <T> List<T> combineLists(List<T> one, List<T> two) {

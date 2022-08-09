@@ -100,7 +100,8 @@ public class WrappedClass {
     }
 
     public WrappedConstructor getConstructor() {
-        val optional = Arrays.stream(this.parent.getConstructors()).filter(cons -> cons.getParameterCount() == 0).findFirst();
+        val optional = Arrays.stream(this.parent.getConstructors())
+                .filter(cons -> cons.getParameterCount() == 0).findFirst();
         return optional.map(constructor -> new WrappedConstructor(this, constructor)).orElse(null);
     }
 
@@ -158,6 +159,20 @@ public class WrappedClass {
 
     public WrappedField getFirstFieldByType(Class<?> type) {
         return this.getFieldByType(type, 0);
+    }
+
+    public WrappedMethod[] getDeclaredMethods() {
+        return Arrays.stream(getParent().getDeclaredMethods())
+                .map(m -> new WrappedMethod(this, m))
+                .toArray(WrappedMethod[]::new);
+    }
+
+    public boolean isAssignableFrom(WrappedClass wrapped) {
+        return wrapped.getParent().isAssignableFrom(getParent());
+    }
+
+    public boolean isAssignableFrom(Class<?> paramClass) {
+        return getParent().isAssignableFrom(paramClass);
     }
 
     public WrappedMethod getMethod(String name, Class... parameters) {

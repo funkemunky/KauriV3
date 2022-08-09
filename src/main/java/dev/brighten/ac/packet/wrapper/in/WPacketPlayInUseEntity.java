@@ -21,7 +21,6 @@ public class WPacketPlayInUseEntity implements WPacket {
         return PacketType.USE_ENTITY;
     }
 
-
     public enum EnumHand {
         MAIN_HAND, OFF_HAND;
     }

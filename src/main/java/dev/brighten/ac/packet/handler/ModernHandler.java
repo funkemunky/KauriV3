@@ -2,6 +2,7 @@ package dev.brighten.ac.packet.handler;
 
 import com.google.common.collect.MapMaker;
 import dev.brighten.ac.Anticheat;
+import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.wrapper.PacketType;
 import dev.brighten.ac.utils.reflections.Reflections;
 import dev.brighten.ac.utils.reflections.types.WrappedField;
@@ -58,6 +59,16 @@ public class ModernHandler extends HandlerAbstract {
         channel.eventLoop().execute(() -> channel.pipeline().remove(handlerName));
     }
 
+    @Override
+    public void sendPacket(Player player, Object packet) {
+        getChannel(player).pipeline().writeAndFlush(packet);
+    }
+
+    @Override
+    public void sendPacket(APlayer player, Object packet) {
+        sendPacket(player.getBukkitPlayer(), packet);
+    }
+
     private Channel getChannel(Player player) {
         synchronized (channelCache) {
             return channelCache.computeIfAbsent(player.getName(), name -> {
@@ -78,8 +89,11 @@ public class ModernHandler extends HandlerAbstract {
             int index = name.lastIndexOf(".");
             String packetName = name.substring(index + 1);
 
-            boolean allowed = Anticheat.INSTANCE.getPacketProcessor().call(player, msg, PacketType
-                    .getByPacketId(packetName).orElse(PacketType.NONE));
+            PacketType type = PacketType
+                    .getByPacketId(packetName).orElse(PacketType.NONE);
+
+            boolean allowed = Anticheat.INSTANCE.getPacketProcessor().call(player, PacketType.processType(type, msg),
+                    type);
 
             if(allowed) {
                 super.channelRead(ctx, msg);

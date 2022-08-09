@@ -1,6 +1,7 @@
 package dev.brighten.ac.utils.world.types;
 
 import dev.brighten.ac.utils.BoundingBox;
+import dev.brighten.ac.utils.KLocation;
 import dev.brighten.ac.utils.reflections.impl.MinecraftReflection;
 import dev.brighten.ac.utils.world.CollisionBox;
 import org.bukkit.Location;
@@ -51,7 +52,11 @@ public class SimpleCollisionBox implements CollisionBox {
     public SimpleCollisionBox(Vector min, Vector max) {
         this(min.getX(), min.getY(), min.getZ(), max.getX(), max.getY(), max.getZ());
     }
-    
+
+    public SimpleCollisionBox(KLocation loc, double width, double height) {
+        this(loc.toVector(), width, height);
+    }
+
     public SimpleCollisionBox(Location loc, double width, double height) {
         this(loc.toVector(), width, height);
     }

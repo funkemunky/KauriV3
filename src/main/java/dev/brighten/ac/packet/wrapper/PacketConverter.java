@@ -1,6 +1,7 @@
 package dev.brighten.ac.packet.wrapper;
 
 import dev.brighten.ac.packet.wrapper.in.*;
+import dev.brighten.ac.packet.wrapper.out.WPacketPlayOutEntityEffect;
 
 public interface PacketConverter {
     WPacketPlayInFlying processFlying(Object object);
@@ -15,4 +16,8 @@ public interface PacketConverter {
     WPacketPlayInBlockPlace processBlockPlace(Object object);
 
     WPacketPlayInCloseWindow processCloseWindow(Object object);
+
+    WPacketPlayInEntityAction processEntityAction(Object object);
+
+    WPacketPlayOutEntityEffect processEntityEffect(Object object);
 }

@@ -1,5 +1,6 @@
 package dev.brighten.ac.packet.handler;
 
+import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.utils.reflections.Reflections;
 import dev.brighten.ac.utils.reflections.types.WrappedClass;
@@ -14,7 +15,7 @@ public abstract class HandlerAbstract {
             fieldNetworkManager = Reflections.getNMSClass("PlayerConnection").getFieldByName("networkManager"),
             fieldPlayerConnection = Reflections.getNMSClass("EntityPlayer").getFieldByName("playerConnection");
 
-    static String handlerName = "brigten-ac-packets";
+    static String handlerName = "brighten-ac-packets";
 
     @Getter
     private static HandlerAbstract handler;
@@ -30,4 +31,8 @@ public abstract class HandlerAbstract {
     public abstract void add(Player player);
 
     public abstract void remove(Player player);
+
+    public abstract void sendPacket(Player player, Object packet);
+
+    public abstract void sendPacket(APlayer player, Object packet);
 }

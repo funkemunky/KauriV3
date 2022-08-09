@@ -4,6 +4,8 @@ import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.util.Vector;
 
+import java.util.Objects;
+
 public class KLocation {
     public double x, y, z;
     public float yaw, pitch;
@@ -54,5 +56,30 @@ public class KLocation {
 
     public KLocation clone() {
         return new KLocation(x, y, z, yaw, pitch, timeStamp);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        KLocation kLocation = (KLocation) o;
+        return Double.compare(kLocation.x, x) == 0 && Double.compare(kLocation.y, y) == 0 && Double.compare(kLocation.z, z) == 0 && Float.compare(kLocation.yaw, yaw) == 0 && Float.compare(kLocation.pitch, pitch) == 0 && timeStamp == kLocation.timeStamp;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(x, y, z, yaw, pitch, timeStamp);
+    }
+
+    @Override
+    public String toString() {
+        return "KLocation{" +
+                "x=" + x +
+                ", y=" + y +
+                ", z=" + z +
+                ", yaw=" + yaw +
+                ", pitch=" + pitch +
+                ", timeStamp=" + timeStamp +
+                '}';
     }
 }

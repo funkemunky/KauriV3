@@ -14,7 +14,9 @@ import dev.brighten.ac.utils.objects.TriFunction;
 import dev.brighten.ac.utils.reflections.Reflections;
 import lombok.Getter;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.BiFunction;
@@ -67,6 +69,18 @@ public class WrappedMethod {
 
     public <T> T invoke(Object object, Object... args) {
         return mfunc.invokeMethod(object, args);
+    }
+
+    public boolean isAnnotationPresent(Class<? extends Annotation> annotation) {
+        return method.isAnnotationPresent(annotation);
+    }
+
+    public Parameter[] getParameters() {
+        return method.getParameters();
+    }
+
+    public Class<?>[] getParameterTypes() {
+        return method.getParameterTypes();
     }
 
     public int getModifiers() {

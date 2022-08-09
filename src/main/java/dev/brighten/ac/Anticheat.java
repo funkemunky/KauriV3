@@ -2,28 +2,35 @@ package dev.brighten.ac;
 
 import co.aikar.commands.BaseCommand;
 import co.aikar.commands.BukkitCommandManager;
+import dev.brighten.ac.check.CheckManager;
+import dev.brighten.ac.data.PlayerRegistry;
+import dev.brighten.ac.handler.PacketHandler;
+import dev.brighten.ac.handler.keepalive.KeepaliveProcessor;
 import dev.brighten.ac.packet.handler.HandlerAbstract;
 import dev.brighten.ac.packet.listener.PacketProcessor;
 import dev.brighten.ac.utils.*;
+import dev.brighten.ac.utils.math.RollingAverageDouble;
 import dev.brighten.ac.utils.objects.RemoteClassLoader;
 import dev.brighten.ac.utils.reflections.Reflections;
 import dev.brighten.ac.utils.reflections.types.WrappedClass;
 import dev.brighten.ac.utils.reflections.types.WrappedField;
 import dev.brighten.ac.utils.reflections.types.WrappedMethod;
+import dev.brighten.ac.utils.timer.Timer;
+import dev.brighten.ac.utils.timer.impl.TickTimer;
 import lombok.Getter;
+import lombok.experimental.PackagePrivate;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.scheduler.BukkitRunnable;
 
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Getter
 @Init
@@ -34,7 +41,18 @@ public class Anticheat extends JavaPlugin {
     private ScheduledExecutorService scheduler;
     private PacketProcessor packetProcessor;
     private BukkitCommandManager commandManager;
-    private int currentTicks;
+    private CheckManager checkManager;
+    private PlayerRegistry playerRegistry;
+    private KeepaliveProcessor keepaliveProcessor;
+    private PacketHandler packetHandler;
+    private int currentTick;
+    private Deque<Runnable> onTickEnd = new LinkedList<>();
+    private ServerInjector injector;
+    //Lag Information
+    private Timer lastTickLag;
+    private long lastTick;
+    @PackagePrivate
+    private RollingAverageDouble tps = new RollingAverageDouble(4, 20);
 
     @ConfigSetting(path = "logging", name = "verbose")
     private static boolean verboseLogging = true;
@@ -48,23 +66,43 @@ public class Anticheat extends JavaPlugin {
 
         commandManager = new BukkitCommandManager(this);
 
+        this.checkManager = new CheckManager();
+        this.playerRegistry = new PlayerRegistry();
+        this.keepaliveProcessor = new KeepaliveProcessor();
+        this.packetHandler = new PacketHandler();
+
+        injector = new ServerInjector();
+        try {
+            injector.inject();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
         initializeScanner(getClass(), this,
                 null,
                 true,
                 true);
-
-        new BukkitRunnable() {
-            public void run() {
-                currentTicks++;
-            }
-        }.runTaskTimer(this, 1L, 1L);
     }
 
     public void onDisable() {
         scheduler.shutdown();
         commandManager.unregisterCommands();
+
+        // Unregistering packet listeners for players
+        Bukkit.getOnlinePlayers().forEach(HandlerAbstract.getHandler()::remove);
+
         HandlerList.unregisterAll(this);
         packetProcessor.shutdown();
+        checkManager = null;
+
+        // Unregistering APlayer objects
+        playerRegistry.unregisterAll();
+        playerRegistry = null;
+        try {
+            injector.eject();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public void initializeScanner(Class<? extends Plugin> mainClass, Plugin plugin, ClassLoader loader,
@@ -192,5 +230,34 @@ public class Anticheat extends JavaPlugin {
                 MiscUtils.printToConsole(log, values);
             else MiscUtils.printToConsole(log);
         }
+    }
+
+    public double getTps() {
+        return this.tps.getAverage();
+    }
+
+    public void runTpsTask() {
+        lastTickLag = new TickTimer();
+        AtomicInteger ticks = new AtomicInteger();
+        AtomicLong lastTimeStamp = new AtomicLong(0);
+        RunUtils.taskTimer(() -> {
+            ticks.getAndIncrement();
+            currentTick++;
+            long currentTime = System.currentTimeMillis();
+
+            if(currentTime - lastTick > 120) {
+                lastTickLag.reset();
+            }
+            if(ticks.get() >= 10) {
+                ticks.set(0);
+                tps.add(500D / (currentTime - lastTimeStamp.get()) * 20);
+                lastTimeStamp.set(currentTime);
+            }
+            lastTick = currentTime;
+        }, this, 1L, 1L);
+    }
+
+    public void onTickEnd(Runnable runnable) {
+        onTickEnd.add(runnable);
     }
 }

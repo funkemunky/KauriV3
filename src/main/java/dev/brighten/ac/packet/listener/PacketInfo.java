@@ -7,12 +7,20 @@ import lombok.Setter;
 import org.bukkit.entity.Player;
 
 @RequiredArgsConstructor
-@Getter
 public class PacketInfo {
+    @Getter
     private final Player player;
     private final Object packet;
+    @Getter
     private final PacketType type;
+    @Getter
     private final long timestamp;
+    @Getter
     @Setter
     private boolean cancelled;
+
+    public <T> T getPacket() {
+        return (T) packet;
+    }
+
 }

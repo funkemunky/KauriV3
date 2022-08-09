@@ -2,7 +2,6 @@ package dev.brighten.ac.packet.listener;
 
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.packet.ProtocolVersion;
-import dev.brighten.ac.packet.handler.HandlerAbstract;
 import dev.brighten.ac.packet.listener.functions.PacketListener;
 import dev.brighten.ac.packet.wrapper.PacketConverter;
 import dev.brighten.ac.packet.wrapper.PacketType;
@@ -11,7 +10,6 @@ import dev.brighten.ac.utils.MiscUtils;
 import dev.brighten.ac.utils.RunUtils;
 import lombok.Getter;
 import lombok.val;
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventPriority;
 import org.bukkit.plugin.Plugin;
@@ -184,6 +182,5 @@ public class PacketProcessor {
     public void shutdown() {
         processors.clear();
         asyncProcessors.clear();
-        Bukkit.getOnlinePlayers().forEach(HandlerAbstract.getHandler()::remove);
     }
 }
