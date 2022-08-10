@@ -2,6 +2,7 @@ package dev.brighten.ac;
 
 import co.aikar.commands.BaseCommand;
 import co.aikar.commands.BukkitCommandManager;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import dev.brighten.ac.check.CheckManager;
 import dev.brighten.ac.data.PlayerRegistry;
 import dev.brighten.ac.handler.PacketHandler;
@@ -17,9 +18,11 @@ import dev.brighten.ac.utils.reflections.types.WrappedField;
 import dev.brighten.ac.utils.reflections.types.WrappedMethod;
 import dev.brighten.ac.utils.timer.Timer;
 import dev.brighten.ac.utils.timer.impl.TickTimer;
+import dev.brighten.ac.utils.world.WorldInfo;
 import lombok.Getter;
 import lombok.experimental.PackagePrivate;
 import org.bukkit.Bukkit;
+import org.bukkit.World;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
@@ -53,6 +56,7 @@ public class Anticheat extends JavaPlugin {
     private long lastTick;
     @PackagePrivate
     private RollingAverageDouble tps = new RollingAverageDouble(4, 20);
+    private final Map<UUID, WorldInfo> worldInfoMap = new HashMap<>();
 
     @ConfigSetting(path = "logging", name = "verbose")
     private static boolean verboseLogging = true;
@@ -60,16 +64,26 @@ public class Anticheat extends JavaPlugin {
     public void onEnable() {
         INSTANCE = this;
 
-        scheduler = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
+        scheduler = Executors.newScheduledThreadPool(2, new ThreadFactoryBuilder()
+                .setNameFormat("Anticheat Schedular")
+                .setUncaughtExceptionHandler((t, e) -> RunUtils.task(e::printStackTrace))
+                .build());
         packetProcessor = new PacketProcessor();
         HandlerAbstract.init();
 
         commandManager = new BukkitCommandManager(this);
+        commandManager.enableUnstableAPI("help");
+
+        new CommandPropertiesManager(commandManager, getDataFolder(),
+                getResource("command-messages.properties"));
 
         this.checkManager = new CheckManager();
         this.playerRegistry = new PlayerRegistry();
         this.keepaliveProcessor = new KeepaliveProcessor();
         this.packetHandler = new PacketHandler();
+
+        alog(Color.Green + "Loading WorldInfo system...");
+        Bukkit.getWorlds().forEach(w -> worldInfoMap.put(w.getUID(), new WorldInfo(w)));
 
         injector = new ServerInjector();
         try {
@@ -95,6 +109,7 @@ public class Anticheat extends JavaPlugin {
         packetProcessor.shutdown();
         checkManager = null;
 
+
         // Unregistering APlayer objects
         playerRegistry.unregisterAll();
         playerRegistry = null;
@@ -109,6 +124,10 @@ public class Anticheat extends JavaPlugin {
                                   boolean loadListeners, boolean loadCommands) {
         initializeScanner(mainClass, plugin, loader, ClassScanner.scanFile(null, mainClass), loadListeners,
                 loadCommands);
+    }
+
+    public WorldInfo getWorldInfo(World world) {
+        return worldInfoMap.computeIfAbsent(world.getUID(), key -> new WorldInfo(world));
     }
 
     public void initializeScanner(Class<? extends Plugin> mainClass, Plugin plugin, ClassLoader loader, Set<String> names,

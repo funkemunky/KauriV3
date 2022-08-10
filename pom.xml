@@ -64,6 +64,14 @@
                                     <pattern>com.google.common</pattern>
                                     <shadedPattern>dev.brighten.ac.com.google.common</shadedPattern>
                                 </relocation>
+                                <relocation>
+                                    <pattern>it.unimi.dsi</pattern>
+                                    <shadedPattern>dev.brighten.ac.it.unimi.dsi</shadedPattern>
+                                </relocation>
+                                <relocation>
+                                    <pattern>co.aikar.commands</pattern>
+                                    <shadedPattern>dev.brighten.ac.co.aikar.commands</shadedPattern>
+                                </relocation>
                             </relocations>
                         </configuration>
                     </execution>
@@ -87,6 +95,12 @@
         </dependency>
         <dependency>
             <groupId>org.github.spigot</groupId>
+            <artifactId>1.13</artifactId>
+            <version>1.13</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.github.spigot</groupId>
             <artifactId>1.8.8</artifactId>
             <version>1.8.8</version>
             <scope>provided</scope>
@@ -95,12 +109,6 @@
             <groupId>org.github.spigot</groupId>
             <artifactId>1.7.10</artifactId>
             <version>1.7.10</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.github.spigot</groupId>
-            <artifactId>1.12.2</artifactId>
-            <version>1.12.2</version>
             <scope>provided</scope>
         </dependency>
         <dependency>

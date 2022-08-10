@@ -201,7 +201,7 @@ public class Speed extends Check {
             if (getPlayer().getMovement().getDeltaXZ() > pmotion && smallestDelta > 1E-4 && getPlayer().getMovement().getDeltaXZ() > 0.1) {
                 if (++buffer > 3) {
                     buffer = Math.min(3.5f, buffer); //Ensuring we don't have a run-away buffer
-                    flag(false,0, "smallest=%s b=%.1f to=%s dxz=%.2f", smallestDelta, buffer, getPlayer().getMovement().getTo().getLoc(), getPlayer().getMovement().getDeltaXZ());
+                    flag("smallest=%s b=%.1f to=%s dxz=%.2f", smallestDelta, buffer, getPlayer().getMovement().getTo().getLoc(), getPlayer().getMovement().getDeltaXZ());
                 }
             } else if (buffer > 0) buffer -= 0.1f;
 

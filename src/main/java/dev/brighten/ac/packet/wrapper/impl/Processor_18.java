@@ -3,13 +3,17 @@ package dev.brighten.ac.packet.wrapper.impl;
 import dev.brighten.ac.packet.wrapper.PacketConverter;
 import dev.brighten.ac.packet.wrapper.in.*;
 import dev.brighten.ac.packet.wrapper.objects.WrappedEnumDirection;
-import dev.brighten.ac.packet.wrapper.out.WPacketPlayOutEntityEffect;
+import dev.brighten.ac.packet.wrapper.out.*;
 import dev.brighten.ac.utils.math.IntVector;
 import dev.brighten.ac.utils.reflections.types.WrappedClass;
 import dev.brighten.ac.utils.reflections.types.WrappedField;
+import io.netty.buffer.Unpooled;
 import net.minecraft.server.v1_8_R3.*;
 import org.bukkit.craftbukkit.v1_8_R3.inventory.CraftItemStack;
 import org.bukkit.util.Vector;
+
+import java.io.IOException;
+import java.util.stream.Collectors;
 
 public class Processor_18 implements PacketConverter {
     @Override
@@ -27,7 +31,7 @@ public class Processor_18 implements PacketConverter {
 
         return WPacketPlayInUseEntity.builder().entityId(fieldEntityId.get(useEntity))
                 .action(WPacketPlayInUseEntity.EnumEntityUseAction.valueOf(useEntity.a().name()))
-                .vector(new Vector(useEntity.b().a, useEntity.b().b, useEntity.b().c))
+                .vector(useEntity.b() != null ? new Vector(useEntity.b().a, useEntity.b().b, useEntity.b().c) : null)
                 .build();
     }
 
@@ -92,23 +96,127 @@ public class Processor_18 implements PacketConverter {
                 .valueOf(packet.b().name())).build();
     }
 
-    private static final WrappedClass classEntityEffect = new WrappedClass(PacketPlayOutEntityEffect.class);
-    private static final WrappedField fieldEntityId2, fieldEffectId, fieldAmplifier, fieldDuration, fieldFlags;
+    @Override
+    public WPacketPlayOutEntityEffect processEntityEffect(Object object) {
+        PacketPlayOutEntityEffect packet = (PacketPlayOutEntityEffect) object;
+        PacketDataSerializer serializer = new PacketDataSerializer(Unpooled.buffer());
+        try {
+            packet.b(serializer);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 
-    static {
-        fieldEntityId2 = classEntityEffect.getFieldByType(Integer.TYPE, 0);
-        fieldEffectId = classEntityEffect.getFieldByType(Byte.TYPE, 0);
-        fieldAmplifier = classEntityEffect.getFieldByType(Byte.TYPE, 1);
-        fieldDuration = classEntityEffect.getFieldByType(Integer.TYPE, 1);
-        fieldFlags = classEntityEffect.getFieldByType(Byte.TYPE, 2);
+        return WPacketPlayOutEntityEffect.builder().entityId(serializer.e())
+                .effectId(serializer.readByte())
+                .duration(serializer.readByte())
+                .duration(serializer.e())
+                .flags(serializer.readByte()).build();
     }
 
     @Override
-    public WPacketPlayOutEntityEffect processEntityEffect(Object object) {
-        return WPacketPlayOutEntityEffect.builder().effectId(fieldEffectId.get(object))
-                .amplifier(fieldAmplifier.get(object))
-                .flags(fieldFlags.get(object))
-                .entityId(fieldEntityId2.get(object))
-                .duration(fieldDuration.get(object)).build();
+    public WPacketPlayOutPosition processServerPosition(Object object) {
+        PacketDataSerializer serializer = new PacketDataSerializer(Unpooled.buffer());
+        PacketPlayOutPosition position = (PacketPlayOutPosition) object;
+
+        try {
+            position.b(serializer);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return WPacketPlayOutPosition.builder()
+                .x(serializer.readDouble())
+                .y(serializer.readDouble())
+                .z(serializer.readDouble())
+                .yaw(serializer.readFloat())
+                .pitch(serializer.readFloat())
+                .flags(PacketPlayOutPosition.EnumPlayerTeleportFlags.a(serializer.readUnsignedByte()).stream()
+                        .map(f -> WPacketPlayOutPosition.EnumPlayerTeleportFlags.valueOf(f.name()))
+                        .collect(Collectors.toSet()))
+                .build();
+    }
+
+    @Override
+    public WPacketPlayOutAttachEntity processAttach(Object object) {
+        PacketDataSerializer serial = new PacketDataSerializer(Unpooled.buffer());
+        PacketPlayOutAttachEntity packet = (PacketPlayOutAttachEntity) object;
+
+        try {
+            packet.b(serial);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+
+        return WPacketPlayOutAttachEntity.builder()
+                .attachedEntityId(serial.readInt())
+                .holdingEntityId(serial.readInt())
+                .isLeashModifer((int)(serial.readUnsignedByte()) == 1)
+                .build();
+    }
+
+    @Override
+    public WPacketPlayOutEntity processOutEntity(Object object) {
+        PacketDataSerializer serial = new PacketDataSerializer(Unpooled.buffer());
+        PacketPlayOutEntity packet = (PacketPlayOutEntity) object;
+
+        try {
+            packet.b(serial);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        int id = serial.e();
+        byte x = 0, y = 0, z = 0, yaw = 0, pitch = 0;
+        boolean ground = false, looked = false, moved = false;
+
+        if(packet instanceof PacketPlayOutEntity.PacketPlayOutRelEntityMoveLook) {
+            x = serial.readByte();
+            y = serial.readByte();
+            z = serial.readByte();
+            yaw = serial.readByte();
+            pitch = serial.readByte();
+            ground = serial.readBoolean();
+            looked = moved = true;
+        } else if(packet instanceof PacketPlayOutEntity.PacketPlayOutRelEntityMove) {
+            x = serial.readByte();
+            y = serial.readByte();
+            z = serial.readByte();
+            ground = serial.readBoolean();
+
+            moved = true;
+        } else if(packet instanceof PacketPlayOutEntity.PacketPlayOutEntityLook) {
+            yaw = serial.readByte();
+            pitch = serial.readByte();
+            ground = serial.readBoolean();
+
+            looked = true;
+        }
+
+        return WPacketPlayOutEntity.builder()
+                .x(x / 32D).y(y / 32D).z(z / 32D).yaw(yaw / 256.0F * 360.0F).pitch(pitch / 256.0F * 360.0F)
+                .onGround(ground).moved(moved).looked(looked)
+                .build();
+    }
+
+    @Override
+    public WPacketPlayOutEntityTeleport processEntityTeleport(Object object) {
+        PacketDataSerializer serial = new PacketDataSerializer(Unpooled.buffer());
+        PacketPlayOutEntityTeleport packet = (PacketPlayOutEntityTeleport) object;
+
+        try {
+            packet.b(serial);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        return WPacketPlayOutEntityTeleport.builder()
+                .entityId(serial.e())
+                .x(serial.readInt() / 32D)
+                .y(serial.readInt() / 32D)
+                .z(serial.readInt() / 32D)
+                .yaw(serial.readByte() / 256.0F * 360.0F)
+                .pitch(serial.readByte() / 256.0F * 360.0F)
+                .onGround(serial.readBoolean())
+                .build();
     }
 }

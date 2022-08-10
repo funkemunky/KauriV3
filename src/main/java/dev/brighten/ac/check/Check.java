@@ -14,6 +14,7 @@ import net.md_5.bungee.api.chat.TextComponent;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Getter
 public abstract class Check {
@@ -23,7 +24,9 @@ public abstract class Check {
     private final CheckData checkData;
     private int vl;
     private long lastFlagRun;
-    private Timer lastAlert = new MillisTimer();
+    private final Timer lastAlert = new MillisTimer();
+
+    public static List<UUID> alertsEnabled = new ArrayList<>();
 
     public Check(APlayer player) {
         this.player = player;
@@ -44,45 +47,46 @@ public abstract class Check {
                 .replace("%vl%", String.valueOf(MathUtils.round(vl, 1)));
     }
 
-    public void flag(boolean devAlerts, int resetVLTime, String information, Object... variables) {
+    public void flag(String information, Object... variables) {
         vl++;
+        if(System.currentTimeMillis() - lastFlagRun < 50L) return;
+
         Anticheat.INSTANCE.getScheduler().execute(() -> {
             if(Anticheat.INSTANCE.getTps() < 18)
                 vl = 0;
-
-            if(System.currentTimeMillis() - lastFlagRun < 50L) return;
             lastFlagRun = System.currentTimeMillis();
 
             final String finalInformation = String.format(information, variables);
 
-            boolean dev = devAlerts || Anticheat.INSTANCE.getTps() < 18;
+            boolean dev = Anticheat.INSTANCE.getTps() < 18;
             final String info = finalInformation
                     .replace("%p", String.valueOf(player.getLagInfo().getTransPing()))
                     .replace("%t", String.valueOf(MathUtils.round(Anticheat.INSTANCE.getTps(), 2)));
             //if(vl > 0) Anticheat.INSTANCE.loggerManager.addLog(player, this, info);
 
-            if (true) {
-                //Sending Discord webhook alert
-               
-                List<TextComponent> components = new ArrayList<>();
+            //Sending Discord webhook alert
 
-                if(dev) {
-                    components.add(new TextComponent(createTxt("&8[&cDev&8] ")));
-                }
-                val text = createTxt("&8[&4!&8] &f%player% &7flagged &f%check%" +
-                        " &8(&ex%vl%&8)", info);
+            List<TextComponent> components = new ArrayList<>();
 
-                text.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponent[] {
-                        createTxt("&eDescription&8: &f%desc%" +
-                                "\n&eInfo: &f%info%\n&r\n&7&oClick to teleport to player.", info)}));
-
-                components.add(text);
-
-                TextComponent[] toSend = components.toArray(new TextComponent[0]);
-
-                player.getBukkitPlayer().spigot().sendMessage(toSend);
-                lastAlert.reset();
+            if(dev) {
+                components.add(new TextComponent(createTxt("&8[&cDev&8] ")));
             }
+            val text = createTxt("&8[&4!&8] &f%player% &7flagged &f%check%" +
+                    " &8(&ex%vl%&8)", info);
+
+            text.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponent[] {
+                    createTxt("&eDescription&8: &f%desc%" +
+                            "\n&eInfo: &f%info%\n&r\n&7&oClick to teleport to player.", info)}));
+
+            components.add(text);
+
+            TextComponent[] toSend = components.toArray(new TextComponent[0]);
+
+            for (UUID uuid : alertsEnabled) {
+                Anticheat.INSTANCE.getPlayerRegistry().getPlayer(uuid)
+                        .ifPresent(apl -> apl.getBukkitPlayer().spigot().sendMessage(toSend));
+            }
+            lastAlert.reset();
         });
     }
 

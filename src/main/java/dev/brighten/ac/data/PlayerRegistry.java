@@ -17,7 +17,7 @@ public class PlayerRegistry {
     public final Int2ObjectMap<APlayer> aplayerMap = Int2ObjectMaps.synchronize(new Int2ObjectOpenHashMap<>());
 
     public Optional<APlayer> getPlayer(UUID uuid) {
-        return Optional.of(aplayerMap.get(uuid.hashCode()));
+        return Optional.ofNullable(aplayerMap.get(uuid.hashCode()));
     }
 
     public APlayer generate(Player player) {

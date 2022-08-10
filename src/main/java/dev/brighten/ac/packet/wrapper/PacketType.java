@@ -10,28 +10,61 @@ public enum PacketType {
     FLYING("PacketPlayInFlying", "PacketPlayInPosition", "PacketPlayInPositionLook",
             "PacketPlayInLook", "PacketPlayInFlying$PacketPlayInPositionLook",
             "PacketPlayInFlying$PacketPlayInLook", "PacketPlayInFlying$PacketPlayInPosition"),
-
     USE_ENTITY("PacketPlayInUseEntity"),
-
+    CLIENT_KEEPALIVE("PacketPlayInKeepAlive"),
+    WINDOW_CLICK("PacketPlayInWindowClick"),
+    STEER_VEHICLE("PacketPlayInSteerVehicle"),
+    CLIENT_PAYLOAD("PacketPlayInCustomPayload"),
+    CLIENT_HELM_ITEM("PacketPlayInHeldItemSlot"),
+    TAB_COMPLETE("PacketPlayInTabComplete"),
+    CREATIVE_SLOT("PacketPlayInSetCreativeSlot"),
+    UPDATE_SIGN("PacketPlayInUpdateSign"),
+    CLIENT_TRANSACTION("PacketPlayInTransaction"),
     CLIENT_ABILITIES("PacketPlayInAbilities"),
-
     ARM_ANIMATION("PacketPlayInArmAnimation"),
-
     BLOCK_DIG("PacketPlayInBlockDig"),
-
     BLOCK_PLACE("PacketPlayInBlockPlace"),
-
     CHAT("PacketPlayInChat"),
-
     CLIENT_COMMAND("PacketPlayInCommand"),
-
-    CLOSE_WINDOW("PacketPlayInCloseWindow"),
-
+    CLIENT_CLOSE_WINDOW("PacketPlayInCloseWindow"),
     ENTITY_ACTION("PacketPlayInEntityAction"),
-
     ENTITY_EFFECT("PacketPlayOutEntityEffect"),
+    SERVER_KEEPALIVE("PacketPlayOutKeepAlive"),
+    SERVER_CHAT("PacketPlayOutChat"),
+    SERVER_POSITION("PacketPlayOutPosition"),
+    SERVER_TRANSACTION("PacketPlayOutTransaction"),
+    NAMED_ENTITY_SPAWN("PacketPlayOutNamedEntitySpawn"),
+    SPAWN_ENTITY_LIVING("PacketPlayOutSpawnEntityLiving"),
+    SPAWN_ENTITY("PacketPlayOutSpawnEntity"),
+    SERVER_PAYLOAD("PacketPlayOutCustomPayload"),
+    SERVER_ABILITIES("PacketPlayOutAbilities"),
+    ENTITY_METADATA("PacketPlayOutEntityMetadata"),
+    VELOCITY("PacketPlayOutEntityVelocity"),
+    ENTITY_DESTROY("PacketPlayOutEntityDestroy"),
+    SCOREBOARD_DISPLAY_OBJECTIVE("PacketPlayOutScoreboardDisplayObjective"),
+    SCOREBOARD_OBJECTIVE("PacketPlayOutScoreboardObjective"),
+    ENTITY_HEAD_ROTATION("PacketPlayOutEntityHeadRotation"),
+    ENTITY_TELEPORT("PacketPlayOutEntityTeleport"),
+    ENTITY("PacketPlayOutEntity"),
+    ENTITY_MOVE("PacketPlayOutEntity$PacketPlayOutRelEntityMove", "PacketPlayOutRelEntityMove"),
+    ENTITY_MOVELOOK("PacketPlayOutEntity$PacketPlayOutRelEntityMoveLook", "PacketPlayOutRelEntityMoveLook"),
+    ENTITY_LOOK("PacketPlayOutEntity$PacketPlayOutEntityLook", "PacketPlayOutEntityLook"),
+    BLOCK_CHANGE("PacketPlayOutBlockChange"),
+    SERVER_CLOSE_WINDOW("PacketPlayOutCloseWindow"),
+    SERVER_HELM_ITEM("PacketPlayOutHeldItemSlot"),
+    SERVER_TAB_COMPLETE("PacketPlayOutTabComplete"),
+    MAP_CHUNK("PacketPlayOutMapChunk"),
+    MULTI_BLOCK_CHANGE("PacketPlayOutMultiBlockChange"),
+    RESPAWN("PacketPlayOutRespawn"),
+    WORLD_PARTICLE("PacketPlayOutWorldParticles"),
+    COMMANDS("PacketPlayOutCommands"),
+    SERVER_OPEN_WINDOW("PacketPlayOutOpenWindow"),
+    SERVER_ENTITY_EFFECT("PacketPlayOutEntityEffect"),
+    SET_SLOT("PacketPlayOutSetSlot"),
+    EXPLOSION("PacketPlayOutExplosion"),
+    ATTACH("PacketPlayOutAttachEntity"),
 
-    NONE();
+    UNKNOWN();
 
     PacketType(String... packetIds) {
         this.packetId = packetIds;
@@ -49,48 +82,6 @@ public enum PacketType {
         return Optional.empty();
     }
 
-    public static class ServerOld {
-        private static final String SERVER = "PacketPlayOut";
-
-        public static final String KEEP_ALIVE = SERVER + "KeepAlive";
-        public static final String CHAT = SERVER + "Chat";
-        public static final String POSITION = SERVER + "Position";
-        public static final String TRANSACTION = SERVER + "Transaction";
-        public static final String NAMED_ENTITY_SPAWN = SERVER + "NamedEntitySpawn";
-        public static final String SPAWN_ENTITY_LIVING = SERVER + "SpawnEntityLiving";
-        public static final String SPAWN_ENTITY = SERVER + "SpawnEntity";
-        public static final String CUSTOM_PAYLOAD = SERVER + "CustomPayload";
-        public static final String ABILITIES = SERVER + "Abilities";
-        public static final String ENTITY_METADATA = SERVER + "EntityMetadata";
-        public static final String ENTITY_VELOCITY = SERVER + "EntityVelocity";
-        public static final String ENTITY_DESTROY = SERVER + "EntityDestroy";
-        public static final String SCOREBOARD_DISPLAY_OBJECTIVE = "ScoreboardDisplayObjective";
-        public static final String SCOREBOARD_OBJECTIVE = "ScoreboardObjective";
-        public static final String ENTITY_HEAD_ROTATION = SERVER + "EntityHeadRotation";
-        public static final String ENTITY_TELEPORT = SERVER + "EntityTeleport";
-        public static final String ENTITY = SERVER + "Entity";
-        public static final String REL_POSITION = ENTITY + "$" + SERVER + "RelEntityMove";
-        public static final String REL_POSITION_LOOK = ENTITY + "$" + SERVER + "RelEntityMoveLook";
-        public static final String REL_LOOK = ENTITY + "$" + SERVER + "EntityLook";
-        public static final String LEGACY_REL_POSITION = SERVER + "RelEntityMove";
-        public static final String LEGACY_REL_POSITION_LOOK = SERVER + "RelEntityMoveLook";
-        public static final String LEGACY_REL_LOOK = SERVER + "EntityLook";
-        public static final String BLOCK_CHANGE = SERVER + "BlockChange";
-        public static final String CLOSE_WINDOW = SERVER + "CloseWindow";
-        public static final String HELD_ITEM = SERVER + "HeldItemSlot";
-        public static final String TAB_COMPLETE = SERVER + "TabComplete";
-        public static final String MAP_CHUNK = SERVER + "MapChunk";
-        public static final String MULTI_BLOCK_CHANGE = SERVER + "MultiBlockChange";
-        public static final String RESPAWN = SERVER + "Respawn";
-        public static final String WORLD_PARTICLE = SERVER + "WorldParticles";
-        public static final String COMMANDS = SERVER + "Commands";
-        public static final String OPEN_WINDOW = SERVER + "OpenWindow";
-        public static final String ENTITY_EFFECT = SERVER + "EntityEffect";
-        public static final String SET_SLOT =  SERVER + "SetSlot";
-        public static final String EXPLOSION = SERVER + "Explosion";
-        public static final String ATTACH = SERVER + "AttachEntity";
-    }
-
     public static class Login {
         public static final String HANDSHAKE = "PacketHandshakingInSetProtocol";
         public static final String PING = "PacketStatusInPing";
@@ -102,18 +93,15 @@ public enum PacketType {
         PacketConverter convert = Anticheat.INSTANCE.getPacketProcessor().getPacketConverter();
 
         switch (type) {
-            case FLYING: {
+            case FLYING:
                 return convert.processFlying(object);
-            }
-            case CHAT:
-                break;
             case BLOCK_DIG:
                 return convert.processBlockDig(object);
             case USE_ENTITY:
                 return convert.processUseEntity(object);
             case BLOCK_PLACE:
                 return convert.processBlockPlace(object);
-            case CLOSE_WINDOW:
+            case CLIENT_CLOSE_WINDOW:
                 return convert.processCloseWindow(object);
             case ARM_ANIMATION:
                 return convert.processAnimation(object);
@@ -123,10 +111,20 @@ public enum PacketType {
                 return convert.processAbilities(object);
             case ENTITY_EFFECT:
                 return convert.processEntityEffect(object);
+            case SERVER_POSITION:
+                return convert.processServerPosition(object);
+            case ATTACH:
+                return convert.processAttach(object);
+            case ENTITY:
+            case ENTITY_LOOK:
+            case ENTITY_MOVE:
+            case ENTITY_MOVELOOK:
+                return convert.processOutEntity(object);
+            case ENTITY_TELEPORT:
+                return convert.processEntityTeleport(object);
             default:
                 return object;
         }
-        return object;
     }
 }
 

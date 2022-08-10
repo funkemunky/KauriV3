@@ -9,22 +9,22 @@ import dev.brighten.ac.data.handlers.LagInformation;
 import dev.brighten.ac.data.handlers.MovementHandler;
 import dev.brighten.ac.data.obj.InstantAction;
 import dev.brighten.ac.data.obj.NormalAction;
+import dev.brighten.ac.handler.EntityLocationHandler;
 import dev.brighten.ac.handler.PotionHandler;
 import dev.brighten.ac.handler.keepalive.KeepAlive;
 import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.packet.handler.HandlerAbstract;
 import dev.brighten.ac.utils.Tuple;
+import dev.brighten.ac.utils.reflections.impl.MinecraftReflection;
 import dev.brighten.ac.utils.reflections.types.WrappedMethod;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.val;
 import net.minecraft.server.v1_8_R3.PacketPlayOutTransaction;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Consumer;
 
@@ -32,11 +32,15 @@ import java.util.function.Consumer;
 public class APlayer {
     @Getter
     private final Player bukkitPlayer;
+    @Getter
+    private final UUID uuid;
     private final List<Check> checks = new ArrayList<>();
     @Getter
     private MovementHandler movement;
     @Getter
     private PotionHandler potionHandler;
+    @Getter
+    private EntityLocationHandler entityLocationHandler;
     @Getter
     private GeneralInformation info;
     @Getter
@@ -48,13 +52,23 @@ public class APlayer {
     @Getter
     //TODO Actually grab real player version once finished implementing version grabber from Atlas
     private ProtocolVersion playerVersion = ProtocolVersion.V1_8_9;
+    @Getter
+    private Object playerConnection;
 
     public final Map<Short, Tuple<InstantAction, Consumer<InstantAction>>> instantTransaction = new HashMap<>();
     public final List<NormalAction> keepAliveStamps = new ArrayList<>();
 
+    @Getter
+    private final Deque<Object> packetQueue = new LinkedList<>();
+
+    @Setter
+    @Getter
+    private boolean sendingPackets;
+
     public APlayer(Player player) {
         this.bukkitPlayer = player;
-
+        this.uuid = player.getUniqueId();
+        this.playerConnection = MinecraftReflection.getPlayerConnection(player);
         load();
     }
 
@@ -64,6 +78,7 @@ public class APlayer {
         }
         this.movement = new MovementHandler(this);
         this.potionHandler = new PotionHandler(this);
+        this.entityLocationHandler = new EntityLocationHandler(this);
         this.info = new GeneralInformation();
         this.lagInfo = new LagInformation();
         this.blockInformation = new BlockInformation(this);

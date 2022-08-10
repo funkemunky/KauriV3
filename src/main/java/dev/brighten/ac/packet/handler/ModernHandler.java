@@ -4,29 +4,33 @@ import com.google.common.collect.MapMaker;
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.wrapper.PacketType;
-import dev.brighten.ac.utils.reflections.Reflections;
-import dev.brighten.ac.utils.reflections.types.WrappedField;
-import dev.brighten.ac.utils.reflections.types.WrappedMethod;
+import dev.brighten.ac.utils.reflections.impl.MinecraftReflection;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
 import lombok.AllArgsConstructor;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerJoinEvent;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-public class ModernHandler extends HandlerAbstract {
+public class ModernHandler extends HandlerAbstract implements Listener {
 
     private final Map<String, Channel> channelCache = new HashMap<>();
-    private Set<Channel> uninjectedChannels = Collections.newSetFromMap(new MapMaker().weakKeys().makeMap());
+    private final Set<Channel> uninjectedChannels = Collections.newSetFromMap(new MapMaker().weakKeys().makeMap());
 
-    private static WrappedField fieldChannel = classNetworkManager.getFieldByType(Channel.class, 0);
-    private static WrappedMethod methodHandle = Reflections.getCBClass("entity.CraftPlayer")
-            .getMethod("getHandle");
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void onJoin(PlayerJoinEvent event) {
+        if(!uninjectedChannels.contains(getChannel(event.getPlayer())))
+            HandlerAbstract.getHandler().add(event.getPlayer());
+    }
 
     @Override
     public void add(Player player) {
@@ -71,11 +75,7 @@ public class ModernHandler extends HandlerAbstract {
 
     private Channel getChannel(Player player) {
         synchronized (channelCache) {
-            return channelCache.computeIfAbsent(player.getName(), name -> {
-                Object manager = fieldNetworkManager.get(fieldPlayerConnection.get(methodHandle.invoke(player)));
-
-                return fieldChannel.get(manager);
-            });
+            return channelCache.computeIfAbsent(player.getName(), name -> MinecraftReflection.getChannel(player));
         }
     }
 
@@ -90,12 +90,17 @@ public class ModernHandler extends HandlerAbstract {
             String packetName = name.substring(index + 1);
 
             PacketType type = PacketType
-                    .getByPacketId(packetName).orElse(PacketType.NONE);
+                    .getByPacketId(packetName).orElse(PacketType.UNKNOWN);
 
-            boolean allowed = Anticheat.INSTANCE.getPacketProcessor().call(player, PacketType.processType(type, msg),
-                    type);
+            try {
+                boolean allowed = Anticheat.INSTANCE.getPacketProcessor().call(player, msg,
+                        type);
 
-            if(allowed) {
+                if(allowed) {
+                    super.channelRead(ctx, msg);
+                }
+            } catch(Throwable throwable) {
+                throwable.printStackTrace();
                 super.channelRead(ctx, msg);
             }
         }
@@ -105,12 +110,18 @@ public class ModernHandler extends HandlerAbstract {
             String name = msg.getClass().getName();
             int index = name.lastIndexOf(".");
             String packetName = name.substring(index + 1);
-            boolean allowed = Anticheat.INSTANCE.getPacketProcessor().call(player, msg, PacketType
-                    .getByPacketId(packetName).orElse(PacketType.NONE));
 
-           if(allowed) {
-               super.write(ctx, msg, promise);
-           }
+            try {
+                boolean allowed = Anticheat.INSTANCE.getPacketProcessor().call(player, msg, PacketType
+                        .getByPacketId(packetName).orElse(PacketType.UNKNOWN));
+
+                if (allowed) {
+                    super.write(ctx, msg, promise);
+                }
+            } catch(Throwable throwable) {
+                throwable.printStackTrace();
+                super.write(ctx, msg, promise);
+            }
         }
     }
 }

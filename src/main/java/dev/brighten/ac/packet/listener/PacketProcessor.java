@@ -7,7 +7,6 @@ import dev.brighten.ac.packet.wrapper.PacketConverter;
 import dev.brighten.ac.packet.wrapper.PacketType;
 import dev.brighten.ac.packet.wrapper.impl.Processor_18;
 import dev.brighten.ac.utils.MiscUtils;
-import dev.brighten.ac.utils.RunUtils;
 import lombok.Getter;
 import lombok.val;
 import org.bukkit.entity.Player;
@@ -65,7 +64,7 @@ public class PacketProcessor {
     }
 
     public PacketListener process(Plugin plugin, EventPriority priority, PacketListener listener) {
-        return process(plugin, priority, listener, PacketType.NONE);
+        return process(plugin, priority, listener, PacketType.UNKNOWN);
     }
 
     public PacketListener processAsync(Plugin plugin, PacketListener listener, PacketType... types) {
@@ -73,7 +72,7 @@ public class PacketProcessor {
     }
 
     public PacketListener processAsync(Plugin plugin, EventPriority priority, PacketListener listener) {
-        return processAsync(plugin, priority, listener, PacketType.NONE);
+        return processAsync(plugin, priority, listener, PacketType.UNKNOWN);
     }
 
     public PacketListener processAsync(Plugin plugin, EventPriority priority, PacketListener listener,
@@ -148,35 +147,37 @@ public class PacketProcessor {
 
     public boolean call(Player player, Object packet, PacketType type) {
         if(packet == null) return false;
-        PacketInfo info = new PacketInfo(player, packet, type, System.currentTimeMillis());
-        if(asyncProcessors.containsKey(type) || asyncProcessors.containsKey(PacketType.NONE)) {
-            RunUtils.taskAsync(() -> {
-                val list = MiscUtils.combine(asyncProcessors.get(type),
-                        asyncProcessors.get(PacketType.NONE));
+        PacketInfo info = new PacketInfo(player, packet, type, System.currentTimeMillis()),
+                asyncInfo;
+        boolean cancelled = false;
+        if(processors.containsKey(type) || processors.containsKey(PacketType.UNKNOWN)) {
+            val list = MiscUtils.combine(processors.get(type), processors.get(PacketType.UNKNOWN));
 
-                for (ListenerEntry tuple : list) {
-                    tuple.getListener().onEvent(info);
-                }
-            });
-        }
-
-        if(processors.containsKey(type) || processors.containsKey(PacketType.NONE)) {
-            val list = MiscUtils.combine(processors.get(type), processors.get(PacketType.NONE));
-
-            boolean cancelled = false;
             for (ListenerEntry tuple : list) {
                 try {
                     tuple.getListener().onEvent(info);
 
-                    if(info.isCancelled()) {
+                    if (info.isCancelled()) {
                         cancelled = true;
                     }
-                } catch(Exception e) {
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
-            return !cancelled;
-        } return true;
+        }
+        if(asyncProcessors.containsKey(type) || asyncProcessors.containsKey(PacketType.UNKNOWN)) {
+            asyncInfo = new PacketInfo(player, PacketType.processType(type, packet), type, info.getTimestamp());
+            asyncInfo.setCancelled(cancelled);
+            Anticheat.INSTANCE.getScheduler().execute(() -> {
+                val list = MiscUtils.combine(asyncProcessors.get(type),
+                        asyncProcessors.get(PacketType.UNKNOWN));
+
+                for (ListenerEntry tuple : list) {
+                    tuple.getListener().onEvent(asyncInfo);
+                }
+            });
+        }
+        return !cancelled;
     }
 
     public void shutdown() {

@@ -52,11 +52,6 @@ public class KeepaliveProcessor implements Runnable {
             if(value.getLagInfo().getLastPingDrop().isNotPassed(2)
                     || value.getLagInfo().getLastClientTransaction().isPassed(135L)) laggyPlayers++;
 
-            if(value.getInfo().getTarget() != null) {
-                value.getInfo().getTargetPastLocation().addLocation(value.getInfo()
-                        .getTarget().getLocation());
-            }
-
             PacketPlayOutTransaction transaction = new PacketPlayOutTransaction(0, currentKeepalive.id, false);
 
             HandlerAbstract.getHandler().sendPacket(value.getBukkitPlayer(), transaction);
