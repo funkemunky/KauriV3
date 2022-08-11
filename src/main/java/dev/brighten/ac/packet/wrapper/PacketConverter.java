@@ -28,4 +28,6 @@ public interface PacketConverter {
     WPacketPlayOutEntity processOutEntity(Object object);
 
     WPacketPlayOutEntityTeleport processEntityTeleport(Object object);
+
+    WPacketHandshakingInSetProtocol processHandshakingProtocol(Object object);
 }

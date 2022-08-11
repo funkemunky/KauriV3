@@ -12,6 +12,8 @@ import dev.brighten.ac.data.obj.NormalAction;
 import dev.brighten.ac.handler.EntityLocationHandler;
 import dev.brighten.ac.handler.PotionHandler;
 import dev.brighten.ac.handler.keepalive.KeepAlive;
+import dev.brighten.ac.handler.protocolsupport.ProtocolAPI;
+import dev.brighten.ac.messages.Messages;
 import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.packet.handler.HandlerAbstract;
 import dev.brighten.ac.utils.Tuple;
@@ -51,7 +53,7 @@ public class APlayer {
     private int playerTick;
     @Getter
     //TODO Actually grab real player version once finished implementing version grabber from Atlas
-    private ProtocolVersion playerVersion = ProtocolVersion.V1_8_9;
+    private ProtocolVersion playerVersion = ProtocolVersion.UNKNOWN;
     @Getter
     private Object playerConnection;
 
@@ -73,8 +75,10 @@ public class APlayer {
     }
 
     private void load() {
-        for (CheckStatic check : Anticheat.INSTANCE.getCheckManager().getCheckClasses()) {
-            checks.add(check.playerInit(this));
+        synchronized (checks) {
+            for (CheckStatic check : Anticheat.INSTANCE.getCheckManager().getCheckClasses()) {
+                checks.add(check.playerInit(this));
+            }
         }
         this.movement = new MovementHandler(this);
         this.potionHandler = new PotionHandler(this);
@@ -82,6 +86,15 @@ public class APlayer {
         this.info = new GeneralInformation();
         this.lagInfo = new LagInformation();
         this.blockInformation = new BlockInformation(this);
+
+        Anticheat.INSTANCE.getScheduler().execute(() ->
+                playerVersion = ProtocolVersion.getVersion(ProtocolAPI.INSTANCE.getPlayerVersion(getBukkitPlayer())));
+
+        if(getBukkitPlayer().hasPermission("anticheat.command.alerts")
+                || getBukkitPlayer().hasPermission("anticheat.alerts")) {
+            Check.alertsEnabled.add(getUuid());
+            getBukkitPlayer().spigot().sendMessage(Messages.ALERTS_ON);
+        }
     }
 
     protected void unload() {
@@ -111,8 +124,8 @@ public class APlayer {
                     .get(new Tuple<String, Class<?>>(check.getCheckData().name(), packet.getClass()));
 
             if(methods != null) {
-                
-                for (WrappedMethod method : 
+
+                for (WrappedMethod method :
                         methods) {
                     method.invoke(check, packet);
                 }

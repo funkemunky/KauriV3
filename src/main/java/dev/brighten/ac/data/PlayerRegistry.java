@@ -34,7 +34,7 @@ public class PlayerRegistry {
 
     public void unregister(UUID uuid) {
         synchronized (aplayerMap) {
-            Optional.of(aplayerMap.remove(uuid.hashCode())).ifPresent(APlayer::unload);
+            Optional.ofNullable(aplayerMap.remove(uuid.hashCode())).ifPresent(APlayer::unload);
         }
     }
 

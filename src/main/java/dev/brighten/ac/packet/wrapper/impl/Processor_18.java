@@ -219,4 +219,23 @@ public class Processor_18 implements PacketConverter {
                 .onGround(serial.readBoolean())
                 .build();
     }
+
+    @Override
+    public WPacketHandshakingInSetProtocol processHandshakingProtocol(Object object) {
+        PacketDataSerializer serial = new PacketDataSerializer(Unpooled.buffer());
+        PacketHandshakingInSetProtocol packet = (PacketHandshakingInSetProtocol) object;
+
+        try {
+            packet.b(serial);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        return WPacketHandshakingInSetProtocol.builder()
+                .versionNumber(serial.e())
+                .hostname(serial.c(32767))
+                .port(serial.readUnsignedShort())
+                .protocol(WPacketHandshakingInSetProtocol.EnumProtocol.valueOf(EnumProtocol.a(serial.e()).name()))
+                .build();
+    }
 }

@@ -63,7 +63,10 @@ public enum PacketType {
     SET_SLOT("PacketPlayOutSetSlot"),
     EXPLOSION("PacketPlayOutExplosion"),
     ATTACH("PacketPlayOutAttachEntity"),
-
+    LOGIN_HANDSHAKE("PacketHandshakingInSetProtocol"),
+    STATUS_PING("PacketStatusInPing"),
+    STATUS_START("PacketStatusInStart"),
+    LOGIN_START("PacketLoginInStart"),
     UNKNOWN();
 
     PacketType(String... packetIds) {
@@ -122,6 +125,8 @@ public enum PacketType {
                 return convert.processOutEntity(object);
             case ENTITY_TELEPORT:
                 return convert.processEntityTeleport(object);
+            case LOGIN_HANDSHAKE:
+                return convert.processHandshakingProtocol(object);
             default:
                 return object;
         }

@@ -18,7 +18,7 @@ import java.util.Comparator;
 import java.util.stream.Collectors;
 
 @Init(priority = Priority.LOW)
-@CommandAlias("anticheat")
+@CommandAlias("anticheat|ac")
 @CommandPermission("anticheat.command")
 public class AnticheatCommand extends BaseCommand {
 
@@ -73,5 +73,26 @@ public class AnticheatCommand extends BaseCommand {
             Check.alertsEnabled.add(player.getBukkitPlayer().getUniqueId());
             pl.spigot().sendMessage(Messages.ALERTS_ON);
         }
+    }
+
+    @Subcommand("playerinfo|info|pi")
+    @Description("Get player's information")
+    @Syntax("[player]")
+    @CommandCompletion("@players")
+    @CommandPermission("anticheat.command.info")
+    public void onCommand(CommandSender sender, @Single Player target) {
+        Anticheat.INSTANCE.getScheduler().execute(() -> {
+            APlayer player = Anticheat.INSTANCE.getPlayerRegistry().getPlayer(target.getUniqueId()).orElse(null);
+
+            if(player == null) {
+                sender.spigot().sendMessage(Messages.NULL_APLAYER);
+                return;
+            }
+
+            sender.sendMessage(MiscUtils.line(Color.Dark_Gray));
+            sender.sendMessage(Color.translate("&6&lPing&8: &f" + player.getLagInfo().getTransPing() * 50 + "ms"));
+            sender.sendMessage(Color.translate("&6&lVersion&8: &f" + player.getPlayerVersion().name()));
+            sender.sendMessage(MiscUtils.line(Color.Dark_Gray));
+        });
     }
 }

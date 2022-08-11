@@ -1,6 +1,5 @@
 package dev.brighten.ac.packet.handler;
 
-import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.utils.reflections.Reflections;
@@ -9,9 +8,8 @@ import dev.brighten.ac.utils.reflections.types.WrappedField;
 import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
-import org.bukkit.event.Listener;
 
-public abstract class HandlerAbstract implements Listener {
+public abstract class HandlerAbstract{
     static WrappedClass classNetworkManager = Reflections.getNMSClass("NetworkManager");
     static WrappedField
             fieldNetworkManager = Reflections.getNMSClass("PlayerConnection").getFieldByName("networkManager"),
@@ -27,8 +25,6 @@ public abstract class HandlerAbstract implements Listener {
             handler = new ModernHandler();
         } else handler = new LegacyHandler();
 
-        Bukkit.getPluginManager().registerEvents(handler, Anticheat.INSTANCE);
-
         Bukkit.getOnlinePlayers().forEach(handler::add);
     }
 
@@ -39,4 +35,6 @@ public abstract class HandlerAbstract implements Listener {
     public abstract void sendPacket(Player player, Object packet);
 
     public abstract void sendPacket(APlayer player, Object packet);
+
+    public abstract int getProtocolVersion(Player player);
 }

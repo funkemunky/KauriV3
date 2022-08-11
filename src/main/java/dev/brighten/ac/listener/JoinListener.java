@@ -77,6 +77,8 @@ public class JoinListener implements Listener {
         System.out.println("Generating for " + event.getPlayer().getName());
         APlayer player = Anticheat.INSTANCE.getPlayerRegistry().generate(event.getPlayer());
 
+        HandlerAbstract.getHandler().add(event.getPlayer());
+
         player.callEvent(event);
     }
 

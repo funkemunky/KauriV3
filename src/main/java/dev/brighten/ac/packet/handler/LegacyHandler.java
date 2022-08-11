@@ -15,28 +15,18 @@ import net.minecraft.util.io.netty.channel.ChannelHandlerContext;
 import net.minecraft.util.io.netty.channel.ChannelPromise;
 import org.bukkit.craftbukkit.v1_7_R4.entity.CraftPlayer;
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.EventPriority;
-import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerJoinEvent;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-public class LegacyHandler extends HandlerAbstract implements Listener {
+public class LegacyHandler extends HandlerAbstract {
 
     private final Map<String, Channel> channelCache = new HashMap<>();
     private Set<Channel> uninjectedChannels = Collections.newSetFromMap(new MapMaker().weakKeys().makeMap());
 
     private static WrappedField fieldChannel = new WrappedClass(NetworkManager.class).getFieldByType(Channel.class, 0);
-
-    @EventHandler(priority = EventPriority.LOWEST)
-    public void onJoin(PlayerJoinEvent event) {
-        if(!uninjectedChannels.contains(getChannel(event.getPlayer())))
-            HandlerAbstract.getHandler().add(event.getPlayer());
-    }
 
     @Override
     public void add(Player player) {
@@ -77,6 +67,11 @@ public class LegacyHandler extends HandlerAbstract implements Listener {
     @Override
     public void sendPacket(APlayer player, Object packet) {
         sendPacket(player.getBukkitPlayer(), packet);
+    }
+
+    @Override
+    public int getProtocolVersion(Player player) {
+        return -1;
     }
 
     private Channel getChannel(Player player) {
