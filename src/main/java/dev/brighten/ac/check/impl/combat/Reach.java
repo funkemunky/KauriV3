@@ -40,7 +40,6 @@ public class Reach extends Check {
         if(packet.getAction() == WPacketPlayInUseEntity.EnumEntityUseAction.ATTACK
                 && allowedEntityTypes.contains(packet.getEntity(getPlayer().getBukkitPlayer().getWorld()).getType())) {
             attacks.add(packet.getEntity(getPlayer().getBukkitPlayer().getWorld()));
-            getPlayer().getBukkitPlayer().sendMessage("Attacked");
         }
     }
 

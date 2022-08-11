@@ -19,6 +19,8 @@ import dev.brighten.ac.packet.handler.HandlerAbstract;
 import dev.brighten.ac.utils.Tuple;
 import dev.brighten.ac.utils.reflections.impl.MinecraftReflection;
 import dev.brighten.ac.utils.reflections.types.WrappedMethod;
+import dev.brighten.ac.utils.timer.Timer;
+import dev.brighten.ac.utils.timer.impl.MillisTimer;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.val;
@@ -51,6 +53,8 @@ public class APlayer {
     private BlockInformation blockInformation;
     @Getter
     private int playerTick;
+    @Getter
+    private Timer creation = new MillisTimer();
     @Getter
     //TODO Actually grab real player version once finished implementing version grabber from Atlas
     private ProtocolVersion playerVersion = ProtocolVersion.UNKNOWN;
@@ -87,9 +91,11 @@ public class APlayer {
         this.lagInfo = new LagInformation();
         this.blockInformation = new BlockInformation(this);
 
+        // Grabbing the protocol version of the player.
         Anticheat.INSTANCE.getScheduler().execute(() ->
                 playerVersion = ProtocolVersion.getVersion(ProtocolAPI.INSTANCE.getPlayerVersion(getBukkitPlayer())));
 
+        // Enabling alerts for players on join if they have the permissions to
         if(getBukkitPlayer().hasPermission("anticheat.command.alerts")
                 || getBukkitPlayer().hasPermission("anticheat.alerts")) {
             Check.alertsEnabled.add(getUuid());

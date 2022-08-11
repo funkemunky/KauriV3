@@ -26,8 +26,8 @@ public class FlyA extends Check {
     @Action
     public void onFlying(WPacketPlayInFlying packet) {
         if(!packet.isMoved() || (getPlayer().getMovement().getDeltaXZ() == 0
-                && getPlayer().getMovement().getDeltaY() == 0)) return;
-
+                && getPlayer().getMovement().getDeltaY() == 0))
+            return;
 
         boolean onGround = getPlayer().getMovement().getTo().isOnGround(),
                 fromGround = getPlayer().getMovement().getFrom().isOnGround();
@@ -55,6 +55,7 @@ public class FlyA extends Check {
 
         if(!getPlayer().getInfo().isGeneralCancel() && deltaPredict > 0.016) {
             if(++buffer > 5) {
+                buffer = 5;
                 flag("dY=%.3f p=%.3f dx=%.3f", getPlayer().getMovement().getDeltaY(), predicted,
                         getPlayer().getMovement().getDeltaXZ());
             }

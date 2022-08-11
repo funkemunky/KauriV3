@@ -68,8 +68,6 @@ public class Anticheat extends JavaPlugin {
                 .setNameFormat("Anticheat Schedular")
                 .setUncaughtExceptionHandler((t, e) -> RunUtils.task(e::printStackTrace))
                 .build());
-        packetProcessor = new PacketProcessor();
-        HandlerAbstract.init();
 
         commandManager = new BukkitCommandManager(this);
         commandManager.enableUnstableAPI("help");
@@ -77,10 +75,13 @@ public class Anticheat extends JavaPlugin {
         new CommandPropertiesManager(commandManager, getDataFolder(),
                 getResource("command-messages.properties"));
 
+        this.keepaliveProcessor = new KeepaliveProcessor();
+        packetProcessor = new PacketProcessor();
         this.checkManager = new CheckManager();
         this.playerRegistry = new PlayerRegistry();
-        this.keepaliveProcessor = new KeepaliveProcessor();
         this.packetHandler = new PacketHandler();
+
+        HandlerAbstract.init();
 
         alog(Color.Green + "Loading WorldInfo system...");
         Bukkit.getWorlds().forEach(w -> worldInfoMap.put(w.getUID(), new WorldInfo(w)));

@@ -6,6 +6,7 @@ import dev.brighten.ac.handler.thread.ThreadHandler;
 import dev.brighten.ac.packet.handler.HandlerAbstract;
 import dev.brighten.ac.packet.wrapper.PacketType;
 import dev.brighten.ac.utils.Init;
+import dev.brighten.ac.utils.RunUtils;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -74,10 +75,9 @@ public class JoinListener implements Listener {
 
     @EventHandler
     public void onJoin(PlayerJoinEvent event) {
-        System.out.println("Generating for " + event.getPlayer().getName());
         APlayer player = Anticheat.INSTANCE.getPlayerRegistry().generate(event.getPlayer());
 
-        HandlerAbstract.getHandler().add(event.getPlayer());
+        RunUtils.taskLater(() -> HandlerAbstract.getHandler().add(event.getPlayer()), 3);
 
         player.callEvent(event);
     }

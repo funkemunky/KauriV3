@@ -35,10 +35,8 @@ public class Speed extends Check {
                         .toLocation(getPlayer().getBukkitPlayer().getWorld())
                         .subtract(0, 1, 0));
 
-        if (underBlock == null || lastUnderBlock == null) {
-            getPlayer().getBukkitPlayer().sendMessage("Null");
+        if (underBlock == null || lastUnderBlock == null)
             return;
-        }
 
         float friction = CraftMagicNumbers.getBlock(underBlock).frictionFactor,
                 lfriction = CraftMagicNumbers.getBlock(lastUnderBlock).frictionFactor;

@@ -26,6 +26,13 @@ public class MathUtils {
         return playerMoved(from.toVector(), to.toVector());
     }
 
+    public static float gcdSmall(float current, float previous) {
+        if(current < previous) return gcdSmall(Math.abs(previous), Math.abs(current));
+        //The larger number has to be first.
+        return (Math.abs(previous) <= 0.001f) ? current : gcdSmall(previous,
+                current - (float)Math.floor(current / previous) * previous);
+    }
+
     public static double getDistanceWithoutRoot(KLocation one, KLocation two) {
         double deltaX = one.x - two.x, deltaY = one.y - two.y, deltaZ = one.z - two.z;
 

@@ -92,6 +92,7 @@ public class AnticheatCommand extends BaseCommand {
             sender.sendMessage(MiscUtils.line(Color.Dark_Gray));
             sender.sendMessage(Color.translate("&6&lPing&8: &f" + player.getLagInfo().getTransPing() * 50 + "ms"));
             sender.sendMessage(Color.translate("&6&lVersion&8: &f" + player.getPlayerVersion().name()));
+            sender.sendMessage(Color.translate("&6&lSensitivity&8: &f" + player.getMovement().getSensXPercent() + "%"));
             sender.sendMessage(MiscUtils.line(Color.Dark_Gray));
         });
     }

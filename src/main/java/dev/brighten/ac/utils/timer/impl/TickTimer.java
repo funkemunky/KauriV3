@@ -10,7 +10,7 @@ public class TickTimer implements Timer {
 
     public TickTimer(long defaultPassed) {
         this.defaultPassed = defaultPassed;
-        currentStamp = Anticheat.INSTANCE.getCurrentTick();
+        currentStamp = Anticheat.INSTANCE.getKeepaliveProcessor().tick;
     }
 
     public TickTimer() {
@@ -49,7 +49,7 @@ public class TickTimer implements Timer {
 
     @Override
     public long getPassed() {
-        return Anticheat.INSTANCE.getCurrentTick()- currentStamp;
+        return Anticheat.INSTANCE.getKeepaliveProcessor().tick - currentStamp;
     }
 
     @Override
@@ -62,6 +62,6 @@ public class TickTimer implements Timer {
         if(getPassed() <= 1) resetStreak++;
         else resetStreak = 0;
 
-        currentStamp = Anticheat.INSTANCE.getCurrentTick();
+        currentStamp = Anticheat.INSTANCE.getKeepaliveProcessor().tick;
     }
 }
