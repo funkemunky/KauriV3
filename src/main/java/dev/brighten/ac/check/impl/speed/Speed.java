@@ -9,9 +9,13 @@ import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
 import dev.brighten.ac.utils.BlockUtils;
 import dev.brighten.ac.utils.MathHelper;
+import dev.brighten.ac.utils.math.IntVector;
+import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.craftbukkit.v1_8_R3.util.CraftMagicNumbers;
 import org.bukkit.potion.PotionEffectType;
+
+import java.util.Deque;
 
 @CheckData(name = "Speed", type = CheckType.MOVEMENT)
 public class Speed extends Check {
@@ -38,16 +42,17 @@ public class Speed extends Check {
         if (underBlock == null || lastUnderBlock == null)
             return;
 
-        float friction = CraftMagicNumbers.getBlock(underBlock).frictionFactor,
-                lfriction = CraftMagicNumbers.getBlock(lastUnderBlock).frictionFactor;
+        Deque<Material> frictionList = getPlayer().getBlockUpdateHandler()
+                .getPossibleMaterials(new IntVector(underBlock.getX(), underBlock.getY(), underBlock.getZ())),
+                lfrictionList = getPlayer().getBlockUpdateHandler()
+                        .getPossibleMaterials(new IntVector(lastUnderBlock.getX(), lastUnderBlock.getY(), lastUnderBlock.getZ()));
 
         check:
         {
             if (!packet.isMoved()
-                    /*|| getPlayer().playerInfo.generalCancel
-                    || getPlayer().playerInfo.onLadder
-                    || getPlayer().playerInfo.lastEntityCollision.isNotPassed(2)
-                    || getPlayer().playerInfo.lastVelocity.isNotPassed(1)*/
+                    || getPlayer().getInfo().isGeneralCancel()
+                    || getPlayer().getBlockInformation().onClimbable
+                    || getPlayer().getInfo().getVelocity().isNotPassed(1)
                     || getPlayer().getBlockInformation().inLiquid
                     || getPlayer().getBlockInformation().collidesHorizontally) {
                 break check;
@@ -59,129 +64,137 @@ public class Speed extends Check {
             loop:
             {
                 for (int f = -1; f < 2; f++) {
-                    for (int s = -1; s < 2; s++) {
-                        for (boolean sprinting : TRUE_FALSE) {
-                            for (int fastMath = 0; fastMath <= 2; fastMath++) {
-                                for (boolean attack : TRUE_FALSE) {
-                                    for (boolean using : TRUE_FALSE) {
-                                        for (boolean sneaking : TRUE_FALSE) {
-                                            for (boolean jumped : TRUE_FALSE) {
+                    for(Material underMaterial : frictionList) {
+                        for(Material lastUnderMaterial : lfrictionList) {
+                            for (int s = -1; s < 2; s++) {
+                                for (boolean sprinting : TRUE_FALSE) {
+                                    for (int fastMath = 0; fastMath <= 2; fastMath++) {
+                                        for (boolean attack : TRUE_FALSE) {
+                                            for (boolean using : TRUE_FALSE) {
+                                                for (boolean sneaking : TRUE_FALSE) {
+                                                    for (boolean jumped : TRUE_FALSE) {
 
-                                                float forward = f, strafe = s;
+                                                        float forward = f, strafe = s;
 
-                                                if (sneaking) {
-                                                    forward *= 0.3;
-                                                    strafe *= 0.3;
-                                                }
+                                                        if (sneaking) {
+                                                            forward *= 0.3;
+                                                            strafe *= 0.3;
+                                                        }
 
-                                                if (using) {
-                                                    forward *= 0.2;
-                                                    strafe *= 0.2;
-                                                }
+                                                        float friction = CraftMagicNumbers.getBlock(underMaterial).frictionFactor;
+                                                        float lfriction = CraftMagicNumbers.getBlock(lastUnderMaterial).frictionFactor;
 
-                                                //Multiplying by 0.98 like in client
-                                                forward *= 0.9800000190734863F;
-                                                strafe *= 0.9800000190734863F;
+                                                        if (using) {
+                                                            forward *= 0.2;
+                                                            strafe *= 0.2;
+                                                        }
 
-                                                double aiMoveSpeed = getPlayer().getBukkitPlayer().getWalkSpeed() / 2;
+                                                        //Multiplying by 0.98 like in client
+                                                        forward *= 0.9800000190734863F;
+                                                        strafe *= 0.9800000190734863F;
 
-                                                float drag = 0.91f;
-                                                double lmotionX = getPlayer().getMovement().getLDeltaX(),
-                                                        lmotionZ = getPlayer().getMovement().getLDeltaZ();
+                                                        double aiMoveSpeed = getPlayer().getBukkitPlayer().getWalkSpeed() / 2;
 
-                                                //The "1" will effectively remove lastFriction from the equation
-                                                lmotionX *= (lastLastClientGround ? lfriction : 1) * 0.9100000262260437D;
-                                                lmotionZ *= (lastLastClientGround ? lfriction : 1) * 0.9100000262260437D;
+                                                        float drag = 0.91f;
+                                                        double lmotionX = getPlayer().getMovement().getLDeltaX(),
+                                                                lmotionZ = getPlayer().getMovement().getLDeltaZ();
 
-                                                //Running multiplication done after previous prediction
-                                                if (getPlayer().getPlayerVersion().isOrAbove(ProtocolVersion.V1_9)) {
-                                                    if (Math.abs(lmotionX) < 0.003)
-                                                        lmotionX = 0;
-                                                    if (Math.abs(lmotionZ) < 0.003)
-                                                        lmotionZ = 0;
-                                                } else {
-                                                    if (Math.abs(lmotionX) < 0.005)
-                                                        lmotionX = 0;
-                                                    if (Math.abs(lmotionZ) < 0.005)
-                                                        lmotionZ = 0;
-                                                }
+                                                        //The "1" will effectively remove lastFriction from the equation
+                                                        lmotionX *= (lastLastClientGround ? lfriction : 1) * 0.9100000262260437D;
+                                                        lmotionZ *= (lastLastClientGround ? lfriction : 1) * 0.9100000262260437D;
 
-                                                // Attack slowdown
-                                                if (attack) {
-                                                    lmotionX *= 0.6;
-                                                    lmotionZ *= 0.6;
-                                                }
+                                                        //Running multiplication done after previous prediction
+                                                        if (getPlayer().getPlayerVersion().isOrAbove(ProtocolVersion.V1_9)) {
+                                                            if (Math.abs(lmotionX) < 0.003)
+                                                                lmotionX = 0;
+                                                            if (Math.abs(lmotionZ) < 0.003)
+                                                                lmotionZ = 0;
+                                                        } else {
+                                                            if (Math.abs(lmotionX) < 0.005)
+                                                                lmotionX = 0;
+                                                            if (Math.abs(lmotionZ) < 0.005)
+                                                                lmotionZ = 0;
+                                                        }
 
-                                                if (sprinting) aiMoveSpeed += aiMoveSpeed * 0.30000001192092896D;
+                                                        // Attack slowdown
+                                                        if (attack) {
+                                                            lmotionX *= 0.6;
+                                                            lmotionZ *= 0.6;
+                                                        }
 
-                                                if (getPlayer().getPotionHandler().hasPotionEffect(PotionEffectType.SPEED))
-                                                    aiMoveSpeed += (getPlayer().getPotionHandler().getEffectByType(PotionEffectType.SPEED)
-                                                            .get()
-                                                            .getAmplifier() + 1) * (double) 0.20000000298023224D * aiMoveSpeed;
-                                                if (getPlayer().getPotionHandler().hasPotionEffect(PotionEffectType.SLOW))
-                                                    aiMoveSpeed += (getPlayer().getPotionHandler().getEffectByType(PotionEffectType.SLOW)
-                                                            .get()
-                                                            .getAmplifier() + 1) * (double) -0.15000000596046448D * aiMoveSpeed;
+                                                        if (sprinting)
+                                                            aiMoveSpeed += aiMoveSpeed * 0.30000001192092896D;
 
-                                                float f5;
-                                                if (onGround) {
-                                                    drag *= friction;
+                                                        if (getPlayer().getPotionHandler().hasPotionEffect(PotionEffectType.SPEED))
+                                                            aiMoveSpeed += (getPlayer().getPotionHandler().getEffectByType(PotionEffectType.SPEED)
+                                                                    .get()
+                                                                    .getAmplifier() + 1) * (double) 0.20000000298023224D * aiMoveSpeed;
+                                                        if (getPlayer().getPotionHandler().hasPotionEffect(PotionEffectType.SLOW))
+                                                            aiMoveSpeed += (getPlayer().getPotionHandler().getEffectByType(PotionEffectType.SLOW)
+                                                                    .get()
+                                                                    .getAmplifier() + 1) * (double) -0.15000000596046448D * aiMoveSpeed;
 
-                                                    f5 = (float) (aiMoveSpeed * (0.16277136F / (drag * drag * drag)));
+                                                        float f5;
+                                                        if (onGround) {
+                                                            drag *= friction;
 
-                                                    if (sprinting && jumped) {
-                                                        float rot = getPlayer().getMovement().getTo().getLoc().yaw * 0.017453292F;
-                                                        lmotionX -= sin(fastMath, rot) * 0.2F;
-                                                        lmotionZ += cos(fastMath, rot) * 0.2F;
-                                                    }
+                                                            f5 = (float) (aiMoveSpeed * (0.16277136F / (drag * drag * drag)));
 
-                                                } else f5 = sprinting ? 0.025999999F : 0.02f;
+                                                            if (sprinting && jumped) {
+                                                                float rot = getPlayer().getMovement().getTo().getLoc().yaw * 0.017453292F;
+                                                                lmotionX -= sin(fastMath, rot) * 0.2F;
+                                                                lmotionZ += cos(fastMath, rot) * 0.2F;
+                                                            }
 
-                                                if (getPlayer().getPlayerVersion().isOrAbove(ProtocolVersion.V1_9)) {
-                                                    double keyedMotion = forward * forward + strafe * strafe;
+                                                        } else f5 = sprinting ? 0.025999999F : 0.02f;
 
-                                                    if (keyedMotion >= 1.0E-4F) {
-                                                        keyedMotion = f5 / Math.max(1.0, Math.sqrt(keyedMotion));
-                                                        forward *= keyedMotion;
-                                                        strafe *= keyedMotion;
+                                                        if (getPlayer().getPlayerVersion().isOrAbove(ProtocolVersion.V1_9)) {
+                                                            double keyedMotion = forward * forward + strafe * strafe;
 
-                                                        final float yawSin = sin(fastMath,
-                                                                getPlayer().getMovement().getTo().getLoc().yaw * (float) Math.PI / 180.F),
-                                                                yawCos = cos(fastMath,
-                                                                        getPlayer().getMovement().getTo().getLoc().yaw * (float) Math.PI / 180.F);
+                                                            if (keyedMotion >= 1.0E-4F) {
+                                                                keyedMotion = f5 / Math.max(1.0, Math.sqrt(keyedMotion));
+                                                                forward *= keyedMotion;
+                                                                strafe *= keyedMotion;
 
-                                                        lmotionX += (strafe * yawCos - forward * yawSin);
-                                                        lmotionZ += (forward * yawCos + strafe * yawSin);
-                                                    }
-                                                } else {
-                                                    float keyedMotion = forward * forward + strafe * strafe;
+                                                                final float yawSin = sin(fastMath,
+                                                                        getPlayer().getMovement().getTo().getLoc().yaw * (float) Math.PI / 180.F),
+                                                                        yawCos = cos(fastMath,
+                                                                                getPlayer().getMovement().getTo().getLoc().yaw * (float) Math.PI / 180.F);
 
-                                                    if (keyedMotion >= 1.0E-4F) {
-                                                        keyedMotion = f5 / Math.max(1.0f, MathHelper.sqrt_float(keyedMotion));
-                                                        forward *= keyedMotion;
-                                                        strafe *= keyedMotion;
+                                                                lmotionX += (strafe * yawCos - forward * yawSin);
+                                                                lmotionZ += (forward * yawCos + strafe * yawSin);
+                                                            }
+                                                        } else {
+                                                            float keyedMotion = forward * forward + strafe * strafe;
 
-                                                        final float yawSin = sin(fastMath,
-                                                                getPlayer().getMovement().getTo().getLoc().yaw * (float) Math.PI / 180.F),
-                                                                yawCos = cos(fastMath,
-                                                                        getPlayer().getMovement().getTo().getLoc().yaw * (float) Math.PI / 180.F);
+                                                            if (keyedMotion >= 1.0E-4F) {
+                                                                keyedMotion = f5 / Math.max(1.0f, MathHelper.sqrt_float(keyedMotion));
+                                                                forward *= keyedMotion;
+                                                                strafe *= keyedMotion;
 
-                                                        lmotionX += (strafe * yawCos - forward * yawSin);
-                                                        lmotionZ += (forward * yawCos + strafe * yawSin);
-                                                    }
-                                                }
+                                                                final float yawSin = sin(fastMath,
+                                                                        getPlayer().getMovement().getTo().getLoc().yaw * (float) Math.PI / 180.F),
+                                                                        yawCos = cos(fastMath,
+                                                                                getPlayer().getMovement().getTo().getLoc().yaw * (float) Math.PI / 180.F);
 
-                                                double diffX = getPlayer().getMovement().getDeltaX() - lmotionX,
-                                                        diffZ = getPlayer().getMovement().getDeltaZ() - lmotionZ;
-                                                double delta = (diffX * diffX) + (diffZ * diffZ);
+                                                                lmotionX += (strafe * yawCos - forward * yawSin);
+                                                                lmotionZ += (forward * yawCos + strafe * yawSin);
+                                                            }
+                                                        }
 
-                                                if (delta < smallestDelta) {
-                                                    smallestDelta = delta;
-                                                    pmotionx = lmotionX;
-                                                    pmotionz = lmotionZ;
+                                                        double diffX = getPlayer().getMovement().getDeltaX() - lmotionX,
+                                                                diffZ = getPlayer().getMovement().getDeltaZ() - lmotionZ;
+                                                        double delta = (diffX * diffX) + (diffZ * diffZ);
 
-                                                    if (delta < 1E-15) {
-                                                        break loop;
+                                                        if (delta < smallestDelta) {
+                                                            smallestDelta = delta;
+                                                            pmotionx = lmotionX;
+                                                            pmotionz = lmotionZ;
+
+                                                            if (delta < 1E-15) {
+                                                                break loop;
+                                                            }
+                                                        }
                                                     }
                                                 }
                                             }

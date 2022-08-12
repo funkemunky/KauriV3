@@ -9,7 +9,9 @@ import dev.brighten.ac.utils.reflections.types.WrappedClass;
 import dev.brighten.ac.utils.reflections.types.WrappedField;
 import io.netty.buffer.Unpooled;
 import net.minecraft.server.v1_8_R3.*;
+import org.bukkit.Material;
 import org.bukkit.craftbukkit.v1_8_R3.inventory.CraftItemStack;
+import org.bukkit.craftbukkit.v1_8_R3.util.CraftMagicNumbers;
 import org.bukkit.util.Vector;
 
 import java.io.IOException;
@@ -236,6 +238,57 @@ public class Processor_18 implements PacketConverter {
                 .hostname(serial.c(32767))
                 .port(serial.readUnsignedShort())
                 .protocol(WPacketHandshakingInSetProtocol.EnumProtocol.valueOf(EnumProtocol.a(serial.e()).name()))
+                .build();
+    }
+
+    @Override
+    public WPacketPlayOutBlockChange processBlockChange(Object object) {
+        PacketPlayOutBlockChange packet = (PacketPlayOutBlockChange) object;
+        PacketDataSerializer serial = new PacketDataSerializer(Unpooled.buffer());
+
+        try {
+            packet.b(serial);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        BlockPosition blockPos = serial.c();
+        IntVector vecPos = new IntVector(blockPos.getX(), blockPos.getY(), blockPos.getZ());
+        Material material = CraftMagicNumbers.getMaterial(packet.block.getBlock());
+
+        return WPacketPlayOutBlockChange.builder()
+                .blockLocation(vecPos)
+                .material(material)
+                .build();
+    }
+
+    @Override
+    public WPacketPlayOutMultiBlockChange processMultiBlockChange(Object object) {
+        PacketPlayOutMultiBlockChange packet = (PacketPlayOutMultiBlockChange) object;
+        PacketDataSerializer serial = new PacketDataSerializer(Unpooled.buffer());
+
+        try {
+            packet.b(serial);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        final int[] chunkLoc = new int[] {serial.readInt(), serial.readInt()};
+        final WPacketPlayOutMultiBlockChange.BlockChange[]
+                blockChanges = new WPacketPlayOutMultiBlockChange.BlockChange[serial.e()];
+
+        for (int i = 0; i < blockChanges.length; i++) {
+            short encodedloc = serial.readShort();
+
+            IntVector loc = new IntVector(encodedloc >> 12 & 15, encodedloc & 255, encodedloc >> 8 & 15);
+            Material blockType = CraftMagicNumbers.getMaterial(Block.d.a(serial.e()).getBlock());
+
+            blockChanges[i] = new WPacketPlayOutMultiBlockChange.BlockChange(loc, blockType);
+        }
+
+        return WPacketPlayOutMultiBlockChange.builder()
+                .chunk(chunkLoc)
+                .changes(blockChanges)
                 .build();
     }
 }

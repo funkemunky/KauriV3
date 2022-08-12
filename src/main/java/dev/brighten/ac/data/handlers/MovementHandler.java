@@ -228,6 +228,13 @@ public class MovementHandler {
         boolean hasLevitation = ProtocolVersion.getGameVersion().isOrAbove(ProtocolVersion.V1_9)
                 && player.getPotionHandler().hasPotionEffect(XPotion.LEVITATION.getPotionEffectType());
 
+        player.getInfo().setRiptiding(CompatHandler.getInstance().isRiptiding(player.getBukkitPlayer()));
+        player.getInfo().setGliding(CompatHandler.getInstance().isGliding(player.getBukkitPlayer()));
+
+        // Resetting glide/sneak timers
+        if(player.getInfo().isGliding()) player.getInfo().getLastElytra().reset();
+        if(player.getInfo().isSneaking()) player.getInfo().getLastSneak().reset();
+
         player.getInfo().setGeneralCancel(player.getBukkitPlayer().getAllowFlight()
                 || moveTicks == 0
                 || excuseNextFlying
@@ -237,8 +244,8 @@ public class MovementHandler {
                 || player.getInfo().isInVehicle()
                 || player.getInfo().getVehicleSwitch().isNotPassed(1)
                 || player.getBukkitPlayer().isSleeping()
-                || CompatHandler.getInstance().isRiptiding(player.getBukkitPlayer())
-                || CompatHandler.getInstance().isGliding(player.getBukkitPlayer())
+                || player.getInfo().isGliding()
+                || player.getInfo().isRiptiding()
                 || hasLevitation);
 
         /*
@@ -281,6 +288,14 @@ public class MovementHandler {
         float result = deltaPitch / (calc * .15f);
 
         return result;
+    }
+
+    public double[] getEyeHeights() {
+        if(player.getPlayerVersion().isOrAbove(ProtocolVersion.V1_14)) {
+            return new double[] {0.4f, 1.27f, 1.62f};
+        } else if(player.getPlayerVersion().isOrAbove(ProtocolVersion.V1_9)) {
+            return new double[] {0.4f, 1.54f, 1.62f};
+        } else return new double[] {1.54f, 1.62f};
     }
 
     public static float getExpiermentalDeltaY(APlayer data) {

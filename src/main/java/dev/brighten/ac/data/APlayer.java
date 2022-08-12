@@ -11,6 +11,7 @@ import dev.brighten.ac.data.obj.InstantAction;
 import dev.brighten.ac.data.obj.NormalAction;
 import dev.brighten.ac.handler.EntityLocationHandler;
 import dev.brighten.ac.handler.PotionHandler;
+import dev.brighten.ac.handler.block.BlockUpdateHandler;
 import dev.brighten.ac.handler.keepalive.KeepAlive;
 import dev.brighten.ac.handler.protocolsupport.ProtocolAPI;
 import dev.brighten.ac.messages.Messages;
@@ -45,6 +46,10 @@ public class APlayer {
     private PotionHandler potionHandler;
     @Getter
     private EntityLocationHandler entityLocationHandler;
+
+    @Getter
+    private BlockUpdateHandler blockUpdateHandler;
+
     @Getter
     private GeneralInformation info;
     @Getter
@@ -87,6 +92,7 @@ public class APlayer {
         this.movement = new MovementHandler(this);
         this.potionHandler = new PotionHandler(this);
         this.entityLocationHandler = new EntityLocationHandler(this);
+        this.blockUpdateHandler = new BlockUpdateHandler(this);
         this.info = new GeneralInformation();
         this.lagInfo = new LagInformation();
         this.blockInformation = new BlockInformation(this);

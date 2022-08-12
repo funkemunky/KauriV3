@@ -13,6 +13,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerKickEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.PlayerTeleportEvent;
 
 import java.util.Optional;
 
@@ -80,6 +81,14 @@ public class JoinListener implements Listener {
         RunUtils.taskLater(() -> HandlerAbstract.getHandler().add(event.getPlayer()), 3);
 
         player.callEvent(event);
+    }
+
+    @EventHandler
+    public void onTeleport(PlayerTeleportEvent event) {
+        if(event.getFrom().getWorld().equals(event.getTo().getWorld())) return;
+
+        Anticheat.INSTANCE.getPlayerRegistry().getPlayer(event.getPlayer().getUniqueId())
+                .ifPresent(player -> player.getBlockUpdateHandler().onWorldChange());
     }
 
     @EventHandler

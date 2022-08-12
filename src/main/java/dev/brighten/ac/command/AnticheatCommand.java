@@ -7,10 +7,14 @@ import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.messages.Messages;
+import dev.brighten.ac.packet.handler.HandlerAbstract;
 import dev.brighten.ac.utils.Color;
 import dev.brighten.ac.utils.Init;
 import dev.brighten.ac.utils.MiscUtils;
 import dev.brighten.ac.utils.Priority;
+import io.netty.buffer.Unpooled;
+import net.minecraft.server.v1_8_R3.PacketDataSerializer;
+import net.minecraft.server.v1_8_R3.PacketPlayOutCustomPayload;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
@@ -94,6 +98,25 @@ public class AnticheatCommand extends BaseCommand {
             sender.sendMessage(Color.translate("&6&lVersion&8: &f" + player.getPlayerVersion().name()));
             sender.sendMessage(Color.translate("&6&lSensitivity&8: &f" + player.getMovement().getSensXPercent() + "%"));
             sender.sendMessage(MiscUtils.line(Color.Dark_Gray));
+        });
+    }
+
+    @Subcommand("runtest")
+    public void onCommand(Player player) {
+        long start = System.currentTimeMillis();
+        PacketDataSerializer serializer = new PacketDataSerializer(Unpooled.buffer());
+        serializer.writeLong(start);
+        PacketPlayOutCustomPayload payload = new PacketPlayOutCustomPayload("Time|Send", serializer);
+
+        HandlerAbstract.getHandler().sendPacket(player, payload);
+        Anticheat.INSTANCE.getPlayerRegistry().getPlayer(player.getUniqueId()).ifPresent(aplayer -> {
+            aplayer.runInstantAction(ka -> {
+                if(!ka.isEnd()) {
+                    long transDelta = System.currentTimeMillis() - start;
+
+                    player.sendMessage("Transaction delta: " + transDelta + "ms");
+                }
+            });
         });
     }
 }

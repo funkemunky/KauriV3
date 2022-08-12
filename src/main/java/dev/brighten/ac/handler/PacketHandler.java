@@ -5,13 +5,13 @@ import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.data.obj.NormalAction;
 import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.packet.wrapper.PacketType;
-import dev.brighten.ac.packet.wrapper.in.WPacketPlayInEntityAction;
-import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
-import dev.brighten.ac.packet.wrapper.in.WPacketPlayInUseEntity;
+import dev.brighten.ac.packet.wrapper.in.*;
 import dev.brighten.ac.packet.wrapper.out.*;
 import dev.brighten.ac.utils.KLocation;
 import dev.brighten.ac.utils.MovementUtils;
 import lombok.val;
+import net.minecraft.server.v1_8_R3.PacketDataSerializer;
+import net.minecraft.server.v1_8_R3.PacketPlayInCustomPayload;
 import net.minecraft.server.v1_8_R3.PacketPlayInSteerVehicle;
 import net.minecraft.server.v1_8_R3.PacketPlayInTransaction;
 import org.bukkit.entity.Entity;
@@ -108,10 +108,26 @@ public class PacketHandler {
                 player.getMovement().process(packet, System.currentTimeMillis());
                 break;
             }
+            case BLOCK_CHANGE: {
+                WPacketPlayOutBlockChange packet = (WPacketPlayOutBlockChange) packetObject;
+
+                player.getBlockUpdateHandler().runUpdate(packet);
+                break;
+            }
+            case MULTI_BLOCK_CHANGE: {
+                WPacketPlayOutMultiBlockChange packet = (WPacketPlayOutMultiBlockChange) packetObject;
+
+                player.getBlockUpdateHandler().runUpdate(packet);
+                break;
+            }
             case ENTITY_EFFECT: {
                 WPacketPlayOutEntityEffect packet = (WPacketPlayOutEntityEffect) packetObject;
 
                 player.getPotionHandler().onPotionEffect(packet);
+                break;
+            }
+            case VELOCITY: {
+                player.runKeepaliveAction(ka -> player.getInfo().getVelocity().reset());
                 break;
             }
             case SERVER_POSITION: {
@@ -139,6 +155,24 @@ public class PacketHandler {
                     player.getInfo().setInVehicle(false);
                 }
 
+                break;
+            }
+            case CLIENT_PAYLOAD: {
+                PacketPlayInCustomPayload packet = (PacketPlayInCustomPayload) packetObject;
+
+                if(packet.a().equals("Time|Receive")) {
+                    PacketDataSerializer serial = packet.b();
+
+                    long serverTime = serial.readLong();
+                    long clientReceivedTime = serial.readLong();
+                    long currentTime = System.currentTimeMillis();
+
+                    long serverPing = clientReceivedTime - serverTime;
+                    long clientToServer = currentTime - clientReceivedTime;
+                    long totalFeedback = currentTime - serverTime;
+
+                    player.getBukkitPlayer().sendMessage(String.format("total: %sms client-server: %sms server-client: %sms", totalFeedback, clientToServer, serverPing));
+                }
                 break;
             }
             case ENTITY_ACTION: {
@@ -187,6 +221,18 @@ public class PacketHandler {
                 if(target instanceof LivingEntity) {
                     player.getInfo().setTarget((LivingEntity) target);
                 }
+                break;
+            }
+            case BLOCK_DIG: {
+                WPacketPlayInBlockPlace packet = (WPacketPlayInBlockPlace) packetObject;
+
+                player.getBlockUpdateHandler().onPlace(packet);
+                break;
+            }
+            case BLOCK_PLACE: {
+                WPacketPlayInBlockDig packet = (WPacketPlayInBlockDig) packetObject;
+
+                player.getBlockUpdateHandler().onDig(packet);
                 break;
             }
         }

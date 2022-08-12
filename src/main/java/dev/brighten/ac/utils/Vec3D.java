@@ -8,6 +8,7 @@ package dev.brighten.ac.utils;
 import org.bukkit.Location;
 
 import javax.annotation.Nullable;
+import java.util.Objects;
 
 public class Vec3D {
     public static final Vec3D a = new Vec3D(0.0D, 0.0D, 0.0D);
@@ -138,33 +139,6 @@ public class Vec3D {
         }
     }
 
-    public boolean equals(Object var1) {
-        if (this == var1) {
-            return true;
-        } else if (!(var1 instanceof Vec3D)) {
-            return false;
-        } else {
-            Vec3D var2 = (Vec3D)var1;
-            if (Double.compare(var2.x, this.x) != 0) {
-                return false;
-            } else if (Double.compare(var2.y, this.y) != 0) {
-                return false;
-            } else {
-                return Double.compare(var2.z, this.z) == 0;
-            }
-        }
-    }
-
-    public int hashCode() {
-        long var2 = Double.doubleToLongBits(this.x);
-        int var1 = (int)(var2 ^ var2 >>> 32);
-        var2 = Double.doubleToLongBits(this.y);
-        var1 = 31 * var1 + (int)(var2 ^ var2 >>> 32);
-        var2 = Double.doubleToLongBits(this.z);
-        var1 = 31 * var1 + (int)(var2 ^ var2 >>> 32);
-        return var1;
-    }
-
     public String toString() {
         return "(" + this.x + ", " + this.y + ", " + this.z + ")";
     }
@@ -185,5 +159,18 @@ public class Vec3D {
         double var6 = this.y;
         double var8 = this.z * (double)var2 - this.x * (double)var3;
         return new Vec3D(var4, var6, var8);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Vec3D vec3D = (Vec3D) o;
+        return Double.compare(vec3D.x, x) == 0 && Double.compare(vec3D.y, y) == 0 && Double.compare(vec3D.z, z) == 0;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(x, y, z);
     }
 }

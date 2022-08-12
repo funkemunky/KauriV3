@@ -30,4 +30,8 @@ public interface PacketConverter {
     WPacketPlayOutEntityTeleport processEntityTeleport(Object object);
 
     WPacketHandshakingInSetProtocol processHandshakingProtocol(Object object);
+
+    WPacketPlayOutBlockChange processBlockChange(Object object);
+
+    WPacketPlayOutMultiBlockChange processMultiBlockChange(Object object);
 }

@@ -85,13 +85,6 @@ public enum PacketType {
         return Optional.empty();
     }
 
-    public static class Login {
-        public static final String HANDSHAKE = "PacketHandshakingInSetProtocol";
-        public static final String PING = "PacketStatusInPing";
-        public static final String STATUS_START = "PacketStatusInStart";
-        public static final String LOGIN_START = "PacketLoginInStart";
-    }
-
     public static Object processType(PacketType type, Object object) {
         PacketConverter convert = Anticheat.INSTANCE.getPacketProcessor().getPacketConverter();
 
@@ -127,6 +120,10 @@ public enum PacketType {
                 return convert.processEntityTeleport(object);
             case LOGIN_HANDSHAKE:
                 return convert.processHandshakingProtocol(object);
+            case BLOCK_CHANGE:
+                return convert.processBlockChange(object);
+            case MULTI_BLOCK_CHANGE:
+                return convert.processMultiBlockChange(object);
             default:
                 return object;
         }

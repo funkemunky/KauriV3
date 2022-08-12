@@ -85,8 +85,6 @@ public class EntityLocationHandler {
             eloc.newPitch += packet.getPitch();
 
             eloc.increment = 3;
-
-            eloc.interpolatedLocations.clear();
         });
     }
 
@@ -120,7 +118,6 @@ public class EntityLocationHandler {
                     eloc.newZ = eloc.z = packet.getZ();
                     eloc.newYaw = eloc.yaw = packet.getYaw();
                     eloc.newPitch = eloc.pitch = packet.getPitch();
-                    eloc.interpolatedLocations.clear();
                 } else {
                     eloc.newX = packet.getX();
                     eloc.newY = packet.getY();
@@ -129,7 +126,6 @@ public class EntityLocationHandler {
                     eloc.newPitch = packet.getPitch();
 
                     eloc.increment = 3;
-                    eloc.interpolatedLocations.clear();
                 }
             } else {
                 //We don't need to do version checking here. Atlas handles this for us.
@@ -159,6 +155,7 @@ public class EntityLocationHandler {
         if(data.getInfo().getTarget() != null && data.getInfo().getTarget().getEntityId() == entity.getEntityId()) {
             data.runInstantAction(ia -> {
                 if(!ia.isEnd()) {
+
                     action.run();
                 } else entityLocationMap.get(entity.getUniqueId()).oldLocations.clear();
             });

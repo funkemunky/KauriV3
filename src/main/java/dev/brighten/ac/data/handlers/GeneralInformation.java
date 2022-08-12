@@ -17,10 +17,12 @@ import java.util.Optional;
 @Setter
 public class GeneralInformation {
     private Optional<Block> blockOnTo, blockBelow;
-    private Timer lastMove = new TickTimer(), vehicleSwitch = new TickTimer();
+    private Timer lastMove = new TickTimer(), vehicleSwitch = new TickTimer(),
+            lastSneak = new TickTimer(), velocity = new TickTimer(),
+            lastElytra = new TickTimer();
     private LivingEntity target;
     private boolean serverGround, lastServerGround, nearGround, worldLoaded, generalCancel, inVehicle, creative,
-            sneaking, sprinting;
+            sneaking, sprinting, gliding, riptiding;
     private List<Entity> nearbyEntities = Collections.emptyList();
-    private PastLocation targetPastLocation = new PastLocation();;
+    private PastLocation targetPastLocation = new PastLocation();
 }

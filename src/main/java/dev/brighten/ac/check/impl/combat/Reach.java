@@ -25,7 +25,7 @@ public class Reach extends Check {
     private int hbuffer;
 
     public Timer lastAimOnTarget = new TickTimer();
-    private final Queue<Entity> attacks = new LinkedBlockingQueue<>();
+    private final Queue<Tuple<Entity, KLocation>> attacks = new LinkedBlockingQueue<>();
 
     private static final EnumSet<EntityType> allowedEntityTypes = EnumSet.of(EntityType.ZOMBIE, EntityType.SHEEP,
             EntityType.BLAZE, EntityType.SKELETON, EntityType.PLAYER, EntityType.VILLAGER, EntityType.IRON_GOLEM,
@@ -39,7 +39,7 @@ public class Reach extends Check {
     public void onUse(WPacketPlayInUseEntity packet) {
         if(packet.getAction() == WPacketPlayInUseEntity.EnumEntityUseAction.ATTACK
                 && allowedEntityTypes.contains(packet.getEntity(getPlayer().getBukkitPlayer().getWorld()).getType())) {
-            attacks.add(packet.getEntity(getPlayer().getBukkitPlayer().getWorld()));
+            attacks.add(new Tuple<>(packet.getEntity(getPlayer().getBukkitPlayer().getWorld()), getPlayer().getMovement().getTo().getLoc().clone()));
         }
     }
 
@@ -49,11 +49,11 @@ public class Reach extends Check {
             attacks.clear();
            return;
         }
-        Entity target;
+        Tuple<Entity, KLocation> target;
 
         while((target = attacks.poll()) != null) {
             //Updating new entity loc
-            Optional<EntityLocation> optionalEloc = getPlayer().getEntityLocationHandler().getEntityLocation(target);
+            Optional<EntityLocation> optionalEloc = getPlayer().getEntityLocationHandler().getEntityLocation(target.one);
 
             if(!optionalEloc.isPresent()) {
                 return;
@@ -61,15 +61,9 @@ public class Reach extends Check {
 
             final EntityLocation eloc = optionalEloc.get();
 
-            final KLocation to = getPlayer().getMovement().getTo().getLoc().clone(), 
-                    from = getPlayer().getMovement().getFrom().getLoc().clone();
+            final KLocation to = target.two;
 
             //debug("current loc: %.4f, %.4f, %.4f", eloc.x, eloc.y, eloc.z);
-
-            to.y+= getPlayer().getInfo().isSneaking() ? (ProtocolVersion.getGameVersion().isOrAbove(ProtocolVersion.V1_14)
-                    ? 1.27f : 1.54f) : 1.62f;
-            from.y+= getPlayer().getInfo().isSneaking() ? (ProtocolVersion.getGameVersion().isOrAbove(ProtocolVersion.V1_14)
-                    ? 1.27f : 1.54f) : 1.62f;
 
             if(eloc.x == 0 && eloc.y == 0 & eloc.z == 0) {
                 return;
@@ -82,29 +76,29 @@ public class Reach extends Check {
             if(eloc.oldLocations.size() > 0) {
                 for (KLocation oldLocation : eloc.oldLocations) {
                     SimpleCollisionBox box = (SimpleCollisionBox)
-                            EntityData.getEntityBox(oldLocation.toVector(), target);
+                            EntityData.getEntityBox(oldLocation.toVector(), target.one);
 
                     if(getPlayer().getPlayerVersion().isBelow(ProtocolVersion.V1_9)) {
-                        box = box.expand(0.1);
+                        box = box.expand(0.1325);
                     } else box = box.expand(0.0325);
                     boxes.add(box);
                 }
                 for (KLocation oldLocation : eloc.interpolatedLocations) {
                     SimpleCollisionBox box = (SimpleCollisionBox)
-                            EntityData.getEntityBox(oldLocation.toVector(), target);
+                            EntityData.getEntityBox(oldLocation.toVector(), target.one);
 
                     if(getPlayer().getPlayerVersion().isBelow(ProtocolVersion.V1_9)) {
-                        box = box.expand(0.1);
+                        box = box.expand(0.1325);
                     } else box = box.expand(0.0325);
                     boxes.add(box);
                 }
             } else {
                 for (KLocation oldLocation : eloc.interpolatedLocations) {
                     SimpleCollisionBox box = (SimpleCollisionBox)
-                            EntityData.getEntityBox(oldLocation.toVector(), target);
+                            EntityData.getEntityBox(oldLocation.toVector(), target.one);
 
                     if(getPlayer().getPlayerVersion().isBelow(ProtocolVersion.V1_9)) {
-                        box = box.expand(0.1);
+                        box = box.expand(0.1325);
                     } else box = box.expand(0.0325);
                     boxes.add(box);
                 }
@@ -114,24 +108,41 @@ public class Reach extends Check {
 
             int hits = 0;
 
-            for (SimpleCollisionBox targetBox : boxes) {
-                final AxisAlignedBB vanillaBox = new AxisAlignedBB(targetBox);
+            boolean didSneakOrElytra = getPlayer().getInfo().getLastElytra().isNotPassed(40)
+                    || getPlayer().getInfo().getLastElytra().isNotPassed(40);
 
-                Vec3D intersectTo = vanillaBox.rayTrace(to.toVector(), MathUtils.getDirection(to), 10),
-                        intersectFrom = vanillaBox.rayTrace(from.toVector(),
-                                MathUtils.getDirection(from), 10);
+            if(!didSneakOrElytra) {
+                to.y+= 1.62f;
+                for (SimpleCollisionBox targetBox : boxes) {
+                    final AxisAlignedBB vanillaBox = new AxisAlignedBB(targetBox);
 
-                if(intersectTo != null) {
-                    lastAimOnTarget.reset();
-                    hits++;
-                    distance = Math.min(distance, intersectTo.distanceSquared(new Vec3D(to.x, to.y, to.z)));
-                    collided = true;
+                    Vec3D intersectTo = vanillaBox.rayTrace(to.toVector(), MathUtils.getDirection(to), 10);
+
+                    if(intersectTo != null) {
+                        lastAimOnTarget.reset();
+                        hits++;
+                        distance = Math.min(distance, intersectTo.distanceSquared(new Vec3D(to.x, to.y, to.z)));
+                        collided = true;
+                    }
                 }
-                if(intersectFrom != null) {
-                    lastAimOnTarget.reset();
-                    hits++;
-                    distance = Math.min(distance, intersectFrom.distanceSquared(new Vec3D(from.x, from.y, from.z)));
-                    collided = true;
+                //Checking all possible eyeheights since client actions notoriously desync from the server side
+            } else {
+                for (double eyeHeight : getPlayer().getMovement().getEyeHeights()) {
+                    for (SimpleCollisionBox targetBox : boxes) {
+                        final AxisAlignedBB vanillaBox = new AxisAlignedBB(targetBox);
+
+                        KLocation from = to.clone();
+
+                        from.y+= eyeHeight;
+                        Vec3D intersectTo = vanillaBox.rayTrace(from.toVector(), MathUtils.getDirection(from), 10);
+
+                        if(intersectTo != null) {
+                            lastAimOnTarget.reset();
+                            hits++;
+                            distance = Math.min(distance, intersectTo.distanceSquared(new Vec3D(from.x, from.y, from.z)));
+                            collided = true;
+                        }
+                    }
                 }
             }
 
