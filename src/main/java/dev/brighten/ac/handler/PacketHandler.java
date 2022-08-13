@@ -223,13 +223,13 @@ public class PacketHandler {
                 }
                 break;
             }
-            case BLOCK_DIG: {
+            case BLOCK_PLACE: {
                 WPacketPlayInBlockPlace packet = (WPacketPlayInBlockPlace) packetObject;
 
                 player.getBlockUpdateHandler().onPlace(packet);
                 break;
             }
-            case BLOCK_PLACE: {
+            case BLOCK_DIG: {
                 WPacketPlayInBlockDig packet = (WPacketPlayInBlockDig) packetObject;
 
                 player.getBlockUpdateHandler().onDig(packet);
