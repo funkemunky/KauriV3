@@ -12,9 +12,7 @@ import lombok.val;
 import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.TextComponent;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @Getter
 public abstract class Check {
@@ -27,6 +25,8 @@ public abstract class Check {
     private final Timer lastAlert = new MillisTimer();
 
     public static List<UUID> alertsEnabled = new ArrayList<>();
+
+    public static final Map<String, List<UUID>> debugInstances = new HashMap<>();
 
     public Check(APlayer player) {
         this.player = player;
@@ -45,6 +45,10 @@ public abstract class Check {
                 .replace("%check%", checkData.name())
                 .replace("%name%",  player.getBukkitPlayer().getName())
                 .replace("%vl%", String.valueOf(MathUtils.round(vl, 1)));
+    }
+
+    public void debug(String information, Object... variables) {
+
     }
 
     public void flag(String information, Object... variables) {

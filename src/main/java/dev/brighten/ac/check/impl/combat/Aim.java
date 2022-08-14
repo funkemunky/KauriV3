@@ -40,7 +40,6 @@ public class Aim extends Check {
 
         if(deltaX > 200 || deltaY > 200) {
             if(buffer > 0) buffer--;
-            getPlayer().getBukkitPlayer().sendMessage("Unstable");
             return;
         }
 
