@@ -5,6 +5,7 @@
 
 package dev.brighten.ac.utils.msg;
 
+import dev.brighten.ac.utils.Color;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.*;
 import net.md_5.bungee.api.chat.ComponentBuilder.FormatRetention;
@@ -14,7 +15,7 @@ public class ChatBuilder {
     private ComponentBuilder componentBuilder;
 
     public ChatBuilder(String text, Object... objects) {
-        this.componentBuilder = new ComponentBuilder(String.format(text, objects));
+        this.componentBuilder = new ComponentBuilder(String.format(Color.translate(text), objects));
     }
 
     public ChatBuilder text(String text, Object... objects) {

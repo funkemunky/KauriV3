@@ -33,6 +33,10 @@ public class MathUtils {
                 current - (float)Math.floor(current / previous) * previous);
     }
 
+    public static boolean isScientificNotation(double value) {
+        return String.valueOf(value).contains("E");
+    }
+
     public static double getDistanceWithoutRoot(KLocation one, KLocation two) {
         double deltaX = one.x - two.x, deltaY = one.y - two.y, deltaZ = one.z - two.z;
 

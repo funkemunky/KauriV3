@@ -1,12 +1,15 @@
 package dev.brighten.ac.utils.world;
 
 import dev.brighten.ac.packet.ProtocolVersion;
+import dev.brighten.ac.utils.BlockUtils;
 import dev.brighten.ac.utils.MiscUtils;
 import dev.brighten.ac.utils.ReflectionsUtil;
 import dev.brighten.ac.utils.XMaterial;
+import dev.brighten.ac.utils.math.IntVector;
 import dev.brighten.ac.utils.world.blocks.*;
 import dev.brighten.ac.utils.world.types.*;
 import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 
@@ -435,6 +438,14 @@ public enum BlockData {
         if (this.box != null)
             return this.box.copy().offset(block.getX(), block.getY(), block.getZ());
         return new DynamicCollisionBox(dynamic, block, version).offset(block.getX(), block.getY(), block.getZ());
+    }
+
+    public CollisionBox getBox(World world, IntVector block, ProtocolVersion version) {
+        if (this.box != null)
+            return this.box.copy().offset(block.getX(), block.getY(), block.getZ());
+        return new DynamicCollisionBox(dynamic,
+                BlockUtils.getBlockAsync(block.toBukkitVector().toLocation(world)).orElse(null), version)
+                .offset(block.getX(), block.getY(), block.getZ());
     }
 
     private static BlockData[] lookup = new BlockData[Material.values().length];

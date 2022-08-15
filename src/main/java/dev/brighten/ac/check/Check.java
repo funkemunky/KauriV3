@@ -5,10 +5,14 @@ import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.utils.Color;
 import dev.brighten.ac.utils.MathUtils;
 import dev.brighten.ac.utils.MiscUtils;
+import dev.brighten.ac.utils.Tuple;
 import dev.brighten.ac.utils.timer.Timer;
 import dev.brighten.ac.utils.timer.impl.MillisTimer;
 import lombok.Getter;
 import lombok.val;
+import net.md_5.bungee.api.ChatColor;
+import net.md_5.bungee.api.chat.BaseComponent;
+import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.TextComponent;
 
@@ -26,7 +30,7 @@ public abstract class Check {
 
     public static List<UUID> alertsEnabled = new ArrayList<>();
 
-    public static final Map<String, List<UUID>> debugInstances = new HashMap<>();
+    public static final Map<String, List<Tuple<UUID, UUID>>> debugInstances = new HashMap<>();
 
     public Check(APlayer player) {
         this.player = player;
@@ -48,7 +52,25 @@ public abstract class Check {
     }
 
     public void debug(String information, Object... variables) {
+        if(!Anticheat.allowDebug) return;
 
+        if(debugInstances.containsKey(checkData.name())) {
+            val list = debugInstances.get(checkData.name());
+
+            for (Tuple<UUID, UUID> tuple : list) {
+                UUID toDebug = tuple.one;
+
+                if(!toDebug.equals(player.getUuid())) continue;
+
+                ComponentBuilder builder = new ComponentBuilder("[DEBUG] ").color(ChatColor.RED);
+
+                BaseComponent[] message =
+                        builder.append(String.format(information, variables)).color(ChatColor.GRAY).create();
+
+                Anticheat.INSTANCE.getPlayerRegistry().getPlayer(tuple.two)
+                        .ifPresent(player -> player.getBukkitPlayer().spigot().sendMessage(message));
+            }
+        }
     }
 
     public void flag(String information, Object... variables) {

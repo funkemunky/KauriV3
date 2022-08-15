@@ -291,4 +291,27 @@ public class Processor_18 implements PacketConverter {
                 .changes(blockChanges)
                 .build();
     }
+
+    @Override
+    public WPacketPlayOutEntityVelocity processVelocity(Object object) {
+        PacketPlayOutEntityVelocity packet = (PacketPlayOutEntityVelocity) object;
+        PacketDataSerializer serial = serialize(packet);
+
+        return WPacketPlayOutEntityVelocity.builder()
+                .entityId(serial.e())
+                .deltaX(serial.readShort() / 8000D)
+                .deltaY(serial.readShort() / 8000D)
+                .deltaZ(serial.readShort() / 8000D)
+                .build();
+    }
+
+    private PacketDataSerializer serialize(Packet packet) {
+        PacketDataSerializer serial = new PacketDataSerializer(Unpooled.buffer());
+        try {
+            packet.b(serial);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return serial;
+    }
 }

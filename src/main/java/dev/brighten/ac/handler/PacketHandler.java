@@ -16,6 +16,7 @@ import net.minecraft.server.v1_8_R3.PacketPlayInSteerVehicle;
 import net.minecraft.server.v1_8_R3.PacketPlayInTransaction;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
+import org.bukkit.util.Vector;
 
 import java.util.*;
 
@@ -127,7 +128,25 @@ public class PacketHandler {
                 break;
             }
             case VELOCITY: {
-                player.runKeepaliveAction(ka -> player.getInfo().getVelocity().reset());
+                WPacketPlayOutEntityVelocity packet = (WPacketPlayOutEntityVelocity) packetObject;
+
+                if(packet.getEntityId() == player.getBukkitPlayer().getEntityId()) {
+                    Vector velocity = new Vector(packet.getDeltaX(), packet.getDeltaY(), packet.getDeltaZ());
+                    player.getInfo().getVelocityHistory().add(velocity);
+
+                    player.runInstantAction(ka -> {
+                        if(!ka.isEnd()) {
+                            player.getInfo().setDoingVelocity(true);
+                        } else if(player.getInfo().getVelocityHistory().contains(velocity)) {
+                            player.getInfo().getVelocityHistory().remove(velocity);
+                            player.getOnVelocityTasks().forEach(task -> task.accept(velocity));
+                            player.getInfo().setDoingVelocity(false);
+                            player.getInfo().getVelocity().reset();
+                        } else {
+                            player.getInfo().setDoingVelocity(false);
+                        }
+                    });
+                }
                 break;
             }
             case SERVER_POSITION: {

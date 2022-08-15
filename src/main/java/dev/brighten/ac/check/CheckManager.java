@@ -55,4 +55,10 @@ public class CheckManager {
 
         checkClasses.add(check);
     }
+
+    public boolean isCheck(String name) {
+        final String formattedName = name.replace("_", " ");
+        return checkClasses.stream().anyMatch(c -> c.getCheckClass().getAnnotation(CheckData.class).name()
+                .equalsIgnoreCase(formattedName));
+    }
 }

@@ -26,10 +26,11 @@ public class FlyA extends Check {
     @Action
     public void onFlying(WPacketPlayInFlying packet) {
         if(!packet.isMoved() || (getPlayer().getMovement().getDeltaXZ() == 0
-                && getPlayer().getMovement().getDeltaY() == 0))
+                && getPlayer().getMovement().getDeltaY() == 0)) {
             return;
+        }
 
-        boolean onGround = getPlayer().getMovement().getTo().isOnGround(),
+        boolean onGround = getPlayer().getMovement().getTo().isOnGround() && getPlayer().getBlockInformation().blocksBelow,
                 fromGround = getPlayer().getMovement().getFrom().isOnGround();
         double lDeltaY = fromGround ? 0 : getPlayer().getMovement().getLDeltaY();
         double predicted = onGround ? lDeltaY : (lDeltaY - 0.08) * mult;
@@ -53,7 +54,10 @@ public class FlyA extends Check {
 
         double deltaPredict = MathUtils.getDelta(getPlayer().getMovement().getDeltaY(), predicted);
 
-        if(!getPlayer().getInfo().isGeneralCancel() && deltaPredict > 0.016) {
+        if(!getPlayer().getInfo().isGeneralCancel()
+                && getPlayer().getInfo().getBlockAbove().isPassed(1)
+                && !getPlayer().getInfo().isOnLadder()
+                && !getPlayer().getBlockInformation().onSlime && deltaPredict > 0.016) {
             if(++buffer > 5) {
                 buffer = 5;
                 flag("dY=%.3f p=%.3f dx=%.3f", getPlayer().getMovement().getDeltaY(), predicted,

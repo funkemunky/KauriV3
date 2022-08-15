@@ -124,6 +124,8 @@ public enum PacketType {
                 return convert.processBlockChange(object);
             case MULTI_BLOCK_CHANGE:
                 return convert.processMultiBlockChange(object);
+            case VELOCITY:
+                return convert.processVelocity(object);
             default:
                 return object;
         }

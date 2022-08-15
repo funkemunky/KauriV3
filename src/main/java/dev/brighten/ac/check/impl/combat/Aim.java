@@ -24,33 +24,22 @@ public class Aim extends Check {
     public void flying(WPacketPlayInFlying packet) {
         if(!packet.isLooked()) return;
 
-        final float sens = getPlayer().getMovement().getSensitivityMcp(),
-                deltaYaw = Math.abs(getPlayer().getMovement().getDeltaYaw()),
-                deltaPitch = Math.abs(getPlayer().getMovement().getDeltaPitch());
-        final float deltaX = deltaYaw / getPlayer().getMovement().getYawMode();
-        final float deltaY = deltaPitch / getPlayer().getMovement().getPitchMode();
-
-        if(getPlayer().getMovement().getYawGcdList().size() < 40)
-            return;
-
-        final double gridX = getGrid(getPlayer().getMovement().getYawGcdList()),
-                gridY = getGrid(getPlayer().getMovement().getPitchGcdList());
-
-        if(gridX < 0.005 || gridY < 0.005) lastGrid.reset();
-
-        if(deltaX > 200 || deltaY > 200) {
+        if(getPlayer().getMovement().getYawGcdList().size() < 40
+                || getPlayer().getMovement().getLookX() > 200 || getPlayer().getMovement().getLookY() > 200) {
             if(buffer > 0) buffer--;
             return;
         }
 
         if(getPlayer().getMovement().getPitchGCD() < 0.007
-                && lastGrid.isPassed()
-                && getPlayer().getMovement().getLastHighRate().isNotPassed(3)) {
-            if(deltaPitch < 10 && ++buffer > 8) {
-                flag("%s", getPlayer().getMovement().getPitchGCD());
+                && !getPlayer().getMovement().isCinematic()) {
+            if(Math.abs(getPlayer().getMovement().getDeltaPitch()) < 10 && ++buffer > 4) {
+                flag("gcd=%.5f", getPlayer().getMovement().getPitchGCD());
             }
-            getPlayer().getBukkitPlayer().sendMessage("Flagged b:" + buffer);
         } else buffer = 0;
+
+        debug("b=%s gcd=%.4f cin=%s", buffer, getPlayer().getMovement().getPitchGCD(),
+                getPlayer().getMovement().isCinematic());
+
     }
 
     /*

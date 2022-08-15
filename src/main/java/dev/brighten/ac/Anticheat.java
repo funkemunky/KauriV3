@@ -58,6 +58,8 @@ public class Anticheat extends JavaPlugin {
     private RollingAverageDouble tps = new RollingAverageDouble(4, 20);
     private final Map<UUID, WorldInfo> worldInfoMap = new HashMap<>();
 
+    public static boolean allowDebug = true;
+
     @ConfigSetting(path = "logging", name = "verbose")
     private static boolean verboseLogging = true;
 

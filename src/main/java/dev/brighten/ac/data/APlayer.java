@@ -28,6 +28,7 @@ import lombok.val;
 import net.minecraft.server.v1_8_R3.PacketPlayOutTransaction;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
+import org.bukkit.util.Vector;
 
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
@@ -71,6 +72,8 @@ public class APlayer {
 
     @Getter
     private final Deque<Object> packetQueue = new LinkedList<>();
+    @Getter
+    private final List<Consumer<Vector>> onVelocityTasks = new ArrayList<>();
 
     @Setter
     @Getter
@@ -157,6 +160,10 @@ public class APlayer {
         return id;
     }
 
+    public void onVelocity(Consumer<Vector> runnable) {
+        onVelocityTasks.add(runnable);
+    }
+
 
     public void runInstantAction(Consumer<InstantAction> runnable) {
         runInstantAction(runnable, false);
@@ -191,5 +198,18 @@ public class APlayer {
 
     public void addPlayerTick() {
         playerTick++;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        APlayer aPlayer = (APlayer) o;
+        return Objects.equals(uuid, aPlayer.uuid);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(uuid);
     }
 }

@@ -36,11 +36,11 @@ public class MovementHandler {
     @Getter
     private float lookX, lookY, lastLookX, lastLookY;
     @Getter
-    private float deltaYaw, deltaPitch, lDeltaYaw, lDeltaPitch, smoothYaw, smoothPitch, lsmoothYaw, lsmoothPitch, pitchGCD, lastPitchGCD, yawGCD, lastYawGCD;
+    private float deltaYaw, deltaPitch, lDeltaYaw, lDeltaPitch, pitchGCD, lastPitchGCD, yawGCD, lastYawGCD;
     private int moveTicks;
     private final List<KLocation> posLocs = new ArrayList<>();
     @Getter
-    private boolean checkMovement, accurateYawData, cinematicMode;
+    private boolean checkMovement, accurateYawData, cinematic;
     @Getter
     @Setter
     private boolean excuseNextFlying;
@@ -57,10 +57,11 @@ public class MovementHandler {
     private float sensitivityX, sensitivityY, currentSensX, currentSensY, sensitivityMcp, yawMode, pitchMode;
     @Getter
     private int sensXPercent, sensYPercent;
+    private int ticks;
+    private double lastX, lastY, lastLastY, lastYawAcelleration, lastPitchAcelleration;
+    private boolean inTick;
     @Getter
     private TickTimer lastCinematic = new TickTimer(2);
-    private MouseFilter mxaxis = new MouseFilter(), myaxis = new MouseFilter();
-    private float smoothCamFilterX, smoothCamFilterY, smoothCamYaw, smoothCamPitch;
     private Timer lastReset = new TickTimer(2), generalProcess = new TickTimer(3);
     private final EvictingList<Integer> sensitivitySamples = new EvictingList<>(50);
 
@@ -71,12 +72,11 @@ public class MovementHandler {
 
         checkMovement = MovementUtils.checkMovement(player.getPlayerConnection());
 
-        if(checkMovement) {
+        if (checkMovement) {
             moveTicks++;
-        }
-        else moveTicks = 0;
+        } else moveTicks = 0;
 
-        if(moveTicks > 0) {
+        if (moveTicks > 0) {
             updateLocations(packet);
 
             // Updating block locations
@@ -84,19 +84,28 @@ public class MovementHandler {
                     .getBlockAsync(to.getLoc().toLocation(player.getBukkitPlayer().getWorld())));
             player.getInfo().setBlockBelow(BlockUtils
                     .getBlockAsync(to.getLoc().toLocation(player.getBukkitPlayer().getWorld())
-                            .subtract(0,1,0)));
+                            .subtract(0, 1, 0)));
 
-            if(packet.isMoved()) {
+            if (packet.isMoved()) {
                 // Updating player bounding box
                 player.getInfo().getLastMove().reset();
+
+                player.getInfo().setOnLadder(MovementUtils.isOnLadder(player));
             }
 
             player.getBlockInformation().runCollisionCheck();
+
+            if(player.getBlockInformation().blocksAbove) {
+                player.getInfo().getBlockAbove().reset();
+            }
         }
+
+        processVelocity();
 
         checkForTeleports(packet);
 
         if (packet.isLooked()) {
+            process();
             float deltaYaw = Math.abs(this.deltaYaw), lastDeltaYaw = Math.abs(this.lDeltaYaw);
             final double differenceYaw = Math.abs(this.deltaYaw - lastDeltaYaw);
             final double differencePitch = Math.abs(this.deltaPitch - this.lDeltaPitch);
@@ -117,9 +126,9 @@ public class MovementHandler {
 
             val origin = this.to.getLoc().clone();
 
-            origin.y+= player.getInfo().isSneaking() ? 1.54 : 1.62;
+            origin.y += player.getInfo().isSneaking() ? 1.54 : 1.62;
 
-            if(lastTeleport.isPassed(1)) {
+            if (lastTeleport.isPassed(1)) {
                 predictionHandling:
                 {
                     float yawGcd = this.yawGCD,
@@ -132,7 +141,7 @@ public class MovementHandler {
                     if (this.pitchGCD > 0.01 && this.pitchGCD < 1.2)
                         pitchGcdList.add(pitchGcd);
 
-                    if(yawGcdList.size() < 20 || pitchGcdList.size() < 20) {
+                    if (yawGcdList.size() < 20 || pitchGcdList.size() < 20) {
                         accurateYawData = false;
                         break predictionHandling;
                     }
@@ -150,7 +159,8 @@ public class MovementHandler {
                         sensXPercent = sensToPercent(sensitivityX = getSensitivityFromYawGCD(yawMode));
                         sensYPercent = sensToPercent(sensitivityY = getSensitivityFromPitchGCD(pitchMode));
 
-                        table: {
+                        table:
+                        {
                             sensitivitySamples.add(Math.max(sensXPercent, sensYPercent));
 
                             if (sensitivitySamples.size() > 30) {
@@ -167,50 +177,6 @@ public class MovementHandler {
                     lookX = getExpiermentalDeltaX(player);
                     lookY = getExpiermentalDeltaY(player);
 
-                    if ((this.pitchGCD < 0.006 && this.yawGCD < 0.006) && smoothCamFilterY < 1E6
-                            && smoothCamFilterX < 1E6 && player.getCreation().isPassed(1000L)) {
-                        float sens = MovementHandler.percentToSens(95);
-                        float f = sens * 0.6f + .2f;
-                        float f1 = f * f * f * 8;
-                        float f2 = lookX * f1;
-                        float f3 = lookY * f1;
-
-                        smoothCamFilterX = mxaxis.smooth(smoothCamYaw, .05f * f1);
-                        smoothCamFilterY = myaxis.smooth(smoothCamPitch, .05f * f1);
-
-                        this.smoothCamYaw += f2;
-                        this.smoothCamPitch += f3;
-
-                        f2 = smoothCamFilterX * 0.5f;
-                        f3 = smoothCamFilterY * 0.5f;
-
-                        //val clampedFrom = (Math.abs(this.from.yaw) > 360 ? this.from.yaw % 360 : this.from.yaw);
-                        val clampedFrom = MathUtils.yawTo180F(getFrom().getLoc().yaw);
-                        float pyaw = clampedFrom + f2 * .15f;
-                        float ppitch = this.getFrom().getLoc().pitch - f3 * .15f;
-
-                        this.lsmoothYaw = smoothYaw;
-                        this.lsmoothPitch = smoothPitch;
-                        this.smoothYaw = pyaw;
-                        this.smoothPitch = ppitch;
-
-                        float yaccel = Math.abs(this.deltaYaw) - Math.abs(this.lDeltaYaw),
-                                pAccel = Math.abs(this.deltaPitch) - Math.abs(this.lDeltaPitch);
-
-                        if (MathUtils.getDelta(smoothYaw, clampedFrom) > (yaccel > 0 ? (yaccel > 10 ? 2.5 : 1) : 0.3)
-                                || MathUtils.getDelta(smoothPitch, this.getFrom().getLoc().pitch)
-                                > (pAccel > 0 ? (pAccel > 10 ? 2.5 : 1) : 0.3)) {
-                            smoothCamYaw = smoothCamPitch = 0;
-                            this.cinematicMode = false;
-                            mxaxis.reset();
-                            myaxis.reset();
-                        } else this.cinematicMode = true;
-                    } else {
-                        mxaxis.reset();
-                        myaxis.reset();
-                        this.cinematicMode = false;
-                    }
-
                     lastLookX = lookX;
                     lastLookY = lookY;
                     lookX = getExpiermentalDeltaX(player);
@@ -220,6 +186,10 @@ public class MovementHandler {
                 yawGcdList.clear();
                 pitchGcdList.clear();
             }
+        }
+
+        if (player.getInfo().isServerGround()) {
+            player.getInfo().setWasOnSlime(player.getBlockInformation().onSlime);
         }
 
         player.getInfo().setCreative(player.getBukkitPlayer().getGameMode() == GameMode.CREATIVE
@@ -232,8 +202,8 @@ public class MovementHandler {
         player.getInfo().setGliding(CompatHandler.getInstance().isGliding(player.getBukkitPlayer()));
 
         // Resetting glide/sneak timers
-        if(player.getInfo().isGliding()) player.getInfo().getLastElytra().reset();
-        if(player.getInfo().isSneaking()) player.getInfo().getLastSneak().reset();
+        if (player.getInfo().isGliding()) player.getInfo().getLastElytra().reset();
+        if (player.getInfo().isSneaking()) player.getInfo().getLastSneak().reset();
 
         player.getInfo().setGeneralCancel(player.getBukkitPlayer().getAllowFlight()
                 || moveTicks == 0
@@ -250,8 +220,9 @@ public class MovementHandler {
 
         /*
         ata.playerInfo.generalCancel = data.getPlayer().getAllowFlight()
-                || this.creative
-                || hasLevi
+                || this.creativelastLastY
+                || hasLeviit
+it
                 || data.excuseNextFlying
                 || data.getPlayer().isSleeping()
                 || (this.lastGhostCollision.isNotPassed() && this.lastBlockPlace.isPassed(2))
@@ -270,6 +241,21 @@ public class MovementHandler {
                 || Kauri.INSTANCE.lastTickLag.isNotPassed(5);
          */
     }
+    // generate a method that processes velocityHistory and compares to current deltaY.
+    private void processVelocity() {
+        //Iterate through player.getInfo().getVelocityHistory() and compare to current deltaY.
+        val iterator = player.getInfo().getVelocityHistory().iterator();
+        while (iterator.hasNext()) {
+            val velocity = iterator.next();
+
+            if(Math.abs(velocity.getY() - getDeltaY()) < 0.01) {
+                player.getInfo().getVelocity().reset();
+                player.getOnVelocityTasks().forEach(vectorConsumer -> vectorConsumer.accept(velocity));
+                iterator.remove();
+                break;
+            }
+        }
+    }
 
     private static float getDeltaX(float yawDelta, float gcd) {
         return MathHelper.ceiling_float_int(yawDelta / gcd);
@@ -277,6 +263,54 @@ public class MovementHandler {
 
     private static float getDeltaY(float pitchDelta, float gcd) {
         return MathHelper.ceiling_float_int(pitchDelta / gcd);
+    }
+    public void process() {
+
+        float yawAcelleration = Math.abs(getDeltaYaw());
+        float pitchAcelleration = Math.abs(getDeltaPitch());
+
+        // They are not rotating
+        if (yawAcelleration < 0.002 || pitchAcelleration < 0.002) return;
+
+        // Deltas between the current acelleration and last
+        double x = Math.abs(yawAcelleration - this.lastYawAcelleration);
+        double y = Math.abs(pitchAcelleration - this.lastPitchAcelleration);
+
+        // Deltas between last X & Y
+        double deltaX = Math.abs(x - this.lastX);
+        double deltaY = Math.abs(y - this.lastY);
+
+        // Pitch delta change
+        double pitchChangeAcelleration = Math.abs(this.lastLastY - deltaY);
+        this.inTick = false;
+
+        // we have to check something different for pitch due to it being a little harder to check for being smooth
+        if (x < .04 || y < .04
+                || (pitchAcelleration > .08 && pitchChangeAcelleration > 0
+                && !MathUtils.isScientificNotation(pitchChangeAcelleration)
+                && pitchChangeAcelleration < .0855)) {
+
+            if (this.isInvalidGCD()) {
+                this.ticks += (this.ticks < 20 ? 1 : 0);
+            }
+        } else {
+            this.ticks -= this.ticks > 0 ? 1 : 0;
+        }
+
+        this.lastLastY = deltaY;
+        this.lastX = x;
+        this.lastY = y;
+
+        this.lastYawAcelleration = yawAcelleration;
+        this.lastPitchAcelleration = pitchAcelleration;
+
+        this.cinematic = this.ticks > 5;
+
+        if(cinematic) lastCinematic.reset();
+    }
+
+    boolean isInvalidGCD() {
+        return pitchGCD < 0.0078125;
     }
 
     public static float getExpiermentalDeltaX(APlayer data) {
@@ -291,11 +325,11 @@ public class MovementHandler {
     }
 
     public double[] getEyeHeights() {
-        if(player.getPlayerVersion().isOrAbove(ProtocolVersion.V1_14)) {
-            return new double[] {0.4f, 1.27f, 1.62f};
-        } else if(player.getPlayerVersion().isOrAbove(ProtocolVersion.V1_9)) {
-            return new double[] {0.4f, 1.54f, 1.62f};
-        } else return new double[] {1.54f, 1.62f};
+        if (player.getPlayerVersion().isOrAbove(ProtocolVersion.V1_14)) {
+            return new double[]{0.4f, 1.27f, 1.62f};
+        } else if (player.getPlayerVersion().isOrAbove(ProtocolVersion.V1_9)) {
+            return new double[]{0.4f, 1.54f, 1.62f};
+        } else return new double[]{1.54f, 1.62f};
     }
 
     public static float getExpiermentalDeltaY(APlayer data) {
@@ -322,7 +356,7 @@ public class MovementHandler {
     }
 
     private static float getSensitivityFromPitchGCD(float gcd) {
-        return ((float)Math.cbrt(pitchToF3(gcd) / 8f) - .2f) / .6f;
+        return ((float) Math.cbrt(pitchToF3(gcd) / 8f) - .2f) / .6f;
     }
 
     private static float getF1FromYaw(float gcd) {
@@ -344,7 +378,7 @@ public class MovementHandler {
     private static float getF1FromPitch(float gcd) {
         float f = getFFromPitch(gcd);
 
-        return (float)Math.pow(f, 3) * 8;
+        return (float) Math.pow(f, 3) * 8;
     }
 
     private static float yawToF2(float yawDelta) {
@@ -360,20 +394,20 @@ public class MovementHandler {
         int i = 0;
         KLocation loc = new KLocation(packet.getX(), packet.getY(), packet.getZ(),
                 packet.getYaw(), packet.getPitch());
-        if(packet.getFlags().contains(WPacketPlayOutPosition.EnumPlayerTeleportFlags.X)) {
-            loc.x+= player.getMovement().getTo().getLoc().x;
+        if (packet.getFlags().contains(WPacketPlayOutPosition.EnumPlayerTeleportFlags.X)) {
+            loc.x += player.getMovement().getTo().getLoc().x;
         }
-        if(packet.getFlags().contains(WPacketPlayOutPosition.EnumPlayerTeleportFlags.Y)) {
-            loc.y+= player.getMovement().getTo().getLoc().y;
+        if (packet.getFlags().contains(WPacketPlayOutPosition.EnumPlayerTeleportFlags.Y)) {
+            loc.y += player.getMovement().getTo().getLoc().y;
         }
-        if(packet.getFlags().contains(WPacketPlayOutPosition.EnumPlayerTeleportFlags.Z)) {
-            loc.z+= player.getMovement().getTo().getLoc().z;
+        if (packet.getFlags().contains(WPacketPlayOutPosition.EnumPlayerTeleportFlags.Z)) {
+            loc.z += player.getMovement().getTo().getLoc().z;
         }
-        if(packet.getFlags().contains(WPacketPlayOutPosition.EnumPlayerTeleportFlags.X_ROT)) {
-            loc.pitch+= player.getMovement().getTo().getLoc().pitch;
+        if (packet.getFlags().contains(WPacketPlayOutPosition.EnumPlayerTeleportFlags.X_ROT)) {
+            loc.pitch += player.getMovement().getTo().getLoc().pitch;
         }
-        if(packet.getFlags().contains(WPacketPlayOutPosition.EnumPlayerTeleportFlags.Y_ROT)) {
-            loc.yaw+= player.getMovement().getTo().getLoc().yaw;
+        if (packet.getFlags().contains(WPacketPlayOutPosition.EnumPlayerTeleportFlags.Y_ROT)) {
+            loc.yaw += player.getMovement().getTo().getLoc().yaw;
         }
 
         teleportsToConfirm++;
@@ -387,6 +421,7 @@ public class MovementHandler {
     /**
      * Updating the "to" and "from" location to current location.
      * Resetting position tracking; meant primarily for instant teleports.
+     *
      * @param location Location
      */
     public void moveTo(Location location) {
@@ -407,19 +442,19 @@ public class MovementHandler {
     }
 
     private void checkForTeleports(WPacketPlayInFlying packet) {
-        if(packet.isMoved() && packet.isLooked() && !packet.isOnGround()) {
+        if (packet.isMoved() && packet.isLooked() && !packet.isOnGround()) {
             synchronized (posLocs) {
                 Iterator<KLocation> iterator = posLocs.iterator();
 
                 //Iterating through the ArrayList to find a potential teleport. We can't remove from the list
                 //without causing a CME unless we use Iterator#remove().
-                while(iterator.hasNext()) {
+                while (iterator.hasNext()) {
                     KLocation posLoc = iterator.next();
 
                     KLocation to = new KLocation(packet.getX(), packet.getY(), packet.getZ());
                     double distance = MathUtils.getDistanceWithoutRoot(to, posLoc);
 
-                    if(distance < 1E-9) {
+                    if (distance < 1E-9) {
                         lastTeleport.reset();
                         iterator.remove();
                         break;
@@ -427,7 +462,7 @@ public class MovementHandler {
                 }
 
                 //Ensuring the list doesn't overflow with old locations, a potential crash exploit.
-                if(teleportsToConfirm == 0 && posLocs.size() > 0) {
+                if (teleportsToConfirm == 0 && posLocs.size() > 0) {
                     posLocs.clear();
                 }
             }
@@ -436,16 +471,17 @@ public class MovementHandler {
 
     /**
      * Setting the to and from to current location only if the player either moved or looked.
+     *
      * @param packet WPacketPlayInFlyingh
      */
     private void setTo(WPacketPlayInFlying packet) {
         to.setWorld(player.getBukkitPlayer().getWorld());
-        if(packet.isMoved()) {
+        if (packet.isMoved()) {
             to.getLoc().x = packet.getX();
             to.getLoc().y = packet.getY();
             to.getLoc().z = packet.getZ();
         }
-        if(packet.isLooked()) {
+        if (packet.isLooked()) {
             to.getLoc().yaw = packet.getYaw();
             to.getLoc().pitch = packet.getPitch();
         }
@@ -456,6 +492,7 @@ public class MovementHandler {
     /**
      * If from location is null, update to loc after to is set, otherwise, update to before from.
      * Updates the location of player and its general delta movement.
+     *
      * @param packet WPacketPlayInFlying
      */
     private void updateLocations(WPacketPlayInFlying packet) {

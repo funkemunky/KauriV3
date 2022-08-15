@@ -4,6 +4,7 @@ import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.utils.*;
+import dev.brighten.ac.utils.math.IntVector;
 import dev.brighten.ac.utils.world.BlockData;
 import dev.brighten.ac.utils.world.CollisionBox;
 import dev.brighten.ac.utils.world.EntityData;
@@ -15,10 +16,7 @@ import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.EnumMap;
-import java.util.List;
+import java.util.*;
 
 public class BlockInformation {
     private APlayer player;
@@ -138,183 +136,186 @@ public class BlockInformation {
                                     break start;
                                 }
                                 if(y > 400 || y < -50) continue;
-                                Block block = chunk.getBlock(x & 15, y, z & 15);
-                                final Material type = block.getType();
-                                if (type != Material.AIR) {
-                                    blocks.add(block);
+                                final Deque<Material> types =
+                                        player.getBlockUpdateHandler().getPossibleMaterials(new IntVector(x, y, z));
 
-                                    CollisionBox blockBox = BlockData.getData(type)
-                                            .getBox(block, player.getPlayerVersion());
+                                for (Material type : types) {
+                                    if (type != Material.AIR) {
+                                        BlockUtils.getBlockAsync(new Location(world, x, y, z)).ifPresent(blocks::add);
 
-                                    if(blockBox.isCollided(normalBox)) {
-                                        if(type.equals(cobweb))
-                                            inWeb = true;
-                                        else if(type.equals(scaffolding)) inScaffolding = true;
-                                        else if(type.equals(honey)) inHoney = true;
-                                    }
+                                        CollisionBox blockBox = BlockData.getData(type)
+                                                .getBox(world, new IntVector(x, y, z), player.getPlayerVersion());
 
-                                    if(type.equals(rosebush))
-                                        roseBush = true;
-
-                                    if(normalBox.copy().offset(0, 0.6f, 0).isCollided(blockBox))
-                                        blocksAbove = true;
-
-                                    if(normalBox.copy().expand(1, -0.0001, 1).isIntersected(blockBox))
-                                        blocksNear = true;
-
-                                    if(normalBox.copy().expand(0.1, 0, 0.1)
-                                            .offset(0, 1,0).isCollided(blockBox)) {
-                                        synchronized (aboveCollisions) {
-                                            blockBox.downCast(aboveCollisions);
-                                        }
-                                    }
-
-                                    if(normalBox.copy().expand(0.1, 0, 0.1).offset(0, -1, 0)
-                                            .isCollided(blockBox)) {
-                                        synchronized (belowCollisions) {
-                                            blockBox.downCast(belowCollisions);
+                                        if(blockBox.isCollided(normalBox)) {
+                                            if(type.equals(cobweb))
+                                                inWeb = true;
+                                            else if(type.equals(scaffolding)) inScaffolding = true;
+                                            else if(type.equals(honey)) inHoney = true;
                                         }
 
-                                        if(Materials.checkFlag(type, Materials.FENCE)
-                                                || Materials.checkFlag(type, Materials.WALL)) {
-                                            fenceBelow = true;
-                                        }
-                                    }
+                                        if(type.equals(rosebush))
+                                            roseBush = true;
 
-                                    if(Materials.checkFlag(type, Materials.SOLID)) {
-                                        SimpleCollisionBox groundBox = normalBox.copy()
-                                                .offset(0, -.49, 0).expandMax(0, -1.2, 0);
+                                        if(normalBox.copy().offset(0, 0.6f, 0).isCollided(blockBox))
+                                            blocksAbove = true;
 
-                                        XMaterial blockMaterial = getXMaterial(type);
+                                        if(normalBox.copy().expand(1, -0.0001, 1).isIntersected(blockBox))
+                                            blocksNear = true;
 
-                                        if(normalBox.copy().expand(0.4, 0, 0.4).expandMin(0, -1, 0)
-                                                .isIntersected(blockBox))
-                                            blocksBelow = true;
-
-                                        if(normalBox.isIntersected(blockBox)) inBlock = true;
-
-                                        SimpleCollisionBox box = player.getMovement().getTo().getBox().copy();
-
-                                        box.expand(Math.abs(player.getMovement().getDeltaX()) + 0.1, -0.001,
-                                                Math.abs(player.getMovement().getDeltaZ()) + 0.1);
-                                        if (blockBox.isCollided(box))
-                                            collidesHorizontally = true;
-
-                                        box = player.getMovement().getTo().getBox().copy();
-                                        box.expand(0, 0.1, 0);
-
-                                        if (blockBox.isCollided(box))
-                                            collidesVertically = true;
-
-                                        if(groundBox.copy().expandMin(0, -0.8, 0).expand(0.2, 0, 0.2)
-                                                .isIntersected(blockBox))
-                                            player.getInfo().setNearGround(true);
-
-                                        if(groundBox.isCollided(blockBox)) {
-                                            player.getInfo().setServerGround(true);
-
-                                            if(blockMaterial != null)
-                                            switch (blockMaterial) {
-                                                case ICE:
-                                                case BLUE_ICE:
-                                                case FROSTED_ICE:
-                                                case PACKED_ICE: {
-                                                    onIce = true;
-                                                    break;
-                                                }
-                                                case SOUL_SAND: {
-                                                    onSoulSand = true;
-                                                    break;
-                                                }
-                                                case SLIME_BLOCK: {
-                                                    onSlime = true;
-                                                    break;
-                                                }
+                                        if(normalBox.copy().expand(0.1, 0, 0.1)
+                                                .offset(0, 1,0).isCollided(blockBox)) {
+                                            synchronized (aboveCollisions) {
+                                                blockBox.downCast(aboveCollisions);
                                             }
                                         }
-                                        if(player.getMovement().getDeltaY() > 0
-                                                && player.getPlayerVersion().isBelow(ProtocolVersion.V1_14)
-                                                && Materials.checkFlag(type, Materials.LADDER)
-                                                && normalBox.copy().expand(0.2f, 0, 0.2f)
+
+                                        if(normalBox.copy().expand(0.1, 0, 0.1).offset(0, -1, 0)
                                                 .isCollided(blockBox)) {
-                                            onClimbable = true;
-                                        }
+                                            synchronized (belowCollisions) {
+                                                blockBox.downCast(belowCollisions);
+                                            }
 
-                                        if(blockMaterial != null) {
-                                            switch (blockMaterial) {
-                                                case PISTON:
-                                                case PISTON_HEAD:
-                                                case MOVING_PISTON:
-                                                case STICKY_PISTON: {
-                                                    if(normalBox.copy().expand(0.5, 0.5, 0.5)
-                                                            .isCollided(blockBox))
-                                                    pistonNear = true;
-                                                    break;
-                                                }
+                                            if(Materials.checkFlag(type, Materials.FENCE)
+                                                    || Materials.checkFlag(type, Materials.WALL)) {
+                                                fenceBelow = true;
                                             }
                                         }
 
-                                        if(groundBox.copy().expand(0.5, 0.3, 0.5).isCollided(blockBox)) {
-                                            if(Materials.checkFlag(type, Materials.SLABS))
-                                                onSlab = true;
-                                            else
-                                            if(Materials.checkFlag(type, Materials.STAIRS))
-                                                onStairs = true;
-                                            else
+                                        if(Materials.checkFlag(type, Materials.SOLID)) {
+                                            SimpleCollisionBox groundBox = normalBox.copy()
+                                                    .offset(0, -.49, 0).expandMax(0, -1.2, 0);
+
+                                            XMaterial blockMaterial = getXMaterial(type);
+
+                                            if(normalBox.copy().expand(0.4, 0, 0.4).expandMin(0, -1, 0)
+                                                    .isIntersected(blockBox))
+                                                blocksBelow = true;
+
+                                            if(normalBox.isIntersected(blockBox)) inBlock = true;
+
+                                            SimpleCollisionBox box = player.getMovement().getTo().getBox().copy();
+
+                                            box.expand(Math.abs(player.getMovement().getDeltaX()) + 0.1, -0.001,
+                                                    Math.abs(player.getMovement().getDeltaZ()) + 0.1);
+                                            if (blockBox.isCollided(box))
+                                                collidesHorizontally = true;
+
+                                            box = player.getMovement().getTo().getBox().copy();
+                                            box.expand(0, 0.1, 0);
+
+                                            if (blockBox.isCollided(box))
+                                                collidesVertically = true;
+
+                                            if(groundBox.copy().expandMin(0, -0.8, 0).expand(0.2, 0, 0.2)
+                                                    .isIntersected(blockBox))
+                                                player.getInfo().setNearGround(true);
+
+                                            if(groundBox.isCollided(blockBox)) {
+                                                player.getInfo().setServerGround(true);
+
+                                                if(blockMaterial != null)
+                                                    switch (blockMaterial) {
+                                                        case ICE:
+                                                        case BLUE_ICE:
+                                                        case FROSTED_ICE:
+                                                        case PACKED_ICE: {
+                                                            onIce = true;
+                                                            break;
+                                                        }
+                                                        case SOUL_SAND: {
+                                                            onSoulSand = true;
+                                                            break;
+                                                        }
+                                                        case SLIME_BLOCK: {
+                                                            onSlime = true;
+                                                            break;
+                                                        }
+                                                    }
+                                            }
+                                            if(player.getMovement().getDeltaY() > 0
+                                                    && player.getPlayerVersion().isBelow(ProtocolVersion.V1_14)
+                                                    && Materials.checkFlag(type, Materials.LADDER)
+                                                    && normalBox.copy().expand(0.2f, 0, 0.2f)
+                                                    .isCollided(blockBox)) {
+                                                onClimbable = true;
+                                            }
+
+                                            if(blockMaterial != null) {
+                                                switch (blockMaterial) {
+                                                    case PISTON:
+                                                    case PISTON_HEAD:
+                                                    case MOVING_PISTON:
+                                                    case STICKY_PISTON: {
+                                                        if(normalBox.copy().expand(0.5, 0.5, 0.5)
+                                                                .isCollided(blockBox))
+                                                            pistonNear = true;
+                                                        break;
+                                                    }
+                                                }
+                                            }
+
+                                            if(groundBox.copy().expand(0.5, 0.3, 0.5).isCollided(blockBox)) {
+                                                if(Materials.checkFlag(type, Materials.SLABS))
+                                                    onSlab = true;
+                                                else
+                                                if(Materials.checkFlag(type, Materials.STAIRS))
+                                                    onStairs = true;
+                                                else
+                                                if(blockMaterial != null)
+                                                    switch(blockMaterial) {
+                                                        case CAKE:
+                                                        case BREWING_STAND:
+                                                        case FLOWER_POT:
+                                                        case PLAYER_HEAD:
+                                                        case PLAYER_WALL_HEAD:
+                                                        case SKELETON_SKULL:
+                                                        case CREEPER_HEAD:
+                                                        case DRAGON_HEAD:
+                                                        case ZOMBIE_HEAD:
+                                                        case ZOMBIE_WALL_HEAD:
+                                                        case CREEPER_WALL_HEAD:
+                                                        case DRAGON_WALL_HEAD:
+                                                        case WITHER_SKELETON_SKULL:
+                                                        case LANTERN:
+                                                        case SKELETON_WALL_SKULL:
+                                                        case WITHER_SKELETON_WALL_SKULL:
+                                                        case SNOW: {
+                                                            miscNear = true;
+                                                            break;
+                                                        }
+                                                        case BLACK_BED:
+                                                        case BLUE_BED:
+                                                        case BROWN_BED:
+                                                        case CYAN_BED:
+                                                        case GRAY_BED:
+                                                        case GREEN_BED:
+                                                        case LIME_BED:
+                                                        case MAGENTA_BED:
+                                                        case ORANGE_BED:
+                                                        case PINK_BED:
+                                                        case PURPLE_BED:
+                                                        case RED_BED:
+                                                        case WHITE_BED:
+                                                        case YELLOW_BED:
+                                                        case LIGHT_BLUE_BED:
+                                                        case LIGHT_GRAY_BED: {
+                                                            bedNear = true;
+                                                            break;
+                                                        }
+                                                    }
+                                            }
+                                        } else if(blockBox.isCollided(normalBox)) {
+                                            XMaterial blockMaterial = getXMaterial(type);
+
                                             if(blockMaterial != null)
-                                            switch(blockMaterial) {
-                                                case CAKE:
-                                                case BREWING_STAND:
-                                                case FLOWER_POT:
-                                                case PLAYER_HEAD:
-                                                case PLAYER_WALL_HEAD:
-                                                case SKELETON_SKULL:
-                                                case CREEPER_HEAD:
-                                                case DRAGON_HEAD:
-                                                case ZOMBIE_HEAD:
-                                                case ZOMBIE_WALL_HEAD:
-                                                case CREEPER_WALL_HEAD:
-                                                case DRAGON_WALL_HEAD:
-                                                case WITHER_SKELETON_SKULL:
-                                                case LANTERN:
-                                                case SKELETON_WALL_SKULL:
-                                                case WITHER_SKELETON_WALL_SKULL:
-                                                case SNOW: {
-                                                    miscNear = true;
-                                                    break;
+                                                switch(blockMaterial) {
+                                                    case END_PORTAL:
+                                                    case NETHER_PORTAL: {
+                                                        inPortal = true;
+                                                        break;
+                                                    }
                                                 }
-                                                case BLACK_BED:
-                                                case BLUE_BED:
-                                                case BROWN_BED:
-                                                case CYAN_BED:
-                                                case GRAY_BED:
-                                                case GREEN_BED:
-                                                case LIME_BED:
-                                                case MAGENTA_BED:
-                                                case ORANGE_BED:
-                                                case PINK_BED:
-                                                case PURPLE_BED:
-                                                case RED_BED:
-                                                case WHITE_BED:
-                                                case YELLOW_BED:
-                                                case LIGHT_BLUE_BED:
-                                                case LIGHT_GRAY_BED: {
-                                                    bedNear = true;
-                                                    break;
-                                                }
-                                            }
                                         }
-                                    } else if(blockBox.isCollided(normalBox)) {
-                                        XMaterial blockMaterial = getXMaterial(type);
-
-                                        if(blockMaterial != null)
-                                            switch(blockMaterial) {
-                                                case END_PORTAL:
-                                                case NETHER_PORTAL: {
-                                                    inPortal = true;
-                                                    break;
-                                                }
-                                            }
                                     }
                                 }
                             }

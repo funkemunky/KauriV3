@@ -8,16 +8,17 @@ import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.messages.Messages;
 import dev.brighten.ac.packet.handler.HandlerAbstract;
-import dev.brighten.ac.utils.Color;
-import dev.brighten.ac.utils.Init;
-import dev.brighten.ac.utils.MiscUtils;
-import dev.brighten.ac.utils.Priority;
+import dev.brighten.ac.utils.*;
+import dev.brighten.ac.utils.msg.ChatBuilder;
 import io.netty.buffer.Unpooled;
+import lombok.val;
 import net.minecraft.server.v1_8_R3.PacketDataSerializer;
 import net.minecraft.server.v1_8_R3.PacketPlayOutCustomPayload;
+import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.stream.Collectors;
 
@@ -31,7 +32,7 @@ public class AnticheatCommand extends BaseCommand {
                 .getCommandCompletions();
 
         cc.registerCompletion("checks", (c) -> Anticheat.INSTANCE.getCheckManager().getCheckClasses().stream()
-                .map(cs -> cs.getCheckClass().getAnnotation(CheckData.class).name())
+                .map(cs -> cs.getCheckClass().getAnnotation(CheckData.class).name().replace(" ", "_"))
                 .sorted(Comparator.naturalOrder()).collect(Collectors.toList()));
 
         BukkitCommandContexts contexts = (BukkitCommandContexts) Anticheat.INSTANCE.getCommandManager()
@@ -46,6 +47,29 @@ public class AnticheatCommand extends BaseCommand {
             } catch(NumberFormatException e) {
                 throw new InvalidCommandArgument(String.format(Color.Red
                         + "Argument \"%s\" is not an integer", arg));
+            }
+        });
+
+        contexts.registerOptionalContext(APlayer.class, c -> {
+            if(c.hasFlag("other")) {
+                String arg = c.popFirstArg();
+
+                Player onlinePlayer = Bukkit.getPlayer(arg);
+
+                if(onlinePlayer != null) {
+                    return Anticheat.INSTANCE.getPlayerRegistry().getPlayer(onlinePlayer.getUniqueId())
+                            .orElse(null);
+                } else return null;
+            } else {
+                CommandSender sender = c.getSender();
+                
+                if(sender instanceof Player) {
+                    return Anticheat.INSTANCE.getPlayerRegistry().getPlayer(((Player) sender).getUniqueId())
+                            .orElse(null);
+                }
+                else if(!c.isOptional()) throw new InvalidCommandArgument(MessageKeys.NOT_ALLOWED_ON_CONSOLE,
+                        false, new String[0]);
+                else return null;
             }
         });
     }
@@ -84,9 +108,8 @@ public class AnticheatCommand extends BaseCommand {
     @Syntax("[player]")
     @CommandCompletion("@players")
     @CommandPermission("anticheat.command.info")
-    public void onCommand(CommandSender sender, @Single Player target) {
+    public void onCommand(CommandSender sender, @Single APlayer player) {
         Anticheat.INSTANCE.getScheduler().execute(() -> {
-            APlayer player = Anticheat.INSTANCE.getPlayerRegistry().getPlayer(target.getUniqueId()).orElse(null);
 
             if(player == null) {
                 sender.spigot().sendMessage(Messages.NULL_APLAYER);
@@ -118,5 +141,51 @@ public class AnticheatCommand extends BaseCommand {
                 }
             });
         });
+    }
+
+    @Subcommand("debug")
+    @CommandCompletion("@checks|none @players")
+    @Description("Debug a player")
+    @CommandPermission("anticheat.command.debug")
+    public void onDebug(APlayer sender, @Single String check, @Optional APlayer targetPlayer) {
+        APlayer target = targetPlayer != null ? targetPlayer : sender;
+        if(check.equals("none")) {
+            synchronized (Check.debugInstances) {
+                Check.debugInstances.forEach((nameKey, list) -> {
+                    val iterator = list.iterator();
+                    while(iterator.hasNext()) {
+                        val tuple = iterator.next();
+
+                        if(tuple.one.equals(target.getUuid())) {
+                            iterator.remove();
+                            sender.getBukkitPlayer().spigot()
+                                    .sendMessage(new ChatBuilder(
+                                            "&cTurned off debug for check &f%s &con target &f%s", nameKey,
+                                            target.getBukkitPlayer().getName()).build());
+                        }
+                    }
+                });
+            }
+        } else {
+            if(!Anticheat.INSTANCE.getCheckManager().isCheck(check)) {
+                sender.getBukkitPlayer().sendMessage(Color.Red + "Check \"" + check + "\" is not a valid check!");
+                return;
+            }
+            synchronized (Check.debugInstances) {
+                Check.debugInstances.compute(check.replace("_", " "), (key, list) -> {
+                    if(list == null) list = new ArrayList<>();
+
+                    list.add(new Tuple<>(target.getUuid(), sender.getUuid()));
+
+                    return list;
+                });
+
+                sender.getBukkitPlayer().spigot()
+                        .sendMessage(new ChatBuilder(
+                                "&aTurned on debug for check &f%s &con target &f%s",
+                                check.replace("_", " "),
+                                target.getBukkitPlayer().getName()).build());
+            }
+        }
     }
 }

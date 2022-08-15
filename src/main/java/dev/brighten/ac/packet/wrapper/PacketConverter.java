@@ -34,4 +34,6 @@ public interface PacketConverter {
     WPacketPlayOutBlockChange processBlockChange(Object object);
 
     WPacketPlayOutMultiBlockChange processMultiBlockChange(Object object);
+
+    WPacketPlayOutEntityVelocity processVelocity(Object object);
 }
