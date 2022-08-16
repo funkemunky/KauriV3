@@ -12,8 +12,6 @@ public interface PlayerSizeHandler {
     double height(Player player);
     double width(Player player);
 
-    boolean isGliding(Player player);
-
     default SimpleCollisionBox bounds(Player player) {
         Location l = player.getLocation();
         return bounds(player,l.getX(),l.getY(),l.getZ());

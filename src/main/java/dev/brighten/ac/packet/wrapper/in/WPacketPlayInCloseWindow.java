@@ -15,4 +15,9 @@ public class WPacketPlayInCloseWindow implements WPacket {
     public PacketType getPacketType() {
         return PacketType.CLIENT_CLOSE_WINDOW;
     }
+
+    @Override
+    public Object getPacket() {
+        return null;
+    }
 }

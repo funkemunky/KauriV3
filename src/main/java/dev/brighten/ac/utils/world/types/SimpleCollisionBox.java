@@ -1,12 +1,16 @@
 package dev.brighten.ac.utils.world.types;
 
+import dev.brighten.ac.packet.wrapper.objects.EnumParticle;
 import dev.brighten.ac.utils.BoundingBox;
+import dev.brighten.ac.utils.Helper;
 import dev.brighten.ac.utils.KLocation;
 import dev.brighten.ac.utils.reflections.impl.MinecraftReflection;
 import dev.brighten.ac.utils.world.CollisionBox;
 import org.bukkit.Location;
+import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
 
+import java.util.Arrays;
 import java.util.List;
 
 public class SimpleCollisionBox implements CollisionBox {
@@ -153,6 +157,11 @@ public class SimpleCollisionBox implements CollisionBox {
         this.yMax += y;
         this.zMax += z;
         return this;
+    }
+
+    @Override
+    public void draw(EnumParticle particle, Player... players) {
+        Helper.drawCuboid(copy().expand(0.025), particle, Arrays.asList(players));
     }
 
     public SimpleCollisionBox expand(double value) {

@@ -15,4 +15,9 @@ public class WPacketPlayInArmAnimation implements WPacket {
     public PacketType getPacketType() {
         return PacketType.ARM_ANIMATION;
     }
+
+    @Override
+    public Object getPacket() {
+        return null;
+    }
 }

@@ -82,22 +82,21 @@ public class PacketHandler {
                             }
                         });
                         player.getLagInfo().getLastClientTransaction().reset();
-                    } else {
-                        Optional.ofNullable(player.instantTransaction.remove(packet.b()))
-                                .ifPresent(t -> t.two.accept(t.one));
                     }
+                    Optional.ofNullable(player.instantTransaction.remove(packet.b()))
+                            .ifPresent(t -> t.two.accept(t.one));
                 }
                 break;
             }
             case FLYING: {
                 WPacketPlayInFlying packet = (WPacketPlayInFlying) packetObject;
 
-                player.getEntityLocationHandler().onFlying();
-
                 if(player.getMovement().isExcuseNextFlying()) {
                     player.getMovement().setExcuseNextFlying(false);
                     return;
                 }
+
+                player.getEntityLocationHandler().onFlying();
 
                 if(player.getPlayerVersion().isOrAbove(ProtocolVersion.V1_17)
                         && packet.isMoved() && packet.isLooked()
@@ -145,6 +144,12 @@ public class PacketHandler {
                             }
                         }
                     }, 2);
+                }
+                break;
+            }
+            case RESPAWN: {
+                if(player.getPlayerVersion().isBelow(ProtocolVersion.V1_14)) {
+                    player.runKeepaliveAction(k -> player.getBukkitPlayer().setSprinting(false), 1);
                 }
                 break;
             }

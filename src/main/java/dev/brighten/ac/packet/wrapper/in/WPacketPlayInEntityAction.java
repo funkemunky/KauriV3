@@ -16,6 +16,11 @@ public class WPacketPlayInEntityAction implements WPacket {
         return PacketType.ENTITY_ACTION;
     }
 
+    @Override
+    public Object getPacket() {
+        return null;
+    }
+
     public static enum EnumPlayerAction {
         START_SNEAKING,
         STOP_SNEAKING,

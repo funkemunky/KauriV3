@@ -206,8 +206,8 @@ public class BlockInformation {
                                             if (blockBox.isCollided(box))
                                                 collidesVertically = true;
 
-                                            if(groundBox.copy().expandMin(0, -0.8, 0).expand(0.2, 0, 0.2)
-                                                    .isIntersected(blockBox))
+                                            if(groundBox.copy().expandMin(0, -0.8, 0).expand(0.4, 0, 0.4)
+                                                    .isCollided(blockBox))
                                                 player.getInfo().setNearGround(true);
 
                                             if(groundBox.isCollided(blockBox)) {

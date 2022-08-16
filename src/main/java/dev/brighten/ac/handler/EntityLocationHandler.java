@@ -78,7 +78,7 @@ public class EntityLocationHandler {
 
         runAction(entity, () -> {
             //We don't need to do version checking here. Atlas handles this for us.
-            eloc.newX += (byte)packet.getX();
+            eloc.newX += packet.getX();
             eloc.newY += packet.getY();
             eloc.newZ += packet.getZ();
             eloc.newYaw += packet.getYaw();
@@ -155,7 +155,6 @@ public class EntityLocationHandler {
         if(data.getInfo().getTarget() != null && data.getInfo().getTarget().getEntityId() == entity.getEntityId()) {
             data.runInstantAction(ia -> {
                 if(!ia.isEnd()) {
-
                     action.run();
                 } else entityLocationMap.get(entity.getUniqueId()).oldLocations.clear();
             });

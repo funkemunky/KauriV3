@@ -2,13 +2,12 @@ package dev.brighten.ac.check.impl.velocity;
 
 import dev.brighten.ac.check.Action;
 import dev.brighten.ac.check.Check;
-import dev.brighten.ac.check.CheckData;
-import dev.brighten.ac.check.CheckType;
 import dev.brighten.ac.check.impl.speed.Speed;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInUseEntity;
 import dev.brighten.ac.utils.Tuple;
+import org.bukkit.craftbukkit.v1_8_R3.util.CraftMagicNumbers;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.potion.PotionEffectType;
 
@@ -16,9 +15,8 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicReference;
 
-@CheckData(name = "Velocity (B)", type = CheckType.MOVEMENT)
+//@CheckData(name = "Velocity (B)", type = CheckType.MOVEMENT)
 public class VelocityB extends Check {
     public VelocityB(APlayer player) {
         super(player);
@@ -27,13 +25,14 @@ public class VelocityB extends Check {
             pvX = velocity.getX();
             pvZ = velocity.getZ();
             ticks = 0;
-            debug("did velocity");
+            debug("did velocity: %.3f, %.3f", pvX, pvZ);
         });
     }
 
     private double pvX, pvZ;
     private boolean useEntity, sprint;
     private double buffer;
+    private float fromFriction;
     private int ticks;
     private static final double[] moveValues = new double[] {-0.98, 0, 0.98};
 
@@ -47,136 +46,143 @@ public class VelocityB extends Check {
 
     @Action
     public void onFlying(WPacketPlayInFlying packet) {
-        if((pvX != 0 || pvZ != 0) && (getPlayer().getMovement().getDeltaX() != 0
-                || getPlayer().getMovement().getDeltaY() != 0
-                || getPlayer().getMovement().getDeltaZ() != 0)) {
-            boolean found = false;
+        check: {
+            if((pvX != 0 || pvZ != 0) && (getPlayer().getMovement().getDeltaX() != 0
+                    || getPlayer().getMovement().getDeltaY() != 0
+                    || getPlayer().getMovement().getDeltaZ() != 0)) {
+                boolean found = false;
 
-            double drag = 0.91;
+                double drag = 0.91;
 
-            if(getPlayer().getBlockInformation().blocksNear
-                    || getPlayer().getBlockInformation().blocksAbove
-                    || getPlayer().getBlockInformation().inLiquid
-                    || getPlayer().getLagInfo().getLastPingDrop().isNotPassed()) {
-                pvX = pvZ = 0;
-                buffer-= buffer > 0 ? 1 : 0;
-                return;
-            }
+                if(getPlayer().getBlockInformation().blocksNear
+                        || getPlayer().getBlockInformation().blocksAbove
+                        || getPlayer().getBlockInformation().inLiquid
+                        || getPlayer().getLagInfo().getLastPingDrop().isNotPassed()) {
+                    pvX = pvZ = 0;
+                    buffer-= buffer > 0 ? 1 : 0;
+                    break check;
+                }
 
-            if(getPlayer().getMovement().getFrom().isOnGround()) {
-                drag*= getPlayer().getBlockInformation().fromFriction;
-            }
+                if(getPlayer().getMovement().getFrom().isOnGround()) {
+                    drag*= fromFriction;
+                }
 
-            if(useEntity && (sprint || (getPlayer().getBukkitPlayer().getItemInHand() != null
-                    && getPlayer().getBukkitPlayer().getItemInHand().containsEnchantment(Enchantment.KNOCKBACK)))) {
-                pvX*= 0.6;
-                pvZ*= 0.6;
-            }
+                if(useEntity && (sprint || (getPlayer().getBukkitPlayer().getItemInHand() != null
+                        && getPlayer().getBukkitPlayer().getItemInHand().containsEnchantment(Enchantment.KNOCKBACK)))) {
+                    pvX*= 0.6;
+                    pvZ*= 0.6;
+                }
 
-            double f = 0.16277136 / (drag * drag * drag);
-            double f5;
+                double f = 0.16277136 / (drag * drag * drag);
+                double f5;
 
-            if (getPlayer().getMovement().getFrom().isOnGround()) {
-                AtomicReference<Double> aiMoveSpeed = new AtomicReference<>((double) getPlayer().getBukkitPlayer().getWalkSpeed() / 2f);
+                if (getPlayer().getMovement().getFrom().isOnGround()) {
+                    double aiMoveSpeed = (double) getPlayer().getBukkitPlayer().getWalkSpeed() / 2f;
 
-                if(getPlayer().getInfo().isSprinting()) aiMoveSpeed.updateAndGet(v -> new Double((double) (v + aiMoveSpeed.get() * 0.3f)));
+                    if(getPlayer().getInfo().isSprinting()) aiMoveSpeed += aiMoveSpeed * 0.30000001192092896D;
 
-                getPlayer().getPotionHandler().getEffectByType(PotionEffectType.SPEED).ifPresent(speed ->
-                        aiMoveSpeed.updateAndGet(v -> new Double((double) (v + (speed.getAmplifier() + 1) * (double) 0.2f * aiMoveSpeed.get()))));
-                getPlayer().getPotionHandler().getEffectByType(PotionEffectType.SLOW).ifPresent(speed ->
-                        aiMoveSpeed.updateAndGet(v -> new Double((double) (v + (speed.getAmplifier() + 1) * (double) -0.15f * aiMoveSpeed.get()))));
-                f5 = aiMoveSpeed.get() * f;
-            } else {
-                f5 = sprint ? 0.026f : 0.02f;
-            }
+                    aiMoveSpeed += (getPlayer().getPotionHandler()
+                            .getEffectByType(PotionEffectType.SPEED)
+                            .map(p -> p.getAmplifier() + 1).orElse(0))
+                            * 0.20000000298023224D * aiMoveSpeed;
+                    aiMoveSpeed += (getPlayer().getPotionHandler()
+                            .getEffectByType(PotionEffectType.SLOW)
+                            .map(p -> p.getAmplifier() + 1).orElse(0))
+                            * -0.15000000596046448D * aiMoveSpeed;
 
-            double vX = pvX;
-            double vZ = pvZ;
-            double vXZ = 0;
+                    f5 = aiMoveSpeed * f;
+                } else {
+                    f5 = sprint ? 0.026f : 0.02f;
+                }
 
-            List<Tuple<Double[], Double[]>> predictions = new ArrayList<>();
+                double vX = pvX;
+                double vZ = pvZ;
 
-            double moveStrafe = 0, moveForward = 0;
-            for (double forward : moveValues) {
-                for(double strafe : moveValues) {
-                    double s2 = strafe;
-                    double f2 = forward;
+                List<Tuple<Double[], Double[]>> predictions = new ArrayList<>();
+
+                double moveStrafe = 0, moveForward = 0;
+                for (double forward : moveValues) {
+                    for(double strafe : moveValues) {
+                        moveFlying(strafe, forward, f5);
+
+                        predictions.add(new Tuple<>(new Double[]{forward, strafe}, new Double[]{pvX, pvZ}));
+
+                        pvX = vX;
+                        pvZ = vZ;
+                    }
+                }
+
+                Optional<Tuple<Double[],Double[]>> velocity = predictions.stream()
+                        .filter(tuple -> {
+                            double deltaX = Math.abs(tuple.two[0] - getPlayer().getMovement().getDeltaX());
+                            double deltaZ = Math.abs(tuple.two[1] - getPlayer().getMovement().getDeltaZ());
+
+                            return (deltaX * deltaX + deltaZ * deltaZ) < 0.005;
+                        })
+                        .min(Comparator.comparing(tuple -> {
+                            double deltaX = Math.abs(tuple.two[0] - getPlayer().getMovement().getDeltaX());
+                            double deltaZ = Math.abs(tuple.two[1] - getPlayer().getMovement().getDeltaZ());
+
+                            return (deltaX * deltaX + deltaZ * deltaZ);
+                        }));
+
+                found = true;
+                if(!velocity.isPresent()) {
+                    Speed speedCheck = (Speed) getPlayer().findCheck(Speed.class);
+                    double s2 = speedCheck.strafe;
+                    double f2 = speedCheck.forward;
+
+                    moveStrafe = s2;
+                    moveForward = f2;
 
                     moveFlying(s2, f2, f5);
+                } else {
+                    Tuple<Double[], Double[]> tuple = velocity.get();
 
-                    predictions.add(new Tuple<>(new Double[]{f2, s2}, new Double[]{pvX, pvZ}));
-
-                    pvX = vX;
-                    pvZ = vZ;
+                    moveForward = tuple.one[0];
+                    moveStrafe = tuple.one[1];
+                    pvX = tuple.two[0];
+                    pvZ = tuple.two[1];
                 }
-            }
 
-            Optional<Tuple<Double[],Double[]>> velocity = predictions.stream()
-                    .filter(tuple -> {
-                        double deltaX = Math.abs(tuple.two[0] - getPlayer().getMovement().getDeltaX());
-                        double deltaZ = Math.abs(tuple.two[1] - getPlayer().getMovement().getDeltaZ());
+                double pvXZ = Math.hypot(pvX, pvZ);
 
-                        return (deltaX * deltaX + deltaZ * deltaZ) < 0.005;
-                    })
-                    .min(Comparator.comparing(tuple -> {
-                        double deltaX = Math.abs(tuple.two[0] - getPlayer().getMovement().getDeltaX());
-                        double deltaZ = Math.abs(tuple.two[1] - getPlayer().getMovement().getDeltaZ());
+                if(pvXZ < 0.2) break check;
+                double ratio = getPlayer().getMovement().getDeltaXZ() / pvXZ;
 
-                        return (deltaX * deltaX + deltaZ * deltaZ);
-                    }));
+                if((ratio < 0.996) && pvX != 0
+                        && pvZ != 0
+                        && getPlayer().getCreation().isPassed(3000L)
+                        && getPlayer().getMovement().getLastTeleport().isPassed(1)
+                        && !getPlayer().getBlockInformation().blocksNear) {
+                    if(++buffer > 20) {
+                        flag("pct=%.2f buffer=%.1f forward=%.2f strafe=%.2f",
+                                ratio * 100, buffer, moveStrafe, moveForward);
+                        buffer = 21;
+                    }
+                } else if(buffer > 0) buffer-= 0.5;
 
-            found = true;
-            if(!velocity.isPresent()) {
-                Speed speedCheck = (Speed) getPlayer().findCheck(Speed.class);
-                double s2 = speedCheck.strafe;
-                double f2 = speedCheck.forward;
+                debug("ratio=%.3f dxz=%.4f vxz=%.4f vxz=%.4g,%.4f buffer=%.1f ticks=%s strafe=%.2f forward=%.2f " +
+                                "found=%s lastV=%s", ratio, getPlayer().getMovement().getDeltaXZ(), pvXZ, pvX, pvZ,
+                        buffer, ticks, moveStrafe, moveForward,
+                        found, getPlayer().getInfo().getVelocity().getPassed());
 
-                moveStrafe = s2;
-                moveForward = f2;
+                pvX *= drag;
+                pvZ *= drag;
 
-                moveFlying(s2, f2, f5);
-            } else {
-                Tuple<Double[], Double[]> tuple = velocity.get();
-
-                moveForward = tuple.one[0];
-                moveStrafe = tuple.one[1];
-                pvX = tuple.two[0];
-                pvZ = tuple.two[1];
-            }
-
-            double pvXZ = Math.sqrt(pvX * pvX + pvZ * pvZ);
-            double ratio = getPlayer().getMovement().getDeltaXZ() / pvXZ;
-
-            if((ratio < 0.996) && pvX != 0
-                    && pvZ != 0
-                    && getPlayer().getCreation().isPassed(3000L)
-                    && getPlayer().getMovement().getLastTeleport().isPassed(1)
-                    && !getPlayer().getBlockInformation().blocksNear) {
-                if(++buffer > 30) {
-                    flag("pct=%.2f buffer=%.1f forward=%.2f strafe=%.2f",
-                            ratio * 100, buffer, moveStrafe, moveForward);
-                    buffer = 31;
+                if(++ticks > 6) {
+                    ticks = 0;
+                    pvX = pvZ = 0;
                 }
-            } else if(buffer > 0) buffer-= 0.5;
 
-            debug("ratio=%.3f dx=%.4f dz=%.4f buffer=%.1f ticks=%s strafe=%.2f forward=%.2f " +
-                            "found=%s lastV=%s", ratio, getPlayer().getMovement().getDeltaX(), getPlayer().getMovement().getDeltaZ(),
-                    buffer, ticks, moveStrafe, moveForward,
-                    found, getPlayer().getInfo().getVelocity().getPassed());
-
-            pvX *= drag;
-            pvZ *= drag;
-
-            if(++ticks > 6) {
-                ticks = 0;
-                pvX = pvZ = 0;
+                if(Math.abs(pvX) < 0.005) pvX = 0;
+                if(Math.abs(pvZ) < 0.005) pvZ = 0;
             }
-
-            if(Math.abs(pvX) < 0.005) pvX = 0;
-            if(Math.abs(pvZ) < 0.005) pvZ = 0;
         }
         sprint = getPlayer().getInfo().isSprinting();
         useEntity = false;
+        fromFriction = getPlayer().getInfo().getBlockBelow()
+                .map(b -> CraftMagicNumbers.getBlock(b.getType()).frictionFactor).orElse(0.6f);
     }
 
     private void moveFlying(double strafe, double forward, double friction) {

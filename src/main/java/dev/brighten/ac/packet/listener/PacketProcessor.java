@@ -168,14 +168,12 @@ public class PacketProcessor {
         if(asyncProcessors.containsKey(type) || asyncProcessors.containsKey(PacketType.UNKNOWN)) {
             asyncInfo = new PacketInfo(player, PacketType.processType(type, packet), type, info.getTimestamp());
             asyncInfo.setCancelled(cancelled);
-            Anticheat.INSTANCE.getScheduler().execute(() -> {
-                val list = MiscUtils.combine(asyncProcessors.get(type),
-                        asyncProcessors.get(PacketType.UNKNOWN));
+            val list = MiscUtils.combine(asyncProcessors.get(type),
+                    asyncProcessors.get(PacketType.UNKNOWN));
 
-                for (ListenerEntry tuple : list) {
-                    tuple.getListener().onEvent(asyncInfo);
-                }
-            });
+            for (ListenerEntry tuple : list) {
+                tuple.getListener().onEvent(asyncInfo);
+            }
         }
         return !cancelled;
     }

@@ -583,13 +583,12 @@ public class MathUtils {
         return squareRoot;
     }
 
-    public static Vector getDirection(double yaw, double pitch) {
-        Vector vector = new Vector();
-        vector.setY(-Math.sin(Math.toRadians(pitch)));
-        double xz = Math.cos(Math.toRadians(pitch));
-        vector.setX(-xz * Math.sin(Math.toRadians(yaw)));
-        vector.setZ(xz * Math.cos(Math.toRadians(yaw)));
-        return vector;
+    public static Vector getDirection(float yaw, float pitch) {
+        float f = MathHelper.cos(-yaw * 0.017453292F - (float)Math.PI);
+        float f1 = MathHelper.sin(-yaw * 0.017453292F - (float)Math.PI);
+        float f2 = -MathHelper.cos(-pitch * 0.017453292F);
+        float f3 = MathHelper.sin(-pitch * 0.017453292F);
+        return new Vector(f1 * f2, f3, f * f2);
     }
 
     public static float sqrt(float number) {

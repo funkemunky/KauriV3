@@ -57,6 +57,8 @@ public class FlyA extends Check {
         if(!getPlayer().getInfo().isGeneralCancel()
                 && getPlayer().getInfo().getBlockAbove().isPassed(1)
                 && !getPlayer().getInfo().isOnLadder()
+                && !(onGround && !fromGround)
+                && getPlayer().getInfo().getVelocity().isPassed(1)
                 && !getPlayer().getBlockInformation().onSlime && deltaPredict > 0.016) {
             if(++buffer > 5) {
                 buffer = 5;
@@ -64,6 +66,9 @@ public class FlyA extends Check {
                         getPlayer().getMovement().getDeltaXZ());
             }
         } else buffer-= buffer > 0 ? 0.25f : 0;
+
+        debug("dY=%.3f p=%.3f dx=%.3f b=%s velocity=%s", getPlayer().getMovement().getDeltaY(), predicted,
+                getPlayer().getMovement().getDeltaXZ(), buffer, getPlayer().getInfo().getVelocity().getPassed());
 
         lastPos.reset();
     }

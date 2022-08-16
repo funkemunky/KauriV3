@@ -33,12 +33,6 @@ public class PlayerSizeHandlerModern implements PlayerSizeHandler {
         return (double) width.invoke(player);
     }
 
-    @Override
-    @SneakyThrows
-    public boolean isGliding(Player player) {
-        return (boolean) gliding.invoke(player);
-    }
-
     @SneakyThrows
     public SimpleCollisionBox bounds(Player player) {
         Location l = player.getLocation();

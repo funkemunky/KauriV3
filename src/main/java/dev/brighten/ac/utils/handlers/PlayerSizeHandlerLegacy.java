@@ -16,11 +16,6 @@ public class PlayerSizeHandlerLegacy implements PlayerSizeHandler {
         return 0.6;
     }
 
-    @Override
-    public boolean isGliding(Player player) {
-        return false;
-    }
-
     public SimpleCollisionBox bounds(Player player) {
         Location l = player.getLocation();
         return new SimpleCollisionBox().offset(l.getX(), l.getY(), l.getZ()).expand(.3,0,.3).expandMax(0,1.8,0);

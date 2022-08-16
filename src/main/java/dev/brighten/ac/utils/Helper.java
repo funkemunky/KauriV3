@@ -1,18 +1,20 @@
 package dev.brighten.ac.utils;
 
 import dev.brighten.ac.packet.ProtocolVersion;
+import dev.brighten.ac.packet.handler.HandlerAbstract;
+import dev.brighten.ac.packet.wrapper.objects.EnumParticle;
+import dev.brighten.ac.packet.wrapper.out.WPacketPlayOutWorldParticles;
 import dev.brighten.ac.utils.handlers.PlayerSizeHandler;
 import dev.brighten.ac.utils.world.BlockData;
 import dev.brighten.ac.utils.world.CollisionBox;
+import dev.brighten.ac.utils.world.types.RayCollision;
 import dev.brighten.ac.utils.world.types.SimpleCollisionBox;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -36,6 +38,114 @@ public class Helper {
 
 	public static SimpleCollisionBox getMovementHitbox(Player player, double x, double y, double z) {
 		return PlayerSizeHandler.instance.bounds(player, x, y, z);
+	}
+
+	public static void drawRay(RayCollision collision, EnumParticle particle, Collection<? extends Player> players) {
+		for (double i = 0; i < 8; i += 0.2) {
+			float fx = (float) (collision.originX + (collision.directionX * i));
+			float fy = (float) (collision.originY + (collision.directionY * i));
+			float fz = (float) (collision.originZ + (collision.directionZ * i));
+
+			WPacketPlayOutWorldParticles packet = WPacketPlayOutWorldParticles.builder()
+					.particle(particle)
+					.x(fx)
+					.y(fy)
+					.z(fz)
+					.offsetX(0)
+					.offsetY(0)
+					.offsetZ(0)
+					.speed(0)
+					.amount(1)
+					.longD(true)
+					.data(new int[0])
+					.build();
+			players.forEach(p -> HandlerAbstract.getHandler().sendPacket(p, packet));
+		}
+	}
+
+	public static void drawCuboid(SimpleCollisionBox box, EnumParticle particle, Collection<? extends Player> players) {
+		Step.GenericStepper<Float> x = Step.step((float)box.xMin, 0.241F, (float)box.xMax);
+		Step.GenericStepper<Float> y = Step.step((float)box.yMin, 0.241F, (float)box.yMax);
+		Step.GenericStepper<Float> z = Step.step((float)box.zMin, 0.241F, (float)box.zMax);
+		Iterator var6 = x.iterator();
+
+		while(var6.hasNext()) {
+			float fx = (Float)var6.next();
+			Iterator var8 = y.iterator();
+
+			label61:
+			while(var8.hasNext()) {
+				float fy = (Float)var8.next();
+				Iterator var10 = z.iterator();
+
+				while(true) {
+					float fz;
+					int check;
+					do {
+						if (!var10.hasNext()) {
+							continue label61;
+						}
+
+						fz = (Float)var10.next();
+						check = 0;
+						if (x.first() || x.last()) {
+							++check;
+						}
+
+						if (y.first() || y.last()) {
+							++check;
+						}
+
+						if (z.first() || z.last()) {
+							++check;
+						}
+					} while(check < 2);
+
+					WPacketPlayOutWorldParticles packet = WPacketPlayOutWorldParticles.builder()
+							.particle(particle)
+							.x(fx)
+							.y(fy)
+							.z(fz)
+							.offsetX(0)
+							.offsetY(0)
+							.offsetZ(0)
+							.speed(0)
+							.amount(1)
+							.data(new int[0])
+							.build();
+
+					Iterator<? extends Player> var14 = players.iterator();
+
+					while(var14.hasNext()) {
+						Player p = var14.next();
+						HandlerAbstract.getHandler().sendPacket(p, packet);
+					}
+				}
+			}
+		}
+
+	}
+
+	public static void drawPoint(Vector point, EnumParticle particle, Collection<? extends Player> players) {
+		WPacketPlayOutWorldParticles packet = WPacketPlayOutWorldParticles.builder()
+				.particle(particle)
+				.x((float)point.getX())
+				.y((float)point.getY())
+				.z((float)point.getZ())
+				.offsetX(0)
+				.offsetY(0)
+				.offsetZ(0)
+				.speed(0)
+				.amount(1)
+				.data(new int[0])
+				.build();
+		Iterator<? extends Player> var4 = players.iterator();
+
+		while(var4.hasNext()) {
+			Player p = var4.next();
+			HandlerAbstract.getHandler().sendPacket(p, packet);
+		}
+
 	}
 
 	public static SimpleCollisionBox getMovementHitbox(Player player) {

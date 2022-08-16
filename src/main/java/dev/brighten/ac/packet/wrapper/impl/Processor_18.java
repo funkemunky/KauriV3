@@ -2,6 +2,7 @@ package dev.brighten.ac.packet.wrapper.impl;
 
 import dev.brighten.ac.packet.wrapper.PacketConverter;
 import dev.brighten.ac.packet.wrapper.in.*;
+import dev.brighten.ac.packet.wrapper.objects.EnumParticle;
 import dev.brighten.ac.packet.wrapper.objects.WrappedEnumDirection;
 import dev.brighten.ac.packet.wrapper.out.*;
 import dev.brighten.ac.utils.math.IntVector;
@@ -15,6 +16,7 @@ import org.bukkit.craftbukkit.v1_8_R3.util.CraftMagicNumbers;
 import org.bukkit.util.Vector;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.stream.Collectors;
 
 public class Processor_18 implements PacketConverter {
@@ -110,7 +112,7 @@ public class Processor_18 implements PacketConverter {
 
         return WPacketPlayOutEntityEffect.builder().entityId(serializer.e())
                 .effectId(serializer.readByte())
-                .duration(serializer.readByte())
+                .amplifier(serializer.readByte())
                 .duration(serializer.e())
                 .flags(serializer.readByte()).build();
     }
@@ -195,6 +197,7 @@ public class Processor_18 implements PacketConverter {
         }
 
         return WPacketPlayOutEntity.builder()
+                .id(id)
                 .x(x / 32D).y(y / 32D).z(z / 32D).yaw(yaw / 256.0F * 360.0F).pitch(pitch / 256.0F * 360.0F)
                 .onGround(ground).moved(moved).looked(looked)
                 .build();
@@ -244,13 +247,7 @@ public class Processor_18 implements PacketConverter {
     @Override
     public WPacketPlayOutBlockChange processBlockChange(Object object) {
         PacketPlayOutBlockChange packet = (PacketPlayOutBlockChange) object;
-        PacketDataSerializer serial = new PacketDataSerializer(Unpooled.buffer());
-
-        try {
-            packet.b(serial);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        PacketDataSerializer serial = serialize(packet);
 
         BlockPosition blockPos = serial.c();
         IntVector vecPos = new IntVector(blockPos.getX(), blockPos.getY(), blockPos.getZ());
@@ -265,13 +262,7 @@ public class Processor_18 implements PacketConverter {
     @Override
     public WPacketPlayOutMultiBlockChange processMultiBlockChange(Object object) {
         PacketPlayOutMultiBlockChange packet = (PacketPlayOutMultiBlockChange) object;
-        PacketDataSerializer serial = new PacketDataSerializer(Unpooled.buffer());
-
-        try {
-            packet.b(serial);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        PacketDataSerializer serial = serialize(packet);
 
         final int[] chunkLoc = new int[] {serial.readInt(), serial.readInt()};
         final WPacketPlayOutMultiBlockChange.BlockChange[]
@@ -303,6 +294,44 @@ public class Processor_18 implements PacketConverter {
                 .deltaY(serial.readShort() / 8000D)
                 .deltaZ(serial.readShort() / 8000D)
                 .build();
+    }
+
+    @Override
+    public Object processVelocity(WPacketPlayOutEntityVelocity packet) {
+        return new PacketPlayOutEntityVelocity(packet.getEntityId(), packet.getDeltaX(), packet.getDeltaY(), packet.getDeltaZ());
+    }
+
+    @Override
+    public WPacketPlayOutWorldParticles processParticles(Object object) {
+        PacketPlayOutWorldParticles packet = (PacketPlayOutWorldParticles) object;
+        PacketDataSerializer serial = serialize(packet);
+
+        EnumParticle particle = EnumParticle.a(serial.readInt());
+
+        if(particle == null) particle = EnumParticle.BARRIER;
+
+        int[] data = new int[particle.d()];
+
+        return WPacketPlayOutWorldParticles.builder()
+                .particle(particle)
+                .longD(serial.readBoolean())
+                .x(serial.readFloat())
+                .y(serial.readFloat())
+                .z(serial.readFloat())
+                .offsetX(serial.readFloat())
+                .offsetY(serial.readFloat())
+                .offsetZ(serial.readFloat())
+                .speed(serial.readFloat())
+                .amount(serial.readInt())
+                .data(Arrays.stream(data).map(i -> serial.e()).toArray())
+                .build();
+    }
+
+    @Override
+    public Object processParticles(WPacketPlayOutWorldParticles packet) {
+        return new PacketPlayOutWorldParticles(net.minecraft.server.v1_8_R3.EnumParticle.valueOf(packet.getParticle().name()),
+                packet.isLongD(), packet.getX(), packet.getY(), packet.getZ(), packet.getOffsetX(), packet.getOffsetY(), packet.getOffsetZ(),
+                packet.getSpeed(), packet.getAmount(), packet.getData());
     }
 
     private PacketDataSerializer serialize(Packet packet) {

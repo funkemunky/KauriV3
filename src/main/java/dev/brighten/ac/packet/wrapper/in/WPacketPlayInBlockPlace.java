@@ -21,4 +21,9 @@ public class WPacketPlayInBlockPlace implements WPacket {
     public PacketType getPacketType() {
         return PacketType.BLOCK_PLACE;
     }
+
+    @Override
+    public Object getPacket() {
+        return null;
+    }
 }

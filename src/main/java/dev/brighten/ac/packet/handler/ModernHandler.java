@@ -4,6 +4,7 @@ import com.google.common.collect.MapMaker;
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.wrapper.PacketType;
+import dev.brighten.ac.packet.wrapper.WPacket;
 import dev.brighten.ac.packet.wrapper.in.WPacketHandshakingInSetProtocol;
 import dev.brighten.ac.utils.reflections.impl.MinecraftReflection;
 import io.netty.channel.*;
@@ -94,22 +95,26 @@ public class ModernHandler extends HandlerAbstract {
     public void remove(Player player) {
         Channel channel = getChannel(player);
 
-        if(channel != null)
+        if(channel != null) {
             channel.eventLoop().execute(() -> {
-                if(channel.pipeline().get(handlerName) != null) {
+                if (channel.pipeline().get(handlerName) != null) {
                     channel.pipeline().remove(handlerName);
                 }
             });
+            channelCache.remove(player.getName());
+        }
     }
 
     @Override
     public void sendPacket(Player player, Object packet) {
-        getChannel(player).pipeline().writeAndFlush(packet);
+        if(packet instanceof WPacket) {
+            getChannel(player).pipeline().writeAndFlush(((WPacket) packet).getPacket());
+        } else getChannel(player).pipeline().writeAndFlush(packet);
     }
 
     @Override
     public void sendPacket(APlayer player, Object packet) {
-        sendPacket(player.getBukkitPlayer(), packet);
+        this.sendPacket(player.getBukkitPlayer(), packet);
     }
 
     @Override

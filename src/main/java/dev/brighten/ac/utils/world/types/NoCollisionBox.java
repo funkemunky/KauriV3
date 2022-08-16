@@ -1,6 +1,8 @@
 package dev.brighten.ac.utils.world.types;
 
+import dev.brighten.ac.packet.wrapper.objects.EnumParticle;
 import dev.brighten.ac.utils.world.CollisionBox;
+import org.bukkit.entity.Player;
 
 import java.util.List;
 
@@ -33,6 +35,11 @@ public class NoCollisionBox implements CollisionBox {
     @Override
     public NoCollisionBox expand(double x, double y, double z) {
         return this;
+    }
+
+    @Override
+    public void draw(EnumParticle particle, Player... players) {
+
     }
 
     @Override

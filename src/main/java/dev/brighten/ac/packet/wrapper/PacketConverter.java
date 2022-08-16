@@ -36,4 +36,10 @@ public interface PacketConverter {
     WPacketPlayOutMultiBlockChange processMultiBlockChange(Object object);
 
     WPacketPlayOutEntityVelocity processVelocity(Object object);
+
+    Object processVelocity(WPacketPlayOutEntityVelocity packet);
+
+    WPacketPlayOutWorldParticles processParticles(Object object);
+
+    Object processParticles(WPacketPlayOutWorldParticles packet);
 }

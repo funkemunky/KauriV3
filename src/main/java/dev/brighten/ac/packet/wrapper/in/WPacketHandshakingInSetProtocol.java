@@ -17,6 +17,11 @@ public class WPacketHandshakingInSetProtocol implements WPacket {
         return PacketType.LOGIN_HANDSHAKE;
     }
 
+    @Override
+    public Object getPacket() {
+        return null;
+    }
+
     public enum EnumProtocol {
         HANDSHAKING(-1),
         PLAY(0),

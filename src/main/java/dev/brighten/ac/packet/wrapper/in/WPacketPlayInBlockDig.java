@@ -20,6 +20,11 @@ public class WPacketPlayInBlockDig implements WPacket {
         return PacketType.BLOCK_DIG;
     }
 
+    @Override
+    public Object getPacket() {
+        return null;
+    }
+
     public enum EnumDirection {
         DOWN,
         UP,

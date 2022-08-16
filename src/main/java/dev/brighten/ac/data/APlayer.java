@@ -67,6 +67,8 @@ public class APlayer {
     @Getter
     private Object playerConnection;
 
+    public int hitsToCancel;
+
     public final Map<Short, Tuple<InstantAction, Consumer<InstantAction>>> instantTransaction = new HashMap<>();
     public final List<NormalAction> keepAliveStamps = new ArrayList<>();
 

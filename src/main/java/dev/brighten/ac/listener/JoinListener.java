@@ -2,14 +2,15 @@ package dev.brighten.ac.listener;
 
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.data.APlayer;
-import dev.brighten.ac.handler.thread.ThreadHandler;
 import dev.brighten.ac.packet.handler.HandlerAbstract;
 import dev.brighten.ac.packet.wrapper.PacketType;
 import dev.brighten.ac.utils.Init;
 import dev.brighten.ac.utils.RunUtils;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerKickEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
@@ -26,9 +27,8 @@ public class JoinListener implements Listener {
             Optional<APlayer> aplayer = Anticheat.INSTANCE.getPlayerRegistry()
                     .getPlayer(event.getPlayer().getUniqueId());
 
-            aplayer.ifPresent(player -> ThreadHandler.INSTANCE.getThread(player)
-                    .runTask(() -> Anticheat.INSTANCE.getPacketHandler()
-                            .process(player, event.getType(), event.getPacket())));
+            aplayer.ifPresent(player -> Anticheat.INSTANCE.getPacketHandler()
+                    .process(player, event.getType(), event.getPacket()));
         });
 
         Anticheat.INSTANCE.getPacketProcessor().process(Anticheat.INSTANCE, EventPriority.HIGHEST, event -> {
@@ -75,10 +75,24 @@ public class JoinListener implements Listener {
     }
 
     @EventHandler
+    public void onDamage(EntityDamageByEntityEvent event) {
+        if(event.getDamager() instanceof Player) {
+            APlayer player = Anticheat.INSTANCE.getPlayerRegistry().getPlayer(event.getDamager().getUniqueId()).
+                    orElse(null);
+
+            if(player == null) return;
+
+            if(player.hitsToCancel > 0) {
+                player.hitsToCancel--;
+                event.setCancelled(true);
+            }
+        }
+    }
+    @EventHandler
     public void onJoin(PlayerJoinEvent event) {
         APlayer player = Anticheat.INSTANCE.getPlayerRegistry().generate(event.getPlayer());
 
-        RunUtils.taskLater(() -> HandlerAbstract.getHandler().add(event.getPlayer()), 3);
+        RunUtils.taskLater(() -> HandlerAbstract.getHandler().add(event.getPlayer()), 6);
 
         player.callEvent(event);
     }
@@ -93,6 +107,7 @@ public class JoinListener implements Listener {
 
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
+        HandlerAbstract.getHandler().remove(event.getPlayer());
         Anticheat.INSTANCE.getPlayerRegistry().unregister(event.getPlayer().getUniqueId());
     }
 

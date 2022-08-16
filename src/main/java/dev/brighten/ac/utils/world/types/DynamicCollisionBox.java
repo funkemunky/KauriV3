@@ -1,9 +1,11 @@
 package dev.brighten.ac.utils.world.types;
 
 import dev.brighten.ac.packet.ProtocolVersion;
+import dev.brighten.ac.packet.wrapper.objects.EnumParticle;
 import dev.brighten.ac.utils.world.CollisionBox;
 import lombok.Setter;
 import org.bukkit.block.Block;
+import org.bukkit.entity.Player;
 
 import java.util.List;
 
@@ -53,6 +55,11 @@ public class DynamicCollisionBox implements CollisionBox {
     @Override
     public DynamicCollisionBox expand(double x, double y, double z) {
         return this;
+    }
+
+    @Override
+    public void draw(EnumParticle particle, Player... players) {
+        box.fetch(version, block).offset(x,y,z).draw(particle,players);
     }
 
     @Override

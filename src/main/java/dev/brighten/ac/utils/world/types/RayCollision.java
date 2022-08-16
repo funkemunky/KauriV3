@@ -1,7 +1,9 @@
 package dev.brighten.ac.utils.world.types;
 
 import dev.brighten.ac.packet.ProtocolVersion;
+import dev.brighten.ac.packet.wrapper.objects.EnumParticle;
 import dev.brighten.ac.utils.BlockUtils;
+import dev.brighten.ac.utils.Helper;
 import dev.brighten.ac.utils.Materials;
 import dev.brighten.ac.utils.Tuple;
 import dev.brighten.ac.utils.math.RayTrace;
@@ -13,9 +15,11 @@ import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class RayCollision implements CollisionBox {
@@ -128,6 +132,11 @@ public class RayCollision implements CollisionBox {
     @Override
     public RayCollision expand(double x, double y, double z) {
         return this;
+    }
+
+    @Override
+    public void draw(EnumParticle particle, Player... players) {
+        Helper.drawRay(this, particle, Arrays.asList(players));
     }
 
     public List<CollisionBox> boxesOnRay(World world, double distance) {

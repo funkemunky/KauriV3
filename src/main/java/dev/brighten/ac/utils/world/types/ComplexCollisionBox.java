@@ -1,6 +1,8 @@
 package dev.brighten.ac.utils.world.types;
 
+import dev.brighten.ac.packet.wrapper.objects.EnumParticle;
 import dev.brighten.ac.utils.world.CollisionBox;
+import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -54,6 +56,12 @@ public class ComplexCollisionBox implements CollisionBox {
         for (CollisionBox b : boxes)
             b.expand(x,y,z);
         return this;
+    }
+
+    @Override
+    public void draw(EnumParticle particle, Player... players) {
+        for (CollisionBox b : boxes)
+            b.draw(particle,players);
     }
 
     @Override

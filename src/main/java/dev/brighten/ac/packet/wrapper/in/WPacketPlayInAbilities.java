@@ -15,4 +15,9 @@ public class WPacketPlayInAbilities implements WPacket {
     public PacketType getPacketType() {
         return PacketType.CLIENT_ABILITIES;
     }
+
+    @Override
+    public Object getPacket() {
+        return null;
+    }
 }

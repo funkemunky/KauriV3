@@ -33,6 +33,8 @@ public class BlockUpdateHandler {
     public void onPlace(WPacketPlayInBlockPlace place) {
         if(!place.getItemStack().getType().isBlock()) return;
 
+        player.getInfo().getLastPlace().reset();
+
         Deque<Material> possible = getPossibleMaterials(place.getBlockPos());
         possible.add(place.getItemStack().getType());
     }

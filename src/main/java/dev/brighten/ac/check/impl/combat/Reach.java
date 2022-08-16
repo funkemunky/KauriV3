@@ -15,6 +15,7 @@ import dev.brighten.ac.utils.world.EntityData;
 import dev.brighten.ac.utils.world.types.SimpleCollisionBox;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
+import org.bukkit.util.Vector;
 
 import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -63,7 +64,7 @@ public class Reach extends Check {
 
             final KLocation to = target.two;
 
-            //debug("current loc: %.4f, %.4f, %.4f", eloc.x, eloc.y, eloc.z);
+            debug("current loc: %.4f, %.4f, %.4f", eloc.x, eloc.y, eloc.z);
 
             if(eloc.x == 0 && eloc.y == 0 & eloc.z == 0) {
                 return;
@@ -111,36 +112,46 @@ public class Reach extends Check {
             boolean didSneakOrElytra = getPlayer().getInfo().getLastElytra().isNotPassed(40)
                     || getPlayer().getInfo().getLastElytra().isNotPassed(40);
 
+            List<Vector> directions = new ArrayList<>(Arrays.asList(MathUtils.getDirection(
+                    getPlayer().getMovement().getTo().getLoc().yaw,
+                    getPlayer().getMovement().getTo().getLoc().pitch),
+                    MathUtils.getDirection(getPlayer().getMovement().getFrom().getLoc().yaw,
+                            getPlayer().getMovement().getTo().getLoc().pitch)));
+
             if(!didSneakOrElytra) {
                 to.y+= 1.62f;
-                for (SimpleCollisionBox targetBox : boxes) {
-                    final AxisAlignedBB vanillaBox = new AxisAlignedBB(targetBox);
-
-                    Vec3D intersectTo = vanillaBox.rayTrace(to.toVector(), MathUtils.getDirection(to), 10);
-
-                    if(intersectTo != null) {
-                        lastAimOnTarget.reset();
-                        hits++;
-                        distance = Math.min(distance, intersectTo.distanceSquared(new Vec3D(to.x, to.y, to.z)));
-                        collided = true;
-                    }
-                }
-                //Checking all possible eyeheights since client actions notoriously desync from the server side
-            } else {
-                for (double eyeHeight : getPlayer().getMovement().getEyeHeights()) {
+                for (Vector direction : directions) {
                     for (SimpleCollisionBox targetBox : boxes) {
                         final AxisAlignedBB vanillaBox = new AxisAlignedBB(targetBox);
 
-                        KLocation from = to.clone();
-
-                        from.y+= eyeHeight;
-                        Vec3D intersectTo = vanillaBox.rayTrace(from.toVector(), MathUtils.getDirection(from), 10);
+                        Vec3D intersectTo = vanillaBox.rayTrace(to.toVector(), direction, 10);
 
                         if(intersectTo != null) {
                             lastAimOnTarget.reset();
                             hits++;
-                            distance = Math.min(distance, intersectTo.distanceSquared(new Vec3D(from.x, from.y, from.z)));
+                            distance = Math.min(distance, intersectTo.distanceSquared(new Vec3D(to.x, to.y, to.z)));
                             collided = true;
+                        }
+                    }
+                }
+                //Checking all possible eyeheights since client actions notoriously desync from the server side
+            } else {
+                for (Vector direction : directions) {
+                    for (double eyeHeight : getPlayer().getMovement().getEyeHeights()) {
+                        for (SimpleCollisionBox targetBox : boxes) {
+                            final AxisAlignedBB vanillaBox = new AxisAlignedBB(targetBox);
+
+                            KLocation from = to.clone();
+
+                            from.y+= eyeHeight;
+                            Vec3D intersectTo = vanillaBox.rayTrace(from.toVector(), direction, 10);
+
+                            if(intersectTo != null) {
+                                lastAimOnTarget.reset();
+                                hits++;
+                                distance = Math.min(distance, intersectTo.distanceSquared(new Vec3D(from.x, from.y, from.z)));
+                                collided = true;
+                            }
                         }
                     }
                 }
@@ -157,10 +168,13 @@ public class Reach extends Check {
                 } else if(buffer > 0) buffer-= 0.05f;
 
                 if(hbuffer > 0) hbuffer--;
+
+                debug("buffer: %.3f distance=%.2f hits=%s", buffer, distance, hits);
             } else {
                 if (++hbuffer > 5) {
                     flag("%.1f;%.1f;%.1f", eloc.x, eloc.y, eloc.z);
                 }
+                debug("Missed!");
             }
         }
     }

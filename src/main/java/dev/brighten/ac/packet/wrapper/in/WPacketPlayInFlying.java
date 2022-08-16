@@ -16,4 +16,9 @@ public class WPacketPlayInFlying implements WPacket {
     public PacketType getPacketType() {
         return PacketType.FLYING;
     }
+
+    @Override
+    public Object getPacket() {
+        return null;
+    }
 }

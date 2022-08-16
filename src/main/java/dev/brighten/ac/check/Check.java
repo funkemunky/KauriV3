@@ -2,10 +2,7 @@ package dev.brighten.ac.check;
 
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.data.APlayer;
-import dev.brighten.ac.utils.Color;
-import dev.brighten.ac.utils.MathUtils;
-import dev.brighten.ac.utils.MiscUtils;
-import dev.brighten.ac.utils.Tuple;
+import dev.brighten.ac.utils.*;
 import dev.brighten.ac.utils.timer.Timer;
 import dev.brighten.ac.utils.timer.impl.MillisTimer;
 import lombok.Getter;
@@ -49,6 +46,19 @@ public abstract class Check {
                 .replace("%check%", checkData.name())
                 .replace("%name%",  player.getBukkitPlayer().getName())
                 .replace("%vl%", String.valueOf(MathUtils.round(vl, 1)));
+    }
+
+    public void cancel() {
+        if(checkData.type() == CheckType.COMBAT) {
+            player.hitsToCancel++;
+        } else {
+            player.getInfo().getLastCancel().reset();
+
+            KLocation fromLoc = player.getInfo().getLastKnownGoodPosition() != null
+                    ? player.getInfo().getLastKnownGoodPosition() : player.getMovement().getFrom().getLoc();
+
+            player.getBukkitPlayer().teleport(fromLoc.toLocation(player.getBukkitPlayer().getWorld()));
+        }
     }
 
     public void debug(String information, Object... variables) {

@@ -3,6 +3,7 @@ package dev.brighten.ac.packet.handler;
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.wrapper.PacketType;
+import dev.brighten.ac.packet.wrapper.WPacket;
 import dev.brighten.ac.utils.reflections.types.WrappedClass;
 import dev.brighten.ac.utils.reflections.types.WrappedField;
 import lombok.AllArgsConstructor;
@@ -61,12 +62,14 @@ public class LegacyHandler extends HandlerAbstract {
 
     @Override
     public void sendPacket(Player player, Object packet) {
-        getChannel(player).pipeline().writeAndFlush(packet);
+        if(packet instanceof WPacket) {
+            getChannel(player).pipeline().writeAndFlush(((WPacket) packet).getPacket());
+        } else getChannel(player).pipeline().writeAndFlush(packet);
     }
 
     @Override
     public void sendPacket(APlayer player, Object packet) {
-        sendPacket(player.getBukkitPlayer(), packet);
+        this.sendPacket(player.getBukkitPlayer(), packet);
     }
 
     @Override

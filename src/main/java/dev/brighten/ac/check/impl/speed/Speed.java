@@ -196,8 +196,14 @@ public class Speed extends Check {
                                                             pmotionz = lmotionZ;
 
                                                             if (delta < 1E-15) {
-                                                                this.strafe = strafe;
-                                                                this.forward = forward;
+                                                                this.strafe = s * 0.98f;
+                                                                this.forward = f * 0.98f;
+
+                                                                if (getPlayer().getInfo().getLastCancel().isPassed(2))
+                                                                    getPlayer().getInfo()
+                                                                            .setLastKnownGoodPosition(getPlayer()
+                                                                                    .getMovement().getFrom().getLoc()
+                                                                                    .clone());
                                                                 break loop;
                                                             }
                                                         }
@@ -222,7 +228,7 @@ public class Speed extends Check {
                 }
             } else if (buffer > 0) buffer -= 0.1f;
 
-            debug("smallest=%s b=%.1f", smallestDelta, buffer);
+            debug("smallest=%s b=%.1f f/s=%.2f,%.2f", smallestDelta, buffer, forward, strafe);
         }
         lastLastClientGround = getPlayer().getMovement().getFrom().isOnGround();
     }

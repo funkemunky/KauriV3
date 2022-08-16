@@ -37,6 +37,7 @@ public class MovementHandler {
     private float lookX, lookY, lastLookX, lastLookY;
     @Getter
     private float deltaYaw, deltaPitch, lDeltaYaw, lDeltaPitch, pitchGCD, lastPitchGCD, yawGCD, lastYawGCD;
+    @Getter
     private int moveTicks;
     private final List<KLocation> posLocs = new ArrayList<>();
     @Getter
@@ -244,16 +245,18 @@ it
     // generate a method that processes velocityHistory and compares to current deltaY.
     private void processVelocity() {
         //Iterate through player.getInfo().getVelocityHistory() and compare to current deltaY.
-        val iterator = player.getInfo().getVelocityHistory().iterator();
-        while (iterator.hasNext()) {
-            val velocity = iterator.next();
+        synchronized (player.getInfo().getVelocityHistory()) {
+            val iterator = player.getInfo().getVelocityHistory().iterator();
+            while (iterator.hasNext()) {
+                val velocity = iterator.next();
 
-            if(Math.abs(velocity.getY() - getDeltaY()) < 0.01) {
-                player.getInfo().getVelocity().reset();
-                player.getInfo().setDoingVelocity(false);
-                player.getOnVelocityTasks().forEach(vectorConsumer -> vectorConsumer.accept(velocity));
-                iterator.remove();
-                break;
+                if(Math.abs(velocity.getY() - getDeltaY()) < 0.01) {
+                    player.getInfo().getVelocity().reset();
+                    player.getInfo().setDoingVelocity(false);
+                    player.getOnVelocityTasks().forEach(vectorConsumer -> vectorConsumer.accept(velocity));
+                    iterator.remove();
+                    break;
+                }
             }
         }
     }

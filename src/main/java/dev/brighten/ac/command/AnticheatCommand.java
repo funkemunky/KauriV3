@@ -2,6 +2,7 @@ package dev.brighten.ac.command;
 
 import co.aikar.commands.*;
 import co.aikar.commands.annotation.*;
+import co.aikar.commands.bukkit.contexts.OnlinePlayer;
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
@@ -146,9 +147,10 @@ public class AnticheatCommand extends BaseCommand {
     @Subcommand("debug")
     @CommandCompletion("@checks|none @players")
     @Description("Debug a player")
+    @Syntax("[check] [player]")
     @CommandPermission("anticheat.command.debug")
-    public void onDebug(APlayer sender, @Single String check, @Optional APlayer targetPlayer) {
-        APlayer target = targetPlayer != null ? targetPlayer : sender;
+    public void onDebug(Player sender, @Single String check, @Optional OnlinePlayer targetPlayer) {
+        Player target = targetPlayer != null ? targetPlayer.player : sender;
         if(check.equals("none")) {
             synchronized (Check.debugInstances) {
                 Check.debugInstances.forEach((nameKey, list) -> {
@@ -156,35 +158,35 @@ public class AnticheatCommand extends BaseCommand {
                     while(iterator.hasNext()) {
                         val tuple = iterator.next();
 
-                        if(tuple.one.equals(target.getUuid())) {
+                        if(tuple.two.equals(target.getUniqueId())) {
                             iterator.remove();
-                            sender.getBukkitPlayer().spigot()
+                            sender.spigot()
                                     .sendMessage(new ChatBuilder(
                                             "&cTurned off debug for check &f%s &con target &f%s", nameKey,
-                                            target.getBukkitPlayer().getName()).build());
+                                            target.getName()).build());
                         }
                     }
                 });
             }
         } else {
             if(!Anticheat.INSTANCE.getCheckManager().isCheck(check)) {
-                sender.getBukkitPlayer().sendMessage(Color.Red + "Check \"" + check + "\" is not a valid check!");
+                sender.sendMessage(Color.Red + "Check \"" + check + "\" is not a valid check!");
                 return;
             }
             synchronized (Check.debugInstances) {
                 Check.debugInstances.compute(check.replace("_", " "), (key, list) -> {
                     if(list == null) list = new ArrayList<>();
 
-                    list.add(new Tuple<>(target.getUuid(), sender.getUuid()));
+                    list.add(new Tuple<>(target.getUniqueId(), sender.getUniqueId()));
 
                     return list;
                 });
 
-                sender.getBukkitPlayer().spigot()
+                sender.spigot()
                         .sendMessage(new ChatBuilder(
-                                "&aTurned on debug for check &f%s &con target &f%s",
+                                "&aTurned on debug for check &f%s &aon target &f%s",
                                 check.replace("_", " "),
-                                target.getBukkitPlayer().getName()).build());
+                                target.getName()).build());
             }
         }
     }
