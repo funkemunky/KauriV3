@@ -250,6 +250,7 @@ it
 
             if(Math.abs(velocity.getY() - getDeltaY()) < 0.01) {
                 player.getInfo().getVelocity().reset();
+                player.getInfo().setDoingVelocity(false);
                 player.getOnVelocityTasks().forEach(vectorConsumer -> vectorConsumer.accept(velocity));
                 iterator.remove();
                 break;

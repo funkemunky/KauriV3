@@ -133,19 +133,18 @@ public class PacketHandler {
                 if(packet.getEntityId() == player.getBukkitPlayer().getEntityId()) {
                     Vector velocity = new Vector(packet.getDeltaX(), packet.getDeltaY(), packet.getDeltaZ());
                     player.getInfo().getVelocityHistory().add(velocity);
+                    player.getInfo().setDoingVelocity(true);
 
-                    player.runInstantAction(ka -> {
-                        if(!ka.isEnd()) {
-                            player.getInfo().setDoingVelocity(true);
-                        } else if(player.getInfo().getVelocityHistory().contains(velocity)) {
-                            player.getInfo().getVelocityHistory().remove(velocity);
+                    player.runKeepaliveAction(ka -> {
+                        if(player.getInfo().getVelocityHistory().contains(velocity)) {
                             player.getOnVelocityTasks().forEach(task -> task.accept(velocity));
                             player.getInfo().setDoingVelocity(false);
                             player.getInfo().getVelocity().reset();
-                        } else {
-                            player.getInfo().setDoingVelocity(false);
+                            synchronized (player.getInfo().getVelocityHistory()) {
+                                player.getInfo().getVelocityHistory().remove(velocity);
+                            }
                         }
-                    });
+                    }, 2);
                 }
                 break;
             }

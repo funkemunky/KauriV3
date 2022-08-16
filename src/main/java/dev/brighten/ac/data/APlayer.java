@@ -86,6 +86,19 @@ public class APlayer {
         load();
     }
 
+    private final Map<Class<? extends Check>, Check> checkCache = new HashMap<>();
+
+    public synchronized Check findCheck(Class<? extends Check> checkClass) {
+        return checkCache.computeIfAbsent(checkClass, key -> {
+            for (Check check : checks) {
+                if (check.getClass().equals(key)) {
+                    return check;
+                }
+            }
+            return null;
+        });
+    }
+
     private void load() {
         synchronized (checks) {
             for (CheckStatic check : Anticheat.INSTANCE.getCheckManager().getCheckClasses()) {

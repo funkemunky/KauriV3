@@ -4,6 +4,7 @@ import dev.brighten.ac.check.Action;
 import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.CheckType;
+import dev.brighten.ac.check.impl.speed.Speed;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInUseEntity;
@@ -23,7 +24,6 @@ public class VelocityB extends Check {
         super(player);
 
         player.onVelocity(velocity -> {
-
             pvX = velocity.getX();
             pvZ = velocity.getZ();
             ticks = 0;
@@ -46,7 +46,7 @@ public class VelocityB extends Check {
     }
 
     @Action
-    public void onFlying(WPacketPlayInFlying packet, long timeStamp) {
+    public void onFlying(WPacketPlayInFlying packet) {
         if((pvX != 0 || pvZ != 0) && (getPlayer().getMovement().getDeltaX() != 0
                 || getPlayer().getMovement().getDeltaY() != 0
                 || getPlayer().getMovement().getDeltaZ() != 0)) {
@@ -57,7 +57,7 @@ public class VelocityB extends Check {
             if(getPlayer().getBlockInformation().blocksNear
                     || getPlayer().getBlockInformation().blocksAbove
                     || getPlayer().getBlockInformation().inLiquid
-                    || getPlayer().getLagInfo().getLastPingDrop().isNotPassed(4)) {
+                    || getPlayer().getLagInfo().getLastPingDrop().isNotPassed()) {
                 pvX = pvZ = 0;
                 buffer-= buffer > 0 ? 1 : 0;
                 return;
@@ -112,6 +112,12 @@ public class VelocityB extends Check {
             }
 
             Optional<Tuple<Double[],Double[]>> velocity = predictions.stream()
+                    .filter(tuple -> {
+                        double deltaX = Math.abs(tuple.two[0] - getPlayer().getMovement().getDeltaX());
+                        double deltaZ = Math.abs(tuple.two[1] - getPlayer().getMovement().getDeltaZ());
+
+                        return (deltaX * deltaX + deltaZ * deltaZ) < 0.005;
+                    })
                     .min(Comparator.comparing(tuple -> {
                         double deltaX = Math.abs(tuple.two[0] - getPlayer().getMovement().getDeltaX());
                         double deltaZ = Math.abs(tuple.two[1] - getPlayer().getMovement().getDeltaZ());
@@ -120,15 +126,26 @@ public class VelocityB extends Check {
                     }));
 
             found = true;
-            Tuple<Double[],Double[]> tuple = velocity.get();
+            if(!velocity.isPresent()) {
+                Speed speedCheck = (Speed) getPlayer().findCheck(Speed.class);
+                double s2 = speedCheck.strafe;
+                double f2 = speedCheck.forward;
 
-            moveForward = tuple.one[0];
-            moveStrafe = tuple.one[1];
-            pvX = tuple.two[0];
-            pvZ = tuple.two[1];
+                moveStrafe = s2;
+                moveForward = f2;
 
-            double ratioX = getPlayer().getMovement().getDeltaX() / pvX, ratioZ = getPlayer().getMovement().getDeltaZ() / pvZ;
-            double ratio = (Math.abs(ratioX) + Math.abs(ratioZ)) / 2;
+                moveFlying(s2, f2, f5);
+            } else {
+                Tuple<Double[], Double[]> tuple = velocity.get();
+
+                moveForward = tuple.one[0];
+                moveStrafe = tuple.one[1];
+                pvX = tuple.two[0];
+                pvZ = tuple.two[1];
+            }
+
+            double pvXZ = Math.sqrt(pvX * pvX + pvZ * pvZ);
+            double ratio = getPlayer().getMovement().getDeltaXZ() / pvXZ;
 
             if((ratio < 0.996) && pvX != 0
                     && pvZ != 0

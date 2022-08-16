@@ -14,6 +14,7 @@ import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.craftbukkit.v1_8_R3.util.CraftMagicNumbers;
 import org.bukkit.potion.PotionEffectType;
+import org.bukkit.util.Vector;
 
 import java.util.Deque;
 
@@ -21,9 +22,12 @@ import java.util.Deque;
 public class Speed extends Check {
     private boolean lastLastClientGround;
     private float buffer;
+    private Vector velocity;
+    private int vTicks;
 
     private static boolean[] TRUE_FALSE = new boolean[]{true, false};
-    private static float[] VALUES = new float[]{-0.98f, 0f, 0.98f};
+
+    public double strafe, forward;
 
     public Speed(APlayer player) {
         super(player);
@@ -39,20 +43,20 @@ public class Speed extends Check {
                         .toLocation(getPlayer().getBukkitPlayer().getWorld())
                         .subtract(0, 1, 0));
 
-        if (underBlock == null || lastUnderBlock == null)
-            return;
-
-        Deque<Material> frictionList = getPlayer().getBlockUpdateHandler()
-                .getPossibleMaterials(new IntVector(underBlock.getX(), underBlock.getY(), underBlock.getZ())),
-                lfrictionList = getPlayer().getBlockUpdateHandler()
-                        .getPossibleMaterials(new IntVector(lastUnderBlock.getX(), lastUnderBlock.getY(), lastUnderBlock.getZ()));
-
         check:
         {
+            if (underBlock == null || lastUnderBlock == null)
+                break check;
+
+            Deque<Material> frictionList = getPlayer().getBlockUpdateHandler()
+                    .getPossibleMaterials(new IntVector(underBlock.getX(), underBlock.getY(), underBlock.getZ())),
+                    lfrictionList = getPlayer().getBlockUpdateHandler()
+                            .getPossibleMaterials(new IntVector(lastUnderBlock.getX(), lastUnderBlock.getY(), lastUnderBlock.getZ()));
+
             if (!packet.isMoved()
+                    || getPlayer().getInfo().getVelocity().isNotPassed(1)
                     || getPlayer().getInfo().isGeneralCancel()
                     || getPlayer().getBlockInformation().onClimbable
-                    || getPlayer().getInfo().getVelocity().isNotPassed(1)
                     || getPlayer().getBlockInformation().inLiquid
                     || getPlayer().getBlockInformation().collidesHorizontally) {
                 break check;
@@ -192,6 +196,8 @@ public class Speed extends Check {
                                                             pmotionz = lmotionZ;
 
                                                             if (delta < 1E-15) {
+                                                                this.strafe = strafe;
+                                                                this.forward = forward;
                                                                 break loop;
                                                             }
                                                         }
@@ -216,9 +222,7 @@ public class Speed extends Check {
                 }
             } else if (buffer > 0) buffer -= 0.1f;
 
-            //getPlayer().getBukkitPlayer().sendMessage(String.format("smallest=%s b=%.1f to=%s dxz=%.2f", smallestDelta, buffer, getPlayer().getMovement().getTo().getLoc(), getPlayer().getMovement().getDeltaXZ()));
-
-            //debug("smallest=%s b=%.1f", smallestDelta, buffer);
+            debug("smallest=%s b=%.1f", smallestDelta, buffer);
         }
         lastLastClientGround = getPlayer().getMovement().getFrom().isOnGround();
     }
