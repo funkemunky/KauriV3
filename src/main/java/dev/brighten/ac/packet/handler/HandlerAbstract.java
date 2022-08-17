@@ -28,6 +28,12 @@ public abstract class HandlerAbstract{
         Bukkit.getOnlinePlayers().forEach(handler::add);
     }
 
+    public static void shutdown() {
+        Bukkit.getOnlinePlayers().forEach(handler::remove);
+        handler = null;
+
+    }
+
     public abstract void add(Player player);
 
     public abstract void remove(Player player);

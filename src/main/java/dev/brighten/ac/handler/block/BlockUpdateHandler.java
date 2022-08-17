@@ -44,9 +44,11 @@ public class BlockUpdateHandler {
      * @param dig
      */
     public void onDig(WPacketPlayInBlockDig dig) {
-        Deque<Material> possible = getPossibleMaterials(dig.getBlockPos());
-        possible.clear();
-        possible.add(Material.AIR);
+        if(dig.getDigType() == WPacketPlayInBlockDig.EnumPlayerDigType.STOP_DESTROY_BLOCK) {
+            Deque<Material> possible = getPossibleMaterials(dig.getBlockPos());
+            possible.clear();
+            possible.add(Material.AIR);
+        }
     }
 
     public void runUpdate(WPacketPlayOutBlockChange packet) {

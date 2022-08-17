@@ -35,6 +35,7 @@ public class BlockInformation {
             rosebush = XMaterial.ROSE_BUSH.parseMaterial(),
             scaffolding = XMaterial.SCAFFOLDING.parseMaterial(),
             honey = XMaterial.HONEY_BLOCK.parseMaterial();
+    public final Map<Material, Integer> collisionMaterialCount = new HashMap<>();
 
     static {
         for (Material mat : Material.values()) {
@@ -66,6 +67,8 @@ public class BlockInformation {
                 = onSlab = onStairs = onHalfBlock = inLiquid = inLava = inWater = inWeb = onSlime = pistonNear
                 = onIce = onSoulSand = blocksAbove = collidesVertically = bedNear = collidesHorizontally =
                 blocksNear = inBlock = miscNear = collidedWithEntity = blocksBelow = inPortal = false;
+
+        collisionMaterialCount.clear();
 
         if(dy > 10) dy = 10;
         else if(dy < -10) dy = -10;
@@ -112,6 +115,30 @@ public class BlockInformation {
         }
         final World world = player.getBukkitPlayer().getWorld();
         int it = 9 * 9;
+
+        SimpleCollisionBox boundsForCollision = player.getMovement().getFrom().getBox().copy().shrink(0.001D, 0.001D, 0.001D);
+
+        IntVector min = new IntVector((int) boundsForCollision.xMin, (int) boundsForCollision.yMin, (int) boundsForCollision.zMin);
+        IntVector max = new IntVector((int) boundsForCollision.xMax, (int) boundsForCollision.yMax, (int) boundsForCollision.zMax);
+
+        for(int x = min.getX() ; x <= max.getX() ; x++) {
+            for(int y = min.getY() ; y <= max.getY() ; y++) {
+                for(int z = min.getZ() ; z <= max.getZ() ; z++) {
+                    Optional<Block> block = BlockUtils.getBlockAsync(
+                            new Location(player.getBukkitPlayer().getWorld(), x, y, z));
+
+                    if(!block.isPresent()) continue;
+
+                    Material type = block.get().getType();
+
+                    collisionMaterialCount.compute(type, (key, count) -> {
+                        if(count == null) return 1;
+
+                        return count + 1;
+                    });
+                }
+            }
+        }
         start:
         for (int chunkx = startX >> 4; chunkx <= endX >> 4; ++chunkx) {
             int cx = chunkx << 4;

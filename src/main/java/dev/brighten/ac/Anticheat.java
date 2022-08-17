@@ -3,6 +3,7 @@ package dev.brighten.ac;
 import co.aikar.commands.BaseCommand;
 import co.aikar.commands.BukkitCommandManager;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckManager;
 import dev.brighten.ac.data.PlayerRegistry;
 import dev.brighten.ac.handler.PacketHandler;
@@ -106,11 +107,17 @@ public class Anticheat extends JavaPlugin {
         commandManager.unregisterCommands();
 
         // Unregistering packet listeners for players
-        Bukkit.getOnlinePlayers().forEach(HandlerAbstract.getHandler()::remove);
-
+        HandlerAbstract.shutdown();
         HandlerList.unregisterAll(this);
         packetProcessor.shutdown();
+        checkManager.getCheckClasses().clear();
+        Check.alertsEnabled.clear();
+        Check.debugInstances.clear();
         checkManager = null;
+        keepaliveProcessor.keepAlives.cleanUp();
+        keepaliveProcessor = null;
+
+        Bukkit.getScheduler().cancelTasks(this);
 
 
         // Unregistering APlayer objects
@@ -118,6 +125,7 @@ public class Anticheat extends JavaPlugin {
         playerRegistry = null;
         try {
             injector.eject();
+            injector = null;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

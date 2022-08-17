@@ -197,14 +197,18 @@ public class APlayer {
         }
 
         InstantAction startAction = new InstantAction(startId, endId, false);
-        instantTransaction.put(startId, new Tuple<>(startAction, runnable));
+        synchronized (instantTransaction) {
+            instantTransaction.put(startId, new Tuple<>(startAction, runnable));
+        }
 
         HandlerAbstract.getHandler().sendPacket(this, new PacketPlayOutTransaction(0, startId, false));
 
         short finalEndId = endId, finalStartId = startId;
         Anticheat.INSTANCE.onTickEnd(() -> {
             InstantAction endAction = new InstantAction(finalStartId, finalEndId, true);
-            instantTransaction.put(finalEndId, new Tuple<>(endAction, runnable));
+            synchronized (instantTransaction) {
+                instantTransaction.put(finalEndId, new Tuple<>(endAction, runnable));
+            }
 
             HandlerAbstract.getHandler()
                     .sendPacket(this, new PacketPlayOutTransaction(0, finalEndId, false));
