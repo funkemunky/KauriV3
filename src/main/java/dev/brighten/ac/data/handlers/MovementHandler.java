@@ -150,11 +150,10 @@ public class MovementHandler {
                     accurateYawData = true;
 
                     //Making sure to get shit within the std for a more accurate result.
-
-                    //Making sure to get shit within the std for a more accurate result.
                     currentSensX = getSensitivityFromYawGCD(yawGcd);
                     currentSensY = getSensitivityFromPitchGCD(pitchGcd);
                     if (lastReset.isPassed()) {
+                        yawMode = MathUtils.getMode(yawGcdList);
                         pitchMode = MathUtils.getMode(pitchGcdList);
                         lastReset.reset();
                         sensXPercent = sensToPercent(sensitivityX = getSensitivityFromYawGCD(yawMode));

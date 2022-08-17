@@ -6,6 +6,7 @@ import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.CheckType;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
+import dev.brighten.ac.utils.Color;
 import dev.brighten.ac.utils.timer.Timer;
 import dev.brighten.ac.utils.timer.impl.TickTimer;
 
@@ -24,21 +25,42 @@ public class Aim extends Check {
     public void flying(WPacketPlayInFlying packet) {
         if(!packet.isLooked()) return;
 
-        if(getPlayer().getMovement().getYawGcdList().size() < 40
-                || getPlayer().getMovement().getLookX() > 200 || getPlayer().getMovement().getLookY() > 200) {
+        if(getPlayer().getMovement().getYawGcdList().size() < 40) {
             if(buffer > 0) buffer--;
             return;
         }
 
-        if(getPlayer().getMovement().getPitchGCD() < 0.007
-                && !getPlayer().getMovement().isCinematic()) {
-            if(Math.abs(getPlayer().getMovement().getDeltaPitch()) < 10 && ++buffer > 4) {
-                flag("gcd=%.5f", getPlayer().getMovement().getPitchGCD());
+        final float deltaYaw = Math.abs(getPlayer().getMovement().getDeltaYaw());
+        final float deltaPitch = Math.abs(getPlayer().getMovement().getDeltaPitch());
+        final float deltaX = deltaYaw / getPlayer().getMovement().getYawMode(),
+                deltaY = deltaPitch / getPlayer().getMovement().getPitchMode();
+
+        final double gridX = getGrid(getPlayer().getMovement().getYawGcdList()),
+                gridY = getGrid(getPlayer().getMovement().getPitchGcdList());
+
+        if(gridX < 0.005 || gridY < 0.005) lastGrid.reset();
+
+        if(deltaX > 200 || deltaY > 200) {
+            debug("sensitivity instability: mcp=%.4f, cx=%.4f, cy=%.4f, dx=%.1f, dy=%.1f",
+                    getPlayer().getMovement().getSensitivityMcp(), getPlayer().getMovement().getCurrentSensX(),
+                    getPlayer().getMovement().getCurrentSensY(), deltaX, deltaY);
+            if(buffer > 0) buffer--;
+            return;
+        }
+
+        boolean increasing = deltaYaw > deltaX || deltaPitch > deltaY;
+
+        boolean flagged = false;
+        if(getPlayer().getMovement().getPitchGCD() < 0.007 && lastGrid.isPassed() && getPlayer().getMovement().getLastHighRate().isNotPassed(3)) {
+            if(deltaPitch < 10 && ++buffer > 8) {
+                flag("%s", getPlayer().getMovement().getPitchGCD());
             }
+            flagged = true;
         } else buffer = 0;
 
-        debug("b=%s gcd=%.4f cin=%s", buffer, getPlayer().getMovement().getPitchGCD(),
-                getPlayer().getMovement().isCinematic());
+        debug((flagged ? Color.Green : "") +"sensitivity: mcp=%.4f, cx=%.4f, cy=%.4f, dx=%.1f, dy=%.1f",
+                getPlayer().getMovement().getSensitivityMcp(), getPlayer().getMovement().getCurrentSensX(),
+                getPlayer().getMovement().getCurrentSensY(), deltaX, deltaY);
 
     }
 
