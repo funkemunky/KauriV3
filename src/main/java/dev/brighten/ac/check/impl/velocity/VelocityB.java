@@ -2,7 +2,7 @@ package dev.brighten.ac.check.impl.velocity;
 
 import dev.brighten.ac.check.Action;
 import dev.brighten.ac.check.Check;
-import dev.brighten.ac.check.impl.speed.Speed;
+import dev.brighten.ac.check.impl.speed.Horizontal;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInUseEntity;
@@ -128,7 +128,7 @@ public class VelocityB extends Check {
 
                 found = true;
                 if(!velocity.isPresent()) {
-                    Speed speedCheck = (Speed) getPlayer().findCheck(Speed.class);
+                    Horizontal speedCheck = (Horizontal) getPlayer().findCheck(Horizontal.class);
                     double s2 = speedCheck.strafe;
                     double f2 = speedCheck.forward;
 

@@ -18,8 +18,8 @@ import org.bukkit.util.Vector;
 
 import java.util.Deque;
 
-@CheckData(name = "Speed", type = CheckType.MOVEMENT)
-public class Speed extends Check {
+@CheckData(name = "Horizontal", type = CheckType.MOVEMENT)
+public class Horizontal extends Check {
     private boolean lastLastClientGround;
     private float buffer;
     private Vector velocity;
@@ -29,7 +29,7 @@ public class Speed extends Check {
 
     public double strafe, forward;
 
-    public Speed(APlayer player) {
+    public Horizontal(APlayer player) {
         super(player);
     }
 
@@ -79,6 +79,10 @@ public class Speed extends Check {
                                                     for (boolean jumped : TRUE_FALSE) {
 
                                                         float forward = f, strafe = s;
+
+                                                        if(sprinting && forward <= 0) {
+                                                            continue;
+                                                        }
 
                                                         if (sneaking) {
                                                             forward *= 0.3;
@@ -221,8 +225,8 @@ public class Speed extends Check {
 
             double pmotion = Math.hypot(pmotionx, pmotionz);
 
-            if (getPlayer().getMovement().getDeltaXZ() > pmotion && smallestDelta > 1E-4 && getPlayer().getMovement().getDeltaXZ() > 0.1) {
-                if (++buffer > 3) {
+            if (getPlayer().getMovement().getDeltaXZ() > pmotion && smallestDelta > 5E-13 && getPlayer().getMovement().getDeltaXZ() > 0.1) {
+                if ((buffer+= smallestDelta > 5E-4 ? 1 : 0.5) > 3) {
                     buffer = Math.min(3.5f, buffer); //Ensuring we don't have a run-away buffer
                     flag("smallest=%s b=%.1f to=%s dxz=%.2f", smallestDelta, buffer, getPlayer().getMovement().getTo().getLoc(), getPlayer().getMovement().getDeltaXZ());
                 }

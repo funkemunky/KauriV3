@@ -88,6 +88,20 @@ public class PacketHandler {
                 }
                 break;
             }
+            case SERVER_ABILITIES: {
+                WPacketPlayOutAbilities packet = (WPacketPlayOutAbilities) packetObject;
+
+                player.getInfo().getLastAbilities().reset();
+
+                player.runInstantAction(ia -> {
+                    if(!ia.isEnd()) {
+                        player.getInfo().getPossibleCapabilities().add(packet.getCapabilities());
+                    } else if(player.getInfo().getPossibleCapabilities().size() > 1) {
+                        player.getInfo().getPossibleCapabilities().remove(0);
+                    }
+                });
+                break;
+            }
             case FLYING: {
                 WPacketPlayInFlying packet = (WPacketPlayInFlying) packetObject;
 

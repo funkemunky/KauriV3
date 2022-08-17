@@ -37,9 +37,15 @@ public interface PacketConverter {
 
     WPacketPlayOutEntityVelocity processVelocity(Object object);
 
+    WPacketPlayOutAbilities processOutAbilities(Object object);
+
+    Object processOutAbilities(WPacketPlayOutAbilities packet);
+
     Object processVelocity(WPacketPlayOutEntityVelocity packet);
 
     WPacketPlayOutWorldParticles processParticles(Object object);
 
     Object processParticles(WPacketPlayOutWorldParticles packet);
+
+    WPacketPlayOutPlayerInfo processInfo(Object object);
 }

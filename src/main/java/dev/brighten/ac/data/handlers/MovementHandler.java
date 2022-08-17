@@ -193,7 +193,13 @@ public class MovementHandler {
         }
 
         player.getInfo().setCreative(player.getBukkitPlayer().getGameMode() == GameMode.CREATIVE
-                || player.getBukkitPlayer().getGameMode() == GameMode.SPECTATOR);
+                || player.getBukkitPlayer().getGameMode() == GameMode.SPECTATOR
+                || player.getInfo().getPossibleCapabilities().stream()
+                .anyMatch(capability -> capability.canInstantlyBuild));
+
+        player.getInfo().setCanFly(player.getBukkitPlayer().getAllowFlight()
+                || player.getInfo().getPossibleCapabilities().stream()
+                .anyMatch(capability -> capability.canFly));
 
         boolean hasLevitation = ProtocolVersion.getGameVersion().isOrAbove(ProtocolVersion.V1_9)
                 && player.getPotionHandler().hasPotionEffect(XPotion.LEVITATION.getPotionEffectType());
@@ -208,6 +214,7 @@ public class MovementHandler {
         player.getInfo().setGeneralCancel(player.getBukkitPlayer().getAllowFlight()
                 || moveTicks == 0
                 || excuseNextFlying
+                || player.getInfo().isCanFly()
                 || player.getInfo().isCreative()
                 || lastTeleport.isNotPassed(2)
                 || teleportsToConfirm > 0

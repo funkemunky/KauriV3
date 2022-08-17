@@ -34,6 +34,16 @@ public class VelocityA extends Check {
                 && !getPlayer().getInfo().isGeneralCancel()) {
             double pct = getPlayer().getMovement().getDeltaY() / currentVelocity.getY() * 100;
 
+            if(currentVelocity.getY() < 0.005
+                    || getPlayer().getBlockInformation().collidesHorizontally
+                    || getPlayer().getInfo().getLastAbilities().isNotPassed(3)
+                    || getPlayer().getBlockInformation().collidesVertically
+                    || getPlayer().getInfo().getVelocity().isPassed(7)) {
+                currentVelocity = null;
+                return;
+            }
+
+
             if(pct < 99.999 || pct > 400) {
                 if(++buffer > 15) {
                     flag("pct=%.1f%% buffer=%.1f", pct, buffer);
@@ -44,12 +54,6 @@ public class VelocityA extends Check {
                     getPlayer().getMovement().getDeltaY(), currentVelocity.getY());
 
             currentVelocity.setY((currentVelocity.getY() - 0.08) * 0.98);
-
-            if(currentVelocity.getY() < 0.005
-                    || getPlayer().getBlockInformation().collidesHorizontally
-                    || getPlayer().getBlockInformation().collidesVertically
-                    || getPlayer().getInfo().getVelocity().isPassed(7))
-                currentVelocity = null;
         } else if(currentVelocity != null) {
             debug("not null: " + currentVelocity.getY());
         }

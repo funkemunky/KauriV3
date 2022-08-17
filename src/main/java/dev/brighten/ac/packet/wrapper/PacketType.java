@@ -40,6 +40,7 @@ public enum PacketType {
     SERVER_ABILITIES("PacketPlayOutAbilities"),
     ENTITY_METADATA("PacketPlayOutEntityMetadata"),
     VELOCITY("PacketPlayOutEntityVelocity"),
+    INFO("PacketPlayOutInfo"),
     ENTITY_DESTROY("PacketPlayOutEntityDestroy"),
     SCOREBOARD_DISPLAY_OBJECTIVE("PacketPlayOutScoreboardDisplayObjective"),
     SCOREBOARD_OBJECTIVE("PacketPlayOutScoreboardObjective"),
@@ -126,6 +127,8 @@ public enum PacketType {
                 return convert.processMultiBlockChange(object);
             case VELOCITY:
                 return convert.processVelocity(object);
+            case SERVER_ABILITIES:
+                return convert.processOutAbilities(object);
             default:
                 return object;
         }

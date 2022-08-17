@@ -3,6 +3,7 @@ package dev.brighten.ac.packet.wrapper.impl;
 import dev.brighten.ac.packet.wrapper.PacketConverter;
 import dev.brighten.ac.packet.wrapper.in.*;
 import dev.brighten.ac.packet.wrapper.objects.EnumParticle;
+import dev.brighten.ac.packet.wrapper.objects.PlayerCapabilities;
 import dev.brighten.ac.packet.wrapper.objects.WrappedEnumDirection;
 import dev.brighten.ac.packet.wrapper.out.*;
 import dev.brighten.ac.utils.math.IntVector;
@@ -39,16 +40,27 @@ public class Processor_18 implements PacketConverter {
                 .build();
     }
 
-    private static final WrappedClass classAbilities = new WrappedClass(PacketPlayInAbilities.class);
+    private static final WrappedClass classAbilities = new WrappedClass(PacketPlayInAbilities.class),
+            outClassAbilities = new WrappedClass(PacketPlayOutAbilities.class);
     private static final WrappedField fieldFlySpeed = classAbilities.getFieldByType(float.class, 0),
             fieldWalkSpeed = classAbilities.getFieldByType(float.class, 1);
+
+    private static final WrappedField outfieldFlySpeed = outClassAbilities.getFieldByType(float.class, 0),
+            outfieldWalkSpeed = outClassAbilities.getFieldByType(float.class, 1);
     @Override
     public WPacketPlayInAbilities processAbilities(Object object) {
         PacketPlayInAbilities abilities = (PacketPlayInAbilities) object;
 
-        return WPacketPlayInAbilities.builder().allowedFlight(abilities.a()).flying(abilities.isFlying())
-                .allowedFlight(abilities.c()).creativeMode(abilities.d()).flySpeed(fieldFlySpeed.get(abilities))
-                .walkSpeed(fieldWalkSpeed.get(abilities)).build();
+        return WPacketPlayInAbilities.builder()
+                .capabilities(PlayerCapabilities.builder()
+                        .isInvulnerable(abilities.a())
+                        .isFlying(abilities.isFlying())
+                        .canFly(abilities.c())
+                        .canInstantlyBuild(abilities.d())
+                        .flySpeed(fieldFlySpeed.get(abilities))
+                        .walkSpeed(fieldWalkSpeed.get(abilities))
+                        .build())
+                .build();
     }
 
     @Override
@@ -297,6 +309,35 @@ public class Processor_18 implements PacketConverter {
     }
 
     @Override
+    public WPacketPlayOutAbilities processOutAbilities(Object object) {
+        PacketPlayOutAbilities packet = (PacketPlayOutAbilities) object;
+        return WPacketPlayOutAbilities.builder()
+                .capabilities(PlayerCapabilities.builder()
+                        .isInvulnerable(packet.a())
+                        .isFlying(packet.b())
+                        .canFly(packet.c())
+                        .canInstantlyBuild(packet.d())
+                        .flySpeed(outfieldFlySpeed.get(packet))
+                        .walkSpeed(outfieldWalkSpeed.get(packet))
+                        .build())
+                .build();
+    }
+
+    @Override
+    public Object processOutAbilities(WPacketPlayOutAbilities packet) {
+        PlayerAbilities abilities = new PlayerAbilities();
+
+        abilities.canFly = packet.getCapabilities().canFly;
+        abilities.isFlying = packet.getCapabilities().isFlying;
+        abilities.isInvulnerable = packet.getCapabilities().isInvulnerable;
+        abilities.canInstantlyBuild = packet.getCapabilities().canInstantlyBuild;
+        abilities.flySpeed = packet.getCapabilities().flySpeed;
+        abilities.walkSpeed = packet.getCapabilities().walkSpeed;
+
+        return new PacketPlayOutAbilities(abilities);
+    }
+
+    @Override
     public Object processVelocity(WPacketPlayOutEntityVelocity packet) {
         return new PacketPlayOutEntityVelocity(packet.getEntityId(), packet.getDeltaX(), packet.getDeltaY(), packet.getDeltaZ());
     }
@@ -332,6 +373,12 @@ public class Processor_18 implements PacketConverter {
         return new PacketPlayOutWorldParticles(net.minecraft.server.v1_8_R3.EnumParticle.valueOf(packet.getParticle().name()),
                 packet.isLongD(), packet.getX(), packet.getY(), packet.getZ(), packet.getOffsetX(), packet.getOffsetY(), packet.getOffsetZ(),
                 packet.getSpeed(), packet.getAmount(), packet.getData());
+    }
+
+    @Override
+    public WPacketPlayOutPlayerInfo processInfo(Object object) {
+        PacketPlayOutPlayerInfo packet = (PacketPlayOutPlayerInfo) object;
+        return null;
     }
 
     private PacketDataSerializer serialize(Packet packet) {

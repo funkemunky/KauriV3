@@ -57,7 +57,8 @@ public class FlyA extends Check {
         if(!getPlayer().getInfo().isGeneralCancel()
                 && getPlayer().getInfo().getBlockAbove().isPassed(1)
                 && !getPlayer().getInfo().isOnLadder()
-                && !(onGround && !fromGround)
+                && !getPlayer().getBlockInformation().inWeb
+                && !getPlayer().getBlockInformation().onHalfBlock
                 && getPlayer().getInfo().getVelocity().isPassed(1)
                 && !getPlayer().getBlockInformation().onSlime && deltaPredict > 0.016) {
             if(++buffer > 5) {
