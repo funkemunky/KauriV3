@@ -44,6 +44,9 @@ public class Reach extends Check {
         }
     }
 
+    //TODO Figure out how to make the check more sensitive without compromising network stability
+    //Aka figure out how to minimize the amount of previous locations needed to process to keep network
+    //stability. like shortening the amount stored, or removing older ones.
     @Action
     public void onFlying(WPacketPlayInFlying packet) {
         if(getPlayer().getInfo().isCreative() || getPlayer().getInfo().isInVehicle()) {
