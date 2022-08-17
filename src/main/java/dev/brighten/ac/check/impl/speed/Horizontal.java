@@ -248,9 +248,9 @@ public class Horizontal extends Check {
             double pmotion = Math.hypot(pmotionx, pmotionz);
 
             if (getPlayer().getMovement().getDeltaXZ() > pmotion
-                    && smallestDelta > (getPlayer().getBlockInformation().onSoulSand ? 5E-4 : 5E-13)
+                    && smallestDelta > (getPlayer().getBlockInformation().onSoulSand ? 0.01 : 5E-13)
                     && getPlayer().getMovement().getDeltaXZ() > 0.1) {
-                if ((buffer += smallestDelta > 5E-4 ? 1 : 0.5) > 3) {
+                if ((buffer += smallestDelta > 58E-4 ? 1 : 0.5) > 3) {
                     buffer = Math.min(3.5f, buffer); //Ensuring we don't have a run-away buffer
                     flag("smallest=%s b=%.1f to=%s dxz=%.2f", smallestDelta, buffer,
                             getPlayer().getMovement().getTo().getLoc(), getPlayer().getMovement().getDeltaXZ());

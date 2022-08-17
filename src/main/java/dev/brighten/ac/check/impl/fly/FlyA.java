@@ -60,6 +60,7 @@ public class FlyA extends Check {
                 && !getPlayer().getBlockInformation().inWeb
                 && !getPlayer().getBlockInformation().inScaffolding
                 && !getPlayer().getBlockInformation().inLiquid
+                && !getPlayer().getBlockInformation().fenceBelow
                 && !getPlayer().getBlockInformation().onHalfBlock
                 && getPlayer().getInfo().getVelocity().isPassed(1)
                 && !getPlayer().getBlockInformation().onSlime && deltaPredict > 0.016) {

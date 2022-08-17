@@ -12,10 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 
-import java.util.EnumSet;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 @RequiredArgsConstructor
@@ -54,7 +51,6 @@ public class EntityLocationHandler {
             streak = 1;
         }
 
-        entityLocationMap.values().forEach(EntityLocation::interpolateLocation);
         lastFlying.reset();
     }
 
@@ -77,6 +73,12 @@ public class EntityLocationHandler {
                 key -> new EntityLocation(entity));
 
         runAction(entity, () -> {
+            //Ensuring fully interpolated before clearing old locations
+            while(eloc.increment > 0) {
+                eloc.interpolateLocation();
+            }
+            eloc.oldLocations.addAll(eloc.interpolatedLocations);
+            eloc.interpolateLocations();
             //We don't need to do version checking here. Atlas handles this for us.
             eloc.newX += packet.getX();
             eloc.newY += packet.getY();
@@ -107,6 +109,12 @@ public class EntityLocationHandler {
                 key -> new EntityLocation(entity));
 
         runAction(entity, () -> {
+            //Ensuring fully interpolated before clearing old locations
+            while(eloc.increment > 0) {
+                eloc.interpolateLocation();
+            }
+            eloc.oldLocations.addAll(eloc.interpolatedLocations);
+            eloc.interpolateLocations();
             if(data.getPlayerVersion().isOrAbove(ProtocolVersion.V1_9)) {
                 if (!(Math.abs(eloc.x - packet.getX()) >= 0.03125D)
                         && !(Math.abs(eloc.y - packet.getY()) >= 0.015625D)
