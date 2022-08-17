@@ -1,0 +1,28 @@
+name: "CI/CD"
+on: [push]
+ 
+jobs:
+  CI:
+ 
+    runs-on: ubuntu-latest
+ 
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up JDK 17.0.2
+        uses: actions/setup-java@v1
+        with:
+          java-version: 17.0
+      - name: Cache Maven packages
+        uses: actions/cache@v2
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+      - name: Compile
+        run: mvn -B clean package -DskipTests
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload Enterprise
+        uses: actions/upload-artifact@v2
+        with:
+          name: Kauri with Detections
+          path: target/EnterpriseAnticheat-*.jar
