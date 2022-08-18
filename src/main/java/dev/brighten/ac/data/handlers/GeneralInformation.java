@@ -33,4 +33,5 @@ public class GeneralInformation {
     private KLocation lastKnownGoodPosition;
     private List<Vector> velocityHistory = Collections.synchronizedList(new EvictingList<>(5));
     private List<PlayerCapabilities> possibleCapabilities = new ArrayList<>();
+    private int clientGroundTicks, clientAirTicks;
 }
