@@ -299,5 +299,10 @@ public class PacketHandler {
         }
 
         player.callPacket(packetObject, timestamp);
+
+        // Post flying settings
+        if(type.equals(PacketType.FLYING)) {
+            player.getInfo().lsneaking = player.getInfo().sneaking;
+        }
     }
 }

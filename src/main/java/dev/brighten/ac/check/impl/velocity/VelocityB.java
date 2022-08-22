@@ -158,10 +158,10 @@ public class VelocityB extends Check {
                         && player.getCreation().isPassed(3000L)
                         && player.getMovement().getLastTeleport().isPassed(1)
                         && !player.getBlockInfo().blocksNear) {
-                    if(player.getInfo().lastUseItem.isPassed(2) && ++buffer > 20) {
+                    if(player.getInfo().lastUseItem.isPassed(2) && ++buffer > 11) {
                         flag("pct=%.2f buffer=%.1f forward=%.2f strafe=%.2f",
                                 ratio * 100, buffer, moveStrafe, moveForward);
-                        buffer = 21;
+                        buffer = 11;
                     }
                 } else if(buffer > 0) buffer-= 0.5;
 
@@ -170,16 +170,8 @@ public class VelocityB extends Check {
                         buffer, ticks, moveStrafe, moveForward,
                         found, player.getInfo().getVelocity().getPassed());
 
-                pvX *= drag;
-                pvZ *= drag;
-
-                if(++ticks > 2) {
-                    ticks = 0;
-                    pvX = pvZ = 0;
-                }
-
-                if(Math.abs(pvX) < 0.005) pvX = 0;
-                if(Math.abs(pvZ) < 0.005) pvZ = 0;
+                pvX = 0;
+                pvZ = 0;
             }
         }
         sprint = player.getInfo().isSprinting();

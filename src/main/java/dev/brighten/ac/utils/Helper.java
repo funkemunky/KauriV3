@@ -40,8 +40,8 @@ public class Helper {
 		return PlayerSizeHandler.instance.bounds(player, x, y, z);
 	}
 
-	public static void drawRay(RayCollision collision, EnumParticle particle, Collection<? extends Player> players) {
-		for (double i = 0; i < 8; i += 0.2) {
+	public static void drawRay(RayCollision collision, double distance, EnumParticle particle, Collection<? extends Player> players) {
+		for (double i = 0; i < 3; i += 0.2) {
 			float fx = (float) (collision.originX + (collision.directionX * i));
 			float fy = (float) (collision.originY + (collision.directionY * i));
 			float fz = (float) (collision.originZ + (collision.directionZ * i));

@@ -54,6 +54,7 @@ public class Horizontal extends Check {
                             .getPossibleMaterials(new IntVector(lastUnderBlock.getX(), lastUnderBlock.getY(), lastUnderBlock.getZ()));
 
             if (!packet.isMoved()
+                    || player.getMovement().getMoveTicks() == 0
                     || player.getInfo().getVelocity().isNotPassed(1)
                     || player.getInfo().isGeneralCancel()
                     || player.getBlockInfo().onClimbable
@@ -254,10 +255,8 @@ public class Horizontal extends Check {
                     buffer = Math.min(3.5f, buffer); //Ensuring we don't have a run-away buffer
                     flag("smallest=%s b=%.1f to=%s dxz=%.2f", smallestDelta, buffer,
                             player.getMovement().getTo().getLoc(), player.getMovement().getDeltaXZ());
-                } else {
-                    debug("bad movement");
                     cancel();
-                }
+                } else debug("bad movement");
             } else if (buffer > 0) buffer -= 0.1f;
 
             debug("smallest=%s pm=%.5f dxz=%.5f b=%.1f f/s=%.2f,%.2f soulsand=%s", smallestDelta, pmotion,

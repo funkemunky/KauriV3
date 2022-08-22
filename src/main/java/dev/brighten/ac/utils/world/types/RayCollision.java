@@ -136,7 +136,7 @@ public class RayCollision implements CollisionBox {
 
     @Override
     public void draw(EnumParticle particle, Player... players) {
-        Helper.drawRay(this, particle, Arrays.asList(players));
+        Helper.drawRay(this, 3, particle, Arrays.asList(players));
     }
 
     public List<CollisionBox> boxesOnRay(World world, double distance) {
@@ -173,6 +173,40 @@ public class RayCollision implements CollisionBox {
 
         return boxes;
     }
+
+    public Block getClosestBlockOfType(World world, int bitmask, double distance) {
+        int amount = Math.round((float) (distance / 0.5));
+
+        Location[] locs = new Location[Math.max(2, amount)]; //We do a max to prevent NegativeArraySizeException.
+        boolean primaryThread = Bukkit.isPrimaryThread();
+        ProtocolVersion version = ProtocolVersion.getGameVersion();
+
+        for (int i = 0; i < locs.length; i++) {
+            double ix = i / 2d;
+
+            double fx = (originX + (directionX * ix));
+            double fy = (originY + (directionY * ix));
+            double fz = (originZ + (directionZ * ix));
+
+            Location loc = new Location(world, fx, fy, fz);
+
+            Block block = primaryThread ? loc.getBlock() : BlockUtils.getBlock(loc);
+
+            if (block == null) continue;
+
+            final Material type = block.getType();
+
+            if (!Materials.checkFlag(type, bitmask)) continue;
+
+            CollisionBox box = BlockData.getData(type).getBox(block, version);
+
+            if (!isCollided(box)) continue;
+
+            return block;
+        }
+        return null;
+    }
+
 
     @Override
     public void downCast(List<SimpleCollisionBox> list) {/*Do Nothing, Ray cannot be down-casted*/}

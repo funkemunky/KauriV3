@@ -21,7 +21,7 @@ import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
 
 @CheckData(name = "Hitbox", type = CheckType.COMBAT)
-public class Reach extends Check {
+public class Hitbox extends Check {
     private float buffer;
     private int hbuffer;
 
@@ -32,7 +32,7 @@ public class Reach extends Check {
             EntityType.BLAZE, EntityType.SKELETON, EntityType.PLAYER, EntityType.VILLAGER, EntityType.IRON_GOLEM,
             EntityType.WITCH, EntityType.COW, EntityType.CREEPER);
 
-    public Reach(APlayer player) {
+    public Hitbox(APlayer player) {
         super(player);
     }
 
@@ -57,19 +57,19 @@ public class Reach extends Check {
 
         while((target = attacks.poll()) != null) {
             //Updating new entity loc
-            Optional<EntityLocation> optionalEloc = player.getEntityLocationHandler().getEntityLocation(target.one);
+            Optional<Tuple<EntityLocation, EntityLocation>> optionalEloc = player.getEntityLocationHandler().getEntityLocation(target.one);
 
             if(!optionalEloc.isPresent()) {
                 return;
             }
 
-            final EntityLocation eloc = optionalEloc.get();
+            final Tuple<EntityLocation, EntityLocation> eloc = optionalEloc.get();
 
             final KLocation to = target.two;
 
-            debug("current loc: %.4f, %.4f, %.4f", eloc.x, eloc.y, eloc.z);
+            debug("current loc: %.4f, %.4f, %.4f", eloc.one.x, eloc.one.y, eloc.one.z);
 
-            if(eloc.x == 0 && eloc.y == 0 & eloc.z == 0) {
+            if(eloc.one.x == 0 && eloc.one.y == 0 & eloc.one.z == 0) {
                 return;
             }
 
@@ -77,8 +77,8 @@ public class Reach extends Check {
             boolean collided = false; //Using this to compare smaller numbers than Double.MAX_VALUE. Slightly faster
 
             List<SimpleCollisionBox> boxes = new ArrayList<>();
-            if(eloc.oldLocations.size() > 0) {
-                for (KLocation oldLocation : eloc.oldLocations) {
+            if(eloc.two != null) {
+                for (KLocation oldLocation : eloc.one.interpolatedLocations) {
                     SimpleCollisionBox box = (SimpleCollisionBox)
                             EntityData.getEntityBox(oldLocation.toVector(), target.one);
 
@@ -87,7 +87,7 @@ public class Reach extends Check {
                     } else box = box.expand(0.0325);
                     boxes.add(box);
                 }
-                for (KLocation oldLocation : eloc.interpolatedLocations) {
+                for (KLocation oldLocation : eloc.two.interpolatedLocations) {
                     SimpleCollisionBox box = (SimpleCollisionBox)
                             EntityData.getEntityBox(oldLocation.toVector(), target.one);
 
@@ -97,7 +97,7 @@ public class Reach extends Check {
                     boxes.add(box);
                 }
             } else {
-                for (KLocation oldLocation : eloc.interpolatedLocations) {
+                for (KLocation oldLocation : eloc.one.interpolatedLocations) {
                     SimpleCollisionBox box = (SimpleCollisionBox)
                             EntityData.getEntityBox(oldLocation.toVector(), target.one);
 
@@ -163,10 +163,10 @@ public class Reach extends Check {
             if(collided) {
                 hbuffer = 0;
                 distance = Math.sqrt(distance);
-                if(distance > 3.05) {
-                    if(++buffer > 2) {
-                        flag("d=%.3f>-3.05", distance);
-                        buffer = Math.min(2, buffer);
+                if(distance > 3.001) {
+                    if(++buffer > 1) {
+                        flag("d=%.3f>-3.0", distance);
+                        buffer = Math.min(1, buffer);
                     }
                 } else if(buffer > 0) buffer-= 0.05f;
 
@@ -175,7 +175,7 @@ public class Reach extends Check {
                 debug("buffer: %.3f distance=%.2f hits=%s", buffer, distance, hits);
             } else {
                 if (++hbuffer > 5) {
-                    flag("%.1f;%.1f;%.1f", eloc.x, eloc.y, eloc.z);
+                    flag("%.1f;%.1f;%.1f", eloc.one.x, eloc.one.y, eloc.one.z);
                 }
                 debug("Missed!");
             }

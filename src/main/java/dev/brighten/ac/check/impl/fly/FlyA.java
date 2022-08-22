@@ -55,19 +55,23 @@ public class FlyA extends Check {
         double deltaPredict = MathUtils.getDelta(player.getMovement().getDeltaY(), predicted);
 
         if(!player.getInfo().isGeneralCancel()
+                && player.getMovement().getTeleportsToConfirm() == 0
                 && player.getInfo().getBlockAbove().isPassed(1)
                 && !player.getInfo().isOnLadder()
+                && player.getInfo().climbTimer.isPassed(2)
                 && !player.getBlockInfo().inWeb
                 && !player.getBlockInfo().inScaffolding
-                && !player.getBlockInfo().inLiquid
+                && player.getInfo().getLastLiquid().isPassed(2)
                 && !player.getBlockInfo().fenceBelow
+                && !player.getInfo().isServerGround()
                 && !player.getBlockInfo().onHalfBlock
                 && player.getInfo().getVelocity().isPassed(1)
                 && !player.getBlockInfo().onSlime && deltaPredict > 0.001) {
-            if(++buffer > 5) {
-                buffer = 5;
+            if(++buffer > 3) {
+                buffer = 3;
                 flag("dY=%.3f p=%.3f dx=%.3f", player.getMovement().getDeltaY(), predicted,
                         player.getMovement().getDeltaXZ());
+                cancel();
             }
         } else buffer-= buffer > 0 ? 0.25f : 0;
 

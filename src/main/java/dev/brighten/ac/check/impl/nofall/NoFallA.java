@@ -19,7 +19,7 @@ public class NoFallA extends Check {
 
     @Action
     public void onFlying(WPacketPlayInFlying packet) {
-        if(!player.getInfo().isGeneralCancel()
+        if(player.getInfo().isGeneralCancel()
                 || (player.getMovement().getDeltaXZ() == 0 && player.getMovement().getDeltaY() == 0)
                 || player.getBlockInfo().inLiquid
                 || player.getMovement().getLastTeleport().isNotPassed(1)

@@ -17,9 +17,8 @@ public class EntityLocation {
     public float newYaw, newPitch, yaw, pitch;
     public int increment = 0;
     public boolean sentTeleport = false;
-    public KLocation oldLocation, location;
-    public Deque<KLocation> oldLocations = new EvictingList<>(3),
-            interpolatedLocations = new EvictingList<>(3);
+    public KLocation location;
+    public Deque<KLocation> interpolatedLocations = new EvictingList<>(2);
 
     public void interpolateLocations() {
         increment = 3;

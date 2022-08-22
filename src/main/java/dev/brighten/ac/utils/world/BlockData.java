@@ -96,7 +96,10 @@ public enum BlockData {
             || mat.name().contains("HEAD")).toArray(Material[]::new)),
 
     _DOOR(new DoorHandler(), Arrays.stream(Material.values())
-            .filter(mat -> !mat.name().contains("TRAP") && mat.name().contains("DOOR"))
+            .filter(mat -> !mat.name().contains("TRAP") && !mat.name().contains("ITEM")
+                    && mat.name().contains("DOOR")
+                    // Potential cause for ClassCastException to MaterialData instead of Door
+                    && !mat.name().equals("WOOD_DOOR") && !mat.name().equals("IRON_DOOR"))
             .toArray(Material[]::new)),
 
     _HOPPER(new HopperBounding(), XMaterial.HOPPER.parseMaterial()),
@@ -216,7 +219,7 @@ public enum BlockData {
         if (v.isBelow(ProtocolVersion.V1_9))
             return new SimpleCollisionBox(0.0f, 0.0F, 0.0f, 1.0f, 0.015625F, 1.0f);
         return new SimpleCollisionBox(0.0625, 0.0F, 0.0625, 0.9375, 0.015625F, 0.9375);
-    }, MiscUtils.match("WATER_LILY")),
+    }, XMaterial.LILY_PAD.parseMaterial()),
 
     _BED(new SimpleCollisionBox(0.0F, 0.0F, 0.0F, 1.0F, 0.5625, 1.0F),
             Arrays.stream(XMaterial.values()).filter(mat -> mat.name().contains("BED") && !mat.name().contains("ROCK"))

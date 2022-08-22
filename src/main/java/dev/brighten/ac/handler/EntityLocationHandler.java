@@ -6,13 +6,18 @@ import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.packet.wrapper.out.WPacketPlayOutEntity;
 import dev.brighten.ac.packet.wrapper.out.WPacketPlayOutEntityTeleport;
 import dev.brighten.ac.utils.EntityLocation;
+import dev.brighten.ac.utils.Tuple;
 import dev.brighten.ac.utils.timer.Timer;
 import dev.brighten.ac.utils.timer.impl.MillisTimer;
 import lombok.RequiredArgsConstructor;
+import lombok.val;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 
-import java.util.*;
+import java.util.EnumSet;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 @RequiredArgsConstructor
@@ -20,7 +25,7 @@ public class EntityLocationHandler {
 
     private final APlayer data;
 
-    private final Map<UUID, EntityLocation> entityLocationMap = new ConcurrentHashMap<>();
+    private final Map<UUID, Tuple<EntityLocation, EntityLocation>> entityLocationMap = new ConcurrentHashMap<>();
     private final Timer lastFlying = new MillisTimer();
     public int streak;
 
@@ -36,7 +41,7 @@ public class EntityLocationHandler {
      * @param entity Entity
      * @return Optional<EntityLocation></EntityLocation>
      */
-    public Optional<EntityLocation> getEntityLocation(Entity entity) {
+    public Optional<Tuple<EntityLocation, EntityLocation>> getEntityLocation(Entity entity) {
         return Optional.ofNullable(entityLocationMap.get(entity.getUniqueId()));
     }
 
@@ -51,7 +56,10 @@ public class EntityLocationHandler {
             streak = 1;
         }
 
-        entityLocationMap.values().forEach(EntityLocation::interpolateLocation);
+        entityLocationMap.values().forEach(eloc -> {
+            if(eloc.one != null) eloc.one.interpolateLocation();
+            if(eloc.two != null) eloc.two.interpolateLocation();
+        });
 
         lastFlying.reset();
     }
@@ -71,15 +79,14 @@ public class EntityLocationHandler {
 
         if(!allowedEntityTypes.contains(entity.getType())) return;
 
-        EntityLocation eloc = entityLocationMap.computeIfAbsent(entity.getUniqueId(),
-                key -> new EntityLocation(entity));
+        val tuple = entityLocationMap.computeIfAbsent(entity.getUniqueId(),
+                key -> new Tuple<>(new EntityLocation(entity), null));
+
+        EntityLocation eloc = tuple.one;
+
+        tuple.two = tuple.one.clone();
 
         runAction(entity, () -> {
-            eloc.oldLocations.addAll(eloc.interpolatedLocations);
-
-            while(eloc.interpolatedLocations.size() > 1) {
-                eloc.interpolatedLocations.removeFirst();
-            }
             //We don't need to do version checking here. Atlas handles this for us.
             eloc.newX += packet.getX();
             eloc.newY += packet.getY();
@@ -106,14 +113,14 @@ public class EntityLocationHandler {
 
         if(!allowedEntityTypes.contains(entity.getType())) return;
 
-        EntityLocation eloc = entityLocationMap.computeIfAbsent(entity.getUniqueId(),
-                key -> new EntityLocation(entity));
+        val tuple = entityLocationMap.computeIfAbsent(entity.getUniqueId(),
+                key -> new Tuple<>(new EntityLocation(entity), null));
+
+        EntityLocation eloc = tuple.one;
+
+        tuple.two = tuple.one.clone();
 
         runAction(entity, () -> {
-            eloc.oldLocations.addAll(eloc.interpolatedLocations);
-            while(eloc.interpolatedLocations.size() > 1) {
-                eloc.interpolatedLocations.removeFirst();
-            }
             if(data.getPlayerVersion().isOrAbove(ProtocolVersion.V1_9)) {
                 if (!(Math.abs(eloc.x - packet.getX()) >= 0.03125D)
                         && !(Math.abs(eloc.y - packet.getY()) >= 0.015625D)
@@ -163,12 +170,12 @@ public class EntityLocationHandler {
             data.runInstantAction(ia -> {
                 if(!ia.isEnd()) {
                     action.run();
-                } else entityLocationMap.get(entity.getUniqueId()).oldLocations.clear();
+                } else entityLocationMap.get(entity.getUniqueId()).two = null;
             });
         } else {
             data.runKeepaliveAction(keepalive -> action.run());
             data.runKeepaliveAction(keepalive ->
-                    entityLocationMap.get(entity.getUniqueId()).oldLocations.clear(), 1);
+                    entityLocationMap.get(entity.getUniqueId()).two = null, 1);
         }
     }
 }

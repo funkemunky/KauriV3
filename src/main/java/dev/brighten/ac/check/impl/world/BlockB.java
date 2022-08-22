@@ -22,9 +22,9 @@ public class BlockB extends Check {
         Block b = event.getBlock();
         double ypos = b.getLocation().getY() - player.getBukkitPlayer().getLocation().getY();
         double distance = player.getBukkitPlayer().getLocation().distance(b.getLocation());
-        double ab_distance = player.getBukkitPlayer().getLocation().distance(ba.getLocation()) + 0.3;
+        double ab_distance = player.getBukkitPlayer().getLocation().distance(ba.getLocation()) + 0.4;
 
-        if (distance >= 1.4 && distance > ab_distance && ypos <= 0.5) {
+        if (distance >= 1.3 && distance > ab_distance && ypos <= 0.5) {
             flag("d:%.4f, ad:%.4f y=%.1f", distance, ab_distance, ypos);
         }
     }

@@ -21,14 +21,15 @@ import java.util.Optional;
 @Getter
 @Setter
 public class GeneralInformation {
-    public Optional<Block> blockOnTo, blockBelow;
+    public Optional<Block> blockOnTo = Optional.empty(), blockBelow = Optional.empty();
     public Timer lastMove = new TickTimer(), vehicleSwitch = new TickTimer(), lastAbilities = new TickTimer(),
             lastSneak = new TickTimer(), velocity = new TickTimer(), lastCancel = new TickTimer(),
             slimeTimer = new TickTimer(), lastElytra = new TickTimer(), blockAbove = new TickTimer(),
-            lastPlace = new TickTimer(), climbTimer = new TickTimer(), lastUseItem = new TickTimer();
+            lastPlace = new TickTimer(), climbTimer = new TickTimer(), lastUseItem = new TickTimer(),
+            lastLiquid = new TickTimer();
     public LivingEntity target;
     public boolean serverGround, lastServerGround, canFly, nearGround, worldLoaded, generalCancel, inVehicle, creative,
-            sneaking, sprinting, gliding, riptiding, wasOnSlime, onLadder, doingVelocity;
+            sneaking, lsneaking, sprinting, gliding, riptiding, wasOnSlime, onLadder, doingVelocity;
     public List<Entity> nearbyEntities = Collections.emptyList();
     public PastLocation targetPastLocation = new PastLocation();
     public KLocation lastKnownGoodPosition;

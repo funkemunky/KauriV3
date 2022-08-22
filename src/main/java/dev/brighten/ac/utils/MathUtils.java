@@ -33,6 +33,10 @@ public class MathUtils {
                 current - (float)Math.floor(current / previous) * previous);
     }
 
+    public static double lerp(double lerpAmount, double start, double end) {
+        return start + lerpAmount * (end - start);
+    }
+
     public static boolean isScientificNotation(double value) {
         return String.valueOf(value).contains("E");
     }
