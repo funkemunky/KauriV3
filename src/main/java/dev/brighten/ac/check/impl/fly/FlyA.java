@@ -9,6 +9,8 @@ import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
 import dev.brighten.ac.utils.MathUtils;
 import dev.brighten.ac.utils.MovementUtils;
+import dev.brighten.ac.utils.timer.Timer;
+import dev.brighten.ac.utils.timer.impl.MillisTimer;
 
 @CheckData(name = "Fly (A)", type = CheckType.MOVEMENT)
 public class FlyA extends Check {
@@ -17,58 +19,42 @@ public class FlyA extends Check {
         super(player);
     }
 
+    private Timer lastPos = new MillisTimer();
     private float buffer;
-
-    //our predicted value using client movement maths.
-    private double predictedValue = 0.0;
-    //how much will the buffer get added
-    private double bufferAdd;
+    private static double mult = 0.98f;
 
     @Action
     public void onFlying(WPacketPlayInFlying packet) {
-        if (!packet.isMoved() || (player.getMovement().getDeltaXZ() == 0
-                && player.getMovement().getDeltaY() == 0) || !player.getMovement().getTo().isOnGround())
+        if(!packet.isMoved() || (player.getMovement().getDeltaXZ() == 0
+                && player.getMovement().getDeltaY() == 0)) {
             return;
-
-        final double delta = player.getMovement().getDeltaY();
-
-        //using the last y axis movement we got from the player, to estimate his next movement
-        predictedValue = player.getMovement().getLDeltaY();
-
-        //if predicted < this, player motion y is set to 0 in mcp, so we'll do same.
-        final double min = player.getPlayerVersion().isBelow(ProtocolVersion.V1_9) ? 0.005 : 0.003;
-
-        //we can be sure here that he jumped
-        if (player.getInfo().getClientAirTicks() == 1) {
-            //so we're handling his jump
-            predictedValue = MovementUtils.getJumpHeight(player);
-            bufferAdd = 2;
-        } else {
-            //this is how minecraft makes player falls, a fly wouldn't respect this rule
-
-            //gravity
-            predictedValue -= 0.08;
-            //air drag
-            predictedValue *= 0.98F;
-
-            //sometimes, player doesn't send a position packet, its called "0.03", because under a 0.03 xyz length move
-            //player doesn't send a position packet
-            if (Math.abs(predictedValue - delta) > 1.0E-6) {
-                final double mightFixedPrediction = (predictedValue - 0.08) * 0.98F;
-                if (Math.abs(mightFixedPrediction - delta) < 1.0E-6)
-                    predictedValue = mightFixedPrediction;
-            }
-
-            bufferAdd = 1;
         }
 
-        if(Math.abs(predictedValue) < min)
-            predictedValue = 0;
+        boolean onGround = player.getMovement().getTo().isOnGround() && player.getBlockInfo().blocksBelow,
+                fromGround = player.getMovement().getFrom().isOnGround();
+        double lDeltaY = fromGround ? 0 : player.getMovement().getLDeltaY();
+        double predicted = onGround ? lDeltaY : (lDeltaY - 0.08) * mult;
 
-        //basically the difference from what we expect the player to move, and what he actually moved.
-        final double offset = MathUtils.getDelta(predictedValue, delta);
+        if(fromGround && !onGround && player.getMovement().getDeltaY() > 0) {
+            predicted = MovementUtils.getJumpHeight(player);
+        }
 
-        if (!player.getInfo().isGeneralCancel()
+        if(Math.abs(predicted) < 0.005 && ProtocolVersion.getGameVersion().isOrAbove(ProtocolVersion.V1_9)) {
+            predicted = 0;
+        }
+
+        if(lastPos.isPassed(60L)) {
+            double toCheck = (predicted - 0.08) * mult;
+
+            if(Math.abs(player.getMovement().getDeltaY() - toCheck)
+                    < Math.abs(player.getMovement().getDeltaY() - predicted)) {
+                predicted = toCheck;
+            }
+        }
+
+        double deltaPredict = MathUtils.getDelta(player.getMovement().getDeltaY(), predicted);
+
+        if(!player.getInfo().isGeneralCancel()
                 && player.getInfo().getBlockAbove().isPassed(1)
                 && !player.getInfo().isOnLadder()
                 && !player.getBlockInfo().inWeb
@@ -77,17 +63,17 @@ public class FlyA extends Check {
                 && !player.getBlockInfo().fenceBelow
                 && !player.getBlockInfo().onHalfBlock
                 && player.getInfo().getVelocity().isPassed(1)
-                && !player.getBlockInfo().onSlime && offset > 1.0E-5) {
-            if ((buffer += bufferAdd) > 5) {
+                && !player.getBlockInfo().onSlime && deltaPredict > 0.001) {
+            if(++buffer > 5) {
                 buffer = 5;
-                flag("dY=%.3f p=%.3f dx=%.3f", player.getMovement().getDeltaY(), predictedValue,
+                flag("dY=%.3f p=%.3f dx=%.3f", player.getMovement().getDeltaY(), predicted,
                         player.getMovement().getDeltaXZ());
             }
-        } else buffer -= buffer > 0 ? 0.25f : 0;
+        } else buffer-= buffer > 0 ? 0.25f : 0;
 
-        debug("dY=%.3f p=%.3f dx=%.3f b=%s velocity=%s", player.getMovement().getDeltaY(), predictedValue,
+        debug("dY=%.3f p=%.3f dx=%.3f b=%s velocity=%s", player.getMovement().getDeltaY(), predicted,
                 player.getMovement().getDeltaXZ(), buffer, player.getInfo().getVelocity().getPassed());
 
-
+        lastPos.reset();
     }
 }
