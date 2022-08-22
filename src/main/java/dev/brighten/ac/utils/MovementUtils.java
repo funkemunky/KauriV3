@@ -17,7 +17,7 @@ public class MovementUtils {
 
     private static Enchantment DEPTH;
 
-    public static float getJumpHeight(APlayer data) {
+    public static double getJumpHeight(APlayer data) {
         float baseHeight = 0.42f;
 
         baseHeight+= data.getPotionHandler().getEffectByType(PotionEffectType.JUMP).map(ef -> ef.getAmplifier() + 1)

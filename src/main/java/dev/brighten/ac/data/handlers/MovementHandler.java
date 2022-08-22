@@ -534,5 +534,8 @@ it
         deltaXZ = Math.hypot(deltaX, deltaZ); // Calculating here to cache since hypot() can be heavy.
         deltaYaw = to.getLoc().yaw - from.getLoc().yaw;
         deltaPitch = to.getLoc().pitch - from.getLoc().pitch;
+
+        player.getInfo().setClientGroundTicks(packet.isOnGround() ? player.getInfo().getClientGroundTicks() + 1 : 0);
+        player.getInfo().setClientAirTicks(!packet.isOnGround() ? player.getInfo().getClientAirTicks() + 1 : 0);
     }
 }
