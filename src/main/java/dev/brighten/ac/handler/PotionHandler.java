@@ -3,7 +3,6 @@ package dev.brighten.ac.handler;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
 import dev.brighten.ac.packet.wrapper.out.WPacketPlayOutEntityEffect;
-import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
@@ -12,11 +11,16 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-@RequiredArgsConstructor
 public class PotionHandler {
     private final APlayer data;
 
     public List<PotionEffect> potionEffects = new CopyOnWriteArrayList<>();
+
+    public  PotionHandler(APlayer data) {
+        this.data = data;
+
+        potionEffects.addAll(data.getBukkitPlayer().getActivePotionEffects());
+    }
 
     public void onFlying(WPacketPlayInFlying packet) {
         for (PotionEffect effect : potionEffects) {
