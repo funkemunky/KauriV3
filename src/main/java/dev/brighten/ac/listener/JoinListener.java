@@ -6,15 +6,12 @@ import dev.brighten.ac.packet.handler.HandlerAbstract;
 import dev.brighten.ac.packet.wrapper.PacketType;
 import dev.brighten.ac.utils.Init;
 import dev.brighten.ac.utils.RunUtils;
-import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerKickEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.event.player.PlayerTeleportEvent;
 
 import java.util.Optional;
 
@@ -43,15 +40,16 @@ public class JoinListener implements Listener {
             if(player.isSendingPackets()) return;
 
             if(event.getType().equals(PacketType.CLIENT_TRANSACTION)) {
-                player.setSendingPackets(true);
-                Object packetToSend = null;
-
-                synchronized (player.getPacketQueue()) {
-                    while((packetToSend = player.getPacketQueue().pollFirst()) != null) {
-                        HandlerAbstract.getHandler().sendPacket(player, packetToSend);
+                if(player.getPacketQueue().size() > 0) {
+                    player.setSendingPackets(true);
+                    Object packetToSend = null;
+                    synchronized (player.getPacketQueue()) {
+                        while((packetToSend = player.getPacketQueue().pollFirst()) != null) {
+                            HandlerAbstract.getHandler().sendPacket(player, packetToSend);
+                        }
                     }
+                    player.setSendingPackets(false);
                 }
-                player.setSendingPackets(false);
             } else {
                 switch (event.getType()) {
                     case ENTITY:
@@ -63,10 +61,12 @@ public class JoinListener implements Listener {
                     case BLOCK_CHANGE:
                     case MULTI_BLOCK_CHANGE:
                     case MAP_CHUNK: {
-                        synchronized (player.getPacketQueue()) {
-                            player.getPacketQueue().add(event.getPacket());
+                        if(player.getLagInfo().getLastClientTransaction().isPassed(100L)) {
+                            synchronized (player.getPacketQueue()) {
+                                player.getPacketQueue().add(event.getPacket());
+                            }
+                            event.setCancelled(true);
                         }
-                        event.setCancelled(true);
                         break;
                     }
                 }
@@ -75,20 +75,6 @@ public class JoinListener implements Listener {
     }
 
     @EventHandler
-    public void onDamage(EntityDamageByEntityEvent event) {
-        if(event.getDamager() instanceof Player) {
-            APlayer player = Anticheat.INSTANCE.getPlayerRegistry().getPlayer(event.getDamager().getUniqueId()).
-                    orElse(null);
-
-            if(player == null) return;
-
-            if(player.hitsToCancel > 0) {
-                player.hitsToCancel--;
-                event.setCancelled(true);
-            }
-        }
-    }
-    @EventHandler
     public void onJoin(PlayerJoinEvent event) {
         APlayer player = Anticheat.INSTANCE.getPlayerRegistry().generate(event.getPlayer());
 
@@ -96,15 +82,6 @@ public class JoinListener implements Listener {
 
         player.callEvent(event);
     }
-
-    @EventHandler
-    public void onTeleport(PlayerTeleportEvent event) {
-        if(event.getFrom().getWorld().equals(event.getTo().getWorld())) return;
-
-        Anticheat.INSTANCE.getPlayerRegistry().getPlayer(event.getPlayer().getUniqueId())
-                .ifPresent(player -> player.getBlockUpdateHandler().onWorldChange());
-    }
-
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
         HandlerAbstract.getHandler().remove(event.getPlayer());

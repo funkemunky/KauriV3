@@ -39,8 +39,8 @@ public class Reach extends Check {
     @Action
     public void onUse(WPacketPlayInUseEntity packet) {
         if(packet.getAction() == WPacketPlayInUseEntity.EnumEntityUseAction.ATTACK
-                && allowedEntityTypes.contains(packet.getEntity(getPlayer().getBukkitPlayer().getWorld()).getType())) {
-            attacks.add(new Tuple<>(packet.getEntity(getPlayer().getBukkitPlayer().getWorld()), getPlayer().getMovement().getTo().getLoc().clone()));
+                && allowedEntityTypes.contains(packet.getEntity(player.getBukkitPlayer().getWorld()).getType())) {
+            attacks.add(new Tuple<>(packet.getEntity(player.getBukkitPlayer().getWorld()), player.getMovement().getTo().getLoc().clone()));
         }
     }
 
@@ -49,7 +49,7 @@ public class Reach extends Check {
     //stability. like shortening the amount stored, or removing older ones.
     @Action
     public void onFlying(WPacketPlayInFlying packet) {
-        if(getPlayer().getInfo().isCreative() || getPlayer().getInfo().isInVehicle()) {
+        if(player.getInfo().isCreative() || player.getInfo().isInVehicle()) {
             attacks.clear();
            return;
         }
@@ -57,7 +57,7 @@ public class Reach extends Check {
 
         while((target = attacks.poll()) != null) {
             //Updating new entity loc
-            Optional<EntityLocation> optionalEloc = getPlayer().getEntityLocationHandler().getEntityLocation(target.one);
+            Optional<EntityLocation> optionalEloc = player.getEntityLocationHandler().getEntityLocation(target.one);
 
             if(!optionalEloc.isPresent()) {
                 return;
@@ -82,7 +82,7 @@ public class Reach extends Check {
                     SimpleCollisionBox box = (SimpleCollisionBox)
                             EntityData.getEntityBox(oldLocation.toVector(), target.one);
 
-                    if(getPlayer().getPlayerVersion().isBelow(ProtocolVersion.V1_9)) {
+                    if(player.getPlayerVersion().isBelow(ProtocolVersion.V1_9)) {
                         box = box.expand(0.1325);
                     } else box = box.expand(0.0325);
                     boxes.add(box);
@@ -91,7 +91,7 @@ public class Reach extends Check {
                     SimpleCollisionBox box = (SimpleCollisionBox)
                             EntityData.getEntityBox(oldLocation.toVector(), target.one);
 
-                    if(getPlayer().getPlayerVersion().isBelow(ProtocolVersion.V1_9)) {
+                    if(player.getPlayerVersion().isBelow(ProtocolVersion.V1_9)) {
                         box = box.expand(0.1325);
                     } else box = box.expand(0.0325);
                     boxes.add(box);
@@ -101,7 +101,7 @@ public class Reach extends Check {
                     SimpleCollisionBox box = (SimpleCollisionBox)
                             EntityData.getEntityBox(oldLocation.toVector(), target.one);
 
-                    if(getPlayer().getPlayerVersion().isBelow(ProtocolVersion.V1_9)) {
+                    if(player.getPlayerVersion().isBelow(ProtocolVersion.V1_9)) {
                         box = box.expand(0.1325);
                     } else box = box.expand(0.0325);
                     boxes.add(box);
@@ -112,14 +112,14 @@ public class Reach extends Check {
 
             int hits = 0;
 
-            boolean didSneakOrElytra = getPlayer().getInfo().getLastElytra().isNotPassed(40)
-                    || getPlayer().getInfo().getLastElytra().isNotPassed(40);
+            boolean didSneakOrElytra = player.getInfo().getLastElytra().isNotPassed(40)
+                    || player.getInfo().getLastElytra().isNotPassed(40);
 
             List<Vector> directions = new ArrayList<>(Arrays.asList(MathUtils.getDirection(
-                    getPlayer().getMovement().getTo().getLoc().yaw,
-                    getPlayer().getMovement().getTo().getLoc().pitch),
-                    MathUtils.getDirection(getPlayer().getMovement().getFrom().getLoc().yaw,
-                            getPlayer().getMovement().getTo().getLoc().pitch)));
+                    player.getMovement().getTo().getLoc().yaw,
+                    player.getMovement().getTo().getLoc().pitch),
+                    MathUtils.getDirection(player.getMovement().getFrom().getLoc().yaw,
+                            player.getMovement().getTo().getLoc().pitch)));
 
             if(!didSneakOrElytra) {
                 to.y+= 1.62f;
@@ -140,7 +140,7 @@ public class Reach extends Check {
                 //Checking all possible eyeheights since client actions notoriously desync from the server side
             } else {
                 for (Vector direction : directions) {
-                    for (double eyeHeight : getPlayer().getMovement().getEyeHeights()) {
+                    for (double eyeHeight : player.getMovement().getEyeHeights()) {
                         for (SimpleCollisionBox targetBox : boxes) {
                             final AxisAlignedBB vanillaBox = new AxisAlignedBB(targetBox);
 

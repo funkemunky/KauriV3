@@ -31,12 +31,24 @@ public class BlockUpdateHandler {
      * @param place
      */
     public void onPlace(WPacketPlayInBlockPlace place) {
+        // Could not possibly be a block placement as it's not a block a player is holding.
         if(!place.getItemStack().getType().isBlock()) return;
+
+        IntVector pos = place.getBlockPos();
+
+        // Not an actual block place, just an interact
+        if(pos.getX() == -1 && (pos.getY() == 255 || pos.getY() == -1) && pos.getZ() == -1) return;
 
         player.getInfo().getLastPlace().reset();
 
+        pos.setX(pos.getX() + place.getDirection().getAdjacentX());
+        pos.setY(pos.getY() + place.getDirection().getAdjacentY());
+        pos.setZ(pos.getZ() + place.getDirection().getAdjacentZ());
+
         Deque<Material> possible = getPossibleMaterials(place.getBlockPos());
         possible.add(place.getItemStack().getType());
+
+        player.getBukkitPlayer().sendMessage("Placed possible: " + possible + ";" + place.getBlockPos());
     }
 
     /**

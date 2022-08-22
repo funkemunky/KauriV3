@@ -21,16 +21,17 @@ import java.util.Optional;
 @Getter
 @Setter
 public class GeneralInformation {
-    private Optional<Block> blockOnTo, blockBelow;
-    private Timer lastMove = new TickTimer(), vehicleSwitch = new TickTimer(), lastAbilities = new TickTimer(),
+    public Optional<Block> blockOnTo, blockBelow;
+    public Timer lastMove = new TickTimer(), vehicleSwitch = new TickTimer(), lastAbilities = new TickTimer(),
             lastSneak = new TickTimer(), velocity = new TickTimer(), lastCancel = new TickTimer(),
-            lastElytra = new TickTimer(), blockAbove = new TickTimer(), lastPlace = new TickTimer();
-    private LivingEntity target;
-    private boolean serverGround, lastServerGround, canFly, nearGround, worldLoaded, generalCancel, inVehicle, creative,
+            slimeTimer = new TickTimer(), lastElytra = new TickTimer(), blockAbove = new TickTimer(),
+            lastPlace = new TickTimer(), climbTimer = new TickTimer(), lastUseItem = new TickTimer();
+    public LivingEntity target;
+    public boolean serverGround, lastServerGround, canFly, nearGround, worldLoaded, generalCancel, inVehicle, creative,
             sneaking, sprinting, gliding, riptiding, wasOnSlime, onLadder, doingVelocity;
-    private List<Entity> nearbyEntities = Collections.emptyList();
-    private PastLocation targetPastLocation = new PastLocation();
-    private KLocation lastKnownGoodPosition;
-    private List<Vector> velocityHistory = Collections.synchronizedList(new EvictingList<>(5));
-    private List<PlayerCapabilities> possibleCapabilities = new ArrayList<>();
+    public List<Entity> nearbyEntities = Collections.emptyList();
+    public PastLocation targetPastLocation = new PastLocation();
+    public KLocation lastKnownGoodPosition;
+    public List<Vector> velocityHistory = Collections.synchronizedList(new EvictingList<>(5));
+    public List<PlayerCapabilities> possibleCapabilities = new ArrayList<>();
 }

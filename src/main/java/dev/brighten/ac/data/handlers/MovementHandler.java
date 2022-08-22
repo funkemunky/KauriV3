@@ -77,8 +77,8 @@ public class MovementHandler {
             moveTicks++;
         } else moveTicks = 0;
 
+        updateLocations(packet);
         if (moveTicks > 0) {
-            updateLocations(packet);
 
             // Updating block locations
             player.getInfo().setBlockOnTo(BlockUtils
@@ -94,14 +94,26 @@ public class MovementHandler {
                 player.getInfo().setOnLadder(MovementUtils.isOnLadder(player));
             }
 
-            player.getBlockInformation().runCollisionCheck();
+            if(packet.isMoved() && !lastTeleport.isNotPassed(2) && !player.getInfo().isCreative()
+                    && !player.getInfo().isCanFly()) {
 
-            if(player.getBlockInformation().blocksAbove) {
+                synchronized (player.pastLocations) { //To prevent ConcurrentModificationExceptions
+                    player.pastLocations.add(new Tuple<>(getTo().getLoc().clone(),
+                            deltaXZ + Math.abs(deltaY)));
+                }
+            }
+
+            player.getBlockInfo().runCollisionCheck();
+
+            if(player.getBlockInfo().blocksAbove) {
                 player.getInfo().getBlockAbove().reset();
             }
         }
 
         processVelocity();
+
+        if (player.getBlockInfo().onSlime) player.getInfo().slimeTimer.reset();
+        if(player.getBlockInfo().onClimbable) player.getInfo().climbTimer.reset();
 
         checkForTeleports(packet);
 
@@ -189,7 +201,7 @@ public class MovementHandler {
         }
 
         if (player.getInfo().isServerGround()) {
-            player.getInfo().setWasOnSlime(player.getBlockInformation().onSlime);
+            player.getInfo().setWasOnSlime(player.getBlockInfo().onSlime);
         }
 
         player.getInfo().setCreative(player.getBukkitPlayer().getGameMode() == GameMode.CREATIVE

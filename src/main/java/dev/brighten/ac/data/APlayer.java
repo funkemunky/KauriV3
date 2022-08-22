@@ -17,7 +17,9 @@ import dev.brighten.ac.handler.protocolsupport.ProtocolAPI;
 import dev.brighten.ac.messages.Messages;
 import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.packet.handler.HandlerAbstract;
+import dev.brighten.ac.utils.KLocation;
 import dev.brighten.ac.utils.Tuple;
+import dev.brighten.ac.utils.objects.evicting.EvictingList;
 import dev.brighten.ac.utils.reflections.impl.MinecraftReflection;
 import dev.brighten.ac.utils.reflections.types.WrappedMethod;
 import dev.brighten.ac.utils.timer.Timer;
@@ -31,6 +33,7 @@ import org.bukkit.event.Event;
 import org.bukkit.util.Vector;
 
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Consumer;
 
@@ -42,7 +45,7 @@ public class APlayer {
     private final UUID uuid;
     private final List<Check> checks = new ArrayList<>();
     @Getter
-    private MovementHandler movement;
+    private  MovementHandler movement;
     @Getter
     private PotionHandler potionHandler;
     @Getter
@@ -56,7 +59,7 @@ public class APlayer {
     @Getter
     private LagInformation lagInfo;
     @Getter
-    private BlockInformation blockInformation;
+    private BlockInformation blockInfo;
     @Getter
     private int playerTick;
     @Getter
@@ -71,11 +74,14 @@ public class APlayer {
 
     public final Map<Short, Tuple<InstantAction, Consumer<InstantAction>>> instantTransaction = new HashMap<>();
     public final List<NormalAction> keepAliveStamps = new ArrayList<>();
+    public final List<String> sniffedPackets = new CopyOnWriteArrayList<>();
+    public boolean sniffing;
 
     @Getter
     private final Deque<Object> packetQueue = new LinkedList<>();
     @Getter
     private final List<Consumer<Vector>> onVelocityTasks = new ArrayList<>();
+    public final EvictingList<Tuple<KLocation, Double>> pastLocations = new EvictingList<>(20);
 
     @Setter
     @Getter
@@ -113,7 +119,7 @@ public class APlayer {
         this.blockUpdateHandler = new BlockUpdateHandler(this);
         this.info = new GeneralInformation();
         this.lagInfo = new LagInformation();
-        this.blockInformation = new BlockInformation(this);
+        this.blockInfo = new BlockInformation(this);
 
         // Grabbing the protocol version of the player.
         Anticheat.INSTANCE.getScheduler().execute(() ->
@@ -148,7 +154,7 @@ public class APlayer {
     }
 
     //TODO When using WPacket wrappers only, make this strictly WPacket param based only
-    public void callPacket(Object packet) {
+    public void callPacket(Object packet, long timestamp) {
         for (Check check : checks) {
             WrappedMethod[] methods = Anticheat.INSTANCE.getCheckManager().getEvents()
                     .get(new Tuple<String, Class<?>>(check.getCheckData().name(), packet.getClass()));
@@ -158,6 +164,16 @@ public class APlayer {
                 for (WrappedMethod method :
                         methods) {
                     method.invoke(check, packet);
+                }
+            }
+            WrappedMethod[] methodsTimestamp = Anticheat.INSTANCE.getCheckManager().getEventsWithTimestamp()
+                    .get(new Tuple<String, Class<?>>(check.getCheckData().name(), packet.getClass()));
+
+            if(methodsTimestamp != null) {
+
+                for (WrappedMethod method :
+                        methodsTimestamp) {
+                    method.invoke(check, packet, timestamp);
                 }
             }
         }

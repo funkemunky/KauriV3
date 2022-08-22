@@ -35,4 +35,14 @@ public class WPacketHandshakingInSetProtocol implements WPacket {
             this.id = id;
         }
     }
+
+    @Override
+    public String toString() {
+        return "WPacketHandshakingInSetProtocol{" +
+                "versionNumber=" + versionNumber +
+                ", port=" + port +
+                ", hostname='" + hostname + '\'' +
+                ", protocol=" + protocol +
+                '}';
+    }
 }

@@ -76,6 +76,10 @@ public class EntityLocationHandler {
 
         runAction(entity, () -> {
             eloc.oldLocations.addAll(eloc.interpolatedLocations);
+
+            while(eloc.interpolatedLocations.size() > 1) {
+                eloc.interpolatedLocations.removeFirst();
+            }
             //We don't need to do version checking here. Atlas handles this for us.
             eloc.newX += packet.getX();
             eloc.newY += packet.getY();
@@ -84,7 +88,6 @@ public class EntityLocationHandler {
             eloc.newPitch += packet.getPitch();
 
             eloc.increment = 3;
-            eloc.interpolateLocation();
         });
     }
 
@@ -108,6 +111,9 @@ public class EntityLocationHandler {
 
         runAction(entity, () -> {
             eloc.oldLocations.addAll(eloc.interpolatedLocations);
+            while(eloc.interpolatedLocations.size() > 1) {
+                eloc.interpolatedLocations.removeFirst();
+            }
             if(data.getPlayerVersion().isOrAbove(ProtocolVersion.V1_9)) {
                 if (!(Math.abs(eloc.x - packet.getX()) >= 0.03125D)
                         && !(Math.abs(eloc.y - packet.getY()) >= 0.015625D)
@@ -138,7 +144,6 @@ public class EntityLocationHandler {
 
                 eloc.increment = 3;
             }
-            eloc.interpolateLocation();
         });
     }
 

@@ -36,11 +36,11 @@ public class Horizontal extends Check {
     @Action
     public void onFlying(WPacketPlayInFlying packet) {
 
-        Block underBlock = BlockUtils.getBlock(getPlayer().getMovement().getTo().getLoc()
-                .toLocation(getPlayer().getBukkitPlayer().getWorld())
+        Block underBlock = BlockUtils.getBlock(player.getMovement().getTo().getLoc()
+                .toLocation(player.getBukkitPlayer().getWorld())
                 .subtract(0, 1, 0)),
-                lastUnderBlock = BlockUtils.getBlock(getPlayer().getMovement().getFrom().getLoc()
-                        .toLocation(getPlayer().getBukkitPlayer().getWorld())
+                lastUnderBlock = BlockUtils.getBlock(player.getMovement().getFrom().getLoc()
+                        .toLocation(player.getBukkitPlayer().getWorld())
                         .subtract(0, 1, 0));
 
         check:
@@ -48,23 +48,23 @@ public class Horizontal extends Check {
             if (underBlock == null || lastUnderBlock == null)
                 break check;
 
-            Deque<Material> frictionList = getPlayer().getBlockUpdateHandler()
+            Deque<Material> frictionList = player.getBlockUpdateHandler()
                     .getPossibleMaterials(new IntVector(underBlock.getX(), underBlock.getY(), underBlock.getZ())),
-                    lfrictionList = getPlayer().getBlockUpdateHandler()
+                    lfrictionList = player.getBlockUpdateHandler()
                             .getPossibleMaterials(new IntVector(lastUnderBlock.getX(), lastUnderBlock.getY(), lastUnderBlock.getZ()));
 
             if (!packet.isMoved()
-                    || getPlayer().getInfo().getVelocity().isNotPassed(1)
-                    || getPlayer().getInfo().isGeneralCancel()
-                    || getPlayer().getBlockInformation().onClimbable
-                    || getPlayer().getBlockInformation().inLiquid
-                    || getPlayer().getBlockInformation().collidesHorizontally) {
+                    || player.getInfo().getVelocity().isNotPassed(1)
+                    || player.getInfo().isGeneralCancel()
+                    || player.getBlockInfo().onClimbable
+                    || player.getBlockInfo().inLiquid
+                    || player.getBlockInfo().collidesHorizontally) {
                 break check;
             }
             double smallestDelta = Double.MAX_VALUE;
 
             double pmotionx = 0, pmotionz = 0;
-            boolean onGround = getPlayer().getMovement().getFrom().isOnGround();
+            boolean onGround = player.getMovement().getFrom().isOnGround();
 
             loop:
             {
@@ -103,19 +103,19 @@ public class Horizontal extends Check {
                                                             forward *= 0.9800000190734863F;
                                                             strafe *= 0.9800000190734863F;
 
-                                                            double aiMoveSpeed = getPlayer().getBukkitPlayer().getWalkSpeed() / 2;
+                                                            double aiMoveSpeed = player.getBukkitPlayer().getWalkSpeed() / 2;
 
                                                             float drag = 0.91f;
-                                                            double lmotionX = getPlayer().getMovement().getLDeltaX(),
-                                                                    lmotionZ = getPlayer().getMovement().getLDeltaZ();
+                                                            double lmotionX = player.getMovement().getLDeltaX(),
+                                                                    lmotionZ = player.getMovement().getLDeltaZ();
 
                                                             if(motionModifiers) {
-                                                                if(getPlayer().getBlockInformation().onSoulSand
-                                                                        && getPlayer().getBlockInformation().collisionMaterialCount.
+                                                                if(player.getBlockInfo().onSoulSand
+                                                                        && player.getBlockInfo().collisionMaterialCount.
                                                                         containsKey(Material.SOUL_SAND)) {
 
                                                                     for(int i = 0
-                                                                        ; i < getPlayer().getBlockInformation()
+                                                                        ; i < player.getBlockInfo()
                                                                             .collisionMaterialCount
                                                                             .get(Material.SOUL_SAND)
                                                                             ; i++) {
@@ -124,7 +124,7 @@ public class Horizontal extends Check {
                                                                     }
                                                                 }
 
-                                                                if(getPlayer().getBlockInformation().inWeb) {
+                                                                if(player.getBlockInfo().inWeb) {
                                                                     lmotionX*= 0.25;
                                                                     lmotionZ*= 0.25;
                                                                 }
@@ -135,7 +135,7 @@ public class Horizontal extends Check {
                                                             lmotionZ *= (lastLastClientGround ? lfriction : 1) * 0.9100000262260437D;
 
                                                             //Running multiplication done after previous prediction
-                                                            if (getPlayer().getPlayerVersion().isOrAbove(ProtocolVersion.V1_9)) {
+                                                            if (player.getPlayerVersion().isOrAbove(ProtocolVersion.V1_9)) {
                                                                 if (Math.abs(lmotionX) < 0.003)
                                                                     lmotionX = 0;
                                                                 if (Math.abs(lmotionZ) < 0.003)
@@ -155,12 +155,12 @@ public class Horizontal extends Check {
                                                             if (sprinting)
                                                                 aiMoveSpeed += aiMoveSpeed * 0.30000001192092896D;
 
-                                                            if (getPlayer().getPotionHandler().hasPotionEffect(PotionEffectType.SPEED))
-                                                                aiMoveSpeed += (getPlayer().getPotionHandler().getEffectByType(PotionEffectType.SPEED)
+                                                            if (player.getPotionHandler().hasPotionEffect(PotionEffectType.SPEED))
+                                                                aiMoveSpeed += (player.getPotionHandler().getEffectByType(PotionEffectType.SPEED)
                                                                         .get()
                                                                         .getAmplifier() + 1) * (double) 0.20000000298023224D * aiMoveSpeed;
-                                                            if (getPlayer().getPotionHandler().hasPotionEffect(PotionEffectType.SLOW))
-                                                                aiMoveSpeed += (getPlayer().getPotionHandler().getEffectByType(PotionEffectType.SLOW)
+                                                            if (player.getPotionHandler().hasPotionEffect(PotionEffectType.SLOW))
+                                                                aiMoveSpeed += (player.getPotionHandler().getEffectByType(PotionEffectType.SLOW)
                                                                         .get()
                                                                         .getAmplifier() + 1) * (double) -0.15000000596046448D * aiMoveSpeed;
 
@@ -171,14 +171,14 @@ public class Horizontal extends Check {
                                                                 f5 = (float) (aiMoveSpeed * (0.16277136F / (drag * drag * drag)));
 
                                                                 if (sprinting && jumped) {
-                                                                    float rot = getPlayer().getMovement().getTo().getLoc().yaw * 0.017453292F;
+                                                                    float rot = player.getMovement().getTo().getLoc().yaw * 0.017453292F;
                                                                     lmotionX -= sin(fastMath, rot) * 0.2F;
                                                                     lmotionZ += cos(fastMath, rot) * 0.2F;
                                                                 }
 
                                                             } else f5 = sprinting ? 0.025999999F : 0.02f;
 
-                                                            if (getPlayer().getPlayerVersion().isOrAbove(ProtocolVersion.V1_9)) {
+                                                            if (player.getPlayerVersion().isOrAbove(ProtocolVersion.V1_9)) {
                                                                 double keyedMotion = forward * forward + strafe * strafe;
 
                                                                 if (keyedMotion >= 1.0E-4F) {
@@ -187,9 +187,9 @@ public class Horizontal extends Check {
                                                                     strafe *= keyedMotion;
 
                                                                     final float yawSin = sin(fastMath,
-                                                                            getPlayer().getMovement().getTo().getLoc().yaw * (float) Math.PI / 180.F),
+                                                                            player.getMovement().getTo().getLoc().yaw * (float) Math.PI / 180.F),
                                                                             yawCos = cos(fastMath,
-                                                                                    getPlayer().getMovement().getTo().getLoc().yaw * (float) Math.PI / 180.F);
+                                                                                    player.getMovement().getTo().getLoc().yaw * (float) Math.PI / 180.F);
 
                                                                     lmotionX += (strafe * yawCos - forward * yawSin);
                                                                     lmotionZ += (forward * yawCos + strafe * yawSin);
@@ -203,16 +203,16 @@ public class Horizontal extends Check {
                                                                     strafe *= keyedMotion;
 
                                                                     final float yawSin = sin(fastMath,
-                                                                            getPlayer().getMovement().getTo().getLoc().yaw * (float) Math.PI / 180.F),
+                                                                            player.getMovement().getTo().getLoc().yaw * (float) Math.PI / 180.F),
                                                                             yawCos = cos(fastMath,
-                                                                                    getPlayer().getMovement().getTo().getLoc().yaw * (float) Math.PI / 180.F);
+                                                                                    player.getMovement().getTo().getLoc().yaw * (float) Math.PI / 180.F);
 
                                                                     lmotionX += (strafe * yawCos - forward * yawSin);
                                                                     lmotionZ += (forward * yawCos + strafe * yawSin);
                                                                 }
                                                             }
-                                                            double diffX = getPlayer().getMovement().getDeltaX() - lmotionX,
-                                                                    diffZ = getPlayer().getMovement().getDeltaZ() - lmotionZ;
+                                                            double diffX = player.getMovement().getDeltaX() - lmotionX,
+                                                                    diffZ = player.getMovement().getDeltaZ() - lmotionZ;
                                                             double delta = (diffX * diffX) + (diffZ * diffZ);
 
                                                             if (delta < smallestDelta) {
@@ -224,9 +224,9 @@ public class Horizontal extends Check {
                                                                     this.strafe = s * 0.98f;
                                                                     this.forward = f * 0.98f;
 
-                                                                    if (getPlayer().getInfo().getLastCancel().isPassed(2))
-                                                                        getPlayer().getInfo()
-                                                                                .setLastKnownGoodPosition(getPlayer()
+                                                                    if (player.getInfo().getLastCancel().isPassed(2))
+                                                                        player.getInfo()
+                                                                                .setLastKnownGoodPosition(player
                                                                                         .getMovement().getFrom().getLoc()
                                                                                         .clone());
                                                                     break loop;
@@ -247,21 +247,24 @@ public class Horizontal extends Check {
 
             double pmotion = Math.hypot(pmotionx, pmotionz);
 
-            if (getPlayer().getMovement().getDeltaXZ() > pmotion
-                    && smallestDelta > (getPlayer().getBlockInformation().onSoulSand ? 0.01 : 5E-13)
-                    && getPlayer().getMovement().getDeltaXZ() > 0.1) {
+            if (player.getMovement().getDeltaXZ() > pmotion
+                    && smallestDelta > (player.getBlockInfo().onSoulSand ? 0.01 : 5E-13)
+                    && player.getMovement().getDeltaXZ() > 0.1) {
                 if ((buffer += smallestDelta > 58E-4 ? 1 : 0.5) > 3) {
                     buffer = Math.min(3.5f, buffer); //Ensuring we don't have a run-away buffer
                     flag("smallest=%s b=%.1f to=%s dxz=%.2f", smallestDelta, buffer,
-                            getPlayer().getMovement().getTo().getLoc(), getPlayer().getMovement().getDeltaXZ());
+                            player.getMovement().getTo().getLoc(), player.getMovement().getDeltaXZ());
+                } else {
+                    debug("bad movement");
+                    cancel();
                 }
             } else if (buffer > 0) buffer -= 0.1f;
 
             debug("smallest=%s pm=%.5f dxz=%.5f b=%.1f f/s=%.2f,%.2f soulsand=%s", smallestDelta, pmotion,
-                    getPlayer().getMovement().getDeltaXZ(), buffer, forward, strafe,
-                    getPlayer().getBlockInformation().onSoulSand);
+                    player.getMovement().getDeltaXZ(), buffer, forward, strafe,
+                    player.getBlockInfo().onSoulSand);
         }
-        lastLastClientGround = getPlayer().getMovement().getFrom().isOnGround();
+        lastLastClientGround = player.getMovement().getFrom().isOnGround();
     }
 
     private static final float[] SIN_TABLE_FAST = new float[4096], SIN_TABLE_FAST_NEW = new float[4096];

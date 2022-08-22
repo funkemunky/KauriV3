@@ -13,6 +13,7 @@ import java.util.*;
 public class CheckManager {
     private final List<CheckStatic> checkClasses = new ArrayList<>();
     private final Map<Tuple<String, Class<?>>, WrappedMethod[]> events = new HashMap<>();
+    private final Map<Tuple<String, Class<?>>, WrappedMethod[]> eventsWithTimestamp = new HashMap<>();
 
     public CheckManager() {
         for (WrappedClass aClass : ClassScanner.getClasses(CheckData.class,
@@ -36,7 +37,7 @@ public class CheckManager {
             // Loop through all the methods in Check that contain @Action annotation by Class
             check.getEvents().forEach((actionClass, methods) -> {
                 // Check if array is already cached for Class and return Array if so, if not create new Array
-                events.compute(new Tuple<String, Class<?>>(checkData.name(), actionClass), (packetClass, array) -> {
+                /*events.compute(new Tuple<String, Class<?>>(checkData.name(), actionClass), (packetClass, array) -> {
                     if(array == null) array = new WrappedMethod[0];
 
                     // Adding preexisting cached WrappedMethod into List for further additions
@@ -49,7 +50,42 @@ public class CheckManager {
 
                     // Returning newly created array for use in detections.
                     return methodList.toArray(new WrappedMethod[0]);
-                });
+                });*/
+                for (WrappedMethod method : methods) {
+                    if(method.getParameters().length == 1) {
+                        events.compute(new Tuple<>(checkData.name(), actionClass), (packetClass, array) -> {
+                            if(array == null) array = new WrappedMethod[0];
+
+                            // Adding preexisting cached WrappedMethod into List for further additions
+                            List<WrappedMethod> methodList = new ArrayList<>(Arrays.asList(array));
+
+                            methodList.add(method);
+
+                            // Adding all precached Check-specific WrappedMethod into global cache of WrappedMethods.
+
+                            System.out.println("Registering regualr method:  " + packetClass.toString());
+
+                            // Returning newly created array for use in detections.
+                            return methodList.toArray(new WrappedMethod[0]);
+                        });
+                    } else if(method.getParameters().length == 2 && method.getParameterTypes()[1].equals(long.class)) {
+                        eventsWithTimestamp.compute(new Tuple<>(checkData.name(), actionClass), (packetClass, array) -> {
+                            if(array == null) array = new WrappedMethod[0];
+
+                            // Adding preexisting cached WrappedMethod into List for further additions
+                            List<WrappedMethod> methodList = new ArrayList<>(Arrays.asList(array));
+
+                            methodList.add(method);
+
+                            // Adding all precached Check-specific WrappedMethod into global cache of WrappedMethods.
+
+                            System.out.println("Registering regualr method:  " + packetClass.toString());
+
+                            // Returning newly created array for use in detections.
+                            return methodList.toArray(new WrappedMethod[0]);
+                        });
+                    }
+                }
             });
         }
 

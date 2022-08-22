@@ -25,18 +25,18 @@ public class FlyA extends Check {
 
     @Action
     public void onFlying(WPacketPlayInFlying packet) {
-        if(!packet.isMoved() || (getPlayer().getMovement().getDeltaXZ() == 0
-                && getPlayer().getMovement().getDeltaY() == 0)) {
+        if(!packet.isMoved() || (player.getMovement().getDeltaXZ() == 0
+                && player.getMovement().getDeltaY() == 0)) {
             return;
         }
 
-        boolean onGround = getPlayer().getMovement().getTo().isOnGround() && getPlayer().getBlockInformation().blocksBelow,
-                fromGround = getPlayer().getMovement().getFrom().isOnGround();
-        double lDeltaY = fromGround ? 0 : getPlayer().getMovement().getLDeltaY();
+        boolean onGround = player.getMovement().getTo().isOnGround() && player.getBlockInfo().blocksBelow,
+                fromGround = player.getMovement().getFrom().isOnGround();
+        double lDeltaY = fromGround ? 0 : player.getMovement().getLDeltaY();
         double predicted = onGround ? lDeltaY : (lDeltaY - 0.08) * mult;
 
-        if(fromGround && !onGround && getPlayer().getMovement().getDeltaY() > 0) {
-            predicted = MovementUtils.getJumpHeight(getPlayer());
+        if(fromGround && !onGround && player.getMovement().getDeltaY() > 0) {
+            predicted = MovementUtils.getJumpHeight(player);
         }
 
         if(Math.abs(predicted) < 0.005 && ProtocolVersion.getGameVersion().isOrAbove(ProtocolVersion.V1_9)) {
@@ -46,33 +46,33 @@ public class FlyA extends Check {
         if(lastPos.isPassed(60L)) {
             double toCheck = (predicted - 0.08) * mult;
 
-            if(Math.abs(getPlayer().getMovement().getDeltaY() - toCheck)
-                    < Math.abs(getPlayer().getMovement().getDeltaY() - predicted)) {
+            if(Math.abs(player.getMovement().getDeltaY() - toCheck)
+                    < Math.abs(player.getMovement().getDeltaY() - predicted)) {
                 predicted = toCheck;
             }
         }
 
-        double deltaPredict = MathUtils.getDelta(getPlayer().getMovement().getDeltaY(), predicted);
+        double deltaPredict = MathUtils.getDelta(player.getMovement().getDeltaY(), predicted);
 
-        if(!getPlayer().getInfo().isGeneralCancel()
-                && getPlayer().getInfo().getBlockAbove().isPassed(1)
-                && !getPlayer().getInfo().isOnLadder()
-                && !getPlayer().getBlockInformation().inWeb
-                && !getPlayer().getBlockInformation().inScaffolding
-                && !getPlayer().getBlockInformation().inLiquid
-                && !getPlayer().getBlockInformation().fenceBelow
-                && !getPlayer().getBlockInformation().onHalfBlock
-                && getPlayer().getInfo().getVelocity().isPassed(1)
-                && !getPlayer().getBlockInformation().onSlime && deltaPredict > 0.016) {
+        if(!player.getInfo().isGeneralCancel()
+                && player.getInfo().getBlockAbove().isPassed(1)
+                && !player.getInfo().isOnLadder()
+                && !player.getBlockInfo().inWeb
+                && !player.getBlockInfo().inScaffolding
+                && !player.getBlockInfo().inLiquid
+                && !player.getBlockInfo().fenceBelow
+                && !player.getBlockInfo().onHalfBlock
+                && player.getInfo().getVelocity().isPassed(1)
+                && !player.getBlockInfo().onSlime && deltaPredict > 0.016) {
             if(++buffer > 5) {
                 buffer = 5;
-                flag("dY=%.3f p=%.3f dx=%.3f", getPlayer().getMovement().getDeltaY(), predicted,
-                        getPlayer().getMovement().getDeltaXZ());
+                flag("dY=%.3f p=%.3f dx=%.3f", player.getMovement().getDeltaY(), predicted,
+                        player.getMovement().getDeltaXZ());
             }
         } else buffer-= buffer > 0 ? 0.25f : 0;
 
-        debug("dY=%.3f p=%.3f dx=%.3f b=%s velocity=%s", getPlayer().getMovement().getDeltaY(), predicted,
-                getPlayer().getMovement().getDeltaXZ(), buffer, getPlayer().getInfo().getVelocity().getPassed());
+        debug("dY=%.3f p=%.3f dx=%.3f b=%s velocity=%s", player.getMovement().getDeltaY(), predicted,
+                player.getMovement().getDeltaXZ(), buffer, player.getInfo().getVelocity().getPassed());
 
         lastPos.reset();
     }

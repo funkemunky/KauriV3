@@ -25,25 +25,25 @@ public class Aim extends Check {
     public void flying(WPacketPlayInFlying packet) {
         if(!packet.isLooked()) return;
 
-        if(getPlayer().getMovement().getYawGcdList().size() < 40) {
+        if(player.getMovement().getYawGcdList().size() < 40) {
             if(buffer > 0) buffer--;
             return;
         }
 
-        final float deltaYaw = Math.abs(getPlayer().getMovement().getDeltaYaw());
-        final float deltaPitch = Math.abs(getPlayer().getMovement().getDeltaPitch());
-        final float deltaX = deltaYaw / getPlayer().getMovement().getYawMode(),
-                deltaY = deltaPitch / getPlayer().getMovement().getPitchMode();
+        final float deltaYaw = Math.abs(player.getMovement().getDeltaYaw());
+        final float deltaPitch = Math.abs(player.getMovement().getDeltaPitch());
+        final float deltaX = deltaYaw / player.getMovement().getYawMode(),
+                deltaY = deltaPitch / player.getMovement().getPitchMode();
 
-        final double gridX = getGrid(getPlayer().getMovement().getYawGcdList()),
-                gridY = getGrid(getPlayer().getMovement().getPitchGcdList());
+        final double gridX = getGrid(player.getMovement().getYawGcdList()),
+                gridY = getGrid(player.getMovement().getPitchGcdList());
 
         if(gridX < 0.005 || gridY < 0.005) lastGrid.reset();
 
         if(deltaX > 200 || deltaY > 200) {
             debug("sensitivity instability: mcp=%.4f, cx=%.4f, cy=%.4f, dx=%.1f, dy=%.1f",
-                    getPlayer().getMovement().getSensitivityMcp(), getPlayer().getMovement().getCurrentSensX(),
-                    getPlayer().getMovement().getCurrentSensY(), deltaX, deltaY);
+                    player.getMovement().getSensitivityMcp(), player.getMovement().getCurrentSensX(),
+                    player.getMovement().getCurrentSensY(), deltaX, deltaY);
             if(buffer > 0) buffer--;
             return;
         }
@@ -51,16 +51,16 @@ public class Aim extends Check {
         boolean increasing = deltaYaw > deltaX || deltaPitch > deltaY;
 
         boolean flagged = false;
-        if(getPlayer().getMovement().getPitchGCD() < 0.007 && lastGrid.isPassed() && getPlayer().getMovement().getLastHighRate().isNotPassed(3)) {
+        if(player.getMovement().getPitchGCD() < 0.007 && lastGrid.isPassed() && player.getMovement().getLastHighRate().isNotPassed(3)) {
             if(deltaPitch < 10 && ++buffer > 8) {
-                flag("%s", getPlayer().getMovement().getPitchGCD());
+                flag("%s", player.getMovement().getPitchGCD());
             }
             flagged = true;
         } else buffer = 0;
 
         debug((flagged ? Color.Green : "") +"sensitivity: mcp=%.4f, cx=%.4f, cy=%.4f, dx=%.1f, dy=%.1f",
-                getPlayer().getMovement().getSensitivityMcp(), getPlayer().getMovement().getCurrentSensX(),
-                getPlayer().getMovement().getCurrentSensY(), deltaX, deltaY);
+                player.getMovement().getSensitivityMcp(), player.getMovement().getCurrentSensX(),
+                player.getMovement().getCurrentSensY(), deltaX, deltaY);
 
     }
 

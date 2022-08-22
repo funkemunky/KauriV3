@@ -45,4 +45,13 @@ public class WPacketPlayInBlockDig implements WPacket {
         private EnumPlayerDigType() {
         }
     }
+
+    @Override
+    public String toString() {
+        return "WPacketPlayInBlockDig{" +
+                "blockPos=" + blockPos +
+                ", direction=" + direction +
+                ", digType=" + digType +
+                '}';
+    }
 }

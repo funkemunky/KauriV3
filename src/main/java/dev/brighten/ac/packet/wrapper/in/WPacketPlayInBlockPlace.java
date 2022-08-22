@@ -26,4 +26,16 @@ public class WPacketPlayInBlockPlace implements WPacket {
     public Object getPacket() {
         return null;
     }
+
+    @Override
+    public String toString() {
+        return "WPacketPlayInBlockPlace{" +
+                "blockPos=" + blockPos +
+                ", itemStack=" + itemStack +
+                ", direction=" + direction +
+                ", vecX=" + vecX +
+                ", vecY=" + vecY +
+                ", vecZ=" + vecZ +
+                '}';
+    }
 }

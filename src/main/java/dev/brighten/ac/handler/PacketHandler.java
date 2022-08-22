@@ -7,8 +7,10 @@ import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.packet.wrapper.PacketType;
 import dev.brighten.ac.packet.wrapper.in.*;
 import dev.brighten.ac.packet.wrapper.out.*;
+import dev.brighten.ac.utils.BlockUtils;
 import dev.brighten.ac.utils.KLocation;
 import dev.brighten.ac.utils.MovementUtils;
+import dev.brighten.ac.utils.math.IntVector;
 import lombok.val;
 import net.minecraft.server.v1_8_R3.PacketDataSerializer;
 import net.minecraft.server.v1_8_R3.PacketPlayInCustomPayload;
@@ -16,6 +18,7 @@ import net.minecraft.server.v1_8_R3.PacketPlayInSteerVehicle;
 import net.minecraft.server.v1_8_R3.PacketPlayInTransaction;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.Vector;
 
 import java.util.*;
@@ -23,9 +26,9 @@ import java.util.*;
 public class PacketHandler {
 
     public void process(APlayer player, PacketType type, Object packetObject) {
+        long timestamp = System.currentTimeMillis();
         switch (type) {
             case CLIENT_TRANSACTION: {
-                long currentTimeMillis = System.currentTimeMillis();
                 PacketPlayInTransaction packet = (PacketPlayInTransaction) packetObject;
 
                 if(packet.a() == 0) {
@@ -46,7 +49,7 @@ public class PacketHandler {
                                 synchronized (player.instantTransaction) {
                                     Deque<Short> toRemove = new LinkedList<>();
                                     player.instantTransaction.forEach((key, tuple) -> {
-                                        if((currentTimeMillis - tuple.one.getStamp())
+                                        if((timestamp - tuple.one.getStamp())
                                                 > player.getLagInfo().getTransPing() * 52L + 750L) {
                                             tuple.two.accept(tuple.one);
                                             toRemove.add(key);
@@ -65,7 +68,7 @@ public class PacketHandler {
                             }
 
                             ka.getReceived(player.getBukkitPlayer().getUniqueId()).ifPresent(r -> {
-                                r.receivedStamp = currentTimeMillis;
+                                r.receivedStamp = timestamp;
                             });
 
                             synchronized (player.keepAliveStamps) {
@@ -97,7 +100,7 @@ public class PacketHandler {
                     if(!ia.isEnd()) {
                         player.getInfo().getPossibleCapabilities().add(packet.getCapabilities());
                     } else if(player.getInfo().getPossibleCapabilities().size() > 1) {
-                        player.getInfo().getPossibleCapabilities().remove(0);
+                        player.getInfo().getPossibleCapabilities().clear();
                     }
                 });
                 break;
@@ -110,6 +113,12 @@ public class PacketHandler {
                     return;
                 }
 
+                if (timestamp - player.getLagInfo().getLastFlying() <= 15) {
+                    player.getLagInfo().getLastPacketDrop().reset();
+                }
+
+                player.getLagInfo().setLastFlying(timestamp);
+
                 player.getEntityLocationHandler().onFlying();
 
                 if(player.getPlayerVersion().isOrAbove(ProtocolVersion.V1_17)
@@ -119,7 +128,7 @@ public class PacketHandler {
                     player.getMovement().setExcuseNextFlying(true);
                 }
 
-                player.getMovement().process(packet, System.currentTimeMillis());
+                player.getMovement().process(packet, timestamp);
                 break;
             }
             case BLOCK_CHANGE: {
@@ -148,8 +157,8 @@ public class PacketHandler {
                     player.getInfo().getVelocityHistory().add(velocity);
                     player.getInfo().setDoingVelocity(true);
 
-                    player.runKeepaliveAction(ka -> {
-                        if(player.getInfo().getVelocityHistory().contains(velocity)) {
+                    player.runInstantAction(ka -> {
+                        if(ka.isEnd() && player.getInfo().getVelocityHistory().contains(velocity)) {
                             player.getOnVelocityTasks().forEach(task -> task.accept(velocity));
                             player.getInfo().setDoingVelocity(false);
                             player.getInfo().getVelocity().reset();
@@ -157,7 +166,7 @@ public class PacketHandler {
                                 player.getInfo().getVelocityHistory().remove(velocity);
                             }
                         }
-                    }, 2);
+                    });
                 }
                 break;
             }
@@ -202,7 +211,7 @@ public class PacketHandler {
 
                     long serverTime = serial.readLong();
                     long clientReceivedTime = serial.readLong();
-                    long currentTime = System.currentTimeMillis();
+                    long currentTime = timestamp;
 
                     long serverPing = clientReceivedTime - serverTime;
                     long clientToServer = currentTime - clientReceivedTime;
@@ -263,6 +272,16 @@ public class PacketHandler {
             case BLOCK_PLACE: {
                 WPacketPlayInBlockPlace packet = (WPacketPlayInBlockPlace) packetObject;
 
+                IntVector pos = packet.getBlockPos();
+                ItemStack stack = packet.getItemStack();
+
+                // Used item
+                if(pos.getX() == -1 && (pos.getY() == 255 | pos.getY() == -1) && pos.getZ() == -1
+                        && stack != null
+                        && BlockUtils.isUsable(stack.getType())) {
+                    player.getInfo().getLastUseItem().reset();
+                }
+
                 player.getBlockUpdateHandler().onPlace(packet);
                 break;
             }
@@ -274,6 +293,11 @@ public class PacketHandler {
             }
         }
 
-        player.callPacket(packetObject);
+        if(player.sniffing) {
+            player.sniffedPackets.add("[" +  Anticheat.INSTANCE.getKeepaliveProcessor().tick + "] " +
+                    "" + type.name() + ": " + packetObject.toString());
+        }
+
+        player.callPacket(packetObject, timestamp);
     }
 }

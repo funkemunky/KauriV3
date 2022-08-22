@@ -21,4 +21,18 @@ public class WPacketPlayInFlying implements WPacket {
     public Object getPacket() {
         return null;
     }
+
+    @Override
+    public String toString() {
+        return "WPacketPlayInFlying{" +
+                "x=" + x +
+                ", y=" + y +
+                ", z=" + z +
+                ", yaw=" + yaw +
+                ", pitch=" + pitch +
+                ", looked=" + looked +
+                ", moved=" + moved +
+                ", onGround=" + onGround +
+                '}';
+    }
 }

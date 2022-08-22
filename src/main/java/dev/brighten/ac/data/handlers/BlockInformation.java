@@ -116,26 +116,28 @@ public class BlockInformation {
         final World world = player.getBukkitPlayer().getWorld();
         int it = 9 * 9;
 
-        SimpleCollisionBox boundsForCollision = player.getMovement().getFrom().getBox().copy().shrink(0.001D, 0.001D, 0.001D);
+        if(player.getMovement().getFrom().getBox() != null) {
+            SimpleCollisionBox boundsForCollision = player.getMovement().getFrom().getBox().copy().shrink(0.001D, 0.001D, 0.001D);
 
-        IntVector min = new IntVector((int) boundsForCollision.xMin, (int) boundsForCollision.yMin, (int) boundsForCollision.zMin);
-        IntVector max = new IntVector((int) boundsForCollision.xMax, (int) boundsForCollision.yMax, (int) boundsForCollision.zMax);
+            IntVector min = new IntVector((int) boundsForCollision.xMin, (int) boundsForCollision.yMin, (int) boundsForCollision.zMin);
+            IntVector max = new IntVector((int) boundsForCollision.xMax, (int) boundsForCollision.yMax, (int) boundsForCollision.zMax);
 
-        for(int x = min.getX() ; x <= max.getX() ; x++) {
-            for(int y = min.getY() ; y <= max.getY() ; y++) {
-                for(int z = min.getZ() ; z <= max.getZ() ; z++) {
-                    Optional<Block> block = BlockUtils.getBlockAsync(
-                            new Location(player.getBukkitPlayer().getWorld(), x, y, z));
+            for(int x = min.getX() ; x <= max.getX() ; x++) {
+                for(int y = min.getY() ; y <= max.getY() ; y++) {
+                    for(int z = min.getZ() ; z <= max.getZ() ; z++) {
+                        Optional<Block> block = BlockUtils.getBlockAsync(
+                                new Location(player.getBukkitPlayer().getWorld(), x, y, z));
 
-                    if(!block.isPresent()) continue;
+                        if(!block.isPresent()) continue;
 
-                    Material type = block.get().getType();
+                        Material type = block.get().getType();
 
-                    collisionMaterialCount.compute(type, (key, count) -> {
-                        if(count == null) return 1;
+                        collisionMaterialCount.compute(type, (key, count) -> {
+                            if(count == null) return 1;
 
-                        return count + 1;
-                    });
+                            return count + 1;
+                        });
+                    }
                 }
             }
         }

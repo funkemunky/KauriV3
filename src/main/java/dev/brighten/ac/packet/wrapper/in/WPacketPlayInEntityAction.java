@@ -33,4 +33,11 @@ public class WPacketPlayInEntityAction implements WPacket {
         private EnumPlayerAction() {
         }
     }
+
+    @Override
+    public String toString() {
+        return "WPacketPlayInEntityAction{" +
+                "action=" + action.name() +
+                '}';
+    }
 }

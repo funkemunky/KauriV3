@@ -27,18 +27,18 @@ public class VelocityA extends Check {
     @Action
     public void onFlying(WPacketPlayInFlying packet) {
         if(currentVelocity != null && currentVelocity.getY() > 0
-                && !getPlayer().getBlockInformation().inWeb
-                && !getPlayer().getBlockInformation().onClimbable
-                && getPlayer().getInfo().getBlockAbove().isPassed(6)
-                && !getPlayer().getBlockInformation().onSlime
-                && !getPlayer().getInfo().isGeneralCancel()) {
-            double pct = getPlayer().getMovement().getDeltaY() / currentVelocity.getY() * 100;
+                && !player.getBlockInfo().inWeb
+                && !player.getBlockInfo().onClimbable
+                && player.getInfo().getBlockAbove().isPassed(6)
+                && !player.getBlockInfo().onSlime
+                && !player.getInfo().isGeneralCancel()) {
+            double pct = player.getMovement().getDeltaY() / currentVelocity.getY() * 100;
 
             if(currentVelocity.getY() < 0.005
-                    || getPlayer().getBlockInformation().collidesHorizontally
-                    || getPlayer().getInfo().getLastAbilities().isNotPassed(3)
-                    || getPlayer().getBlockInformation().collidesVertically
-                    || getPlayer().getInfo().getVelocity().isPassed(7)) {
+                    || player.getBlockInfo().collidesHorizontally
+                    || player.getInfo().getLastAbilities().isNotPassed(3)
+                    || player.getBlockInfo().collidesVertically
+                    || player.getInfo().getVelocity().isPassed(7)) {
                 currentVelocity = null;
                 return;
             }
@@ -51,7 +51,7 @@ public class VelocityA extends Check {
             } else if(buffer > 0) buffer-= 0.5;
 
             debug("pct=%.1f%% buffer=%.1f dy=%.4f vy=%.4f", pct, buffer,
-                    getPlayer().getMovement().getDeltaY(), currentVelocity.getY());
+                    player.getMovement().getDeltaY(), currentVelocity.getY());
 
             currentVelocity.setY((currentVelocity.getY() - 0.08) * 0.98);
         } else if(currentVelocity != null) {

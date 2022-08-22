@@ -20,4 +20,11 @@ public class WPacketPlayInArmAnimation implements WPacket {
     public Object getPacket() {
         return null;
     }
+
+    @Override
+    public String toString() {
+        return "WPacketPlayInArmAnimation{" +
+                "timestamp=" + timestamp +
+                '}';
+    }
 }

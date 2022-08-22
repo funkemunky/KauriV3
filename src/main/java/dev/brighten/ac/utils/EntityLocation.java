@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.bukkit.entity.Entity;
 
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -17,8 +18,8 @@ public class EntityLocation {
     public int increment = 0;
     public boolean sentTeleport = false;
     public KLocation oldLocation, location;
-    public List<KLocation> oldLocations = new EvictingList<>(3),
-            interpolatedLocations = new EvictingList<>(4);
+    public Deque<KLocation> oldLocations = new EvictingList<>(3),
+            interpolatedLocations = new EvictingList<>(3);
 
     public void interpolateLocations() {
         increment = 3;

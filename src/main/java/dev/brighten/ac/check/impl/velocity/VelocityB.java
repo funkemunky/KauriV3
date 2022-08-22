@@ -2,6 +2,8 @@ package dev.brighten.ac.check.impl.velocity;
 
 import dev.brighten.ac.check.Action;
 import dev.brighten.ac.check.Check;
+import dev.brighten.ac.check.CheckData;
+import dev.brighten.ac.check.CheckType;
 import dev.brighten.ac.check.impl.speed.Horizontal;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
@@ -16,7 +18,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
-//@CheckData(name = "Velocity (B)", type = CheckType.MOVEMENT)
+@CheckData(name = "Velocity (B)", type = CheckType.MOVEMENT)
 public class VelocityB extends Check {
     public VelocityB(APlayer player) {
         super(player);
@@ -47,28 +49,29 @@ public class VelocityB extends Check {
     @Action
     public void onFlying(WPacketPlayInFlying packet) {
         check: {
-            if((pvX != 0 || pvZ != 0) && (getPlayer().getMovement().getDeltaX() != 0
-                    || getPlayer().getMovement().getDeltaY() != 0
-                    || getPlayer().getMovement().getDeltaZ() != 0)) {
+            if((pvX != 0 || pvZ != 0) && (player.getMovement().getDeltaX() != 0
+                    || player.getMovement().getDeltaY() != 0
+                    || player.getMovement().getDeltaZ() != 0)) {
                 boolean found = false;
 
                 double drag = 0.91;
 
-                if(getPlayer().getBlockInformation().blocksNear
-                        || getPlayer().getBlockInformation().blocksAbove
-                        || getPlayer().getBlockInformation().inLiquid
-                        || getPlayer().getLagInfo().getLastPingDrop().isNotPassed()) {
+                if(player.getBlockInfo().blocksNear
+                        || player.getBlockInfo().blocksAbove
+                        || player.getBlockInfo().inLiquid
+                        || player.getLagInfo().getLastPacketDrop().isNotPassed(2)
+                        || player.getLagInfo().getLastPingDrop().isNotPassed(4)) {
                     pvX = pvZ = 0;
                     buffer-= buffer > 0 ? 1 : 0;
                     break check;
                 }
 
-                if(getPlayer().getMovement().getFrom().isOnGround()) {
+                if(player.getMovement().getFrom().isOnGround()) {
                     drag*= fromFriction;
                 }
 
-                if(useEntity && (sprint || (getPlayer().getBukkitPlayer().getItemInHand() != null
-                        && getPlayer().getBukkitPlayer().getItemInHand().containsEnchantment(Enchantment.KNOCKBACK)))) {
+                if(useEntity && (sprint || (player.getBukkitPlayer().getItemInHand() != null
+                        && player.getBukkitPlayer().getItemInHand().containsEnchantment(Enchantment.KNOCKBACK)))) {
                     pvX*= 0.6;
                     pvZ*= 0.6;
                 }
@@ -76,16 +79,16 @@ public class VelocityB extends Check {
                 double f = 0.16277136 / (drag * drag * drag);
                 double f5;
 
-                if (getPlayer().getMovement().getFrom().isOnGround()) {
-                    double aiMoveSpeed = (double) getPlayer().getBukkitPlayer().getWalkSpeed() / 2f;
+                if (player.getMovement().getFrom().isOnGround()) {
+                    double aiMoveSpeed = (double) player.getBukkitPlayer().getWalkSpeed() / 2f;
 
-                    if(getPlayer().getInfo().isSprinting()) aiMoveSpeed += aiMoveSpeed * 0.30000001192092896D;
+                    if(player.getInfo().isSprinting()) aiMoveSpeed += aiMoveSpeed * 0.30000001192092896D;
 
-                    aiMoveSpeed += (getPlayer().getPotionHandler()
+                    aiMoveSpeed += (player.getPotionHandler()
                             .getEffectByType(PotionEffectType.SPEED)
                             .map(p -> p.getAmplifier() + 1).orElse(0))
                             * 0.20000000298023224D * aiMoveSpeed;
-                    aiMoveSpeed += (getPlayer().getPotionHandler()
+                    aiMoveSpeed += (player.getPotionHandler()
                             .getEffectByType(PotionEffectType.SLOW)
                             .map(p -> p.getAmplifier() + 1).orElse(0))
                             * -0.15000000596046448D * aiMoveSpeed;
@@ -114,21 +117,21 @@ public class VelocityB extends Check {
 
                 Optional<Tuple<Double[],Double[]>> velocity = predictions.stream()
                         .filter(tuple -> {
-                            double deltaX = Math.abs(tuple.two[0] - getPlayer().getMovement().getDeltaX());
-                            double deltaZ = Math.abs(tuple.two[1] - getPlayer().getMovement().getDeltaZ());
+                            double deltaX = Math.abs(tuple.two[0] - player.getMovement().getDeltaX());
+                            double deltaZ = Math.abs(tuple.two[1] - player.getMovement().getDeltaZ());
 
                             return (deltaX * deltaX + deltaZ * deltaZ) < 0.005;
                         })
                         .min(Comparator.comparing(tuple -> {
-                            double deltaX = Math.abs(tuple.two[0] - getPlayer().getMovement().getDeltaX());
-                            double deltaZ = Math.abs(tuple.two[1] - getPlayer().getMovement().getDeltaZ());
+                            double deltaX = Math.abs(tuple.two[0] - player.getMovement().getDeltaX());
+                            double deltaZ = Math.abs(tuple.two[1] - player.getMovement().getDeltaZ());
 
                             return (deltaX * deltaX + deltaZ * deltaZ);
                         }));
 
                 found = true;
                 if(!velocity.isPresent()) {
-                    Horizontal speedCheck = (Horizontal) getPlayer().findCheck(Horizontal.class);
+                    Horizontal speedCheck = (Horizontal) player.findCheck(Horizontal.class);
                     double s2 = speedCheck.strafe;
                     double f2 = speedCheck.forward;
 
@@ -148,14 +151,14 @@ public class VelocityB extends Check {
                 double pvXZ = Math.hypot(pvX, pvZ);
 
                 if(pvXZ < 0.2) break check;
-                double ratio = getPlayer().getMovement().getDeltaXZ() / pvXZ;
+                double ratio = player.getMovement().getDeltaXZ() / pvXZ;
 
                 if((ratio < 0.996) && pvX != 0
                         && pvZ != 0
-                        && getPlayer().getCreation().isPassed(3000L)
-                        && getPlayer().getMovement().getLastTeleport().isPassed(1)
-                        && !getPlayer().getBlockInformation().blocksNear) {
-                    if(++buffer > 20) {
+                        && player.getCreation().isPassed(3000L)
+                        && player.getMovement().getLastTeleport().isPassed(1)
+                        && !player.getBlockInfo().blocksNear) {
+                    if(player.getInfo().lastUseItem.isPassed(2) && ++buffer > 20) {
                         flag("pct=%.2f buffer=%.1f forward=%.2f strafe=%.2f",
                                 ratio * 100, buffer, moveStrafe, moveForward);
                         buffer = 21;
@@ -163,14 +166,14 @@ public class VelocityB extends Check {
                 } else if(buffer > 0) buffer-= 0.5;
 
                 debug("ratio=%.3f dxz=%.4f vxz=%.4f vxz=%.4g,%.4f buffer=%.1f ticks=%s strafe=%.2f forward=%.2f " +
-                                "found=%s lastV=%s", ratio, getPlayer().getMovement().getDeltaXZ(), pvXZ, pvX, pvZ,
+                                "found=%s lastV=%s", ratio, player.getMovement().getDeltaXZ(), pvXZ, pvX, pvZ,
                         buffer, ticks, moveStrafe, moveForward,
-                        found, getPlayer().getInfo().getVelocity().getPassed());
+                        found, player.getInfo().getVelocity().getPassed());
 
                 pvX *= drag;
                 pvZ *= drag;
 
-                if(++ticks > 6) {
+                if(++ticks > 2) {
                     ticks = 0;
                     pvX = pvZ = 0;
                 }
@@ -179,9 +182,9 @@ public class VelocityB extends Check {
                 if(Math.abs(pvZ) < 0.005) pvZ = 0;
             }
         }
-        sprint = getPlayer().getInfo().isSprinting();
+        sprint = player.getInfo().isSprinting();
         useEntity = false;
-        fromFriction = getPlayer().getInfo().getBlockBelow()
+        fromFriction = player.getInfo().getBlockBelow()
                 .map(b -> CraftMagicNumbers.getBlock(b.getType()).frictionFactor).orElse(0.6f);
     }
 
@@ -198,8 +201,8 @@ public class VelocityB extends Check {
             f = friction / f;
             strafe = strafe * f;
             forward = forward * f;
-            double f1 = Math.sin(getPlayer().getMovement().getTo().getLoc().yaw * Math.PI / 180.0F);
-            double f2 = Math.cos(getPlayer().getMovement().getTo().getLoc().yaw * Math.PI / 180.0F);
+            double f1 = Math.sin(player.getMovement().getTo().getLoc().yaw * Math.PI / 180.0F);
+            double f2 = Math.cos(player.getMovement().getTo().getLoc().yaw * Math.PI / 180.0F);
             pvX += (strafe * f2 - forward * f1);
             pvZ += (forward * f2 + strafe * f1);
         }

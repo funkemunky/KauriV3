@@ -20,4 +20,11 @@ public class WPacketPlayInAbilities implements WPacket {
     public Object getPacket() {
         return null;
     }
+
+    @Override
+    public String toString() {
+        return "WPacketPlayInAbilities{" +
+                "capabilities=" + capabilities +
+                '}';
+    }
 }

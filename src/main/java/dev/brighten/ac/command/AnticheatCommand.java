@@ -19,6 +19,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.stream.Collectors;
@@ -151,42 +152,71 @@ public class AnticheatCommand extends BaseCommand {
     @CommandPermission("anticheat.command.debug")
     public void onDebug(Player sender, @Single String check, @Optional OnlinePlayer targetPlayer) {
         Player target = targetPlayer != null ? targetPlayer.player : sender;
-        if(check.equals("none")) {
-            synchronized (Check.debugInstances) {
-                Check.debugInstances.forEach((nameKey, list) -> {
-                    val iterator = list.iterator();
-                    while(iterator.hasNext()) {
-                        val tuple = iterator.next();
+        switch (check.toLowerCase()) {
+            case "none": {
+                synchronized (Check.debugInstances) {
+                    Check.debugInstances.forEach((nameKey, list) -> {
+                        val iterator = list.iterator();
+                        while(iterator.hasNext()) {
+                            val tuple = iterator.next();
 
-                        if(tuple.two.equals(target.getUniqueId())) {
-                            iterator.remove();
-                            sender.spigot()
-                                    .sendMessage(new ChatBuilder(
-                                            "&cTurned off debug for check &f%s &con target &f%s", nameKey,
-                                            target.getName()).build());
+                            if(tuple.two.equals(target.getUniqueId())) {
+                                iterator.remove();
+                                sender.spigot()
+                                        .sendMessage(new ChatBuilder(
+                                                "&cTurned off debug for check &f%s &con target &f%s", nameKey,
+                                                target.getName()).build());
+                            }
                         }
+                    });
+                }
+                break;
+            }
+            case "sniff": {
+                APlayer targetData = Anticheat.INSTANCE.getPlayerRegistry().getPlayer(target.getUniqueId()).orElse(null);
+
+                if(targetData != null) {
+                    if(targetData.sniffing) {
+                        targetData.sniffing = false;
+                        sender.sendMessage(Color.Red + "Stopped sniff. Pasting...");
+                        try {
+                            sender.sendMessage(Color.Gray + "Paste: " + Color.White + Pastebin.makePaste(
+                                    String.join("\n", targetData.sniffedPackets.toArray(new String[0])),
+                                    "Sniffed from " + target.getName(), Pastebin.Privacy.UNLISTED));
+                        } catch (UnsupportedEncodingException e) {
+                            e.printStackTrace();
+                        }
+                        targetData.sniffedPackets.clear();
+                    } else {
+                        targetData.sniffing = true;
+                        sender.sendMessage(Color.Green + "Started packet sniff on " + target.getName() + "!");
                     }
-                });
+                } else {
+                    sender.spigot().sendMessage(Messages.NULL_APLAYER);
+                }
+                break;
             }
-        } else {
-            if(!Anticheat.INSTANCE.getCheckManager().isCheck(check)) {
-                sender.sendMessage(Color.Red + "Check \"" + check + "\" is not a valid check!");
-                return;
-            }
-            synchronized (Check.debugInstances) {
-                Check.debugInstances.compute(check.replace("_", " "), (key, list) -> {
-                    if(list == null) list = new ArrayList<>();
+            default: {
+                if(!Anticheat.INSTANCE.getCheckManager().isCheck(check)) {
+                    sender.sendMessage(Color.Red + "Check \"" + check + "\" is not a valid check!");
+                    return;
+                }
+                synchronized (Check.debugInstances) {
+                    Check.debugInstances.compute(check.replace("_", " "), (key, list) -> {
+                        if(list == null) list = new ArrayList<>();
 
-                    list.add(new Tuple<>(target.getUniqueId(), sender.getUniqueId()));
+                        list.add(new Tuple<>(target.getUniqueId(), sender.getUniqueId()));
 
-                    return list;
-                });
+                        return list;
+                    });
 
-                sender.spigot()
-                        .sendMessage(new ChatBuilder(
-                                "&aTurned on debug for check &f%s &aon target &f%s",
-                                check.replace("_", " "),
-                                target.getName()).build());
+                    sender.spigot()
+                            .sendMessage(new ChatBuilder(
+                                    "&aTurned on debug for check &f%s &aon target &f%s",
+                                    check.replace("_", " "),
+                                    target.getName()).build());
+                }
+                break;
             }
         }
     }

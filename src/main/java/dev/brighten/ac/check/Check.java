@@ -15,17 +15,17 @@ import net.md_5.bungee.api.chat.TextComponent;
 
 import java.util.*;
 
-@Getter
 public abstract class Check {
 
-    private final APlayer player;
-
+    public final APlayer player;
+    @Getter
     private final CheckData checkData;
+    @Getter
     private int vl;
     private long lastFlagRun;
     private final Timer lastAlert = new MillisTimer();
 
-    public static List<UUID> alertsEnabled = new ArrayList<>();
+    public static Set<UUID> alertsEnabled = new HashSet<>();
 
     public static final Map<String, List<Tuple<UUID, UUID>>> debugInstances = new HashMap<>();
 
