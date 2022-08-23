@@ -178,11 +178,13 @@ public class Check implements ECheck {
             result = event.onPunish(player.getBukkitPlayer(),this,  commands, result.isCancelled());
         }
         PunishResult finalResult = result;
-        RunUtils.task(() -> {
-            for (String punishmentCommand : finalResult.getCommands()) {
-                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), punishmentCommand);
-            }
-        });
+        if(finalResult != null && finalResult.getCommands() != null && !finalResult.isCancelled()) {
+            RunUtils.task(() -> {
+                for (String punishmentCommand : finalResult.getCommands()) {
+                    Bukkit.dispatchCommand(Bukkit.getConsoleSender(), punishmentCommand);
+                }
+            });
+        }
         vl = 0;
     }
 
