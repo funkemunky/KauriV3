@@ -59,15 +59,9 @@ public class EntityLocationHandler {
         entityLocationMap.values().forEach(eloc -> {
             if(eloc.one != null) {
                 eloc.one.interpolateLocation();
-                if(streak > 2 && eloc.one.interpolatedLocations.size() > 1) {
-                    eloc.one.interpolatedLocations.removeFirst();
-                }
             }
             if(eloc.two != null) {
                 eloc.two.interpolateLocation();
-                if(streak > 2 && eloc.two.interpolatedLocations.size() > 1) {
-                    eloc.two.interpolatedLocations.removeFirst();
-                }
             }
         });
 
