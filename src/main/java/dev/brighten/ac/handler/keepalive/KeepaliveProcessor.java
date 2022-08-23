@@ -19,7 +19,7 @@ public class KeepaliveProcessor implements Runnable {
 
     private BukkitTask task;
 
-    public KeepAlive currentKeepalive = new KeepAlive(0, (short)0);
+    public KeepAlive currentKeepalive = new KeepAlive(0, (short) 0);
     public int tick;
     public int totalPlayers, laggyPlayers;
 
@@ -49,8 +49,16 @@ public class KeepaliveProcessor implements Runnable {
         for (APlayer value : Anticheat.INSTANCE.getPlayerRegistry().aplayerMap.values()) {
             totalPlayers++;
 
-            if(value.getLagInfo().getLastPingDrop().isNotPassed(2)
+            if (value.getLagInfo().getLastPingDrop().isNotPassed(2)
                     || value.getLagInfo().getLastClientTransaction().isPassed(135L)) laggyPlayers++;
+
+            if (tick % 5 == 0) {
+                double dh = Math.min(value.getMovement().getDeltaXZ(), 1),
+                        dy = Math.min(1, Math.abs(value.getMovement().getDeltaY()));
+
+                value.getInfo().nearbyEntities = value.getBukkitPlayer()
+                        .getNearbyEntities(2 + dh, 3 + dy, 2 + dh);
+            }
 
             PacketPlayOutTransaction transaction = new PacketPlayOutTransaction(0, currentKeepalive.id, false);
 
@@ -67,27 +75,27 @@ public class KeepaliveProcessor implements Runnable {
     }
 
     public Optional<KeepAlive> getResponse(APlayer data) {
-        if(!lastResponses.containsKey(data.getBukkitPlayer().getUniqueId().hashCode()))
+        if (!lastResponses.containsKey(data.getBukkitPlayer().getUniqueId().hashCode()))
             return Optional.empty();
 
         return getKeepById(lastResponses.get(data.getBukkitPlayer().getUniqueId().hashCode()));
     }
 
     public void start() {
-        if(task == null) {
+        if (task == null) {
             task = RunUtils.taskTimer(this, Anticheat.INSTANCE, 20L, 0L);
         }
     }
 
     public void addResponse(APlayer data, short id) {
         getKeepById(id).ifPresent(ka -> {
-            lastResponses.put(data.getBukkitPlayer().getUniqueId().hashCode(), (Short)id);
+            lastResponses.put(data.getBukkitPlayer().getUniqueId().hashCode(), (Short) id);
             ka.received(data);
         });
     }
 
     public void stop() {
-        if(task != null) {
+        if (task != null) {
             task.cancel();
             task = null;
         }

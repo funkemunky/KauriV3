@@ -36,22 +36,20 @@ public class Hitbox extends Check {
         super(player);
     }
 
-    @Action
-    public void onUse(WPacketPlayInUseEntity packet) {
+    Action<WPacketPlayInUseEntity> useEntity = packet -> {
         if(packet.getAction() == WPacketPlayInUseEntity.EnumEntityUseAction.ATTACK
                 && allowedEntityTypes.contains(packet.getEntity(player.getBukkitPlayer().getWorld()).getType())) {
             attacks.add(new Tuple<>(packet.getEntity(player.getBukkitPlayer().getWorld()), player.getMovement().getTo().getLoc().clone()));
         }
-    }
+    };
 
     //TODO Figure out how to make the check more sensitive without compromising network stability
     //Aka figure out how to minimize the amount of previous locations needed to process to keep network
     //stability. like shortening the amount stored, or removing older ones.
-    @Action
-    public void onFlying(WPacketPlayInFlying packet) {
+    Action<WPacketPlayInFlying> onFlying = packet -> {
         if(player.getInfo().isCreative() || player.getInfo().isInVehicle()) {
             attacks.clear();
-           return;
+            return;
         }
         Tuple<Entity, KLocation> target;
 
@@ -116,8 +114,8 @@ public class Hitbox extends Check {
                     || player.getInfo().getLastElytra().isNotPassed(40);
 
             List<Vector> directions = new ArrayList<>(Arrays.asList(MathUtils.getDirection(
-                    player.getMovement().getTo().getLoc().yaw,
-                    player.getMovement().getTo().getLoc().pitch),
+                            player.getMovement().getTo().getLoc().yaw,
+                            player.getMovement().getTo().getLoc().pitch),
                     MathUtils.getDirection(player.getMovement().getFrom().getLoc().yaw,
                             player.getMovement().getTo().getLoc().pitch)));
 
@@ -180,6 +178,6 @@ public class Hitbox extends Check {
                 debug("Missed!");
             }
         }
-    }
+    };
 
 }

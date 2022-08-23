@@ -18,8 +18,7 @@ public class FlyB extends Check {
     private Timer lastNearGround = new TickTimer();
     private float buffer;
 
-    @Action
-    public void onFlying(WPacketPlayInFlying packet) {
+    Action<WPacketPlayInFlying> flying = packet -> {
         if(player.getInfo().isNearGround()) lastNearGround.reset();
         if(!packet.isMoved() || player.getInfo().isGeneralCancel()) return;
 
@@ -36,5 +35,5 @@ public class FlyB extends Check {
                         player.getMovement().getDeltaY(), player.getMovement().getLDeltaY());
             }
         } else if(buffer > 0) buffer-= 0.05f;
-    }
+    };
 }

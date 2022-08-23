@@ -33,9 +33,7 @@ public class Horizontal extends Check {
         super(player);
     }
 
-    @Action
-    public void onFlying(WPacketPlayInFlying packet) {
-
+    Action<WPacketPlayInFlying> flying = packet -> {
         Block underBlock = BlockUtils.getBlock(player.getMovement().getTo().getLoc()
                 .toLocation(player.getBukkitPlayer().getWorld())
                 .subtract(0, 1, 0)),
@@ -264,7 +262,7 @@ public class Horizontal extends Check {
                     player.getBlockInfo().onSoulSand);
         }
         lastLastClientGround = player.getMovement().getFrom().isOnGround();
-    }
+    };
 
     private static final float[] SIN_TABLE_FAST = new float[4096], SIN_TABLE_FAST_NEW = new float[4096];
     private static final float[] SIN_TABLE = new float[65536];

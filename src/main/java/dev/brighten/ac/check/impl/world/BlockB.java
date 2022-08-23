@@ -14,8 +14,7 @@ public class BlockB extends Check {
         super(player);
     }
 
-    @Action
-    public void onBlock(BlockPlaceEvent event) {
+    Action<BlockPlaceEvent> blockPlaceEvent = event -> {
         Block ba = event.getBlockAgainst();
 
         if (!event.getBlockPlaced().getType().isBlock()) return;
@@ -27,5 +26,5 @@ public class BlockB extends Check {
         if (distance >= 1.3 && distance > ab_distance && ypos <= 0.5) {
             flag("d:%.4f, ad:%.4f y=%.1f", distance, ab_distance, ypos);
         }
-    }
+    };
 }

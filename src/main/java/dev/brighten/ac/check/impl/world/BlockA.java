@@ -33,9 +33,8 @@ public class BlockA extends Check {
     private final MaxDouble verbose = new MaxDouble(20);
     private Queue<Tuple<Block, SimpleCollisionBox>> blockPlacements = new LinkedBlockingQueue<>();
 
-    @Action
-    public void onBlockPlace(WPacketPlayInBlockPlace event) {
-        Location loc = event.getBlockPos().toBukkitVector().toLocation(player.getBukkitPlayer().getWorld());
+    Action<WPacketPlayInBlockPlace> blockPlace = packet -> {
+        Location loc = packet.getBlockPos().toBukkitVector().toLocation(player.getBukkitPlayer().getWorld());
         Optional<Block> optionalBlock = BlockUtils.getBlockAsync(loc);
 
         if(!optionalBlock.isPresent()) return;
@@ -43,7 +42,7 @@ public class BlockA extends Check {
         final Block block = optionalBlock.get();
         CollisionBox box = BlockData.getData(block.getType()).getBox(block, player.getPlayerVersion());
 
-        debug(event.getBlockPos().toString());
+        debug(packet.getBlockPos().toString());
         if(!(box instanceof SimpleCollisionBox)) {
             debug("Not SimpleCollisionBox: " + box.getClass().getSimpleName() + ";" + block.getType());
             return;
@@ -62,10 +61,9 @@ public class BlockA extends Check {
         }
 
         blockPlacements.add(new Tuple<>(block, simpleBox.expand(0.1)));
-    }
+    };
 
-    @Action
-    public void onFlying(WPacketPlayInFlying packet) {
+    Action<WPacketPlayInFlying> flying = packet -> {
         Tuple<Block, SimpleCollisionBox> tuple;
 
         while((tuple = blockPlacements.poll()) != null) {
@@ -75,9 +73,9 @@ public class BlockA extends Check {
             final KLocation to = player.getMovement().getTo().getLoc().clone(),
                     from = player.getMovement().getFrom().getLoc().clone();
 
-            to.y+= player.getInfo().sneaking ? (ProtocolVersion.getGameVersion().isOrAbove(ProtocolVersion.V1_14)
+            to.y += player.getInfo().sneaking ? (ProtocolVersion.getGameVersion().isOrAbove(ProtocolVersion.V1_14)
                     ? 1.27f : 1.54f) : 1.62f;
-            from.y+= player.getInfo().lsneaking ? (ProtocolVersion.getGameVersion().isOrAbove(ProtocolVersion.V1_14)
+            from.y += player.getInfo().lsneaking ? (ProtocolVersion.getGameVersion().isOrAbove(ProtocolVersion.V1_14)
                     ? 1.27f : 1.54f) : 1.62f;
 
             final RayCollision rayTo = new RayCollision(to.toVector(),
@@ -87,8 +85,8 @@ public class BlockA extends Check {
 
             final boolean collided = rayTo.isCollided(box) || rayFrom.isCollided(box);
 
-            if(!collided) {
-                if(verbose.add() > 4) {
+            if (!collided) {
+                if (verbose.add() > 4) {
                     flag("to=[x=%.1f y=%.1f z=%.1f yaw=%.1f pitch=%.1f] loc=[%.1f,%.1f,%.1f]",
                             to.x, to.y, to.z, to.yaw, from.pitch,
                             block.getLocation().getX(), block.getLocation().getY(), block.getLocation().getZ());
@@ -97,5 +95,5 @@ public class BlockA extends Check {
 
             debug("collided=%s verbose=%s", collided, verbose.value());
         }
-    }
+    };
 }

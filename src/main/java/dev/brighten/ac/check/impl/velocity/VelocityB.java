@@ -38,16 +38,14 @@ public class VelocityB extends Check {
     private int ticks;
     private static final double[] moveValues = new double[] {-0.98, 0, 0.98};
 
-    @Action
-    public void onUseEntity(WPacketPlayInUseEntity packet) {
+    Action<WPacketPlayInUseEntity> usePacket = packet -> {
         if(!useEntity
                 && packet.getAction().equals(WPacketPlayInUseEntity.EnumEntityUseAction.ATTACK)) {
             useEntity = true;
         }
-    }
+    };
 
-    @Action
-    public void onFlying(WPacketPlayInFlying packet) {
+    Action<WPacketPlayInFlying> flying = packet -> {
         check: {
             if((pvX != 0 || pvZ != 0) && (player.getMovement().getDeltaX() != 0
                     || player.getMovement().getDeltaY() != 0
@@ -178,7 +176,7 @@ public class VelocityB extends Check {
         useEntity = false;
         fromFriction = player.getInfo().getBlockBelow()
                 .map(b -> CraftMagicNumbers.getBlock(b.getType()).frictionFactor).orElse(0.6f);
-    }
+    };
 
     private void moveFlying(double strafe, double forward, double friction) {
         double f = strafe * strafe + forward * forward;

@@ -2,24 +2,27 @@ package dev.brighten.ac.check;
 
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.wrapper.WPacket;
+import dev.brighten.ac.utils.Tuple;
 import dev.brighten.ac.utils.reflections.types.WrappedClass;
 import dev.brighten.ac.utils.reflections.types.WrappedConstructor;
-import dev.brighten.ac.utils.reflections.types.WrappedMethod;
+import dev.brighten.ac.utils.reflections.types.WrappedField;
 import lombok.Getter;
 import net.minecraft.server.v1_8_R3.Packet;
+import org.bukkit.Bukkit;
 import org.bukkit.event.Event;
 
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class CheckStatic {
     @Getter
     private final WrappedClass checkClass;
     private WrappedConstructor initConst;
     @Getter
-    private final Map<Class<?>, List<WrappedMethod>> events = new HashMap<>();
+    private final List<Tuple<WrappedField, Class<?>>> actions = new ArrayList<>(),
+            timedActions = new ArrayList<>();
 
     public CheckStatic(WrappedClass checkClass) {
         this.checkClass = checkClass;
@@ -28,19 +31,36 @@ public class CheckStatic {
 
     private void processClass() {
         initConst = checkClass.getConstructor(APlayer.class);
-        for (WrappedMethod method : checkClass.getDeclaredMethods()) {
-            if(!method.isAnnotationPresent(Action.class)
-                    || method.getParameters().length == 0) continue;
-            Class<?> type = method.getParameterTypes()[0];
+        for (WrappedField field : checkClass.getFields()) {
+            if(!Action.class.isAssignableFrom(field.getType())
+                    || TimedAction.class.isAssignableFrom(field.getType())) continue;
 
-            if(Packet.class.isAssignableFrom(type)
-                    || WPacket.class.isAssignableFrom(type) || Event.class.isAssignableFrom(type)) {
-                events.compute(type, (key, list) -> {
-                    if(list == null) list = new ArrayList<>();
+            Type genericType = field.getField().getGenericType();
+            Type type = null;
 
-                    list.add(method);
-                    return list;
-                });
+            if(genericType instanceof ParameterizedType) {
+                type = ((ParameterizedType) genericType).getActualTypeArguments()[0];
+            } else type = genericType;
+
+            if(type == null) {
+                Bukkit.getLogger().warning("Could not get type for field " + field.getField().getName()
+                        + " in class " + checkClass.getClass().getSimpleName());
+
+                continue;
+            }
+
+            if(!Packet.class.isAssignableFrom((Class<?>) type)
+                    && !WPacket.class.isAssignableFrom((Class<?>) type)
+                    && !Event.class.isAssignableFrom((Class<?>) type)) {
+                Bukkit.getLogger().warning("Type " + ((Class<?>) type).getSimpleName() + " is not a valid type for field "
+                        + field.getField().getName() + " in class " + checkClass.getClass().getSimpleName());
+                continue;
+            }
+
+            if(field.getType().equals(Action.class)) {
+                actions.add(new Tuple<>(field, (Class<?>)type));
+            } else { //This will always be TimedAction
+                timedActions.add(new Tuple<>(field, (Class<?>)type));
             }
         }
     }

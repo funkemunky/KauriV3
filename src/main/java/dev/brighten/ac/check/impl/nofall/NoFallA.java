@@ -17,8 +17,7 @@ public class NoFallA extends Check {
     private static double divisor = 1. / 64.;
     private float buffer;
 
-    @Action
-    public void onFlying(WPacketPlayInFlying packet) {
+    Action<WPacketPlayInFlying> flying = packet -> {
         if(player.getInfo().isGeneralCancel()
                 || (player.getMovement().getDeltaXZ() == 0 && player.getMovement().getDeltaY() == 0)
                 || player.getBlockInfo().inLiquid
@@ -33,10 +32,10 @@ public class NoFallA extends Check {
 
         if(onGround) {
             flag = Math.abs(player.getMovement().getDeltaY()) > 0.1
-                      && player.getInfo().slimeTimer.isPassed(2)
-                      && player.getInfo().getBlockAbove().isPassed(3)
-                      && !player.getInfo().isServerGround()
-                      && (player.getMovement().getDeltaY() >= 0
+                    && player.getInfo().slimeTimer.isPassed(2)
+                    && player.getInfo().getBlockAbove().isPassed(3)
+                    && !player.getInfo().isServerGround()
+                    && (player.getMovement().getDeltaY() >= 0
                     && (Math.abs(player.getMovement().getTo().getLoc().y) % divisor != 0
                     || Math.abs(player.getMovement().getDeltaY()) % divisor != 0)
                     || player.getMovement().getDeltaY() <= player.getMovement().getLDeltaY());
@@ -55,5 +54,5 @@ public class NoFallA extends Check {
 
         debug("[%.1f] g=%s;dy=%.4f;ldy=%.4f", buffer, onGround,
                 player.getMovement().getDeltaY(), player.getMovement().getLDeltaY());
-    }
+    };
 }

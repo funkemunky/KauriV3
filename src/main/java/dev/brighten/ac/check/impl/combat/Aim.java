@@ -21,8 +21,8 @@ public class Aim extends Check {
     private float buffer;
     protected Timer lastGrid = new TickTimer(3);
 
-    @Action
-    public void flying(WPacketPlayInFlying packet) {
+
+    Action<WPacketPlayInFlying> onFlying = (packet) -> {
         if(!packet.isLooked()) return;
 
         if(player.getMovement().getYawGcdList().size() < 40) {
@@ -61,8 +61,7 @@ public class Aim extends Check {
         debug((flagged ? Color.Green : "") +"sensitivity: mcp=%.4f, cx=%.4f, cy=%.4f, dx=%.1f, dy=%.1f",
                 player.getMovement().getSensitivityMcp(), player.getMovement().getCurrentSensX(),
                 player.getMovement().getCurrentSensY(), deltaX, deltaY);
-
-    }
+    };
 
     /*
      * This is an attempt to reverse the logistics of cinematic camera without having to run a full on prediction using

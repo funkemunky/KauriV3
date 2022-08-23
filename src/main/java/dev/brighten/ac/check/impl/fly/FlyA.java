@@ -23,8 +23,7 @@ public class FlyA extends Check {
     private float buffer;
     private static double mult = 0.98f;
 
-    @Action
-    public void onFlying(WPacketPlayInFlying packet) {
+    Action<WPacketPlayInFlying> flying = packet -> {
         if(!packet.isMoved() || (player.getMovement().getDeltaXZ() == 0
                 && player.getMovement().getDeltaY() == 0)) {
             return;
@@ -79,5 +78,5 @@ public class FlyA extends Check {
                 player.getMovement().getDeltaXZ(), buffer, player.getInfo().getVelocity().getPassed());
 
         lastPos.reset();
-    }
+    };
 }

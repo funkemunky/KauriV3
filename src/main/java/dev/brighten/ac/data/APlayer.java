@@ -1,8 +1,10 @@
 package dev.brighten.ac.data;
 
 import dev.brighten.ac.Anticheat;
+import dev.brighten.ac.check.Action;
 import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckStatic;
+import dev.brighten.ac.check.TimedAction;
 import dev.brighten.ac.data.handlers.BlockInformation;
 import dev.brighten.ac.data.handlers.GeneralInformation;
 import dev.brighten.ac.data.handlers.LagInformation;
@@ -21,7 +23,7 @@ import dev.brighten.ac.utils.KLocation;
 import dev.brighten.ac.utils.Tuple;
 import dev.brighten.ac.utils.objects.evicting.EvictingList;
 import dev.brighten.ac.utils.reflections.impl.MinecraftReflection;
-import dev.brighten.ac.utils.reflections.types.WrappedMethod;
+import dev.brighten.ac.utils.reflections.types.WrappedField;
 import dev.brighten.ac.utils.timer.Timer;
 import dev.brighten.ac.utils.timer.impl.MillisTimer;
 import lombok.Getter;
@@ -83,6 +85,9 @@ public class APlayer {
     private final List<Consumer<Vector>> onVelocityTasks = new ArrayList<>();
     public final EvictingList<Tuple<KLocation, Double>> pastLocations = new EvictingList<>(20);
 
+    private final Map<Class<?>, Action<?>[]> events = new HashMap<>();
+    private final Map<Class<?>, TimedAction<?>[]> eventsWithTimestamp = new HashMap<>();
+
     @Setter
     @Getter
     private boolean sendingPackets;
@@ -131,6 +136,38 @@ public class APlayer {
             Check.alertsEnabled.add(getUuid());
             getBukkitPlayer().spigot().sendMessage(Messages.ALERTS_ON);
         }
+
+        // Enabling checks for players on join
+        for (CheckStatic checkClass : Anticheat.INSTANCE.getCheckManager().getCheckClasses()) {
+            Check check = checkClass.playerInit(this);
+
+            for (Tuple<WrappedField, Class<?>> tuple : checkClass.getActions()) {
+                Action<?> action = tuple.one.get(check);
+
+                events.compute(tuple.two, (packetClass, array) -> {
+                    if (array == null) {
+                        return new Action<?>[]{action};
+                    } else {
+                        Action<?>[] newArray = Arrays.copyOf(array, array.length + 1);
+                        newArray[array.length] = action;
+                        return newArray;
+                    }
+                });
+            }
+            for (Tuple<WrappedField, Class<?>> tuple : checkClass.getTimedActions()) {
+                TimedAction<?> action = tuple.one.get(check);
+
+                eventsWithTimestamp.compute(tuple.two, (packetClass, array) -> {
+                    if (array == null) {
+                        return new TimedAction<?>[]{action};
+                    } else {
+                        TimedAction<?>[] newArray = Arrays.copyOf(array, array.length + 1);
+                        newArray[array.length] = action;
+                        return newArray;
+                    }
+                });
+            }
+        }
     }
 
     protected void unload() {
@@ -141,40 +178,26 @@ public class APlayer {
     }
 
     public void callEvent(Event event) {
-        for (Check check : checks) {
-            WrappedMethod[] methods = Anticheat.INSTANCE.getCheckManager().getEvents()
-                    .get(new Tuple<String, Class<?>>(check.getCheckData().name(), event.getClass()));
-
-            if(methods != null) {
-                for (WrappedMethod method : methods) {
-                    method.invoke(check, event);
-                }
+        if(events.containsKey(event.getClass())) {
+            Action<Event>[] actions = (Action<Event>[]) events.get(event.getClass());
+            for (Action<Event> action : actions) {
+                action.invoke(event);
             }
         }
     }
 
     //TODO When using WPacket wrappers only, make this strictly WPacket param based only
     public void callPacket(Object packet, long timestamp) {
-        for (Check check : checks) {
-            WrappedMethod[] methods = Anticheat.INSTANCE.getCheckManager().getEvents()
-                    .get(new Tuple<String, Class<?>>(check.getCheckData().name(), packet.getClass()));
-
-            if(methods != null) {
-
-                for (WrappedMethod method :
-                        methods) {
-                    method.invoke(check, packet);
-                }
+        if(events.containsKey(packet.getClass())) {
+            Action<Object>[] actions = (Action<Object>[]) events.get(packet.getClass());
+            for (Action<Object> action : actions) {
+                action.invoke(packet);
             }
-            WrappedMethod[] methodsTimestamp = Anticheat.INSTANCE.getCheckManager().getEventsWithTimestamp()
-                    .get(new Tuple<String, Class<?>>(check.getCheckData().name(), packet.getClass()));
-
-            if(methodsTimestamp != null) {
-
-                for (WrappedMethod method :
-                        methodsTimestamp) {
-                    method.invoke(check, packet, timestamp);
-                }
+        }
+        if(eventsWithTimestamp.containsKey(packet.getClass())) {
+            TimedAction<Object>[] actions = (TimedAction<Object>[]) eventsWithTimestamp.get(packet.getClass());
+            for (TimedAction<Object> action : actions) {
+                action.invoke(packet, timestamp);
             }
         }
     }

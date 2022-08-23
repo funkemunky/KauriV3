@@ -18,14 +18,12 @@ public class VelocityA extends Check {
         super(player);
 
         player.onVelocity(velocity -> {
-
             currentVelocity = velocity.clone();
             debug("did velocity: " + currentVelocity.getY());
         });
     }
 
-    @Action
-    public void onFlying(WPacketPlayInFlying packet) {
+    Action<WPacketPlayInFlying> flying = packet -> {
         if(currentVelocity != null && currentVelocity.getY() > 0
                 && !player.getBlockInfo().inWeb
                 && !player.getBlockInfo().onClimbable
@@ -57,5 +55,5 @@ public class VelocityA extends Check {
         } else if(currentVelocity != null) {
             debug("not null: " + currentVelocity.getY());
         }
-    }
+    };
 }

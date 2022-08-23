@@ -18,8 +18,7 @@ public class NoFallB extends Check {
 
     private int airBuffer, groundBuffer;
 
-    @Action
-    public void onFlying(WPacketPlayInFlying packet, long timestamp) {
+    Action<WPacketPlayInFlying> flying = packet -> {
         if(player.getMovement().getLastTeleport().isNotPassed(3)
                 || player.getMovement().getMoveTicks() < 2
                 || player.getInfo().canFly
@@ -62,5 +61,5 @@ public class NoFallB extends Check {
         debug("[%s,%s] g=%s;sg-%s;bbelow=%s;dy=%.4f;ldy=%.4f", groundBuffer, airBuffer, packet.isOnGround(),
                 player.getInfo().isServerGround(), player.getBlockInfo().blocksBelow, player.getMovement().getDeltaY(),
                 player.getMovement().getLDeltaY());
-    }
+    };
 }

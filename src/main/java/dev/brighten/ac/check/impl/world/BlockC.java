@@ -20,8 +20,7 @@ public class BlockC extends Check {
         super(player);
     }
 
-    @Action
-    public void onFlying(WPacketPlayInFlying packet) {
+    Action<WPacketPlayInFlying> flying = packet -> {
         if(player.getInfo().isCreative() || player.getMovement().isExcuseNextFlying()) return;
         long timestamp = System.currentTimeMillis();
         if(place) {
@@ -33,10 +32,9 @@ public class BlockC extends Check {
             } else if(buffer > 0) buffer-= 0.25f;
             place = false;
         }
-    }
+    };
 
-    @Action
-    public void onBlockPlace(WPacketPlayInBlockPlace packet) {
+    Action<WPacketPlayInBlockPlace> blockPlace = packet -> {
         if(player.pastLocations.isEmpty()) return;
 
         KLocation lastMovePacket = player.pastLocations.getLast().one;
@@ -50,5 +48,5 @@ public class BlockC extends Check {
             lastPlace = timestamp;
             place = true;
         } else if(buffer > 0) buffer-= 0.25f;
-    }
+    };
 }
