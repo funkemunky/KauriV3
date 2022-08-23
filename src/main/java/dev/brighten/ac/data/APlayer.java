@@ -1,10 +1,7 @@
 package dev.brighten.ac.data;
 
 import dev.brighten.ac.Anticheat;
-import dev.brighten.ac.check.Action;
-import dev.brighten.ac.check.Check;
-import dev.brighten.ac.check.CheckStatic;
-import dev.brighten.ac.check.TimedAction;
+import dev.brighten.ac.check.*;
 import dev.brighten.ac.data.handlers.BlockInformation;
 import dev.brighten.ac.data.handlers.GeneralInformation;
 import dev.brighten.ac.data.handlers.LagInformation;
@@ -85,8 +82,8 @@ public class APlayer {
     private final List<Consumer<Vector>> onVelocityTasks = new ArrayList<>();
     public final EvictingList<Tuple<KLocation, Double>> pastLocations = new EvictingList<>(20);
 
-    private final Map<Class<?>, Action<?>[]> events = new HashMap<>();
-    private final Map<Class<?>, TimedAction<?>[]> eventsWithTimestamp = new HashMap<>();
+    private final Map<Class<?>, WAction<?>[]> events = new HashMap<>();
+    private final Map<Class<?>, TimedWAction<?>[]> eventsWithTimestamp = new HashMap<>();
 
     @Setter
     @Getter
@@ -127,46 +124,57 @@ public class APlayer {
         this.blockInfo = new BlockInformation(this);
 
         // Grabbing the protocol version of the player.
-        Anticheat.INSTANCE.getScheduler().execute(() ->
-                playerVersion = ProtocolVersion.getVersion(ProtocolAPI.INSTANCE.getPlayerVersion(getBukkitPlayer())));
+        Anticheat.INSTANCE.getScheduler().execute(() -> {
+            playerVersion = ProtocolVersion.getVersion(ProtocolAPI.INSTANCE.getPlayerVersion(getBukkitPlayer()));
+
+            // Enabling checks for players on join
+            for (CheckStatic checkClass : Anticheat.INSTANCE.getCheckManager().getCheckClasses()) {
+                CheckData data = checkClass.getCheckClass().getAnnotation(CheckData.class);
+
+                //Version checks
+                if(playerVersion.isAbove(data.maxVersion()) || playerVersion.isBelow(data.minVersion())) {
+                    Anticheat.INSTANCE.alog("Player " + getBukkitPlayer().getName() +
+                            " is not on the right version for check " + data.name()
+                            + " (version: " + playerVersion.name() + ")");
+                    continue;
+                }
+
+                Check check = checkClass.playerInit(this);
+
+                for (Tuple<WrappedField, Class<?>> tuple : checkClass.getActions()) {
+                    WAction<?> action = tuple.one.get(check);
+
+                    events.compute(tuple.two, (packetClass, array) -> {
+                        if (array == null) {
+                            return new WAction<?>[]{action};
+                        } else {
+                            WAction<?>[] newArray = Arrays.copyOf(array, array.length + 1);
+                            newArray[array.length] = action;
+                            return newArray;
+                        }
+                    });
+                }
+                for (Tuple<WrappedField, Class<?>> tuple : checkClass.getTimedActions()) {
+                    TimedWAction<?> action = tuple.one.get(check);
+
+                    eventsWithTimestamp.compute(tuple.two, (packetClass, array) -> {
+                        if (array == null) {
+                            return new TimedWAction<?>[]{action};
+                        } else {
+                            TimedWAction<?>[] newArray = Arrays.copyOf(array, array.length + 1);
+                            newArray[array.length] = action;
+                            return newArray;
+                        }
+                    });
+                }
+            }
+        });
 
         // Enabling alerts for players on join if they have the permissions to
         if(getBukkitPlayer().hasPermission("anticheat.command.alerts")
                 || getBukkitPlayer().hasPermission("anticheat.alerts")) {
             Check.alertsEnabled.add(getUuid());
             getBukkitPlayer().spigot().sendMessage(Messages.ALERTS_ON);
-        }
-
-        // Enabling checks for players on join
-        for (CheckStatic checkClass : Anticheat.INSTANCE.getCheckManager().getCheckClasses()) {
-            Check check = checkClass.playerInit(this);
-
-            for (Tuple<WrappedField, Class<?>> tuple : checkClass.getActions()) {
-                Action<?> action = tuple.one.get(check);
-
-                events.compute(tuple.two, (packetClass, array) -> {
-                    if (array == null) {
-                        return new Action<?>[]{action};
-                    } else {
-                        Action<?>[] newArray = Arrays.copyOf(array, array.length + 1);
-                        newArray[array.length] = action;
-                        return newArray;
-                    }
-                });
-            }
-            for (Tuple<WrappedField, Class<?>> tuple : checkClass.getTimedActions()) {
-                TimedAction<?> action = tuple.one.get(check);
-
-                eventsWithTimestamp.compute(tuple.two, (packetClass, array) -> {
-                    if (array == null) {
-                        return new TimedAction<?>[]{action};
-                    } else {
-                        TimedAction<?>[] newArray = Arrays.copyOf(array, array.length + 1);
-                        newArray[array.length] = action;
-                        return newArray;
-                    }
-                });
-            }
         }
     }
 
@@ -179,8 +187,8 @@ public class APlayer {
 
     public void callEvent(Event event) {
         if(events.containsKey(event.getClass())) {
-            Action<Event>[] actions = (Action<Event>[]) events.get(event.getClass());
-            for (Action<Event> action : actions) {
+            WAction<Event>[] actions = (WAction<Event>[]) events.get(event.getClass());
+            for (WAction<Event> action : actions) {
                 action.invoke(event);
             }
         }
@@ -189,14 +197,14 @@ public class APlayer {
     //TODO When using WPacket wrappers only, make this strictly WPacket param based only
     public void callPacket(Object packet, long timestamp) {
         if(events.containsKey(packet.getClass())) {
-            Action<Object>[] actions = (Action<Object>[]) events.get(packet.getClass());
-            for (Action<Object> action : actions) {
+            WAction<Object>[] actions = (WAction<Object>[]) events.get(packet.getClass());
+            for (WAction<Object> action : actions) {
                 action.invoke(packet);
             }
         }
         if(eventsWithTimestamp.containsKey(packet.getClass())) {
-            TimedAction<Object>[] actions = (TimedAction<Object>[]) eventsWithTimestamp.get(packet.getClass());
-            for (TimedAction<Object> action : actions) {
+            TimedWAction<Object>[] actions = (TimedWAction<Object>[]) eventsWithTimestamp.get(packet.getClass());
+            for (TimedWAction<Object> action : actions) {
                 action.invoke(packet, timestamp);
             }
         }

@@ -1,9 +1,9 @@
 package dev.brighten.ac.check.impl.velocity;
 
-import dev.brighten.ac.check.Action;
+import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
-import dev.brighten.ac.check.CheckType;
+import dev.brighten.ac.api.check.CheckType;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
 import org.bukkit.util.Vector;
@@ -23,7 +23,7 @@ public class VelocityA extends Check {
         });
     }
 
-    Action<WPacketPlayInFlying> flying = packet -> {
+    WAction<WPacketPlayInFlying> flying = packet -> {
         if(currentVelocity != null && currentVelocity.getY() > 0
                 && !player.getBlockInfo().inWeb
                 && !player.getBlockInfo().onClimbable

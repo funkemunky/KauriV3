@@ -275,6 +275,8 @@ public class PacketHandler {
                 IntVector pos = packet.getBlockPos();
                 ItemStack stack = packet.getItemStack();
 
+                player.getInfo().getLastBlockPlace().reset();
+
                 // Used item
                 if(pos.getX() == -1 && (pos.getY() == 255 | pos.getY() == -1) && pos.getZ() == -1
                         && stack != null
@@ -288,6 +290,7 @@ public class PacketHandler {
             case BLOCK_DIG: {
                 WPacketPlayInBlockDig packet = (WPacketPlayInBlockDig) packetObject;
 
+                player.getInfo().getLastBlockDig().reset();
                 player.getBlockUpdateHandler().onDig(packet);
                 break;
             }

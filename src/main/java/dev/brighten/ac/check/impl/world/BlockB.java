@@ -1,9 +1,9 @@
 package dev.brighten.ac.check.impl.world;
 
-import dev.brighten.ac.check.Action;
+import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
-import dev.brighten.ac.check.CheckType;
+import dev.brighten.ac.api.check.CheckType;
 import dev.brighten.ac.data.APlayer;
 import org.bukkit.block.Block;
 import org.bukkit.event.block.BlockPlaceEvent;
@@ -14,7 +14,7 @@ public class BlockB extends Check {
         super(player);
     }
 
-    Action<BlockPlaceEvent> blockPlaceEvent = event -> {
+    WAction<BlockPlaceEvent> blockPlaceEvent = event -> {
         Block ba = event.getBlockAgainst();
 
         if (!event.getBlockPlaced().getType().isBlock()) return;

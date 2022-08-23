@@ -1,9 +1,9 @@
 package dev.brighten.ac.check.impl.velocity;
 
-import dev.brighten.ac.check.Action;
+import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
-import dev.brighten.ac.check.CheckType;
+import dev.brighten.ac.api.check.CheckType;
 import dev.brighten.ac.check.impl.speed.Horizontal;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
@@ -38,14 +38,14 @@ public class VelocityB extends Check {
     private int ticks;
     private static final double[] moveValues = new double[] {-0.98, 0, 0.98};
 
-    Action<WPacketPlayInUseEntity> usePacket = packet -> {
+    WAction<WPacketPlayInUseEntity> usePacket = packet -> {
         if(!useEntity
                 && packet.getAction().equals(WPacketPlayInUseEntity.EnumEntityUseAction.ATTACK)) {
             useEntity = true;
         }
     };
 
-    Action<WPacketPlayInFlying> flying = packet -> {
+    WAction<WPacketPlayInFlying> flying = packet -> {
         check: {
             if((pvX != 0 || pvZ != 0) && (player.getMovement().getDeltaX() != 0
                     || player.getMovement().getDeltaY() != 0

@@ -1,6 +1,6 @@
 package dev.brighten.ac.check;
 
 @FunctionalInterface
-public interface TimedAction<T> {
+public interface TimedWAction<T> {
     void invoke(T event, long timestamp);
 }

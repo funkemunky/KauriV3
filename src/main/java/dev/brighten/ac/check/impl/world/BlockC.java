@@ -1,9 +1,9 @@
 package dev.brighten.ac.check.impl.world;
 
-import dev.brighten.ac.check.Action;
+import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
-import dev.brighten.ac.check.CheckType;
+import dev.brighten.ac.api.check.CheckType;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInBlockPlace;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
@@ -20,7 +20,7 @@ public class BlockC extends Check {
         super(player);
     }
 
-    Action<WPacketPlayInFlying> flying = packet -> {
+    WAction<WPacketPlayInFlying> flying = packet -> {
         if(player.getInfo().isCreative() || player.getMovement().isExcuseNextFlying()) return;
         long timestamp = System.currentTimeMillis();
         if(place) {
@@ -34,7 +34,7 @@ public class BlockC extends Check {
         }
     };
 
-    Action<WPacketPlayInBlockPlace> blockPlace = packet -> {
+    WAction<WPacketPlayInBlockPlace> blockPlace = packet -> {
         if(player.pastLocations.isEmpty()) return;
 
         KLocation lastMovePacket = player.pastLocations.getLast().one;

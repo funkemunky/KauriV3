@@ -1,6 +1,6 @@
 package dev.brighten.ac.check;
 
 @FunctionalInterface
-public interface Action<T> {
+public interface WAction<T> {
     void invoke(T event);
 }

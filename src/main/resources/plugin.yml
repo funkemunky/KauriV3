@@ -2,3 +2,4 @@ name: Anticheat
 main: dev.brighten.ac.Anticheat
 version: 1.0
 author: funkemunky
+softdepend: [ViaVersion]

@@ -1,9 +1,9 @@
 package dev.brighten.ac.check.impl.combat;
 
-import dev.brighten.ac.check.Action;
+import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
-import dev.brighten.ac.check.CheckType;
+import dev.brighten.ac.api.check.CheckType;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
@@ -36,7 +36,7 @@ public class Hitbox extends Check {
         super(player);
     }
 
-    Action<WPacketPlayInUseEntity> useEntity = packet -> {
+    WAction<WPacketPlayInUseEntity> useEntity = packet -> {
         if(packet.getAction() == WPacketPlayInUseEntity.EnumEntityUseAction.ATTACK
                 && allowedEntityTypes.contains(packet.getEntity(player.getBukkitPlayer().getWorld()).getType())) {
             attacks.add(new Tuple<>(packet.getEntity(player.getBukkitPlayer().getWorld()), player.getMovement().getTo().getLoc().clone()));
@@ -46,7 +46,7 @@ public class Hitbox extends Check {
     //TODO Figure out how to make the check more sensitive without compromising network stability
     //Aka figure out how to minimize the amount of previous locations needed to process to keep network
     //stability. like shortening the amount stored, or removing older ones.
-    Action<WPacketPlayInFlying> onFlying = packet -> {
+    WAction<WPacketPlayInFlying> onFlying = packet -> {
         if(player.getInfo().isCreative() || player.getInfo().isInVehicle()) {
             attacks.clear();
             return;

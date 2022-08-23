@@ -1,9 +1,9 @@
 package dev.brighten.ac.check.impl.combat;
 
-import dev.brighten.ac.check.Action;
+import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
-import dev.brighten.ac.check.CheckType;
+import dev.brighten.ac.api.check.CheckType;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
 import dev.brighten.ac.utils.Color;
@@ -22,7 +22,7 @@ public class Aim extends Check {
     protected Timer lastGrid = new TickTimer(3);
 
 
-    Action<WPacketPlayInFlying> onFlying = (packet) -> {
+    WAction<WPacketPlayInFlying> onFlying = (packet) -> {
         if(!packet.isLooked()) return;
 
         if(player.getMovement().getYawGcdList().size() < 40) {

@@ -1,9 +1,9 @@
 package dev.brighten.ac.check.impl.world;
 
-import dev.brighten.ac.check.Action;
+import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
-import dev.brighten.ac.check.CheckType;
+import dev.brighten.ac.api.check.CheckType;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInBlockPlace;
@@ -33,7 +33,7 @@ public class BlockA extends Check {
     private final MaxDouble verbose = new MaxDouble(20);
     private Queue<Tuple<Block, SimpleCollisionBox>> blockPlacements = new LinkedBlockingQueue<>();
 
-    Action<WPacketPlayInBlockPlace> blockPlace = packet -> {
+    WAction<WPacketPlayInBlockPlace> blockPlace = packet -> {
         Location loc = packet.getBlockPos().toBukkitVector().toLocation(player.getBukkitPlayer().getWorld());
         Optional<Block> optionalBlock = BlockUtils.getBlockAsync(loc);
 
@@ -63,7 +63,7 @@ public class BlockA extends Check {
         blockPlacements.add(new Tuple<>(block, simpleBox.expand(0.1)));
     };
 
-    Action<WPacketPlayInFlying> flying = packet -> {
+    WAction<WPacketPlayInFlying> flying = packet -> {
         Tuple<Block, SimpleCollisionBox> tuple;
 
         while((tuple = blockPlacements.poll()) != null) {

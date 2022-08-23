@@ -1,6 +1,13 @@
 package dev.brighten.ac.check;
 
 import dev.brighten.ac.Anticheat;
+import dev.brighten.ac.api.AnticheatAPI;
+import dev.brighten.ac.api.check.CheckType;
+import dev.brighten.ac.api.check.ECheck;
+import dev.brighten.ac.api.event.AnticheatEvent;
+import dev.brighten.ac.api.event.result.CancelResult;
+import dev.brighten.ac.api.event.result.FlagResult;
+import dev.brighten.ac.api.event.result.PunishResult;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.utils.*;
 import dev.brighten.ac.utils.timer.Timer;
@@ -12,16 +19,18 @@ import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.TextComponent;
+import org.bukkit.Bukkit;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
-public abstract class Check {
+public class Check implements ECheck {
 
     public final APlayer player;
     @Getter
     private final CheckData checkData;
     @Getter
-    private int vl;
+    private float vl;
     private long lastFlagRun;
     private final Timer lastAlert = new MillisTimer();
 
@@ -32,6 +41,16 @@ public abstract class Check {
     public Check(APlayer player) {
         this.player = player;
         this.checkData = getClass().getAnnotation(CheckData.class);
+    }
+
+    @Override
+    public String getName() {
+        return checkData.name();
+    }
+
+    @Override
+    public CheckType getCheckType() {
+        return checkData.type();
     }
 
     private String formatAlert(String toFormat, String info) {
@@ -45,10 +64,20 @@ public abstract class Check {
         return string.replace("%player%", player.getBukkitPlayer().getName())
                 .replace("%check%", checkData.name())
                 .replace("%name%",  player.getBukkitPlayer().getName())
+                .replace("%p", String.valueOf(player.getLagInfo().getTransPing()))
+                .replace("%t", String.valueOf(MathUtils.round(Anticheat.INSTANCE.getTps(), 2)))
                 .replace("%vl%", String.valueOf(MathUtils.round(vl, 1)));
     }
 
     public void cancel() {
+        CancelResult result = CancelResult.builder().cancelled(false).build();
+
+        for (AnticheatEvent event : AnticheatAPI.INSTANCE.getAllEvents()) {
+            result = event.onCancel(player.getBukkitPlayer(), this, result.isCancelled());
+        }
+
+        if(result.isCancelled()) return;
+
         if(checkData.type() == CheckType.COMBAT) {
             player.hitsToCancel++;
         } else {
@@ -84,6 +113,10 @@ public abstract class Check {
     }
 
     public void flag(String information, Object... variables) {
+        flag(true, information, variables);
+    }
+
+    public void flag(boolean punish, String information, Object... variables) {
         vl++;
         if(System.currentTimeMillis() - lastFlagRun < 50L) return;
 
@@ -92,12 +125,18 @@ public abstract class Check {
                 vl = 0;
             lastFlagRun = System.currentTimeMillis();
 
-            final String finalInformation = String.format(information, variables);
+            final String info = String.format(information, variables);
+
+            FlagResult currentResult = FlagResult.builder().cancelled(false).build();
+
+            for (AnticheatEvent event : AnticheatAPI.INSTANCE.getAllEvents()) {
+                currentResult = event.onFlag(player.getBukkitPlayer(), this, info,
+                        currentResult.isCancelled());
+            }
+
+            if(currentResult.isCancelled()) return;
 
             boolean dev = Anticheat.INSTANCE.getTps() < 18;
-            final String info = finalInformation
-                    .replace("%p", String.valueOf(player.getLagInfo().getTransPing()))
-                    .replace("%t", String.valueOf(MathUtils.round(Anticheat.INSTANCE.getTps(), 2)));
             //if(vl > 0) Anticheat.INSTANCE.loggerManager.addLog(player, this, info);
 
             //Sending Discord webhook alert
@@ -122,8 +161,29 @@ public abstract class Check {
                 Anticheat.INSTANCE.getPlayerRegistry().getPlayer(uuid)
                         .ifPresent(apl -> apl.getBukkitPlayer().spigot().sendMessage(toSend));
             }
+
+            if(punish && vl > checkData.punishVl()) {
+                punish();
+            }
             lastAlert.reset();
         });
+    }
+
+    public void punish() {
+        PunishResult result = PunishResult.builder().cancelled(false).build();
+
+        List<String> commands = CheckConfig.punishmentCommands.stream().map(this::addPlaceHolders)
+                .collect(Collectors.toList());
+        for (AnticheatEvent event : AnticheatAPI.INSTANCE.getAllEvents()) {
+            result = event.onPunish(player.getBukkitPlayer(),this,  commands, result.isCancelled());
+        }
+        PunishResult finalResult = result;
+        RunUtils.task(() -> {
+            for (String punishmentCommand : finalResult.getCommands()) {
+                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), punishmentCommand);
+            }
+        });
+        vl = 0;
     }
 
     private TextComponent createTxt(String txt) {

@@ -1,9 +1,9 @@
 package dev.brighten.ac.check.impl.nofall;
 
-import dev.brighten.ac.check.Action;
+import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
-import dev.brighten.ac.check.CheckType;
+import dev.brighten.ac.api.check.CheckType;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
 
@@ -18,7 +18,7 @@ public class NoFallB extends Check {
 
     private int airBuffer, groundBuffer;
 
-    Action<WPacketPlayInFlying> flying = packet -> {
+    WAction<WPacketPlayInFlying> flying = packet -> {
         if(player.getMovement().getLastTeleport().isNotPassed(3)
                 || player.getMovement().getMoveTicks() < 2
                 || player.getInfo().canFly

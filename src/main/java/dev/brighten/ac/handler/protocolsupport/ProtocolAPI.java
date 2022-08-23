@@ -1,5 +1,6 @@
 package dev.brighten.ac.handler.protocolsupport;
 
+import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.handler.protocolsupport.impl.NoAPI;
 import dev.brighten.ac.handler.protocolsupport.impl.ProtocolSupport;
 import dev.brighten.ac.handler.protocolsupport.impl.ViaVersionAPI;
@@ -21,9 +22,14 @@ public class ProtocolAPI {
 
     public ProtocolAPI() {
         if(Bukkit.getPluginManager().isPluginEnabled("ViaVersion")) {
+            Anticheat.INSTANCE.alog("Using ViaVersion for ProtocolAPI");
             INSTANCE = new ViaVersionAPI();
         } else if(Bukkit.getPluginManager().isPluginEnabled("ProtocolSupport")) {
+            Anticheat.INSTANCE.alog("Using ProtocolSupport for ProtocolAPI");
             INSTANCE = new ProtocolSupport();
-        } else INSTANCE = new NoAPI();
+        } else {
+            Anticheat.INSTANCE.alog("Using Vanilla API for ProtocolAPI");
+            INSTANCE = new NoAPI();
+        }
     }
 }

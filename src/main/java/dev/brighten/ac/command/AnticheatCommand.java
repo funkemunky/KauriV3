@@ -15,8 +15,10 @@ import io.netty.buffer.Unpooled;
 import lombok.val;
 import net.minecraft.server.v1_8_R3.PacketDataSerializer;
 import net.minecraft.server.v1_8_R3.PacketPlayOutCustomPayload;
+import net.minecraft.server.v1_8_R3.PacketPlayOutTitle;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
+import org.bukkit.craftbukkit.v1_8_R3.util.CraftChatMessage;
 import org.bukkit.entity.Player;
 
 import java.io.UnsupportedEncodingException;
@@ -86,6 +88,7 @@ public class AnticheatCommand extends BaseCommand {
     }
 
     @Subcommand("alerts")
+    @HelpCommand
     @CommandPermission("anticheat.command.alerts")
     @Description("Toggle anticheat alerts")
     public void onAlerts(Player pl) {
@@ -103,6 +106,14 @@ public class AnticheatCommand extends BaseCommand {
             Check.alertsEnabled.add(player.getBukkitPlayer().getUniqueId());
             pl.spigot().sendMessage(Messages.ALERTS_ON);
         }
+    }
+
+    @Subcommand("title")
+    @Private
+    public void onTitle(CommandSender sender, OnlinePlayer target, String title) {
+        PacketPlayOutTitle packetSubtitle = new PacketPlayOutTitle(PacketPlayOutTitle.EnumTitleAction.TITLE, CraftChatMessage.fromString(Color.translate(title))[0]);
+        HandlerAbstract.getHandler().sendPacket(target.getPlayer(), packetSubtitle);
+        sender.sendMessage(Color.Green + "Sent title!");
     }
 
     @Subcommand("playerinfo|info|pi")

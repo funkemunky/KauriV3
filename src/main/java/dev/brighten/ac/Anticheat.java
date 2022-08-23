@@ -3,11 +3,13 @@ package dev.brighten.ac;
 import co.aikar.commands.BaseCommand;
 import co.aikar.commands.BukkitCommandManager;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import dev.brighten.ac.api.AnticheatAPI;
 import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckManager;
 import dev.brighten.ac.data.PlayerRegistry;
 import dev.brighten.ac.handler.PacketHandler;
 import dev.brighten.ac.handler.keepalive.KeepaliveProcessor;
+import dev.brighten.ac.handler.protocolsupport.ProtocolAPI;
 import dev.brighten.ac.packet.handler.HandlerAbstract;
 import dev.brighten.ac.packet.listener.PacketProcessor;
 import dev.brighten.ac.utils.*;
@@ -72,14 +74,24 @@ public class Anticheat extends JavaPlugin {
                 .setUncaughtExceptionHandler((t, e) -> RunUtils.task(e::printStackTrace))
                 .build());
 
+        saveDefaultConfig();
+
         commandManager = new BukkitCommandManager(this);
         commandManager.enableUnstableAPI("help");
 
         new CommandPropertiesManager(commandManager, getDataFolder(),
                 getResource("command-messages.properties"));
 
-        this.keepaliveProcessor = new KeepaliveProcessor();
         packetProcessor = new PacketProcessor();
+
+        new AnticheatAPI();
+
+        initializeScanner(getClass(), this,
+                null,
+                true,
+                true);
+
+        this.keepaliveProcessor = new KeepaliveProcessor();
         this.checkManager = new CheckManager();
         this.playerRegistry = new PlayerRegistry();
         this.packetHandler = new PacketHandler();
@@ -95,11 +107,6 @@ public class Anticheat extends JavaPlugin {
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-        initializeScanner(getClass(), this,
-                null,
-                true,
-                true);
     }
 
     public void onDisable() {
@@ -110,12 +117,15 @@ public class Anticheat extends JavaPlugin {
         HandlerAbstract.shutdown();
         HandlerList.unregisterAll(this);
         packetProcessor.shutdown();
+        packetProcessor = null;
         checkManager.getCheckClasses().clear();
         Check.alertsEnabled.clear();
         Check.debugInstances.clear();
         checkManager = null;
         keepaliveProcessor.keepAlives.cleanUp();
         keepaliveProcessor = null;
+        ProtocolAPI.INSTANCE = null;
+        tps = null;
 
         Bukkit.getScheduler().cancelTasks(this);
 
@@ -129,7 +139,15 @@ public class Anticheat extends JavaPlugin {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+
+        AnticheatAPI.INSTANCE = null;
+
+        onTickEnd.clear();
+        onTickEnd = null;
+        packetHandler = null;
     }
+
+
 
     public void initializeScanner(Class<? extends Plugin> mainClass, Plugin plugin, ClassLoader loader,
                                   boolean loadListeners, boolean loadCommands) {

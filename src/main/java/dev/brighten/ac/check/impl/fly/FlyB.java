@@ -1,9 +1,9 @@
 package dev.brighten.ac.check.impl.fly;
 
-import dev.brighten.ac.check.Action;
+import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
-import dev.brighten.ac.check.CheckType;
+import dev.brighten.ac.api.check.CheckType;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
 import dev.brighten.ac.utils.timer.Timer;
@@ -18,7 +18,7 @@ public class FlyB extends Check {
     private Timer lastNearGround = new TickTimer();
     private float buffer;
 
-    Action<WPacketPlayInFlying> flying = packet -> {
+    WAction<WPacketPlayInFlying> flying = packet -> {
         if(player.getInfo().isNearGround()) lastNearGround.reset();
         if(!packet.isMoved() || player.getInfo().isGeneralCancel()) return;
 

@@ -32,8 +32,8 @@ public class CheckStatic {
     private void processClass() {
         initConst = checkClass.getConstructor(APlayer.class);
         for (WrappedField field : checkClass.getFields()) {
-            if(!Action.class.isAssignableFrom(field.getType())
-                    || TimedAction.class.isAssignableFrom(field.getType())) continue;
+            if(!WAction.class.isAssignableFrom(field.getType())
+                    && !TimedWAction.class.isAssignableFrom(field.getType())) continue;
 
             Type genericType = field.getField().getGenericType();
             Type type = null;
@@ -57,7 +57,7 @@ public class CheckStatic {
                 continue;
             }
 
-            if(field.getType().equals(Action.class)) {
+            if(field.getType().equals(WAction.class)) {
                 actions.add(new Tuple<>(field, (Class<?>)type));
             } else { //This will always be TimedAction
                 timedActions.add(new Tuple<>(field, (Class<?>)type));

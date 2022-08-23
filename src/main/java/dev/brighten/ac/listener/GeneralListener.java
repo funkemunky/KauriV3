@@ -5,15 +5,18 @@ import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.utils.Init;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 
 @Init
 public class GeneralListener implements Listener {
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGH)
     public void onDamage(EntityDamageByEntityEvent event) {
         if(event.getDamager() instanceof Player) {
             APlayer player = Anticheat.INSTANCE.getPlayerRegistry().getPlayer(event.getDamager().getUniqueId()).
@@ -28,17 +31,25 @@ public class GeneralListener implements Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onInteract(PlayerInteractEvent event) {
+        Anticheat.INSTANCE.getPlayerRegistry().getPlayer(event.getPlayer().getUniqueId()).ifPresent(player -> {
+            player.getInfo().breakingBlock = event.getAction().equals(Action.LEFT_CLICK_BLOCK);
+        });
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
     public void onTeleport(PlayerTeleportEvent event) {
-        if(event.getFrom().getWorld().equals(event.getTo().getWorld())) return;
+        if(event.getFrom().getWorld().equals(event.getTo().getWorld()) || event.isCancelled()) return;
 
         Anticheat.INSTANCE.getPlayerRegistry().getPlayer(event.getPlayer().getUniqueId())
                 .ifPresent(player -> player.getBlockUpdateHandler().onWorldChange());
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.MONITOR)
     public void onPlace(BlockPlaceEvent event) {
-        Anticheat.INSTANCE.getPlayerRegistry().getPlayer(event.getPlayer().getUniqueId())
-                .ifPresent(player -> player.callEvent(event));
+        if(!event.isCancelled())
+            Anticheat.INSTANCE.getPlayerRegistry().getPlayer(event.getPlayer().getUniqueId())
+                    .ifPresent(player -> player.callEvent(event));
     }
 }

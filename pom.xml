@@ -106,6 +106,12 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
+            <groupId>dev.brighten.ac</groupId>
+            <artifactId>API</artifactId>
+            <version>1.0</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
             <groupId>org.github.spigot</groupId>
             <artifactId>1.7.10</artifactId>
             <version>1.7.10</version>
