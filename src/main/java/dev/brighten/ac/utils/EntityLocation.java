@@ -40,6 +40,25 @@ public class EntityLocation {
         }
     }
 
+    public void interpolateRestOfLocations() {
+        while(increment > 0) {
+            double d0 = x + (newX - x) / increment;
+            double d1 = y + (newY - y) / increment;
+            double d2 = z + (newZ - z) / increment;
+            double d3 = MathHelper.wrapAngleTo180_float(newYaw - yaw);
+
+            yaw = (float) ((double) yaw + d3 / (double) increment);
+            pitch = (float) ((double) pitch + (newPitch - (double) pitch) / (double) increment);
+
+            increment--;
+
+            this.x = d0;
+            this.y = d1;
+            this.z = d2;
+            interpolatedLocations.add(new KLocation(x, y, z, yaw, pitch, Anticheat.INSTANCE.getKeepaliveProcessor().tick));
+        }
+    }
+
     public List<KLocation> getInterpolatedLocations() {
         int increment = 3;
         double x = this.x, y = this.y, z = this.z, newX = this.newX, newY = this.newY, newZ = this.newZ;

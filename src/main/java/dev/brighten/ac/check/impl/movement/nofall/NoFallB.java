@@ -1,4 +1,4 @@
-package dev.brighten.ac.check.impl.nofall;
+package dev.brighten.ac.check.impl.movement.nofall;
 
 import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.check.Check;

@@ -1,4 +1,4 @@
-package dev.brighten.ac.check.impl.velocity;
+package dev.brighten.ac.check.impl.movement.velocity;
 
 import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.check.Check;

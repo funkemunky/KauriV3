@@ -1,4 +1,4 @@
-package dev.brighten.ac.check.impl.fly;
+package dev.brighten.ac.check.impl.movement.fly;
 
 import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.check.Check;
@@ -21,7 +21,8 @@ public class FlyA extends Check {
 
     private Timer lastPos = new MillisTimer();
     private float buffer;
-    private static double mult = 0.98f;
+    private static double mult = 0.98f, previousPrediction;
+    private boolean didNextPrediction = false;
 
     WAction<WPacketPlayInFlying> flying = packet -> {
         if(!packet.isMoved() || (player.getMovement().getDeltaXZ() == 0
@@ -42,12 +43,19 @@ public class FlyA extends Check {
             predicted = 0;
         }
 
+        // There will be missed movements that we can't account for if we had to predict the player's next position
+        // twice, so we shouldn't flag regardless.
+        boolean willBeWeirdNext = didNextPrediction;
+        didNextPrediction = false;
+
         if(lastPos.isPassed(60L)) {
             double toCheck = (predicted - 0.08) * mult;
 
             if(Math.abs(player.getMovement().getDeltaY() - toCheck)
                     < Math.abs(player.getMovement().getDeltaY() - predicted)) {
+                previousPrediction = predicted;
                 predicted = toCheck;
+                didNextPrediction = true;
             }
         }
 
@@ -59,9 +67,11 @@ public class FlyA extends Check {
                 && !player.getInfo().isOnLadder()
                 && player.getInfo().climbTimer.isPassed(2)
                 && !player.getBlockInfo().inWeb
+                && !willBeWeirdNext
                 && !player.getBlockInfo().inScaffolding
                 && player.getInfo().getLastLiquid().isPassed(2)
                 && !player.getBlockInfo().fenceBelow
+                && !packet.isOnGround()
                 && !player.getInfo().isServerGround()
                 && !player.getBlockInfo().onHalfBlock
                 && player.getInfo().getVelocity().isPassed(1)

@@ -14,5 +14,5 @@ public @interface CheckData {
     int punishVl() default 10;
 
     ProtocolVersion minVersion() default ProtocolVersion.V1_7;
-    ProtocolVersion maxVersion() default ProtocolVersion.V1_19;
+    ProtocolVersion maxVersion() default ProtocolVersion.v1_19_1;
 }

@@ -1,4 +1,4 @@
-package dev.brighten.ac.check.impl.speed;
+package dev.brighten.ac.check.impl.movement.speed;
 
 import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.check.Check;
@@ -53,10 +53,10 @@ public class Horizontal extends Check {
 
             if (!packet.isMoved()
                     || player.getMovement().getMoveTicks() == 0
-                    || player.getInfo().getVelocity().isNotPassed(1)
+                    || player.getInfo().getVelocity().isNotPassed(2)
                     || player.getInfo().isGeneralCancel()
                     || player.getBlockInfo().onClimbable
-                    || player.getBlockInfo().inLiquid
+                    || player.getInfo().lastLiquid.isNotPassed(2)
                     || player.getBlockInfo().collidesHorizontally) {
                 break check;
             }

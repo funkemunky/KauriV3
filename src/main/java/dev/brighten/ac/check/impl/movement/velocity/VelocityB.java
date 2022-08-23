@@ -1,14 +1,16 @@
-package dev.brighten.ac.check.impl.velocity;
+package dev.brighten.ac.check.impl.movement.velocity;
 
-import dev.brighten.ac.check.WAction;
+import dev.brighten.ac.api.check.CheckType;
 import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
-import dev.brighten.ac.api.check.CheckType;
-import dev.brighten.ac.check.impl.speed.Horizontal;
+import dev.brighten.ac.check.WAction;
+import dev.brighten.ac.check.impl.movement.speed.Horizontal;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInUseEntity;
 import dev.brighten.ac.utils.Tuple;
+import dev.brighten.ac.utils.timer.Timer;
+import dev.brighten.ac.utils.timer.impl.TickTimer;
 import org.bukkit.craftbukkit.v1_8_R3.util.CraftMagicNumbers;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.potion.PotionEffectType;
@@ -20,14 +22,19 @@ import java.util.Optional;
 
 @CheckData(name = "Velocity (B)", type = CheckType.MOVEMENT)
 public class VelocityB extends Check {
+    private Timer lastVelocity = new TickTimer();
     public VelocityB(APlayer player) {
         super(player);
 
         player.onVelocity(velocity -> {
-            pvX = velocity.getX();
-            pvZ = velocity.getZ();
-            ticks = 0;
-            debug("did velocity: %.3f, %.3f", pvX, pvZ);
+            if(lastVelocity.isPassed(10)) { //Temp fix for combo mode
+                pvX = velocity.getX();
+                pvZ = velocity.getZ();
+                ticks = 0;
+                debug("did velocity: %.3f, %.3f", pvX, pvZ);
+            }
+
+            lastVelocity.reset();
         });
     }
 

@@ -1,4 +1,4 @@
-package dev.brighten.ac.check.impl.fly;
+package dev.brighten.ac.check.impl.movement.fly;
 
 import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.check.Check;

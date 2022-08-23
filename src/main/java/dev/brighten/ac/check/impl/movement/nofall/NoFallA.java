@@ -1,4 +1,4 @@
-package dev.brighten.ac.check.impl.nofall;
+package dev.brighten.ac.check.impl.movement.nofall;
 
 import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.check.Check;
@@ -21,6 +21,7 @@ public class NoFallA extends Check {
         if(player.getInfo().isGeneralCancel()
                 || (player.getMovement().getDeltaXZ() == 0 && player.getMovement().getDeltaY() == 0)
                 || player.getBlockInfo().inLiquid
+                || player.getInfo().velocity.isNotPassed(1)
                 || player.getMovement().getLastTeleport().isNotPassed(1)
                 || !packet.isMoved()) {
             if(buffer > 0) buffer-= 0.5f;
