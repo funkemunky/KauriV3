@@ -65,8 +65,6 @@ public class Hitbox extends Check {
 
             final KLocation to = target.two;
 
-            debug("current loc: %.4f, %.4f, %.4f", eloc.one.x, eloc.one.y, eloc.one.z);
-
             if(eloc.one.x == 0 && eloc.one.y == 0 & eloc.one.z == 0) {
                 return;
             }
@@ -81,7 +79,7 @@ public class Hitbox extends Check {
                             EntityData.getEntityBox(oldLocation.toVector(), target.one);
 
                     if(player.getPlayerVersion().isBelow(ProtocolVersion.V1_9)) {
-                        box = box.expand(0.12);
+                        box = box.expand(0.105);
                     } else box = box.expand(0.0325);
                     boxes.add(box);
                 }
@@ -90,7 +88,7 @@ public class Hitbox extends Check {
                             EntityData.getEntityBox(oldLocation.toVector(), target.one);
 
                     if(player.getPlayerVersion().isBelow(ProtocolVersion.V1_9)) {
-                        box = box.expand(0.12);
+                        box = box.expand(0.105);
                     } else box = box.expand(0.0325);
                     boxes.add(box);
                 }
@@ -100,7 +98,7 @@ public class Hitbox extends Check {
                             EntityData.getEntityBox(oldLocation.toVector(), target.one);
 
                     if(player.getPlayerVersion().isBelow(ProtocolVersion.V1_9)) {
-                        box = box.expand(0.12);
+                        box = box.expand(0.105);
                     } else box = box.expand(0.0325);
                     boxes.add(box);
                 }
@@ -110,7 +108,7 @@ public class Hitbox extends Check {
 
             int hits = 0;
 
-            boolean didSneakOrElytra = player.getInfo().getLastElytra().isNotPassed(40)
+            boolean didSneakOrElytra = player.getInfo().getLastSneak().isNotPassed(40)
                     || player.getInfo().getLastElytra().isNotPassed(40);
 
             List<Vector> directions = new ArrayList<>(Arrays.asList(MathUtils.getDirection(

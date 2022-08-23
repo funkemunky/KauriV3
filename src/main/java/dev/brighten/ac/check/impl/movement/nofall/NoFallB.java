@@ -26,7 +26,7 @@ public class NoFallB extends Check {
                 || player.getBlockInfo().miscNear
                 || player.getInfo().inVehicle
                 || player.getInfo().climbTimer.isNotPassed(3)
-                || player.getCreation().isPassed(2000L)
+                || player.getCreation().isNotPassed(2000L)
                 || player.getInfo().slimeTimer.isNotPassed(3)) {
             if(groundBuffer > 0) groundBuffer--;
             if(airBuffer > 0) airBuffer--;
@@ -41,7 +41,7 @@ public class NoFallB extends Check {
                 && !player.getInfo().isServerGround()) {
             groundBuffer+= 2;
             if(groundBuffer > 14) {
-                flag("[%.1f] g=%s;dy=%.4f;ldy=%.4f", groundBuffer, true,
+                flag("[%s] g=%s;dy=%.4f;ldy=%.4f", groundBuffer, true,
                         player.getMovement().getDeltaY(), player.getMovement().getLDeltaY());
             }
         } else if(groundBuffer > 0) groundBuffer--;
@@ -53,7 +53,7 @@ public class NoFallB extends Check {
                 && ((player.getInfo().isServerGround() || player.getBlockInfo().blocksBelow)
                 && dground && !player.getBlockInfo().onHalfBlock)) {
             if((airBuffer +=10) > 30) {
-                flag("[%.1f] g=%s;dy=%.4f;ldy=%.4f", airBuffer, false,
+                flag("[%s] g=%s;dy=%.4f;ldy=%.4f", airBuffer, false,
                         player.getMovement().getDeltaY(), player.getMovement().getLDeltaY());
             }
         } else if(airBuffer > 0) airBuffer-= 4;
