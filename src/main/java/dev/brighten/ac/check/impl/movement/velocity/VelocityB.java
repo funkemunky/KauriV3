@@ -1,8 +1,6 @@
 package dev.brighten.ac.check.impl.movement.velocity;
 
-import dev.brighten.ac.api.check.CheckType;
 import dev.brighten.ac.check.Check;
-import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.check.impl.movement.speed.Horizontal;
 import dev.brighten.ac.data.APlayer;
@@ -20,7 +18,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
-@CheckData(name = "Velocity (B)", type = CheckType.MOVEMENT)
+//@CheckData(name = "Velocity (B)", type = CheckType.MOVEMENT)
 public class VelocityB extends Check {
     private Timer lastVelocity = new TickTimer();
     public VelocityB(APlayer player) {

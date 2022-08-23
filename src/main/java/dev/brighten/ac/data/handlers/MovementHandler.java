@@ -187,13 +187,13 @@ public class MovementHandler {
 
                     lastLookX = lookX;
                     lastLookY = lookY;
-                    lookX = getExpiermentalDeltaX(player);
-                    lookY = getExpiermentalDeltaY(player);
+                    lookX = getExperimentalDeltaX(player);
+                    lookY = getExperimentalDeltaY(player);
 
                     lastLookX = lookX;
                     lastLookY = lookY;
-                    lookX = getExpiermentalDeltaX(player);
-                    lookY = getExpiermentalDeltaY(player);
+                    lookX = getExperimentalDeltaX(player);
+                    lookY = getExperimentalDeltaY(player);
                 }
             } else {
                 yawGcdList.clear();
@@ -336,15 +336,21 @@ it
         return pitchGCD < 0.0078125;
     }
 
-    public static float getExpiermentalDeltaX(APlayer data) {
+    public static float getExperimentalDeltaX(APlayer data) {
         float deltaPitch = data.getMovement().getDeltaYaw();
         float sens = data.getMovement().sensitivityX;
         float f = sens * 0.6f + .2f;
         float calc = f * f * f * 8;
 
-        float result = deltaPitch / (calc * .15f);
+        return deltaPitch / (calc * .15f);
+    }
 
-        return result;
+    public float getExperimentalDelta(float deltaAngle) {
+        float sens = player.getMovement().sensitivityMcp;
+        float f = sens * 0.6f + .2f;
+        float calc = f * f * f * 8;
+
+        return deltaAngle / (calc * .15f);
     }
 
     public double[] getEyeHeights() {
@@ -355,15 +361,13 @@ it
         } else return new double[]{1.54f, 1.62f};
     }
 
-    public static float getExpiermentalDeltaY(APlayer data) {
+    public static float getExperimentalDeltaY(APlayer data) {
         float deltaPitch = data.getMovement().getDeltaPitch();
         float sens = data.getMovement().sensitivityY;
         float f = sens * 0.6f + .2f;
         float calc = f * f * f * 8;
 
-        float result = deltaPitch / (calc * .15f);
-
-        return result;
+        return deltaPitch / (calc * .15f);
     }
 
     public static int sensToPercent(float sensitivity) {

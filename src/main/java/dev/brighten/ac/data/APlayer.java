@@ -170,6 +170,8 @@ public class APlayer {
             }
         });
 
+        creation.reset();
+
         // Enabling alerts for players on join if they have the permissions to
         if(getBukkitPlayer().hasPermission("anticheat.command.alerts")
                 || getBukkitPlayer().hasPermission("anticheat.alerts")) {
