@@ -11,6 +11,9 @@ public @interface CheckData {
     String name();
     CheckType type();
 
+    boolean enabled() default true;
+
+    boolean punishable() default true;
     int punishVl() default 10;
 
     ProtocolVersion minVersion() default ProtocolVersion.V1_7;

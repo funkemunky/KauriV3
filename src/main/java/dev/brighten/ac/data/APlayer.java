@@ -6,8 +6,10 @@ import dev.brighten.ac.data.handlers.BlockInformation;
 import dev.brighten.ac.data.handlers.GeneralInformation;
 import dev.brighten.ac.data.handlers.LagInformation;
 import dev.brighten.ac.data.handlers.MovementHandler;
+import dev.brighten.ac.data.obj.ActionStore;
 import dev.brighten.ac.data.obj.InstantAction;
 import dev.brighten.ac.data.obj.NormalAction;
+import dev.brighten.ac.data.obj.TimedActionStore;
 import dev.brighten.ac.handler.EntityLocationHandler;
 import dev.brighten.ac.handler.PotionHandler;
 import dev.brighten.ac.handler.block.BlockUpdateHandler;
@@ -82,8 +84,8 @@ public class APlayer {
     private final List<Consumer<Vector>> onVelocityTasks = new ArrayList<>();
     public final EvictingList<Tuple<KLocation, Double>> pastLocations = new EvictingList<>(20);
 
-    private final Map<Class<?>, WAction<?>[]> events = new HashMap<>();
-    private final Map<Class<?>, TimedWAction<?>[]> eventsWithTimestamp = new HashMap<>();
+    private final Map<Class<?>, ActionStore[]> events = new HashMap<>();
+    private final Map<Class<?>, TimedActionStore[]> eventsWithTimestamp = new HashMap<>();
 
     @Setter
     @Getter
@@ -111,7 +113,7 @@ public class APlayer {
 
     private void load() {
         synchronized (checks) {
-            for (CheckStatic check : Anticheat.INSTANCE.getCheckManager().getCheckClasses()) {
+            for (CheckStatic check : Anticheat.INSTANCE.getCheckManager().getCheckClasses().values()) {
                 checks.add(check.playerInit(this));
             }
         }
@@ -128,7 +130,7 @@ public class APlayer {
             playerVersion = ProtocolVersion.getVersion(ProtocolAPI.INSTANCE.getPlayerVersion(getBukkitPlayer()));
 
             // Enabling checks for players on join
-            for (CheckStatic checkClass : Anticheat.INSTANCE.getCheckManager().getCheckClasses()) {
+            for (CheckStatic checkClass : Anticheat.INSTANCE.getCheckManager().getCheckClasses().values()) {
                 CheckData data = checkClass.getCheckClass().getAnnotation(CheckData.class);
 
                 //Version checks
@@ -141,31 +143,35 @@ public class APlayer {
 
                 Check check = checkClass.playerInit(this);
 
-                for (Tuple<WrappedField, Class<?>> tuple : checkClass.getActions()) {
-                    WAction<?> action = tuple.one.get(check);
+                synchronized (events) {
+                    for (Tuple<WrappedField, Class<?>> tuple : checkClass.getActions()) {
+                        WAction<?> action = tuple.one.get(check);
 
-                    events.compute(tuple.two, (packetClass, array) -> {
-                        if (array == null) {
-                            return new WAction<?>[]{action};
-                        } else {
-                            WAction<?>[] newArray = Arrays.copyOf(array, array.length + 1);
-                            newArray[array.length] = action;
-                            return newArray;
-                        }
-                    });
+                        events.compute(tuple.two, (packetClass, array) -> {
+                            if (array == null) {
+                                return new ActionStore[] {new ActionStore(action, checkClass.getCheckClass().getParent())};
+                            } else {
+                                ActionStore[] newArray = Arrays.copyOf(array, array.length + 1);
+                                newArray[array.length] = new ActionStore(action, checkClass.getCheckClass().getParent());
+                                return newArray;
+                            }
+                        });
+                    }
                 }
-                for (Tuple<WrappedField, Class<?>> tuple : checkClass.getTimedActions()) {
-                    TimedWAction<?> action = tuple.one.get(check);
+                synchronized (eventsWithTimestamp) {
+                    for (Tuple<WrappedField, Class<?>> tuple : checkClass.getTimedActions()) {
+                        TimedWAction<?> action = tuple.one.get(check);
 
-                    eventsWithTimestamp.compute(tuple.two, (packetClass, array) -> {
-                        if (array == null) {
-                            return new TimedWAction<?>[]{action};
-                        } else {
-                            TimedWAction<?>[] newArray = Arrays.copyOf(array, array.length + 1);
-                            newArray[array.length] = action;
-                            return newArray;
-                        }
-                    });
+                        eventsWithTimestamp.compute(tuple.two, (packetClass, array) -> {
+                            if (array == null) {
+                                return new TimedActionStore[] {new TimedActionStore(action, checkClass.getCheckClass().getParent())};
+                            } else {
+                                TimedActionStore[] newArray = Arrays.copyOf(array, array.length + 1);
+                                newArray[array.length] = new TimedActionStore(action, checkClass.getCheckClass().getParent());
+                                return newArray;
+                            }
+                        });
+                    }
                 }
             }
         });
@@ -187,11 +193,15 @@ public class APlayer {
         this.movement = null;
     }
 
+    public void disableCheck(String checkName) {
+
+    }
+
     public void callEvent(Event event) {
         if(events.containsKey(event.getClass())) {
-            WAction<Event>[] actions = (WAction<Event>[]) events.get(event.getClass());
-            for (WAction<Event> action : actions) {
-                action.invoke(event);
+            ActionStore<Event>[] actions = (ActionStore<Event>[]) events.get(event.getClass());
+            for (ActionStore<Event> action : actions) {
+                action.getAction().invoke(event);
             }
         }
     }
@@ -199,15 +209,19 @@ public class APlayer {
     //TODO When using WPacket wrappers only, make this strictly WPacket param based only
     public void callPacket(Object packet, long timestamp) {
         if(events.containsKey(packet.getClass())) {
-            WAction<Object>[] actions = (WAction<Object>[]) events.get(packet.getClass());
-            for (WAction<Object> action : actions) {
-                action.invoke(packet);
+            synchronized (events) {
+                ActionStore<Object>[] actions = events.get(packet.getClass());
+                for (ActionStore<Object> action : actions) {
+                    action.getAction().invoke(packet);
+                }
             }
         }
         if(eventsWithTimestamp.containsKey(packet.getClass())) {
-            TimedWAction<Object>[] actions = (TimedWAction<Object>[]) eventsWithTimestamp.get(packet.getClass());
-            for (TimedWAction<Object> action : actions) {
-                action.invoke(packet, timestamp);
+            synchronized (events) {
+                TimedActionStore<Object>[] actions = eventsWithTimestamp.get(packet.getClass());
+                for (TimedActionStore<Object> action : actions) {
+                    action.getAction().invoke(packet, timestamp);
+                }
             }
         }
     }

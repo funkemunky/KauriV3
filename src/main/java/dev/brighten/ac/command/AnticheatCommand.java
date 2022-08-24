@@ -5,7 +5,6 @@ import co.aikar.commands.annotation.*;
 import co.aikar.commands.bukkit.contexts.OnlinePlayer;
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.check.Check;
-import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.messages.Messages;
 import dev.brighten.ac.packet.handler.HandlerAbstract;
@@ -35,9 +34,9 @@ public class AnticheatCommand extends BaseCommand {
         BukkitCommandCompletions cc = (BukkitCommandCompletions) Anticheat.INSTANCE.getCommandManager()
                 .getCommandCompletions();
 
-        cc.registerCompletion("checks", (c) -> Anticheat.INSTANCE.getCheckManager().getCheckClasses().stream()
-                .map(cs -> cs.getCheckClass().getAnnotation(CheckData.class).name().replace(" ", "_"))
-                .sorted(Comparator.naturalOrder()).collect(Collectors.toList()));
+        cc.registerCompletion("checks", (c) -> Anticheat.INSTANCE.getCheckManager().getCheckClasses().keySet()
+                .stream()  .sorted(Comparator.naturalOrder())
+                .map(name -> name.replace(" ", "_")).collect(Collectors.toList()));
 
         BukkitCommandContexts contexts = (BukkitCommandContexts) Anticheat.INSTANCE.getCommandManager()
                 .getCommandContexts();

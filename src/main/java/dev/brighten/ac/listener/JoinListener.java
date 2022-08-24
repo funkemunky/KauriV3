@@ -61,7 +61,7 @@ public class JoinListener implements Listener {
                     case BLOCK_CHANGE:
                     case MULTI_BLOCK_CHANGE:
                     case MAP_CHUNK: {
-                        if(player.getLagInfo().getLastClientTransaction().isPassed(100L)) {
+                        if(player.getLagInfo().getLastClientTransaction().isPassed(100L) && player.getCreation().isPassed(2000L)) {
                             synchronized (player.getPacketQueue()) {
                                 player.getPacketQueue().add(event.getPacket());
                             }
@@ -78,7 +78,10 @@ public class JoinListener implements Listener {
     public void onJoin(PlayerJoinEvent event) {
         APlayer player = Anticheat.INSTANCE.getPlayerRegistry().generate(event.getPlayer());
 
-        RunUtils.taskLater(() -> HandlerAbstract.getHandler().add(event.getPlayer()), 6);
+        RunUtils.taskLater(() -> {
+            if(event.getPlayer() != null && event.getPlayer().isOnline())
+                HandlerAbstract.getHandler().add(event.getPlayer());
+        }, 6);
 
         player.callEvent(event);
     }

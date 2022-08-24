@@ -13,6 +13,7 @@ import dev.brighten.ac.utils.*;
 import dev.brighten.ac.utils.timer.Timer;
 import dev.brighten.ac.utils.timer.impl.MillisTimer;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.val;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.BaseComponent;
@@ -30,8 +31,11 @@ public class Check implements ECheck {
     @Getter
     private final CheckData checkData;
     @Getter
-    private float vl;
+    public float vl;
     private long lastFlagRun;
+    @Getter
+    @Setter
+    private boolean enabled, punishable;
     private final Timer lastAlert = new MillisTimer();
 
     public static Set<UUID> alertsEnabled = new HashSet<>();
@@ -58,6 +62,14 @@ public class Check implements ECheck {
                         MiscUtils
                                 .splitIntoLine("", 20))))
                 .replace("%info%", info));
+    }
+
+    public void onEnable() {
+
+    }
+
+    public void onDisable() {
+
     }
 
     private String addPlaceHolders(String string) {
@@ -170,6 +182,8 @@ public class Check implements ECheck {
     }
 
     public void punish() {
+        if(!punishable) return;
+
         PunishResult result = PunishResult.builder().cancelled(false).build();
 
         List<String> commands = CheckConfig.punishmentCommands.stream().map(this::addPlaceHolders)

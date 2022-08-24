@@ -5,17 +5,19 @@ import dev.brighten.ac.utils.ClassScanner;
 import dev.brighten.ac.utils.reflections.types.WrappedClass;
 import lombok.Getter;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 @Getter
 public class CheckManager {
-    private final List<CheckStatic> checkClasses = new ArrayList<>();
+    private final Map<String, CheckStatic> checkClasses = new HashMap<>();
 
     public CheckManager() {
-        for (WrappedClass aClass : ClassScanner.getClasses(CheckData.class,
-                "dev.brighten.ac.check.impl")) {
-            addCheck(aClass);
+        synchronized (checkClasses) {
+            for (WrappedClass aClass : ClassScanner.getClasses(CheckData.class,
+                    "dev.brighten.ac.check.impl")) {
+                addCheck(aClass);
+            }
         }
     }
 
@@ -30,12 +32,11 @@ public class CheckManager {
 
         Anticheat.INSTANCE.alog(true, "&7Adding check to CheckManager: " + checkData.name());
 
-        checkClasses.add(check);
+        checkClasses.put(checkData.name(), check);
     }
 
     public boolean isCheck(String name) {
         final String formattedName = name.replace("_", " ");
-        return checkClasses.stream().anyMatch(c -> c.getCheckClass().getAnnotation(CheckData.class).name()
-                .equalsIgnoreCase(formattedName));
+        return checkClasses.containsKey(formattedName);
     }
 }
