@@ -14,6 +14,7 @@ import dev.brighten.ac.messages.Messages;
 import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.packet.handler.HandlerAbstract;
 import dev.brighten.ac.utils.KLocation;
+import dev.brighten.ac.utils.RunUtils;
 import dev.brighten.ac.utils.Tuple;
 import dev.brighten.ac.utils.objects.evicting.EvictingList;
 import dev.brighten.ac.utils.reflections.impl.MinecraftReflection;
@@ -115,7 +116,9 @@ public class APlayer {
         Anticheat.INSTANCE.getScheduler().execute(() -> {
             playerVersion = ProtocolVersion.getVersion(ProtocolAPI.INSTANCE.getPlayerVersion(getBukkitPlayer()));
 
-            checkHandler.initChecks();
+            RunUtils.task(() -> {
+                checkHandler.initChecks();
+            });
         });
 
         // Enabling alerts for players on join if they have the permissions to

@@ -62,7 +62,8 @@ public class CheckHandler {
                 for (Tuple<WrappedField, Class<?>> tuple : checkClass.getActions()) {
                     WAction<?> action = tuple.one.get(check);
 
-                    if(!action.getClass().isAnnotationPresent(Async.class)) {
+                    if(!tuple.one.getField().isAnnotationPresent(Async.class)) {
+                        System.out.println("Adding sync event");
                         events.compute(tuple.two, (packetClass, array) -> {
                             if (array == null) {
                                 return new ActionStore[] {new ActionStore(action, checkClass.getCheckClass().getParent())};
@@ -79,7 +80,8 @@ public class CheckHandler {
                 for (Tuple<WrappedField, Class<?>> tuple : checkClass.getActions()) {
                     WAction<?> action = tuple.one.get(check);
 
-                    if(action.getClass().isAnnotationPresent(Async.class)) {
+                    if(tuple.one.getField().isAnnotationPresent(Async.class)) {
+                        System.out.println("Adding async event");
                         async_events.compute(tuple.two, (packetClass, array) -> {
                             if (array == null) {
                                 return new ActionStore[] {new ActionStore(action, checkClass.getCheckClass().getParent())};
@@ -96,7 +98,8 @@ public class CheckHandler {
                 for (Tuple<WrappedField, Class<?>> tuple : checkClass.getTimedActions()) {
                     WTimedAction<?> action = tuple.one.get(check);
 
-                    if(!action.getClass().isAnnotationPresent(Async.class)) {
+                    if(!tuple.one.getField().isAnnotationPresent(Async.class)) {
+                        System.out.println("Adding timed sync event");
                         eventsWithTimestamp.compute(tuple.two, (packetClass, array) -> {
                             if (array == null) {
                                 return new TimedActionStore[] {new TimedActionStore(action, checkClass.getCheckClass().getParent())};
@@ -113,7 +116,8 @@ public class CheckHandler {
                 for (Tuple<WrappedField, Class<?>> tuple : checkClass.getTimedActions()) {
                     WTimedAction<?> action = tuple.one.get(check);
 
-                    if(action.getClass().isAnnotationPresent(Async.class)) {
+                    if(tuple.one.getField().isAnnotationPresent(Async.class)) {
+                        System.out.println("Adding timed async event");
                         async_eventsWithTimestamp.compute(tuple.two, (packetClass, array) -> {
                             if (array == null) {
                                 return new TimedActionStore[] {new TimedActionStore(action, checkClass.getCheckClass().getParent())};
@@ -127,10 +131,11 @@ public class CheckHandler {
                 }
             }
             synchronized (cancellableEvents) {
-                for (Tuple<WrappedField, Class<?>> tuple : checkClass.getTimedActions()) {
+                for (Tuple<WrappedField, Class<?>> tuple : checkClass.getCancellableActions()) {
                     WCancellable<?> action = tuple.one.get(check);
 
-                    if(!action.getClass().isAnnotationPresent(Async.class)) {
+                    if(!tuple.one.getField().isAnnotationPresent(Async.class)) {
+                        System.out.println("Adding cancel sync event");
                         cancellableEvents.compute(tuple.two, (packetClass, array) -> {
                             if (array == null) {
                                 return new CancellableActionStore[] {new CancellableActionStore(action, checkClass.getCheckClass().getParent())};
@@ -172,9 +177,10 @@ public class CheckHandler {
 
     //TODO When using WPacket wrappers only, make this strictly WPacket param based only
     public void callPacket(Object packet, long timestamp) {
+        //System.out.println("Being called");
         ThreadHandler.INSTANCE.getThread(player).getThread().execute(() -> {
             if(async_events.containsKey(packet.getClass())) {
-                synchronized (events) {
+                synchronized (async_events) {
                     ActionStore<Object>[] actions = async_events.get(packet.getClass());
                     for (ActionStore<Object> action : actions) {
                         action.getAction().invoke(packet);
@@ -182,7 +188,7 @@ public class CheckHandler {
                 }
             }
             if(async_eventsWithTimestamp.containsKey(packet.getClass())) {
-                synchronized (events) {
+                synchronized (async_eventsWithTimestamp) {
                     TimedActionStore<Object>[] actions = async_eventsWithTimestamp.get(packet.getClass());
                     for (TimedActionStore<Object> action : actions) {
                         action.getAction().invoke(packet, timestamp);
@@ -202,7 +208,7 @@ public class CheckHandler {
             }
         }
         if(eventsWithTimestamp.containsKey(packet.getClass())) {
-            synchronized (events) {
+            synchronized (eventsWithTimestamp) {
                 TimedActionStore<Object>[] actions = eventsWithTimestamp.get(packet.getClass());
                 for (TimedActionStore<Object> action : actions) {
                     action.getAction().invoke(packet, timestamp);

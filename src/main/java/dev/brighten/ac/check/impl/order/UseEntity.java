@@ -25,6 +25,8 @@ public class UseEntity extends Check {
                 flag("delta=%s", timestamp - lastFlying);
             }
         } else if(buffer > 0) buffer--;
+
+        debug("delta=%s", timestamp - lastFlying);
     };
 
     WTimedAction<WPacketPlayInFlying> flying = (packet, timestamp) -> {

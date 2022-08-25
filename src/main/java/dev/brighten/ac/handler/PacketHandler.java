@@ -306,8 +306,7 @@ public class PacketHandler {
         }
 
         boolean cancelled = player.getCheckHandler().callSyncPacket(packetObject, timestamp);
-        ThreadHandler.INSTANCE.getThread(player).getThread()
-                .execute(() -> player.getCheckHandler().callPacket(packetObject, timestamp));
+        player.getCheckHandler().callPacket(packetObject, timestamp);
 
         // Post flying settings
         if(type.equals(PacketType.FLYING)) {
