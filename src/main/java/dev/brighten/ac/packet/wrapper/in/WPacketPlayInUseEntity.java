@@ -11,7 +11,7 @@ import org.bukkit.util.Vector;
 
 @Builder
 @Getter
-public class WPacketPlayInUseEntity implements WPacket {
+public class WPacketPlayInUseEntity extends WPacket {
     private int entityId;
     private Vector vector;
     private EnumEntityUseAction action;

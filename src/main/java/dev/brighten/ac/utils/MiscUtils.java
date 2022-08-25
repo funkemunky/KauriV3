@@ -46,6 +46,13 @@ public class MiscUtils {
         return toCheck.toLowerCase().contains(contains.toLowerCase());
     }
 
+    public static void close(AutoCloseable... closeables) {
+        try {
+            for (AutoCloseable closeable : closeables) if (closeable != null) closeable.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
     public static boolean isInMaterialBB(World world, SimpleCollisionBox entityBox, XMaterial xmaterial) {
         int startX = MathHelper.floor_double(entityBox.xMin);
         int startY = MathHelper.floor_double(entityBox.yMin);

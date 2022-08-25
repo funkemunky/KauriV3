@@ -1,7 +1,8 @@
 package dev.brighten.ac.packet.wrapper;
 
-public interface WPacket {
-    PacketType getPacketType();
+public abstract class WPacket {
 
-    Object getPacket();
+    public abstract PacketType getPacketType();
+
+    public abstract Object getPacket();
 }

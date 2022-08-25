@@ -8,7 +8,7 @@ import lombok.Getter;
 
 @Builder
 @Getter
-public class WPacketPlayInAbilities implements WPacket {
+public class WPacketPlayInAbilities extends WPacket {
     private PlayerCapabilities capabilities;
 
     @Override

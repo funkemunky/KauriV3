@@ -7,7 +7,7 @@ import lombok.Getter;
 
 @Builder
 @Getter
-public class WPacketPlayInFlying implements WPacket {
+public class WPacketPlayInFlying extends WPacket {
     private double x, y, z;
     private float yaw, pitch;
     private boolean looked, moved, onGround;

@@ -19,4 +19,24 @@ public class CMove {
         this.box = move.getBox();
         this.onGround = move.isOnGround();
     }
+
+    public double getX() {
+        return loc.x;
+    }
+
+    public double getY() {
+        return loc.y;
+    }
+
+    public double getZ() {
+        return loc.z;
+    }
+
+    public float getYaw() {
+        return loc.yaw;
+    }
+
+    public float getPitch() {
+        return loc.pitch;
+    }
 }

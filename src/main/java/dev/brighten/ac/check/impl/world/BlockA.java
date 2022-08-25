@@ -8,10 +8,7 @@ import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInBlockPlace;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
-import dev.brighten.ac.utils.BlockUtils;
-import dev.brighten.ac.utils.KLocation;
-import dev.brighten.ac.utils.MathUtils;
-import dev.brighten.ac.utils.Tuple;
+import dev.brighten.ac.utils.*;
 import dev.brighten.ac.utils.math.cond.MaxDouble;
 import dev.brighten.ac.utils.world.BlockData;
 import dev.brighten.ac.utils.world.CollisionBox;
@@ -24,7 +21,7 @@ import java.util.Optional;
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 
-@CheckData(name = "Block (A)", type = CheckType.INTERACT)
+@CheckData(name = "Block (A)", checkId = "blocka", type = CheckType.INTERACT)
 public class BlockA extends Check {
     public BlockA(APlayer player) {
         super(player);
@@ -33,6 +30,7 @@ public class BlockA extends Check {
     private final MaxDouble verbose = new MaxDouble(20);
     private Queue<Tuple<Block, SimpleCollisionBox>> blockPlacements = new LinkedBlockingQueue<>();
 
+    @Async
     WAction<WPacketPlayInBlockPlace> blockPlace = packet -> {
         Location loc = packet.getBlockPos().toBukkitVector().toLocation(player.getBukkitPlayer().getWorld());
         Optional<Block> optionalBlock = BlockUtils.getBlockAsync(loc);
@@ -63,6 +61,7 @@ public class BlockA extends Check {
         blockPlacements.add(new Tuple<>(block, simpleBox.expand(0.1)));
     };
 
+    @Async
     WAction<WPacketPlayInFlying> flying = packet -> {
         Tuple<Block, SimpleCollisionBox> tuple;
 

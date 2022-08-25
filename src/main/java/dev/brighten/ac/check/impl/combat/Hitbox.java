@@ -20,7 +20,7 @@ import org.bukkit.util.Vector;
 import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
 
-@CheckData(name = "Hitbox", type = CheckType.COMBAT)
+@CheckData(name = "Hitbox", checkId = "hitboxa", type = CheckType.COMBAT)
 public class Hitbox extends Check {
     private float buffer;
     private int hbuffer;

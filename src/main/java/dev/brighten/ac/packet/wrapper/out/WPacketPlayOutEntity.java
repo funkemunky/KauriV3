@@ -7,7 +7,7 @@ import lombok.Getter;
 
 @Builder
 @Getter
-public class WPacketPlayOutEntity implements WPacket {
+public class WPacketPlayOutEntity extends WPacket {
 
     private int id;
     private boolean looked, moved, onGround;

@@ -7,7 +7,7 @@ import lombok.Getter;
 
 @Builder
 @Getter
-public class WPacketPlayInCloseWindow implements WPacket {
+public class WPacketPlayInCloseWindow extends WPacket {
 
     private int id;
 

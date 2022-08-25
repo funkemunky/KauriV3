@@ -9,6 +9,7 @@ import java.lang.annotation.RetentionPolicy;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface CheckData {
     String name();
+    String checkId();
     CheckType type();
 
     boolean enabled() default true;

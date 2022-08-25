@@ -9,7 +9,7 @@ import lombok.Getter;
 
 @Builder
 @Getter
-public class WPacketPlayOutAbilities implements WPacket {
+public class WPacketPlayOutAbilities extends WPacket {
 
     private PlayerCapabilities capabilities;
 

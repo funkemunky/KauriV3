@@ -9,7 +9,7 @@ import org.bukkit.Material;
 
 @Builder
 @Getter
-public class WPacketPlayOutBlockChange implements WPacket {
+public class WPacketPlayOutBlockChange extends WPacket {
 
     private IntVector blockLocation;
     private Material material;

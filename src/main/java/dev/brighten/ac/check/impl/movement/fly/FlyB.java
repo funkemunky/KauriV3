@@ -6,10 +6,11 @@ import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.api.check.CheckType;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
+import dev.brighten.ac.utils.Async;
 import dev.brighten.ac.utils.timer.Timer;
 import dev.brighten.ac.utils.timer.impl.TickTimer;
 
-@CheckData(name = "Fly (B)", type = CheckType.MOVEMENT)
+@CheckData(name = "Fly (B)", checkId = "flyb", type = CheckType.MOVEMENT)
 public class FlyB extends Check {
     public FlyB(APlayer player) {
         super(player);
@@ -18,6 +19,7 @@ public class FlyB extends Check {
     private Timer lastNearGround = new TickTimer();
     private float buffer;
 
+    @Async
     WAction<WPacketPlayInFlying> flying = packet -> {
         if(player.getInfo().isNearGround()) lastNearGround.reset();
         if(!packet.isMoved() || player.getInfo().isGeneralCancel()) return;

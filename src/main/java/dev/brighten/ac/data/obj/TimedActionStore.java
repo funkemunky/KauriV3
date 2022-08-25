@@ -1,7 +1,7 @@
 package dev.brighten.ac.data.obj;
 
 import dev.brighten.ac.check.Check;
-import dev.brighten.ac.check.TimedWAction;
+import dev.brighten.ac.check.WTimedAction;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -11,7 +11,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Getter
 public class TimedActionStore<T> {
-    private final TimedWAction<T> action;
+    private final WTimedAction<T> action;
     private final Class<? extends Check> checkClass;
     //To ensure duplicate actions are not added to the list
     private final UUID uuid = UUID.randomUUID();

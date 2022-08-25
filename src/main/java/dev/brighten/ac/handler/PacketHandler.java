@@ -3,6 +3,7 @@ package dev.brighten.ac.handler;
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.data.obj.NormalAction;
+import dev.brighten.ac.handler.thread.ThreadHandler;
 import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.packet.wrapper.PacketType;
 import dev.brighten.ac.packet.wrapper.in.*;
@@ -25,7 +26,7 @@ import java.util.*;
 
 public class PacketHandler {
 
-    public void process(APlayer player, PacketType type, Object packetObject) {
+    public boolean process(APlayer player, PacketType type, Object packetObject) {
         long timestamp = System.currentTimeMillis();
         switch (type) {
             case CLIENT_TRANSACTION: {
@@ -110,7 +111,7 @@ public class PacketHandler {
 
                 if(player.getMovement().isExcuseNextFlying()) {
                     player.getMovement().setExcuseNextFlying(false);
-                    return;
+                    return false;
                 }
 
                 if (timestamp - player.getLagInfo().getLastFlying() <= 15) {
@@ -304,12 +305,16 @@ public class PacketHandler {
                     "" + type.name() + ": " + packetObject.toString());
         }
 
-        player.callPacket(packetObject, timestamp);
+        boolean cancelled = player.getCheckHandler().callSyncPacket(packetObject, timestamp);
+        ThreadHandler.INSTANCE.getThread(player).getThread()
+                .execute(() -> player.getCheckHandler().callPacket(packetObject, timestamp));
 
         // Post flying settings
         if(type.equals(PacketType.FLYING)) {
             player.getVelocityHandler().onFlyingPost((WPacketPlayInFlying)packetObject);
             player.getInfo().lsneaking = player.getInfo().sneaking;
         }
+
+        return cancelled;
     }
 }

@@ -11,7 +11,7 @@ import java.util.Set;
 
 @Builder
 @Getter
-public class WPacketPlayOutPosition implements WPacket {
+public class WPacketPlayOutPosition extends WPacket {
 
     private double x, y, z;
     private float yaw, pitch;

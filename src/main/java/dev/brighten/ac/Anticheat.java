@@ -91,6 +91,13 @@ public class Anticheat extends JavaPlugin {
                 true,
                 true);
 
+        if(!getConfig().contains("database.username")) {
+            getConfig().set("database.username", "dbuser");
+        }
+        if(!getConfig().contains("database.password")) {
+            getConfig().set("database.password", UUID.randomUUID().toString());
+        }
+
         this.keepaliveProcessor = new KeepaliveProcessor();
         this.checkManager = new CheckManager();
         this.playerRegistry = new PlayerRegistry();

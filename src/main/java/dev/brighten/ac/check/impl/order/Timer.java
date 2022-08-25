@@ -4,7 +4,7 @@ import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.api.check.CheckType;
 import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
-import dev.brighten.ac.check.TimedWAction;
+import dev.brighten.ac.check.WTimedAction;
 import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.ProtocolVersion;
@@ -14,7 +14,7 @@ import dev.brighten.ac.packet.wrapper.out.WPacketPlayOutPosition;
 import dev.brighten.ac.utils.timer.impl.TickTimer;
 import net.minecraft.server.v1_8_R3.PacketPlayInTransaction;
 
-@CheckData(name = "Timer", type = CheckType.ORDER)
+@CheckData(name = "Timer", checkId = "timer", type = CheckType.ORDER)
 public class Timer extends Check {
 
     public Timer(APlayer player) {
@@ -38,7 +38,7 @@ public class Timer extends Check {
     /**
      * Fixing bug with 1.9 since flying packets are not always sent
      */
-    TimedWAction<PacketPlayInTransaction> transaction = (packet, timestamp) -> {
+    WTimedAction<PacketPlayInTransaction> transaction = (packet, timestamp) -> {
         if(player.getPlayerVersion().isBelow(ProtocolVersion.V1_9)) return;
 
         Anticheat.INSTANCE.getKeepaliveProcessor().getKeepById(packet.b()).ifPresent(ka -> {
@@ -50,7 +50,7 @@ public class Timer extends Check {
         });
     };
 
-    TimedWAction<WPacketPlayInFlying> flying = (packet, timestamp) -> {
+    WTimedAction<WPacketPlayInFlying> flying = (packet, timestamp) -> {
         if(totalTimer == -1) {
             totalTimer = player.getCreation().getCurrent() - 50;
             debug("set base time");

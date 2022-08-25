@@ -7,7 +7,7 @@ import lombok.Getter;
 
 @Builder
 @Getter
-public class WPacketPlayOutEntityTeleport implements WPacket {
+public class WPacketPlayOutEntityTeleport extends WPacket {
 
     private int entityId;
     private double x, y, z;

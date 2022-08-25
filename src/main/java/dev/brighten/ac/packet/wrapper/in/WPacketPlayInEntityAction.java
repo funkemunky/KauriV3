@@ -7,7 +7,7 @@ import lombok.Getter;
 
 @Builder
 @Getter
-public class WPacketPlayInEntityAction implements WPacket {
+public class WPacketPlayInEntityAction extends WPacket {
 
     private EnumPlayerAction action;
 

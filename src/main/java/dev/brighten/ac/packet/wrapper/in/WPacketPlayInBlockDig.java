@@ -9,7 +9,7 @@ import lombok.Getter;
 
 @Builder
 @Getter
-public class WPacketPlayInBlockDig implements WPacket {
+public class WPacketPlayInBlockDig extends WPacket {
 
     private IntVector blockPos;
     private WrappedEnumDirection direction;

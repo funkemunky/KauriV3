@@ -8,7 +8,7 @@ import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
 import org.bukkit.util.Vector;
 
-@CheckData(name = "Velocity (A)", type = CheckType.MOVEMENT)
+@CheckData(name = "Velocity (A)", checkId = "velocitya", type = CheckType.MOVEMENT)
 public class VelocityA extends Check {
 
     private Vector currentVelocity = null;

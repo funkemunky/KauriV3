@@ -6,13 +6,14 @@ import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.api.check.CheckType;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
+import dev.brighten.ac.utils.Async;
 import dev.brighten.ac.utils.Color;
 import dev.brighten.ac.utils.timer.Timer;
 import dev.brighten.ac.utils.timer.impl.TickTimer;
 
 import java.util.List;
 
-@CheckData(name = "Aim", type = CheckType.COMBAT)
+@CheckData(name = "Aim", checkId = "aima", type = CheckType.COMBAT)
 public class Aim extends Check {
     public Aim(APlayer player) {
         super(player);
@@ -22,6 +23,7 @@ public class Aim extends Check {
     protected Timer lastGrid = new TickTimer(3);
 
 
+    @Async
     WAction<WPacketPlayInFlying> onFlying = (packet) -> {
         if(!packet.isLooked()) return;
 

@@ -134,7 +134,7 @@ public class VelocityB extends Check {
 
                 found = true;
                 if(!velocity.isPresent()) {
-                    Horizontal speedCheck = (Horizontal) player.findCheck(Horizontal.class);
+                    Horizontal speedCheck = (Horizontal) player.getCheckHandler().findCheck(Horizontal.class);
                     double s2 = speedCheck.strafe;
                     double f2 = speedCheck.forward;
 

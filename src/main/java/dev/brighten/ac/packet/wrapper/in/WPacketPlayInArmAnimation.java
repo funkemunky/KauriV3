@@ -7,7 +7,7 @@ import lombok.Getter;
 
 @Builder
 @Getter
-public class WPacketPlayInArmAnimation implements WPacket {
+public class WPacketPlayInArmAnimation extends WPacket {
 
     private long timestamp;
 

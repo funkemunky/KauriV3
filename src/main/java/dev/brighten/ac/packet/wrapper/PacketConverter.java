@@ -1,6 +1,7 @@
 package dev.brighten.ac.packet.wrapper;
 
 import dev.brighten.ac.packet.wrapper.in.*;
+import dev.brighten.ac.packet.wrapper.login.WPacketHandshakingInSetProtocol;
 import dev.brighten.ac.packet.wrapper.out.*;
 
 public interface PacketConverter {
@@ -46,6 +47,10 @@ public interface PacketConverter {
     WPacketPlayOutWorldParticles processParticles(Object object);
 
     Object processParticles(WPacketPlayOutWorldParticles packet);
+
+    WPacketPlayInChat processChat(Object object);
+
+    Object processChat(WPacketPlayInChat packet);
 
     WPacketPlayOutPlayerInfo processInfo(Object object);
 }

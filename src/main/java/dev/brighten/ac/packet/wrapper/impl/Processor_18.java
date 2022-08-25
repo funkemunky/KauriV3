@@ -2,6 +2,7 @@ package dev.brighten.ac.packet.wrapper.impl;
 
 import dev.brighten.ac.packet.wrapper.PacketConverter;
 import dev.brighten.ac.packet.wrapper.in.*;
+import dev.brighten.ac.packet.wrapper.login.WPacketHandshakingInSetProtocol;
 import dev.brighten.ac.packet.wrapper.objects.EnumParticle;
 import dev.brighten.ac.packet.wrapper.objects.PlayerCapabilities;
 import dev.brighten.ac.packet.wrapper.objects.WrappedEnumDirection;
@@ -373,6 +374,19 @@ public class Processor_18 implements PacketConverter {
         return new PacketPlayOutWorldParticles(net.minecraft.server.v1_8_R3.EnumParticle.valueOf(packet.getParticle().name()),
                 packet.isLongD(), packet.getX(), packet.getY(), packet.getZ(), packet.getOffsetX(), packet.getOffsetY(), packet.getOffsetZ(),
                 packet.getSpeed(), packet.getAmount(), packet.getData());
+    }
+
+    @Override
+    public WPacketPlayInChat processChat(Object object) {
+        PacketPlayInChat packet = (PacketPlayInChat) object;
+        return WPacketPlayInChat.builder()
+                .message(packet.a())
+                .build();
+    }
+
+    @Override
+    public Object processChat(WPacketPlayInChat packet) {
+        return new PacketPlayInChat(packet.getMessage());
     }
 
     @Override

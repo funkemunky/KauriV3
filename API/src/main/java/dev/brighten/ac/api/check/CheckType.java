@@ -5,6 +5,9 @@ public enum CheckType {
     AUTOCLICKER,
     MOVEMENT,
     BLOCK,
+    CHAT,
+    CRASH,
+    EXPLOIT,
     INTERACT,
     ORDER
 }

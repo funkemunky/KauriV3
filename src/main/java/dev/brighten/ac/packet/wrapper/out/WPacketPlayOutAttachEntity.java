@@ -7,7 +7,7 @@ import lombok.Getter;
 
 @Builder
 @Getter
-public class WPacketPlayOutAttachEntity implements WPacket {
+public class WPacketPlayOutAttachEntity extends WPacket {
 
     private int attachedEntityId, holdingEntityId;
     private boolean isLeashModifer = true;

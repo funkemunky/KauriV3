@@ -10,7 +10,8 @@ import org.bukkit.entity.Player;
 public class PacketInfo {
     @Getter
     private final Player player;
-    private final Object packet;
+    @Setter
+    private Object packet;
     @Getter
     private final PacketType type;
     @Getter
@@ -18,6 +19,13 @@ public class PacketInfo {
     @Getter
     @Setter
     private boolean cancelled;
+
+    public PacketInfo(Player player, Object packet, PacketType type, long timestamp) {
+        this.player = player;
+        this.packet = packet;
+        this.type = type;
+        this.timestamp = timestamp;
+    }
 
     public <T> T getPacket() {
         return (T) packet;

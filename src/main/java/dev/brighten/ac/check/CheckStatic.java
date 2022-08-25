@@ -22,7 +22,7 @@ public class CheckStatic {
     private WrappedConstructor initConst;
     @Getter
     private final List<Tuple<WrappedField, Class<?>>> actions = new ArrayList<>(),
-            timedActions = new ArrayList<>();
+            timedActions = new ArrayList<>(), cancellableActions = new ArrayList<>();
 
     public CheckStatic(WrappedClass checkClass) {
         this.checkClass = checkClass;
@@ -33,7 +33,8 @@ public class CheckStatic {
         initConst = checkClass.getConstructor(APlayer.class);
         for (WrappedField field : checkClass.getFields()) {
             if(!WAction.class.isAssignableFrom(field.getType())
-                    && !TimedWAction.class.isAssignableFrom(field.getType())) continue;
+                    && !WCancellable.class.isAssignableFrom(field.getType())
+                    && !WTimedAction.class.isAssignableFrom(field.getType())) continue;
 
             Type genericType = field.getField().getGenericType();
             Type type = null;
@@ -59,8 +60,10 @@ public class CheckStatic {
 
             if(field.getType().equals(WAction.class)) {
                 actions.add(new Tuple<>(field, (Class<?>)type));
-            } else { //This will always be TimedAction
+            } else if(field.getType().equals(WTimedAction.class)) { //This will always be TimedAction
                 timedActions.add(new Tuple<>(field, (Class<?>)type));
+            } else if(field.getType().equals(WCancellable.class)) {
+                cancellableActions.add(new Tuple<>(field, (Class<?>)type));
             }
         }
     }

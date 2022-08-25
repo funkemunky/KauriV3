@@ -24,8 +24,12 @@ public class JoinListener implements Listener {
             Optional<APlayer> aplayer = Anticheat.INSTANCE.getPlayerRegistry()
                     .getPlayer(event.getPlayer().getUniqueId());
 
-            aplayer.ifPresent(player -> Anticheat.INSTANCE.getPacketHandler()
-                    .process(player, event.getType(), event.getPacket()));
+            aplayer.ifPresent(player -> {
+                if(Anticheat.INSTANCE.getPacketHandler()
+                        .process(player, event.getType(), event.getPacket())) {
+                    event.setCancelled(true);
+                }
+            });
         });
 
         Anticheat.INSTANCE.getPacketProcessor().process(Anticheat.INSTANCE, EventPriority.HIGHEST, event -> {
@@ -83,7 +87,7 @@ public class JoinListener implements Listener {
                 HandlerAbstract.getHandler().add(event.getPlayer());
         }, 6);
 
-        player.callEvent(event);
+        player.getCheckHandler().callEvent(event);
     }
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {

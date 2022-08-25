@@ -1,4 +1,4 @@
-package dev.brighten.ac.packet.wrapper.in;
+package dev.brighten.ac.packet.wrapper.login;
 
 import dev.brighten.ac.packet.wrapper.PacketType;
 import dev.brighten.ac.packet.wrapper.WPacket;
@@ -7,7 +7,7 @@ import lombok.Getter;
 
 @Builder
 @Getter
-public class WPacketHandshakingInSetProtocol implements WPacket {
+public class WPacketHandshakingInSetProtocol extends WPacket {
     private int versionNumber, port;
     private String hostname;
     private EnumProtocol protocol;

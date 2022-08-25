@@ -8,7 +8,7 @@ import lombok.Getter;
 
 @Getter
 @Builder
-public class WPacketPlayOutEntityVelocity implements WPacket {
+public class WPacketPlayOutEntityVelocity extends WPacket {
     private int entityId;
     private double deltaX, deltaY, deltaZ;
 

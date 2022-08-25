@@ -5,7 +5,7 @@ import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.wrapper.PacketType;
 import dev.brighten.ac.packet.wrapper.WPacket;
-import dev.brighten.ac.packet.wrapper.in.WPacketHandshakingInSetProtocol;
+import dev.brighten.ac.packet.wrapper.login.WPacketHandshakingInSetProtocol;
 import dev.brighten.ac.utils.reflections.impl.MinecraftReflection;
 import io.netty.channel.*;
 import net.minecraft.server.v1_8_R3.PacketLoginInStart;
@@ -129,7 +129,7 @@ public class ModernHandler extends HandlerAbstract {
     }
 
     private final class PacketHandler extends ChannelDuplexHandler {
-        protected Player player;
+        private Player player;
 
         @Override
         public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
@@ -156,11 +156,11 @@ public class ModernHandler extends HandlerAbstract {
 
             if(player != null) {
                 try {
-                    boolean allowed = Anticheat.INSTANCE.getPacketProcessor().call(player, msg,
+                    Object returnedObject = Anticheat.INSTANCE.getPacketProcessor().call(player, msg,
                             type);
 
-                    if (allowed) {
-                        super.channelRead(ctx, msg);
+                    if (returnedObject != null) {
+                        super.channelRead(ctx, returnedObject);
                     }
                 } catch (Throwable throwable) {
                     throwable.printStackTrace();
@@ -177,11 +177,11 @@ public class ModernHandler extends HandlerAbstract {
 
             if(player != null) {
                 try {
-                    boolean allowed = Anticheat.INSTANCE.getPacketProcessor().call(player, msg, PacketType
+                    Object returnedObject = Anticheat.INSTANCE.getPacketProcessor().call(player, msg, PacketType
                             .getByPacketId(packetName).orElse(PacketType.UNKNOWN));
 
-                    if (allowed) {
-                        super.write(ctx, msg, promise);
+                    if (returnedObject != null) {
+                        super.write(ctx, returnedObject, promise);
                     }
                 } catch(Throwable throwable) {
                     throwable.printStackTrace();

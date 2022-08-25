@@ -145,7 +145,7 @@ public class PacketProcessor {
         }
     }
 
-    public boolean call(Player player, Object packet, PacketType type) {
+    public Object call(Player player, Object packet, PacketType type) {
         if(packet == null) return false;
         PacketInfo info = new PacketInfo(player, packet, type, System.currentTimeMillis()),
                 asyncInfo;
@@ -175,7 +175,7 @@ public class PacketProcessor {
                 tuple.getListener().onEvent(asyncInfo);
             }
         }
-        return !cancelled;
+        return cancelled ? null : info.getPacket();
     }
 
     public void shutdown() {

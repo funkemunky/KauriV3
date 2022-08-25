@@ -7,6 +7,7 @@ import dev.brighten.ac.api.check.CheckType;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
+import dev.brighten.ac.utils.Async;
 import dev.brighten.ac.utils.BlockUtils;
 import dev.brighten.ac.utils.MathHelper;
 import dev.brighten.ac.utils.math.IntVector;
@@ -18,7 +19,7 @@ import org.bukkit.util.Vector;
 
 import java.util.Deque;
 
-@CheckData(name = "Horizontal", type = CheckType.MOVEMENT)
+@CheckData(name = "Horizontal", checkId = "horizontala", type = CheckType.MOVEMENT)
 public class Horizontal extends Check {
     private boolean lastLastClientGround;
     private float buffer;
@@ -33,6 +34,7 @@ public class Horizontal extends Check {
         super(player);
     }
 
+    @Async
     WAction<WPacketPlayInFlying> flying = packet -> {
         Block underBlock = BlockUtils.getBlock(player.getMovement().getTo().getLoc()
                 .toLocation(player.getBukkitPlayer().getWorld())
@@ -219,7 +221,7 @@ public class Horizontal extends Check {
                                                                 pmotionx = lmotionX;
                                                                 pmotionz = lmotionZ;
 
-                                                                if (delta < 1E-15) {
+                                                                if (delta < 4E-17) {
                                                                     this.strafe = s * 0.98f;
                                                                     this.forward = f * 0.98f;
 

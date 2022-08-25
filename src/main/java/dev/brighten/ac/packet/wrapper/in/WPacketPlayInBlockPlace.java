@@ -10,7 +10,7 @@ import org.bukkit.inventory.ItemStack;
 
 @Getter
 @Builder
-public class WPacketPlayInBlockPlace implements WPacket {
+public class WPacketPlayInBlockPlace extends WPacket {
 
     private IntVector blockPos;
     private ItemStack itemStack;

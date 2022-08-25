@@ -1,15 +1,15 @@
 package dev.brighten.ac.check.impl.world;
 
-import dev.brighten.ac.check.WAction;
+import dev.brighten.ac.api.check.CheckType;
 import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
-import dev.brighten.ac.api.check.CheckType;
+import dev.brighten.ac.check.WTimedAction;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInBlockPlace;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
 import dev.brighten.ac.utils.KLocation;
 
-@CheckData(name = "Block (C)", type = CheckType.INTERACT)
+@CheckData(name = "Block (C)", checkId = "blockc", type = CheckType.INTERACT)
 public class BlockC extends Check {
 
     private long lastPlace;
@@ -20,9 +20,8 @@ public class BlockC extends Check {
         super(player);
     }
 
-    WAction<WPacketPlayInFlying> flying = packet -> {
+    WTimedAction<WPacketPlayInFlying> flying = (packet, timestamp) -> {
         if(player.getInfo().isCreative() || player.getMovement().isExcuseNextFlying()) return;
-        long timestamp = System.currentTimeMillis();
         if(place) {
             long delta = timestamp - lastPlace;
             if(delta >= 25) {
@@ -34,11 +33,10 @@ public class BlockC extends Check {
         }
     };
 
-    WAction<WPacketPlayInBlockPlace> blockPlace = packet -> {
+    WTimedAction<WPacketPlayInBlockPlace> blockPlace = (packet, timestamp) -> {
         if(player.pastLocations.isEmpty()) return;
 
         KLocation lastMovePacket = player.pastLocations.getLast().one;
-        long timestamp = System.currentTimeMillis();
 
         if(lastMovePacket == null) return;
 

@@ -12,7 +12,7 @@ import java.util.Arrays;
 
 @Builder
 @Getter
-public class WPacketPlayOutMultiBlockChange implements WPacket {
+public class WPacketPlayOutMultiBlockChange extends WPacket {
     private int[] chunk;
     private BlockChange[] changes;
 

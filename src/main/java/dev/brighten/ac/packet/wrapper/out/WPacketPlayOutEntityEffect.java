@@ -7,7 +7,7 @@ import lombok.Getter;
 
 @Builder
 @Getter
-public class WPacketPlayOutEntityEffect implements WPacket {
+public class WPacketPlayOutEntityEffect extends WPacket {
 
     private int entityId, effectId, duration;
     private byte amplifier, flags;

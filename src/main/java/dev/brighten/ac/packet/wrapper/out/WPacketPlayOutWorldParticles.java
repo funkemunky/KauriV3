@@ -11,7 +11,7 @@ import java.util.Arrays;
 
 @Getter
 @Builder
-public class WPacketPlayOutWorldParticles implements WPacket {
+public class WPacketPlayOutWorldParticles extends WPacket {
     private EnumParticle particle;
     private float x, y, z, offsetX, offsetY, offsetZ, speed;
     private int amount;

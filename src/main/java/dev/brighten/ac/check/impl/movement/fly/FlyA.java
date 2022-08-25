@@ -7,12 +7,13 @@ import dev.brighten.ac.api.check.CheckType;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
+import dev.brighten.ac.utils.Async;
 import dev.brighten.ac.utils.MathUtils;
 import dev.brighten.ac.utils.MovementUtils;
 import dev.brighten.ac.utils.timer.Timer;
 import dev.brighten.ac.utils.timer.impl.MillisTimer;
 
-@CheckData(name = "Fly (A)", type = CheckType.MOVEMENT)
+@CheckData(name = "Fly (A)", checkId = "flya", type = CheckType.MOVEMENT)
 public class FlyA extends Check {
 
     public FlyA(APlayer player) {
@@ -24,6 +25,7 @@ public class FlyA extends Check {
     private static double mult = 0.98f, previousPrediction;
     private boolean didNextPrediction = false;
 
+    @Async
     WAction<WPacketPlayInFlying> flying = packet -> {
         if(!packet.isMoved() || (player.getMovement().getDeltaXZ() == 0
                 && player.getMovement().getDeltaY() == 0)) {

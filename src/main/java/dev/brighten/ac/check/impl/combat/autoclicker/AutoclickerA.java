@@ -8,8 +8,9 @@ import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInArmAnimation;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
+import dev.brighten.ac.utils.Async;
 
-@CheckData(name = "AutoClicker (A)", type = CheckType.AUTOCLICKER, maxVersion = ProtocolVersion.V1_8_9)
+@CheckData(name = "AutoClicker (A)", checkId = "autoclickera", type = CheckType.AUTOCLICKER, maxVersion = ProtocolVersion.V1_8_9)
 public class AutoclickerA extends Check {
     public AutoclickerA(APlayer player) {
         super(player);
@@ -17,6 +18,7 @@ public class AutoclickerA extends Check {
 
     private int flyingTicks, cps;
 
+    @Async
     WAction<WPacketPlayInFlying> flying = (packet) -> {
         flyingTicks++;
         if(flyingTicks >= 20) {
@@ -30,6 +32,7 @@ public class AutoclickerA extends Check {
         }
     };
 
+    @Async
     WAction<WPacketPlayInArmAnimation> armAnimation = packet -> {
         if(!player.getInfo().breakingBlock
                 && player.getInfo().getLastBlockDig().isPassed(1)

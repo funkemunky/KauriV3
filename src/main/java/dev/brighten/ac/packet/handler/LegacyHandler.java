@@ -97,11 +97,11 @@ public class LegacyHandler extends HandlerAbstract {
             int index = name.lastIndexOf(".");
             String packetName = name.substring(index + 1);
 
-            boolean allowed = Anticheat.INSTANCE.getPacketProcessor().call(player, msg, PacketType
+            Object packet = Anticheat.INSTANCE.getPacketProcessor().call(player, msg, PacketType
                     .getByPacketId(packetName).orElse(PacketType.UNKNOWN));
 
-            if(allowed) {
-                super.channelRead(ctx, msg);
+            if(packet != null) {
+                super.channelRead(ctx, packet);
             }
         }
 
@@ -110,12 +110,12 @@ public class LegacyHandler extends HandlerAbstract {
             String name = msg.getClass().getName();
             int index = name.lastIndexOf(".");
             String packetName = name.substring(index + 1);
-            boolean allowed = Anticheat.INSTANCE.getPacketProcessor().call(player, msg, PacketType
+            Object packet = Anticheat.INSTANCE.getPacketProcessor().call(player, msg, PacketType
                     .getByPacketId(packetName).orElse(PacketType.UNKNOWN));
 
-           if(allowed) {
-               super.write(ctx, msg, promise);
-           }
+            if(packet != null) {
+                super.write(ctx, packet, promise);
+            }
         }
     }
 }
