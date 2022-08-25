@@ -158,6 +158,9 @@ public class PacketHandler {
                     player.getInfo().setDoingVelocity(true);
 
                     player.runInstantAction(ka -> {
+                        if(!ka.isEnd()) {
+                            player.getVelocityHandler().onPre(packet);
+                        } else player.getVelocityHandler().onPost(packet);
                         if(ka.isEnd() && player.getInfo().getVelocityHistory().contains(velocity)) {
                             player.getOnVelocityTasks().forEach(task -> task.accept(velocity));
                             player.getInfo().setDoingVelocity(false);
@@ -305,6 +308,7 @@ public class PacketHandler {
 
         // Post flying settings
         if(type.equals(PacketType.FLYING)) {
+            player.getVelocityHandler().onFlyingPost((WPacketPlayInFlying)packetObject);
             player.getInfo().lsneaking = player.getInfo().sneaking;
         }
     }
