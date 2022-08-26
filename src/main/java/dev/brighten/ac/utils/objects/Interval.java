@@ -10,7 +10,7 @@ import java.util.stream.Stream;
 
 public class Interval extends LinkedList<Double> {
 
-    private long max;
+    private final long max;
 
     public Interval(long max) {
         this.max = max;

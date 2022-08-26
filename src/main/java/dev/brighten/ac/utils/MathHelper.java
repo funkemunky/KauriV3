@@ -42,11 +42,11 @@ public class MathHelper {
         }
 
         for (int j = 0; j < 4096; ++j) {
-            SIN_TABLE_FAST[j] = (float) Math.sin((double) (((float) j + 0.5F) / 4096.0F * ((float) Math.PI * 2F)));
+            SIN_TABLE_FAST[j] = (float) Math.sin(((float) j + 0.5F) / 4096.0F * ((float) Math.PI * 2F));
         }
 
         for (int l = 0; l < 360; l += 90) {
-            SIN_TABLE_FAST[(int) ((float) l * 11.377778F) & 4095] = (float) Math.sin((double) ((float) l * 0.017453292F));
+            SIN_TABLE_FAST[(int) ((float) l * 11.377778F) & 4095] = (float) Math.sin((float) l * 0.017453292F);
         }
 
         multiplyDeBruijnBitPosition = new int[]{0, 1, 28, 2, 29, 14, 24, 3, 30, 22, 20, 15, 25, 17, 4, 8, 31, 27, 13, 23, 21, 19, 16, 7, 26, 12, 18, 6, 11, 5, 10, 9};
@@ -77,7 +77,7 @@ public class MathHelper {
     }
 
     public static float sqrt_float(float value) {
-        return (float) Math.sqrt((double) value);
+        return (float) Math.sqrt(value);
     }
 
     public static float sqrt_double(double value) {
@@ -364,7 +364,7 @@ public class MathHelper {
     }
 
     public static long getCoordinateRandom(int x, int y, int z) {
-        long i = (long) (x * 3129871) ^ (long) z * 116129781L ^ (long) y;
+        long i = (long) (x * 3129871L) ^ (long) z * 116129781L ^ (long) y;
         i = i * i * 42317861L + i * 11L;
         return i;
     }

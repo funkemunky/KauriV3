@@ -12,7 +12,7 @@ public class MethodFunction {
     private BiFunction biFunc;
     private TriFunction triFunc;
     private QuadFunction quadFunc;
-    private Method method;
+    private final Method method;
 
     public MethodFunction(Method method, Function function) {
         this.function = function;

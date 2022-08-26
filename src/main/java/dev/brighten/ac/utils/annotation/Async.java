@@ -1,4 +1,4 @@
-package dev.brighten.ac.utils;
+package dev.brighten.ac.utils.annotation;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

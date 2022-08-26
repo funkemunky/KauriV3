@@ -1,4 +1,6 @@
-package dev.brighten.ac.utils;
+package dev.brighten.ac.utils.annotation;
+
+import dev.brighten.ac.utils.Priority;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;

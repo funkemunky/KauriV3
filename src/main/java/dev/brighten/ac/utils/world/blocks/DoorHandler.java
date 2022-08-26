@@ -97,7 +97,7 @@ public class DoorHandler implements CollisionFactory {
         } else {
             Block blockTwo;
             Door door = (Door) b.getType().getNewData(b.getData());
-            if ((boolean) door.isTopHalf()) {
+            if (door.isTopHalf()) {
                 Optional<Block> rel = BlockUtils.getRelativeAsync(b, BlockFace.DOWN);
 
                 if (!rel.isPresent()) return NoCollisionBox.INSTANCE;

@@ -13,7 +13,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class SettingButton extends Button {
 
-    private Setting<?> setting;
+    private final Setting<?> setting;
     private AtomicInteger current;
 
     public SettingButton(Player player, String name, String description, Setting<?> setting) {

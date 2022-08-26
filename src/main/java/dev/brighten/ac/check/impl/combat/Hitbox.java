@@ -79,7 +79,7 @@ public class Hitbox extends Check {
                             EntityData.getEntityBox(oldLocation.toVector(), target.one);
 
                     if(player.getPlayerVersion().isBelow(ProtocolVersion.V1_9)) {
-                        box = box.expand(0.105);
+                        box = box.expand(0.1325);
                     } else box = box.expand(0.0325);
                     boxes.add(box);
                 }
@@ -88,7 +88,7 @@ public class Hitbox extends Check {
                             EntityData.getEntityBox(oldLocation.toVector(), target.one);
 
                     if(player.getPlayerVersion().isBelow(ProtocolVersion.V1_9)) {
-                        box = box.expand(0.105);
+                        box = box.expand(0.1325);
                     } else box = box.expand(0.0325);
                     boxes.add(box);
                 }
@@ -98,7 +98,7 @@ public class Hitbox extends Check {
                             EntityData.getEntityBox(oldLocation.toVector(), target.one);
 
                     if(player.getPlayerVersion().isBelow(ProtocolVersion.V1_9)) {
-                        box = box.expand(0.105);
+                        box = box.expand(0.1325);
                     } else box = box.expand(0.0325);
                     boxes.add(box);
                 }
@@ -168,7 +168,7 @@ public class Hitbox extends Check {
 
                 if(hbuffer > 0) hbuffer--;
 
-                debug("buffer: %.3f distance=%.2f hits=%s", buffer, distance, hits);
+                debug("buffer: %.3f distance=%.2f hits=%s sneaking=%s", buffer, distance, hits, player.getInfo().isSneaking());
             } else if(player.getEntityLocationHandler().streak > 1) {
                 if (++hbuffer > 5) {
                     flag("%.1f;%.1f;%.1f", eloc.one.x, eloc.one.y, eloc.one.z);

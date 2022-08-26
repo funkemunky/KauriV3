@@ -11,8 +11,8 @@ public class ExpTimer {
     public final long extense;
     public final Runnable onComplete;
     public BukkitTask levelTask, expTask;
-    private int previousLevel;
-    private float previousExp;
+    private final int previousLevel;
+    private final float previousExp;
 
     public ExpTimer(Player player, long time, TimeUnit unit, Runnable onComplete) {
         this.player = player;

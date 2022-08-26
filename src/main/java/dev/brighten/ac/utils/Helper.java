@@ -4,7 +4,6 @@ import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.packet.handler.HandlerAbstract;
 import dev.brighten.ac.packet.wrapper.objects.EnumParticle;
 import dev.brighten.ac.packet.wrapper.out.WPacketPlayOutWorldParticles;
-import dev.brighten.ac.utils.handlers.PlayerSizeHandler;
 import dev.brighten.ac.utils.world.BlockData;
 import dev.brighten.ac.utils.world.CollisionBox;
 import dev.brighten.ac.utils.world.types.RayCollision;
@@ -34,10 +33,6 @@ public class Helper {
 		vector.setX(-xz * Math.sin(Math.toRadians(yaw)));
 		vector.setZ(xz * Math.cos(Math.toRadians(yaw)));
 		return vector;
-	}
-
-	public static SimpleCollisionBox getMovementHitbox(Player player, double x, double y, double z) {
-		return PlayerSizeHandler.instance.bounds(player, x, y, z);
 	}
 
 	public static void drawRay(RayCollision collision, double distance, EnumParticle particle, Collection<? extends Player> players) {
@@ -146,16 +141,6 @@ public class Helper {
 			HandlerAbstract.getHandler().sendPacket(p, packet);
 		}
 
-	}
-
-	public static SimpleCollisionBox getMovementHitbox(Player player) {
-		return PlayerSizeHandler.instance.bounds(player);
-	}
-
-	public static SimpleCollisionBox getCombatHitbox(Player player, ProtocolVersion version) {
-		return version.isBelow(ProtocolVersion.V1_9)
-				? PlayerSizeHandler.instance.bounds(player).expand(.1, 0, .1)
-				: PlayerSizeHandler.instance.bounds(player);
 	}
 
 	public static Block getBlockAt(World world, int x, int y, int z) {

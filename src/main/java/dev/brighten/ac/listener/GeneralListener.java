@@ -2,7 +2,7 @@ package dev.brighten.ac.listener;
 
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.data.APlayer;
-import dev.brighten.ac.utils.Init;
+import dev.brighten.ac.utils.annotation.Init;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;

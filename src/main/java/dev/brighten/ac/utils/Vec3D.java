@@ -35,7 +35,7 @@ public class Vec3D {
     }
 
     public Vec3D(Location var1) {
-        this((double)var1.getX(), (double)var1.getY(), (double)var1.getZ());
+        this(var1.getX(), var1.getY(), var1.getZ());
     }
 
     public Vec3D a(Vec3D var1) {
@@ -43,7 +43,7 @@ public class Vec3D {
     }
 
     public Vec3D a() {
-        double var1 = (double) MathHelper.sqrt_double(this.x * this.x + this.y * this.y + this.z * this.z);
+        double var1 = MathHelper.sqrt_double(this.x * this.x + this.y * this.y + this.z * this.z);
         return var1 < 1.0E-4D ? a : new Vec3D(this.x / var1, this.y / var1, this.z / var1);
     }
 
@@ -75,7 +75,7 @@ public class Vec3D {
         double var2 = var1.x - this.x;
         double var4 = var1.y - this.y;
         double var6 = var1.z - this.z;
-        return (double)MathHelper.sqrt_double(var2 * var2 + var4 * var4 + var6 * var6);
+        return MathHelper.sqrt_double(var2 * var2 + var4 * var4 + var6 * var6);
     }
 
     public double distanceSquared(Vec3D var1) {
@@ -97,7 +97,7 @@ public class Vec3D {
     }
 
     public double b() {
-        return (double)MathHelper.sqrt_double(this.x * this.x + this.y * this.y + this.z * this.z);
+        return MathHelper.sqrt_double(this.x * this.x + this.y * this.y + this.z * this.z);
     }
 
     @Nullable

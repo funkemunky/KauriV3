@@ -28,7 +28,7 @@ public class MinecraftReflection {
     public static WrappedClass iBlockData, blockBase,
             chunkProviderServer = Reflections.getNMSClass("ChunkProviderServer");
     public static WrappedClass itemClass = Reflections.getNMSClass("Item"),
-            enumChatFormat = Reflections.getNMSClass("EnumChatFormat");;
+            enumChatFormat = Reflections.getNMSClass("EnumChatFormat");
     public static WrappedClass world = Reflections.getNMSClass("World");
     public static WrappedClass worldServer = Reflections.getNMSClass("WorldServer");
     public static WrappedClass playerInventory = Reflections.getNMSClass("PlayerInventory");
@@ -222,7 +222,8 @@ public class MinecraftReflection {
         new WrappedClass(channel.getClass()).getMethod("close").invoke(channel);
     }
 
-    private static WrappedMethod fluidMethod, getFlowMethod;
+    private static WrappedMethod fluidMethod;
+    private static final WrappedMethod getFlowMethod;
 
     public static ItemStack toBukkitItemStack(Object vanillaItemStack) {
         return itemStackAsBukkitCopy.invoke(null, vanillaItemStack);

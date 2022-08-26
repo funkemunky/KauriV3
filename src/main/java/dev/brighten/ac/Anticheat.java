@@ -7,12 +7,19 @@ import dev.brighten.ac.api.AnticheatAPI;
 import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckManager;
 import dev.brighten.ac.data.PlayerRegistry;
+import dev.brighten.ac.depends.LibraryLoader;
+import dev.brighten.ac.depends.MavenLibrary;
+import dev.brighten.ac.depends.Repository;
 import dev.brighten.ac.handler.PacketHandler;
 import dev.brighten.ac.handler.keepalive.KeepaliveProcessor;
 import dev.brighten.ac.handler.protocolsupport.ProtocolAPI;
+import dev.brighten.ac.logging.LoggerManager;
 import dev.brighten.ac.packet.handler.HandlerAbstract;
 import dev.brighten.ac.packet.listener.PacketProcessor;
 import dev.brighten.ac.utils.*;
+import dev.brighten.ac.utils.annotation.ConfigSetting;
+import dev.brighten.ac.utils.annotation.Init;
+import dev.brighten.ac.utils.annotation.Invoke;
 import dev.brighten.ac.utils.math.RollingAverageDouble;
 import dev.brighten.ac.utils.objects.RemoteClassLoader;
 import dev.brighten.ac.utils.reflections.Reflections;
@@ -40,6 +47,12 @@ import java.util.concurrent.atomic.AtomicLong;
 
 @Getter
 @Init
+@MavenLibrary(groupId = "co.aikar", artifactId = "acf-bukkit", version = "0.5.0", repo = @Repository(url = "https://nexus.funkemunky.cc/content/repositories/releases/"))
+@MavenLibrary(groupId = "com.google.guava", artifactId = "guava", version = "21.0", repo = @Repository(url = "https://repo1.maven.org/maven2"))
+@MavenLibrary(groupId = "com.h2database", artifactId = "h2", version = "1.4.199", repo = @Repository(url = "https://repo1.maven.org/maven2"))
+@MavenLibrary(groupId = "it.unimi.dsi", artifactId = "fastutil", version = "8.5.6", repo = @Repository(url = "https://repo1.maven.org/maven2"))
+@MavenLibrary(groupId = "org.ow2.asm", artifactId = "asm", version = "9.2", repo = @Repository(url = "https://repo1.maven.org/maven2"))
+@MavenLibrary(groupId = "org.ow2.asm", artifactId = "asm-tree", version = "9.2", repo = @Repository(url = "https://repo1.maven.org/maven2"))
 public class Anticheat extends JavaPlugin {
 
     public static Anticheat INSTANCE;
@@ -51,6 +64,7 @@ public class Anticheat extends JavaPlugin {
     private PlayerRegistry playerRegistry;
     private KeepaliveProcessor keepaliveProcessor;
     private PacketHandler packetHandler;
+    private LoggerManager logManager;
     private int currentTick;
     private Deque<Runnable> onTickEnd = new LinkedList<>();
     private ServerInjector injector;
@@ -68,6 +82,7 @@ public class Anticheat extends JavaPlugin {
 
     public void onEnable() {
         INSTANCE = this;
+        LibraryLoader.loadAll(getClass());
 
         scheduler = Executors.newScheduledThreadPool(2, new ThreadFactoryBuilder()
                 .setNameFormat("Anticheat Schedular")
@@ -98,12 +113,15 @@ public class Anticheat extends JavaPlugin {
             getConfig().set("database.password", UUID.randomUUID().toString());
         }
 
+        HandlerAbstract.init();
+
         this.keepaliveProcessor = new KeepaliveProcessor();
         this.checkManager = new CheckManager();
         this.playerRegistry = new PlayerRegistry();
         this.packetHandler = new PacketHandler();
+        logManager = new LoggerManager();
 
-        HandlerAbstract.init();
+        logManager.init();
 
         alog(Color.Green + "Loading WorldInfo system...");
         Bukkit.getWorlds().forEach(w -> worldInfoMap.put(w.getUID(), new WorldInfo(w)));
@@ -114,6 +132,8 @@ public class Anticheat extends JavaPlugin {
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+        Bukkit.getOnlinePlayers().forEach(HandlerAbstract.getHandler()::add);
     }
 
     public void onDisable() {
@@ -133,6 +153,8 @@ public class Anticheat extends JavaPlugin {
         keepaliveProcessor = null;
         ProtocolAPI.INSTANCE = null;
         tps = null;
+
+        logManager.shutDown();
 
         Bukkit.getScheduler().cancelTasks(this);
 

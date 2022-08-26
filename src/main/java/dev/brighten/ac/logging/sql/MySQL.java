@@ -1,14 +1,16 @@
 package dev.brighten.ac.logging.sql;
 
 import dev.brighten.ac.Anticheat;
+import dev.brighten.ac.utils.reflections.Reflections;
+import dev.brighten.ac.utils.reflections.types.WrappedConstructor;
 import lombok.SneakyThrows;
 import org.bukkit.Bukkit;
 
 import java.io.File;
 import java.io.IOException;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.Properties;
 import java.util.logging.Level;
 
 public class MySQL {
@@ -26,10 +28,11 @@ public class MySQL {
         }
         try {
             Class.forName("org.h2.Driver");
-            conn = new NonClosableConnection(DriverManager.getConnection ("jdbc:h2:file:" +
+            WrappedConstructor jdbcConnection = Reflections.getClass("org.h2.jdbc.JdbcConnection")
+                    .getConstructor(String.class, Properties.class);
+            conn = new NonClosableConnection(jdbcConnection.newInstance("jdbc:h2:file:" +
                     dataFolder.getAbsolutePath(),
-                    Anticheat.INSTANCE.getConfig().getString("database.username"),
-                    Anticheat.INSTANCE.getConfig().getString("database.password")));
+                    new Properties()));
             conn.setAutoCommit(true);
             Query.use(conn);
             Bukkit.getLogger().info("Connection to H2 SQlLite has been established.");

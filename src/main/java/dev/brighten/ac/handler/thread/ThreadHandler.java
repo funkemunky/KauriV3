@@ -3,7 +3,7 @@ package dev.brighten.ac.handler.thread;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.data.APlayer;
-import dev.brighten.ac.utils.Init;
+import dev.brighten.ac.utils.annotation.Init;
 import dev.brighten.ac.utils.MiscUtils;
 import dev.brighten.ac.utils.RunUtils;
 import lombok.Getter;

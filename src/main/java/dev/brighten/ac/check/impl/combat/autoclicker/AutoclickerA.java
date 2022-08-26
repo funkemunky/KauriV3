@@ -8,7 +8,7 @@ import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInArmAnimation;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
-import dev.brighten.ac.utils.Async;
+import dev.brighten.ac.utils.annotation.Async;
 
 @CheckData(name = "AutoClicker (A)", checkId = "autoclickera", type = CheckType.AUTOCLICKER, maxVersion = ProtocolVersion.V1_8_9)
 public class AutoclickerA extends Check {

@@ -28,7 +28,7 @@ public class Pastebin {
     }
 
     static String checkResponse(String response) {
-        if (response.substring(0, 15).equals("Bad API request")) {
+        if (response.startsWith("Bad API request")) {
             return response.substring(17);
         }
         return "";
@@ -74,7 +74,7 @@ public class Pastebin {
                     "application/x-www-form-urlencoded");
 
             connection.setRequestProperty("Content-Length",
-                    "" + Integer.toString(urlParameters.getBytes().length));
+                    "" + urlParameters.getBytes().length);
             connection.setRequestProperty("Content-Language", "en-US");
 
             connection.setDoInput(true);
@@ -110,10 +110,10 @@ public class Pastebin {
         }
     }
 
-    public static enum Privacy {
+    public enum Privacy {
         PUBLIC(0), UNLISTED(1), PRIVATE(2);
 
-        private int privacy;
+        private final int privacy;
 
         Privacy(int privacy) {
             this.privacy = privacy;

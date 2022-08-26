@@ -43,12 +43,12 @@ public class AxisAlignedBB {
     }
 
     public AxisAlignedBB(Location blockposition, Location blockposition1) {
-        this.minX = (double) blockposition.getBlockX();
-        this.minY = (double) blockposition.getBlockY();
-        this.minZ = (double) blockposition.getBlockZ();
-        this.maxX = (double) blockposition1.getBlockX();
-        this.maxY = (double) blockposition1.getBlockY();
-        this.maxZ = (double) blockposition1.getBlockZ();
+        this.minX = blockposition.getBlockX();
+        this.minY = blockposition.getBlockY();
+        this.minZ = blockposition.getBlockZ();
+        this.maxX = blockposition1.getBlockX();
+        this.maxY = blockposition1.getBlockY();
+        this.maxZ = blockposition1.getBlockZ();
     }
 
     public AxisAlignedBB a(double d0, double d1, double d2) {

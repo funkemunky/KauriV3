@@ -12,7 +12,7 @@ import net.md_5.bungee.api.chat.ComponentBuilder.FormatRetention;
 import net.md_5.bungee.api.chat.HoverEvent.Action;
 
 public class ChatBuilder {
-    private ComponentBuilder componentBuilder;
+    private final ComponentBuilder componentBuilder;
 
     public ChatBuilder(String text, Object... objects) {
         this.componentBuilder = new ComponentBuilder(String.format(Color.translate(text), objects));
@@ -67,7 +67,7 @@ public class ChatBuilder {
     }
 
     public ChatBuilder event(Action action, TextComponent component) {
-        return this.event(action, TextComponent.fromLegacyText(TextComponent.toLegacyText(new BaseComponent[]{component})));
+        return this.event(action, TextComponent.fromLegacyText(TextComponent.toLegacyText(component)));
     }
 
     public ChatBuilder event(Action action, String string) {
@@ -89,7 +89,7 @@ public class ChatBuilder {
     }
 
     public static ChatBuilder create() {
-        return new ChatBuilder("", new Object[0]);
+        return new ChatBuilder("");
     }
 
     public static ChatBuilder create(String text, Object... objects) {

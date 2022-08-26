@@ -11,6 +11,7 @@ import java.util.Map;
 @Getter
 public class CheckManager {
     private final Map<String, CheckStatic> checkClasses = new HashMap<>();
+    private final Map<String, String> idToName = new HashMap<>();
 
     public CheckManager() {
         synchronized (checkClasses) {
@@ -33,6 +34,7 @@ public class CheckManager {
         Anticheat.INSTANCE.alog(true, "&7Adding check to CheckManager: " + checkData.name());
 
         checkClasses.put(checkData.name(), check);
+        idToName.put(checkData.checkId(), checkData.name());
     }
 
     public boolean isCheck(String name) {

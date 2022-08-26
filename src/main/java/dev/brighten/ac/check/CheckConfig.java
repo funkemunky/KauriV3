@@ -1,7 +1,7 @@
 package dev.brighten.ac.check;
 
-import dev.brighten.ac.utils.ConfigSetting;
-import dev.brighten.ac.utils.Init;
+import dev.brighten.ac.utils.annotation.ConfigSetting;
+import dev.brighten.ac.utils.annotation.Init;
 
 import java.util.Arrays;
 import java.util.List;

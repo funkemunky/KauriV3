@@ -11,7 +11,7 @@ import java.util.List;
 
 public class DynamicCollisionBox implements CollisionBox {
 
-    private CollisionFactory box;
+    private final CollisionFactory box;
     @Setter
     private Block block;
     @Setter

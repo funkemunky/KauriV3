@@ -11,7 +11,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Stream;
 
 public class EvictingList<T> extends LinkedList<T> {
-    private int maxSize;
+    private final int maxSize;
 
     public EvictingList(int maxSize) {
         this.maxSize = maxSize;

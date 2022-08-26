@@ -1,13 +1,12 @@
 package dev.brighten.ac.check.impl.movement.speed;
 
-import dev.brighten.ac.check.WAction;
+import dev.brighten.ac.api.check.CheckType;
 import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
-import dev.brighten.ac.api.check.CheckType;
+import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
-import dev.brighten.ac.utils.Async;
 import dev.brighten.ac.utils.BlockUtils;
 import dev.brighten.ac.utils.MathHelper;
 import dev.brighten.ac.utils.math.IntVector;
@@ -34,7 +33,6 @@ public class Horizontal extends Check {
         super(player);
     }
 
-    @Async
     WAction<WPacketPlayInFlying> flying = packet -> {
         Block underBlock = BlockUtils.getBlock(player.getMovement().getTo().getLoc()
                 .toLocation(player.getBukkitPlayer().getWorld())
@@ -146,6 +144,11 @@ public class Horizontal extends Check {
                                                                     lmotionX = 0;
                                                                 if (Math.abs(lmotionZ) < 0.005)
                                                                     lmotionZ = 0;
+                                                            }
+
+                                                            //Less than 0.05
+                                                            if(((lmotionX * lmotionX) + (lmotionZ * lmotionZ)) < 0.0025 && player.getMovement().getDeltaXZ() < 0.1) {
+                                                                break check;
                                                             }
                                                             // Attack slowdown
                                                             if (attack) {

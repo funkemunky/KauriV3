@@ -279,13 +279,9 @@ public class RayCollision implements CollisionBox {
                 tFar = tymax >= tFar && !Double.isNaN(tFar) ? tFar : tymax;
                 tNear = tzmin > tNear ? tzmin : tNear;
                 tFar = tzmax < tFar ? tzmax : tFar;
-                if (tNear < tFar && tFar >= 0.0D) {
-//                    result.x = tNear;
-//                    result.y = tFar;
-                    return true;
-                } else {
-                    return false;
-                }
+                //                    result.x = tNear;
+                //                    result.y = tFar;
+                return tNear < tFar && tFar >= 0.0D;
             } else {
                 return false;
             }

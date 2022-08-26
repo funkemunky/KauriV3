@@ -4,8 +4,8 @@ import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.handler.protocolsupport.impl.NoAPI;
 import dev.brighten.ac.handler.protocolsupport.impl.ProtocolSupport;
 import dev.brighten.ac.handler.protocolsupport.impl.ViaVersionAPI;
-import dev.brighten.ac.utils.Init;
-import dev.brighten.ac.utils.Instance;
+import dev.brighten.ac.utils.annotation.Init;
+import dev.brighten.ac.utils.annotation.Instance;
 import org.bukkit.Bukkit;
 
 import java.util.HashMap;

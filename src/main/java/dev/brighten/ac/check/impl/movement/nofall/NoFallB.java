@@ -6,7 +6,7 @@ import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.api.check.CheckType;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
-import dev.brighten.ac.utils.Async;
+import dev.brighten.ac.utils.annotation.Async;
 
 @CheckData(name = "NoFall (B)", checkId = "nofallb", type = CheckType.MOVEMENT)
 public class NoFallB extends Check {

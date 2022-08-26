@@ -20,12 +20,12 @@ import java.util.function.Consumer;
 @Getter
 public class
 CollisionHandler {
-	private List<Block> blocks;
-	private List<Entity> entities;
-	private APlayer data;
-	private KLocation location;
-	private List<Triad<Double[], Integer, Consumer<Boolean>>> intersects = new ArrayList<>(),
-			collides = new ArrayList<>();
+	private final List<Block> blocks;
+	private final List<Entity> entities;
+	private final APlayer data;
+	private final KLocation location;
+	private final List<Triad<Double[], Integer, Consumer<Boolean>>> intersects = new ArrayList<>();
+	private final List<Triad<Double[], Integer, Consumer<Boolean>>> collides = new ArrayList<>();
 
 	private double width, height;
 	private double shift;
@@ -62,7 +62,7 @@ CollisionHandler {
 	}
 
 	public void intersectsWithFuture(int bitMask, Consumer<Boolean> intersects) {
-		String bitMaskString = String.valueOf(bitMask) + "%%__NONCE__%%";
+		String bitMaskString = bitMask + "%%__NONCE__%%";
 		this.intersects.add(new Triad<>(new Double[] {width, height, shift}, bitMask, intersects));
 	}
 

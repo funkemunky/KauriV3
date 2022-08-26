@@ -5,10 +5,13 @@ import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
 import dev.brighten.ac.packet.wrapper.out.WPacketPlayOutEntityVelocity;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
-import org.bukkit.util.Consumer;
 import org.bukkit.util.Vector;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Consumer;
 
 @RequiredArgsConstructor
 public class VelocityHandler {

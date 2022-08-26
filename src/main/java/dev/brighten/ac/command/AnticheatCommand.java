@@ -6,9 +6,11 @@ import co.aikar.commands.bukkit.contexts.OnlinePlayer;
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.check.Check;
 import dev.brighten.ac.data.APlayer;
+import dev.brighten.ac.logging.Log;
 import dev.brighten.ac.messages.Messages;
 import dev.brighten.ac.packet.handler.HandlerAbstract;
 import dev.brighten.ac.utils.*;
+import dev.brighten.ac.utils.annotation.Init;
 import dev.brighten.ac.utils.msg.ChatBuilder;
 import io.netty.buffer.Unpooled;
 import lombok.val;
@@ -23,6 +25,8 @@ import org.bukkit.entity.Player;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Init(priority = Priority.LOW)
@@ -105,6 +109,40 @@ public class AnticheatCommand extends BaseCommand {
             Check.alertsEnabled.add(player.getBukkitPlayer().getUniqueId());
             pl.spigot().sendMessage(Messages.ALERTS_ON);
         }
+    }
+
+    @Subcommand("logs")
+    @Syntax("[player]")
+    @CommandCompletion("@players")
+    @CommandPermission("anticheat.command.logs")
+    @Description("Get player logs")
+    public void onLogs(CommandSender sender, @Single String playername) {
+        UUID uuid = Bukkit.getOfflinePlayer(playername).getUniqueId();
+
+        sender.sendMessage(Color.Red + "Getting logs for " + playername + "...");
+
+        Anticheat.INSTANCE.getScheduler().execute(() -> {
+            List<String> logs = new ArrayList<>();
+            Anticheat.INSTANCE.getLogManager().runQuery("select * from logs where uuid=" + uuid.hashCode(), rs -> {
+                Log log = Log.builder()
+                        .uuid(UUID.fromString(rs.getString("uuid")))
+                        .checkId(rs.getString("check"))
+                        .data(rs.getString("data"))
+                        .vl(rs.getFloat("vl"))
+                        .time(rs.getLong("time"))
+                        .build();
+
+                logs.add("Flagged " + Anticheat.INSTANCE.getCheckManager().getIdToName().get(log.getCheckId()) + " data: " + log.getData() + " VL: " + log.getVl() + " at " + log.getTime());
+            });
+            String url = null;
+            try {
+                url = Pastebin.makePaste(String.join("\n", logs), playername + "'s Logs", Pastebin.Privacy.UNLISTED);
+
+                sender.sendMessage(Color.Green + "Logs for " + playername + ": " + Color.White + url);
+            } catch (UnsupportedEncodingException e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 
     @Subcommand("title")

@@ -46,6 +46,7 @@ public class KeepaliveProcessor implements Runnable {
 
         currentKeepalive.startStamp = System.currentTimeMillis();
         totalPlayers = laggyPlayers = 0;
+        if(Anticheat.INSTANCE.getPlayerRegistry() == null) return; //Temp fix for startup errors on plugman reload
         for (APlayer value : Anticheat.INSTANCE.getPlayerRegistry().aplayerMap.values()) {
             totalPlayers++;
 

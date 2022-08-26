@@ -40,7 +40,7 @@ public class MiscUtils {
             .filter(mat -> mat.name().contains("LEGACY"))
             .toArray(Material[]::new);
 
-    public static Map<EntityType, Vector> entityDimensions = new HashMap<>();;
+    public static Map<EntityType, Vector> entityDimensions = new HashMap<>();
 
     public static boolean containsIgnoreCase(String toCheck, String contains) {
         return toCheck.toLowerCase().contains(contains.toLowerCase());
@@ -256,7 +256,7 @@ public class MiscUtils {
         return total;
     }
 
-    private static WrappedClass materialClass = new WrappedClass(Material.class);
+    private static final WrappedClass materialClass = new WrappedClass(Material.class);
     public static Material match(String material) {
         if(ProtocolVersion.getGameVersion().isOrAbove(ProtocolVersion.V1_13)) {
             return materialClass
@@ -372,11 +372,11 @@ public class MiscUtils {
             if(p.getDescription().getName().equalsIgnoreCase(pl)) {
                 pm.disablePlugin(p);
                 var21 = var21 + p.getName() + " ";
-                if(plugins != null && plugins.contains(p)) {
+                if(plugins != null) {
                     plugins.remove(p);
                 }
 
-                if(names != null && names.containsKey(pl)) {
+                if(names != null) {
                     names.remove(pl);
                 }
 

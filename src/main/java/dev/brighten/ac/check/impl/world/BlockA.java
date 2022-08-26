@@ -9,6 +9,7 @@ import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInBlockPlace;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
 import dev.brighten.ac.utils.*;
+import dev.brighten.ac.utils.annotation.Async;
 import dev.brighten.ac.utils.math.cond.MaxDouble;
 import dev.brighten.ac.utils.world.BlockData;
 import dev.brighten.ac.utils.world.CollisionBox;

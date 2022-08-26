@@ -7,7 +7,7 @@ import dev.brighten.ac.data.obj.ActionStore;
 import dev.brighten.ac.data.obj.CancellableActionStore;
 import dev.brighten.ac.data.obj.TimedActionStore;
 import dev.brighten.ac.handler.thread.ThreadHandler;
-import dev.brighten.ac.utils.Async;
+import dev.brighten.ac.utils.annotation.Async;
 import dev.brighten.ac.utils.Tuple;
 import dev.brighten.ac.utils.reflections.types.WrappedField;
 import lombok.RequiredArgsConstructor;
@@ -63,7 +63,6 @@ public class CheckHandler {
                     WAction<?> action = tuple.one.get(check);
 
                     if(!tuple.one.getField().isAnnotationPresent(Async.class)) {
-                        System.out.println("Adding sync event");
                         events.compute(tuple.two, (packetClass, array) -> {
                             if (array == null) {
                                 return new ActionStore[] {new ActionStore(action, checkClass.getCheckClass().getParent())};
@@ -81,7 +80,6 @@ public class CheckHandler {
                     WAction<?> action = tuple.one.get(check);
 
                     if(tuple.one.getField().isAnnotationPresent(Async.class)) {
-                        System.out.println("Adding async event");
                         async_events.compute(tuple.two, (packetClass, array) -> {
                             if (array == null) {
                                 return new ActionStore[] {new ActionStore(action, checkClass.getCheckClass().getParent())};
@@ -99,7 +97,6 @@ public class CheckHandler {
                     WTimedAction<?> action = tuple.one.get(check);
 
                     if(!tuple.one.getField().isAnnotationPresent(Async.class)) {
-                        System.out.println("Adding timed sync event");
                         eventsWithTimestamp.compute(tuple.two, (packetClass, array) -> {
                             if (array == null) {
                                 return new TimedActionStore[] {new TimedActionStore(action, checkClass.getCheckClass().getParent())};
@@ -117,7 +114,6 @@ public class CheckHandler {
                     WTimedAction<?> action = tuple.one.get(check);
 
                     if(tuple.one.getField().isAnnotationPresent(Async.class)) {
-                        System.out.println("Adding timed async event");
                         async_eventsWithTimestamp.compute(tuple.two, (packetClass, array) -> {
                             if (array == null) {
                                 return new TimedActionStore[] {new TimedActionStore(action, checkClass.getCheckClass().getParent())};
@@ -135,7 +131,6 @@ public class CheckHandler {
                     WCancellable<?> action = tuple.one.get(check);
 
                     if(!tuple.one.getField().isAnnotationPresent(Async.class)) {
-                        System.out.println("Adding cancel sync event");
                         cancellableEvents.compute(tuple.two, (packetClass, array) -> {
                             if (array == null) {
                                 return new CancellableActionStore[] {new CancellableActionStore(action, checkClass.getCheckClass().getParent())};
@@ -177,7 +172,6 @@ public class CheckHandler {
 
     //TODO When using WPacket wrappers only, make this strictly WPacket param based only
     public void callPacket(Object packet, long timestamp) {
-        //System.out.println("Being called");
         ThreadHandler.INSTANCE.getThread(player).getThread().execute(() -> {
             if(async_events.containsKey(packet.getClass())) {
                 synchronized (async_events) {

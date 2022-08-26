@@ -1,6 +1,7 @@
 package dev.brighten.ac.utils;
 
 import dev.brighten.ac.Anticheat;
+import dev.brighten.ac.utils.annotation.Init;
 import dev.brighten.ac.utils.reflections.Reflections;
 import dev.brighten.ac.utils.reflections.types.WrappedClass;
 import org.bukkit.Bukkit;

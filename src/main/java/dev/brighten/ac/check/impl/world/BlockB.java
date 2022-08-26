@@ -5,7 +5,7 @@ import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.api.check.CheckType;
 import dev.brighten.ac.data.APlayer;
-import dev.brighten.ac.utils.Async;
+import dev.brighten.ac.utils.annotation.Async;
 import org.bukkit.block.Block;
 import org.bukkit.event.block.BlockPlaceEvent;
 

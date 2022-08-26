@@ -7,7 +7,7 @@ import dev.brighten.ac.api.check.CheckType;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
-import dev.brighten.ac.utils.Async;
+import dev.brighten.ac.utils.annotation.Async;
 import dev.brighten.ac.utils.MathUtils;
 import dev.brighten.ac.utils.MovementUtils;
 import dev.brighten.ac.utils.timer.Timer;

@@ -8,7 +8,7 @@ import java.util.stream.Collectors;
 
 public class ConcurrentFilteredSet<T> extends ConcurrentSkipListSet<T> {
 
-    private Predicate<T> predicate;
+    private final Predicate<T> predicate;
 
     public ConcurrentFilteredSet(Predicate<T> predicate) {
         this.predicate = predicate;

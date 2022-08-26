@@ -26,6 +26,10 @@
             <id>jitpack.io</id>
             <url>https://jitpack.io</url>
         </repository>
+        <repository>
+            <id>lucko</id>
+            <url>https://repo.lucko.me/</url>
+        </repository>
     </repositories>
 
     <build>
@@ -57,23 +61,6 @@
                         <goals>
                             <goal>shade</goal>
                         </goals>
-                        <configuration>
-                            <minimizeJar>true</minimizeJar>
-                            <relocations>
-                                <relocation>
-                                    <pattern>com.google.common</pattern>
-                                    <shadedPattern>dev.brighten.ac.com.google.common</shadedPattern>
-                                </relocation>
-                                <relocation>
-                                    <pattern>it.unimi.dsi</pattern>
-                                    <shadedPattern>dev.brighten.ac.it.unimi.dsi</shadedPattern>
-                                </relocation>
-                                <relocation>
-                                    <pattern>co.aikar.commands</pattern>
-                                    <shadedPattern>dev.brighten.ac.co.aikar.commands</shadedPattern>
-                                </relocation>
-                            </relocations>
-                        </configuration>
                     </execution>
                 </executions>
             </plugin>
@@ -114,8 +101,8 @@
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
-            <version>2.1.214</version>
-            <scope>compile</scope>
+            <version>1.4.199</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.github.spigot</groupId>
@@ -127,7 +114,7 @@
             <groupId>it.unimi.dsi</groupId>
             <artifactId>fastutil</artifactId>
             <version>8.5.6</version>
-            <scope>compile</scope>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.shevchik.protocolsupport</groupId>
@@ -145,25 +132,25 @@
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
             <version>31.1-jre</version>
-            <scope>compile</scope>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.ow2.asm</groupId>
             <artifactId>asm</artifactId>
             <version>9.2</version>
-            <scope>compile</scope>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.ow2.asm</groupId>
             <artifactId>asm-tree</artifactId>
             <version>9.2</version>
-            <scope>compile</scope>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>co.aikar</groupId>
             <artifactId>acf-bukkit</artifactId>
             <version>0.5.0-SNAPSHOT</version>
-            <scope>compile</scope>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
 

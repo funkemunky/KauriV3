@@ -3,7 +3,7 @@ package dev.brighten.ac.utils.menu;
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.utils.Color;
-import dev.brighten.ac.utils.Init;
+import dev.brighten.ac.utils.annotation.Init;
 import dev.brighten.ac.utils.XMaterial;
 import dev.brighten.ac.utils.menu.button.Button;
 import dev.brighten.ac.utils.menu.button.ClickAction;

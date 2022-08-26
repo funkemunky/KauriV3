@@ -25,11 +25,11 @@ import java.util.function.Function;
 @Getter
 public class WrappedMethod {
     private final WrappedClass parent;
-    private Method method;
+    private final Method method;
     private final String name;
     private MethodFunction mfunc;
     private final List<Class<?>> parameters;
-    private boolean isVoid;
+    private final boolean isVoid;
 
     public WrappedMethod(WrappedClass parent, Method method) {
         this.name = method.getName();

@@ -11,7 +11,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Stream;
 
 public class ConcurrentEvictingList<T> extends ConcurrentLinkedDeque<T> {
-    private int maxSize;
+    private final int maxSize;
 
     public ConcurrentEvictingList(int maxSize) {
         this.maxSize = maxSize;

@@ -1,5 +1,5 @@
 name: Anticheat
 main: dev.brighten.ac.Anticheat
-version: 1.0
+version: ${project.version}
 author: funkemunky
 softdepend: [ViaVersion, ProtocolSupport]

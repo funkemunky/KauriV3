@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
  * @version 1.3
  */
 public class ItemBuilder {
-    private ItemStack is;
+    private final ItemStack is;
     /**
      * Inits the builder with the given {@link Material}
      *

@@ -26,8 +26,8 @@ public interface ListMap<K, V> {
 
     @Getter
     class ContainsResult {
-        private boolean result;
-        private Object key;
+        private final boolean result;
+        private final Object key;
         protected ContainsResult(Object key, boolean result) {
             this.key = key;
             this.result = result;

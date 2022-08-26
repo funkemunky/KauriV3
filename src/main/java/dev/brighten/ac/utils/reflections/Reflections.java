@@ -28,7 +28,7 @@ import java.util.function.Function;
 public class Reflections {
     private static final String craftBukkitString;
     private static final String netMinecraftServerString;
-    private static MethodHandles.Lookup lookup = MethodHandles.lookup();
+    private static final MethodHandles.Lookup lookup = MethodHandles.lookup();
     public static String OBC_PREFIX = Bukkit.getServer().getClass().getPackage().getName();
     public static String VERSION = OBC_PREFIX.replace("org.bukkit.craftbukkit", "")
             .replace(".", "");

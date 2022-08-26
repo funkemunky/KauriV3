@@ -4,7 +4,7 @@ import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.handler.HandlerAbstract;
 import dev.brighten.ac.packet.wrapper.PacketType;
-import dev.brighten.ac.utils.Init;
+import dev.brighten.ac.utils.annotation.Init;
 import dev.brighten.ac.utils.RunUtils;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;

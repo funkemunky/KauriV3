@@ -58,7 +58,7 @@ public class MovementHandler {
     @Getter
     private float sensitivityX, sensitivityY, currentSensX, currentSensY, sensitivityMcp, yawMode, pitchMode;
     @Getter
-    private int sensXPercent, sensYPercent;
+    private int sensXPercent, sensYPercent, airTicks, groundTicks;
     private int ticks;
     private double lastX, lastY, lastLastY, lastYawAcelleration, lastPitchAcelleration;
     private boolean inTick;
@@ -76,6 +76,7 @@ public class MovementHandler {
 
         if (checkMovement) {
             moveTicks++;
+            if(!packet.isMoved()) moveTicks = 1;
         } else moveTicks = 0;
 
         updateLocations(packet);
@@ -201,8 +202,13 @@ public class MovementHandler {
             }
         }
 
-        if (player.getInfo().isServerGround()) {
+        if (packet.isOnGround()) {
             player.getInfo().setWasOnSlime(player.getBlockInfo().onSlime);
+            groundTicks++;
+            airTicks = 0;
+        } else {
+            airTicks++;
+            groundTicks = 0;
         }
 
         player.getInfo().setCreative(player.getBukkitPlayer().getGameMode() == GameMode.CREATIVE

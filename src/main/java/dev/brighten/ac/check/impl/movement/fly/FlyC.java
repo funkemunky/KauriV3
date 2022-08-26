@@ -6,7 +6,6 @@ import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
-import dev.brighten.ac.utils.Async;
 import dev.brighten.ac.utils.MathUtils;
 import dev.brighten.ac.utils.MovementUtils;
 
@@ -23,6 +22,7 @@ public class FlyC extends Check {
 
     WAction<WPacketPlayInFlying> flyingAction = packet -> {
         if(player.getMovement().getLastTeleport().isNotPassed((1))
+                || player.getMovement().getMoveTicks() <= 2
                 || player.getInfo().isGeneralCancel())
             return;
         final boolean ground = player.getMovement().getTo().isOnGround(),
@@ -44,7 +44,7 @@ public class FlyC extends Check {
             for (Double possibleHeight : possibleHeights) {
                 double delta = MathUtils.getDelta(player.getMovement().getDeltaY(), possibleHeight);
 
-                if(delta < 1E-5) {
+                if(delta < (player.getInfo().getLastBlockPlace().isNotPassed(20) ? 0.02 : 0.005)) {
                     debug("Found delta: dy=%.5f, p=%.5f", player.getMovement().getDeltaY(), possibleHeight);
                     break jumpCheck;
                 }

@@ -34,6 +34,7 @@ public class BlockUpdateHandler {
      * @param place
      */
     public void onPlace(WPacketPlayInBlockPlace place) {
+        player.getInfo().lastBlockUpdate.reset();
         // Could not possibly be a block placement as it's not a block a player is holding.
         IntVector pos = place.getBlockPos().clone();
 
@@ -68,6 +69,7 @@ public class BlockUpdateHandler {
      * @param dig
      */
     public void onDig(WPacketPlayInBlockDig dig) {
+        player.getInfo().lastBlockUpdate.reset();
         if(dig.getDigType() == WPacketPlayInBlockDig.EnumPlayerDigType.STOP_DESTROY_BLOCK) {
             Deque<Material> possible = getPossibleMaterials(dig.getBlockPos());
             possible.clear();
@@ -76,6 +78,7 @@ public class BlockUpdateHandler {
     }
 
     public void runUpdate(WPacketPlayOutBlockChange packet) {
+        player.getInfo().lastBlockUpdate.reset();
         Deque<Material> blockInfo = blockInformation.compute(packet.getBlockLocation(), (blockLoc, blockI) -> {
             if(blockI == null) {
                 blockI = new LinkedList<>();
@@ -105,6 +108,7 @@ public class BlockUpdateHandler {
     }
 
     public void runUpdate(WPacketPlayOutMultiBlockChange packet) {
+        player.getInfo().lastBlockUpdate.reset();
         List<Tuple<Deque<Material>, Material>> changes = new ArrayList<>();
         for (WPacketPlayOutMultiBlockChange.BlockChange change : packet.getChanges()) {
             Deque<Material> blockInfo = blockInformation.compute(change.getLocation(), (blockLoc, blockI) -> {
@@ -144,7 +148,7 @@ public class BlockUpdateHandler {
     }
 
     public Deque<Material> getPossibleMaterials(IntVector loc) {
-        return blockInformation.compute(loc, (blockLoc, blockI) -> {
+        return new LinkedList<>(blockInformation.compute(loc, (blockLoc, blockI) -> {
             if(blockI == null) {
                 blockI = new LinkedList<>();
 
@@ -160,6 +164,6 @@ public class BlockUpdateHandler {
             }
 
             return blockI;
-        });
+        }));
     }
 }

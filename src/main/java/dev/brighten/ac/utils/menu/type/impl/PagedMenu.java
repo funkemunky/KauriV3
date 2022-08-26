@@ -126,11 +126,7 @@ public class PagedMenu implements Menu {
 
     @Override
     public void showMenu(Player player) {
-        if (holder == null) {
-            buildInventory(true);
-        } else {
-            buildInventory(false);
-        }
+        buildInventory(holder == null);
         player.openInventory(holder.getInventory());
     }
 

@@ -8,7 +8,7 @@ import java.util.stream.Collectors;
 
 public class ConcurrentFilteredList<T> extends CopyOnWriteArrayList<T> {
 
-    private Predicate<T> predicate;
+    private final Predicate<T> predicate;
 
     public ConcurrentFilteredList(Predicate<T> predicate) {
         this.predicate = predicate;

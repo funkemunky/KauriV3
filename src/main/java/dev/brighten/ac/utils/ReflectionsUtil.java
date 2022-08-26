@@ -27,13 +27,13 @@ import java.util.logging.Level;
 
 public class ReflectionsUtil {
     public static Class<?> blockPosition = null;
-    private static String version = Bukkit.getServer().getClass().getPackage().getName().replace(".", ",").split(",")[3];
+    private static final String version = Bukkit.getServer().getClass().getPackage().getName().replace(".", ",").split(",")[3];
     public static Class<?> EntityPlayer = getNMSClass("EntityPlayer");
     public static Class<?> Entity = getNMSClass("Entity");
     public static Class<?> CraftPlayer = getCBClass("entity.CraftPlayer");
     public static Class<?> CraftEntity = getCBClass("entity.CraftEntity");
     public static Class<?> CraftWorld = getCBClass("CraftWorld");
-    private static Class<?> craftServer = getCBClass("CraftServer");
+    private static final Class<?> craftServer = getCBClass("CraftServer");
     public static Class<?> World = getNMSClass("World");
     public static Class<?> worldServer = getNMSClass("WorldServer");
     public static Class<?> playerConnection = getNMSClass("PlayerConnection");
@@ -42,9 +42,9 @@ public class ReflectionsUtil {
     public static Class<?> packet = getNMSClass("Packet");
     public static Class<?> iBlockData = null;
     public static Class<?> iBlockAccess = null;
-    private static Class<?> vanillaBlock = getNMSClass("Block");
-    private static Method getCubes = getMethod(World, "a", getNMSClass("AxisAlignedBB"));
-    private static Method getCubes1_12 = getMethod(World, "getCubes", getNMSClass("Entity"), getNMSClass("AxisAlignedBB"));
+    private static final Class<?> vanillaBlock = getNMSClass("Block");
+    private static final Method getCubes = getMethod(World, "a", getNMSClass("AxisAlignedBB"));
+    private static final Method getCubes1_12 = getMethod(World, "getCubes", getNMSClass("Entity"), getNMSClass("AxisAlignedBB"));
 
     public static Object getEntityPlayer(Player player) {
         return getMethodValue(getMethod(CraftPlayer, "getHandle"), player);
@@ -122,7 +122,7 @@ public class ReflectionsUtil {
         return getMethodValue(getMethod(getCBClass("inventory.CraftInventoryPlayer"), "getInventory"), player.getInventory());
     }
 
-    private static Field frictionFactorField = getFieldByName(vanillaBlock, "frictionFactor");
+    private static final Field frictionFactorField = getFieldByName(vanillaBlock, "frictionFactor");
     public static float getFriction(Block block) {
         Object blockNMS = getVanillaBlock(block);
 
@@ -287,7 +287,7 @@ public class ReflectionsUtil {
         }
     }
     
-    private static Method getItemMethod = getMethod(nmsItemStack, "getItem");
+    private static final Method getItemMethod = getMethod(nmsItemStack, "getItem");
     public static Object getVanillaItem(ItemStack itemStack) {
         return getMethodValue(getMethod(nmsItemStack, "getItem"), getVanillaItemStack(itemStack));
     }
@@ -473,7 +473,7 @@ public class ReflectionsUtil {
                 : getMethodValue(getCubes, world, axisAlignedBB));
     }
 
-    private static Method craftWorldHandle = getMethod(CraftWorld, "getHandle");
+    private static final Method craftWorldHandle = getMethod(CraftWorld, "getHandle");
     public static Object getWorldHandle(org.bukkit.World world) {
         return getMethodValue(craftWorldHandle, world);
     }

@@ -706,7 +706,7 @@ public class MathUtils {
     public static double trim(int degree, double d) {
         String format = "#.#";
         for (int i = 1; i < degree; ++i) {
-            format = String.valueOf(format) + "#";
+            format = format + "#";
         }
         DecimalFormat twoDForm = new DecimalFormat(format);
         return Double.parseDouble(twoDForm.format(d).replaceAll(",", "."));
@@ -715,7 +715,7 @@ public class MathUtils {
     public static float trimFloat(int degree, float d) {
         String format = "#.#";
         for (int i = 1; i < degree; ++i) {
-            format = String.valueOf(format) + "#";
+            format = format + "#";
         }
         DecimalFormat twoDForm = new DecimalFormat(format);
         return Float.parseFloat(twoDForm.format(d).replaceAll(",", "."));
@@ -749,7 +749,7 @@ public class MathUtils {
         });
 
         //Calculating the largest value to the key, which would be the mode.
-        return (T) repeated.keySet().stream()
+        return repeated.keySet().stream()
                 .map(key -> new Tuple<>(key, repeated.get(key))) //We map it into a Tuple for easier sorting.
                 .max(Comparator.comparing(tup -> tup.two, Comparator.naturalOrder()))
                 .orElseThrow(NullPointerException::new).one;
