@@ -27,8 +27,8 @@ public class EntityData {
 
             //We cast this as a float since the fields are floats.
 
-            return new SimpleCollisionBox(new Vector(), fieldWidth.get(ventity),
-                    fieldLength.get(ventity));
+            return new SimpleCollisionBox(new Vector(), (float)fieldWidth.get(ventity),
+                    (float)fieldLength.get(ventity));
         }).copy();
     }
 

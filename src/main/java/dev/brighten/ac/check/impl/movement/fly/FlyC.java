@@ -37,8 +37,14 @@ public class FlyC extends Check {
         // Adding all possible velocity deltaY.
         player.getVelocityHandler().getPossibleVectors().forEach(vec -> possibleHeights.add(vec.getY()));
 
+        if(player.getBlockInfo().onHalfBlock) {
+            possibleHeights.add(0.5);
+        }
+
         jumpCheck: {
-            if(!jumped) break jumpCheck;
+            if(!jumped || player.getInfo().blockAbove.isNotPassed(1)
+                    || player.getInfo().slimeTimer.isNotPassed(1)
+                    || player.getInfo().lastLiquid.isNotPassed(1)) break jumpCheck;
 
             // We want to check all possible heights
             for (Double possibleHeight : possibleHeights) {

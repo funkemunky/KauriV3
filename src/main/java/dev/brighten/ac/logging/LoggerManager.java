@@ -47,7 +47,7 @@ public class LoggerManager {
                     Log log = null;
                     int amount = 0;
                     while((log = logList.poll()) != null) {
-                        objectsToInsert.add(log.getUuid().toString());
+                        objectsToInsert.add(log.getUuid().hashCode());
                         objectsToInsert.add(log.getCheckId());
                         objectsToInsert.add(log.getVl());
                         objectsToInsert.add(log.getData());

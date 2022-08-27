@@ -123,6 +123,7 @@ public class AnticheatCommand extends BaseCommand {
 
         Anticheat.INSTANCE.getScheduler().execute(() -> {
             List<String> logs = new ArrayList<>();
+            System.out.println("shit 1");
             Anticheat.INSTANCE.getLogManager().runQuery("select * from logs where uuid=" + uuid.hashCode(), rs -> {
                 Log log = Log.builder()
                         .uuid(UUID.fromString(rs.getString("uuid")))
@@ -131,6 +132,8 @@ public class AnticheatCommand extends BaseCommand {
                         .vl(rs.getFloat("vl"))
                         .time(rs.getLong("time"))
                         .build();
+
+                System.out.println("Shit");
 
                 logs.add("Flagged " + Anticheat.INSTANCE.getCheckManager().getIdToName().get(log.getCheckId()) + " data: " + log.getData() + " VL: " + log.getVl() + " at " + log.getTime());
             });

@@ -3,7 +3,6 @@ package dev.brighten.ac.handler;
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.data.obj.NormalAction;
-import dev.brighten.ac.handler.thread.ThreadHandler;
 import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.packet.wrapper.PacketType;
 import dev.brighten.ac.packet.wrapper.in.*;
@@ -178,6 +177,7 @@ public class PacketHandler {
                 if(player.getPlayerVersion().isBelow(ProtocolVersion.V1_14)) {
                     player.runKeepaliveAction(k -> player.getBukkitPlayer().setSprinting(false), 1);
                 }
+                player.runKeepaliveAction(ka -> player.getInfo().lastRespawn.reset());
                 break;
             }
             case SERVER_POSITION: {

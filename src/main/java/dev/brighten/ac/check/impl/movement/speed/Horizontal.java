@@ -8,6 +8,7 @@ import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
 import dev.brighten.ac.utils.BlockUtils;
+import dev.brighten.ac.utils.KLocation;
 import dev.brighten.ac.utils.MathHelper;
 import dev.brighten.ac.utils.math.IntVector;
 import org.bukkit.Material;
@@ -24,7 +25,7 @@ public class Horizontal extends Check {
     private float buffer;
     private Vector velocity;
     private int vTicks;
-
+    private KLocation previousFrom;
     private static final boolean[] TRUE_FALSE = new boolean[]{true, false};
 
     public double strafe, forward;
@@ -34,15 +35,15 @@ public class Horizontal extends Check {
     }
 
     WAction<WPacketPlayInFlying> flying = packet -> {
-        Block underBlock = BlockUtils.getBlock(player.getMovement().getTo().getLoc()
-                .toLocation(player.getBukkitPlayer().getWorld())
-                .subtract(0, 1, 0)),
-                lastUnderBlock = BlockUtils.getBlock(player.getMovement().getFrom().getLoc()
-                        .toLocation(player.getBukkitPlayer().getWorld())
-                        .subtract(0, 1, 0));
 
         check:
         {
+            Block underBlock = BlockUtils.getBlock((previousFrom != null ? player.getMovement().getFrom().getLoc() : player.getMovement().getTo().getLoc())
+                    .toLocation(player.getBukkitPlayer().getWorld())
+                    .subtract(0, 1, 0)),
+                    lastUnderBlock = BlockUtils.getBlock((previousFrom != null ? previousFrom : player.getMovement().getFrom().getLoc())
+                            .toLocation(player.getBukkitPlayer().getWorld())
+                            .subtract(0, 1, 0));
             if (underBlock == null || lastUnderBlock == null)
                 break check;
 
@@ -147,7 +148,7 @@ public class Horizontal extends Check {
                                                             }
 
                                                             //Less than 0.05
-                                                            if(((lmotionX * lmotionX) + (lmotionZ * lmotionZ)) < 0.0025 && player.getMovement().getDeltaXZ() < 0.1) {
+                                                            if(((lmotionX * lmotionX) + (lmotionZ * lmotionZ)) < 0.0025 && player.getMovement().getDeltaXZ() < 0.2) {
                                                                 break check;
                                                             }
                                                             // Attack slowdown
@@ -262,11 +263,12 @@ public class Horizontal extends Check {
                 } else debug("bad movement");
             } else if (buffer > 0) buffer -= 0.05f;
 
-            debug("smallest=%s pm=%.5f dxz=%.5f b=%.1f f/s=%.2f,%.2f soulsand=%s", smallestDelta, pmotion,
+            debug("smallest=%s f=%s lf=%s pm=%.5f dxz=%.5f b=%.1f f/s=%.2f,%.2f soulsand=%s ", smallestDelta, frictionList, lfrictionList, pmotion,
                     player.getMovement().getDeltaXZ(), buffer, forward, strafe,
                     player.getBlockInfo().onSoulSand);
         }
         lastLastClientGround = player.getMovement().getFrom().isOnGround();
+        previousFrom = player.getMovement().getFrom().getLoc().clone();
     };
 
     private static final float[] SIN_TABLE_FAST = new float[4096], SIN_TABLE_FAST_NEW = new float[4096];

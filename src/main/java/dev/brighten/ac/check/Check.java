@@ -113,7 +113,8 @@ public class Check implements ECheck {
 
                 if(!toDebug.equals(player.getUuid())) continue;
 
-                ComponentBuilder builder = new ComponentBuilder("[DEBUG] ").color(ChatColor.RED);
+                ComponentBuilder builder = new ComponentBuilder("[ " + getName() + ": " + player.getBukkitPlayer().getName() + "] ")
+                        .color(ChatColor.RED);
 
                 BaseComponent[] message =
                         builder.append(String.format(information, variables)).color(ChatColor.GRAY).create();

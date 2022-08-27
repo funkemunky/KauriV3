@@ -24,6 +24,8 @@ public abstract class HandlerAbstract{
         if(ProtocolVersion.getGameVersion().isOrAbove(ProtocolVersion.V1_8)) {
             handler = new ModernHandler();
         } else handler = new LegacyHandler();
+
+        Bukkit.getOnlinePlayers().forEach(handler::add);
     }
 
     public static void shutdown() {

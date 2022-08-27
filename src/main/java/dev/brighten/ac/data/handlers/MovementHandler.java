@@ -230,6 +230,7 @@ public class MovementHandler {
         if (player.getInfo().isGliding()) player.getInfo().getLastElytra().reset();
         if (player.getInfo().isSneaking()) player.getInfo().getLastSneak().reset();
         if (player.getBlockInfo().inLiquid) player.getInfo().getLastLiquid().reset();
+        if(player.getBlockInfo().inWeb) player.getInfo().lastWeb.reset();
 
         player.getInfo().setGeneralCancel(player.getBukkitPlayer().getAllowFlight()
                 || moveTicks == 0

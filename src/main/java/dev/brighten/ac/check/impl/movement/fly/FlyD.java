@@ -18,7 +18,8 @@ public class FlyD extends Check {
 
     @Async
     WAction<WPacketPlayInFlying> flyingPacket = packet -> {
-        if(!packet.isMoved() || player.getMovement().getMoveTicks() <= 2) return;
+        if(!packet.isMoved() || player.getMovement().getMoveTicks() <= 2
+                || player.getBlockInfo().miscNear || player.getInfo().isGeneralCancel()) return;
         double deltaY = player.getMovement().getDeltaY();
 
         if(deltaY > 0)

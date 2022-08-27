@@ -113,13 +113,15 @@ public class Anticheat extends JavaPlugin {
             getConfig().set("database.password", UUID.randomUUID().toString());
         }
 
-        HandlerAbstract.init();
-
         this.keepaliveProcessor = new KeepaliveProcessor();
         this.checkManager = new CheckManager();
         this.playerRegistry = new PlayerRegistry();
         this.packetHandler = new PacketHandler();
         logManager = new LoggerManager();
+
+        keepaliveProcessor.start();
+
+        HandlerAbstract.init();
 
         logManager.init();
 

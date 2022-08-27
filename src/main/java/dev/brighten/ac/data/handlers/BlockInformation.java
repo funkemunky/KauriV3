@@ -371,8 +371,10 @@ public class BlockInformation {
             if(entityBox.isCollided(normalBox.copy().offset(0, -.1, 0)))
                 player.getInfo().setServerGround(true);
 
-            if(entityBox.isCollided(normalBox))
+            if(entityBox.isCollided(normalBox)) {
                 collidedWithEntity = true;
+                player.getInfo().getLastEntityCollision().reset();
+            }
         }
 
         //Bukkit.broadcastMessage("chigga5");

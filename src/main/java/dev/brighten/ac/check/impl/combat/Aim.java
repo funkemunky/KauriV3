@@ -50,7 +50,9 @@ public class Aim extends Check {
         boolean increasing = deltaYaw > deltaX || deltaPitch > deltaY;
 
         boolean flagged = false;
-        if(player.getMovement().getPitchGCD() < 0.007 && lastGrid.isPassed() && player.getMovement().getLastHighRate().isNotPassed(3)) {
+        if(player.getMovement().getPitchGCD() < 0.007 && lastGrid.isPassed()
+                && !player.getMovement().isCinematic()
+                && player.getMovement().getLastHighRate().isNotPassed(3)) {
             if(deltaPitch < 10 && ++buffer > 8) {
                 flag("%s", player.getMovement().getPitchGCD());
             }
