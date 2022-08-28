@@ -38,6 +38,11 @@ public class LoggerManager {
                 "PRIMARY KEY (`id`)" +
                 ");").execute();
 
+        Query.prepare("create index if not exists `uuid_1` on `logs` (`uuid`)")
+                .execute();
+        Query.prepare("create index if not exists `uuid_check_1` on `logs` (`uuid`, `check`)")
+                        .execute();
+
         Anticheat.INSTANCE.getScheduler().scheduleAtFixedRate(() -> {
             if(logList.size() > 0) {
                 synchronized (logList) {
@@ -65,6 +70,8 @@ public class LoggerManager {
                             .append(objectsToInsert.toArray());
 
                     statement.execute();
+
+                    Anticheat.INSTANCE.getLogger().info("Saved " + amount + " logs!");
 
                     objectsToInsert.clear();
                 }

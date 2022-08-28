@@ -29,10 +29,10 @@ public class MySQL {
         try {
             Class.forName("org.h2.Driver");
             WrappedConstructor jdbcConnection = Reflections.getClass("org.h2.jdbc.JdbcConnection")
-                    .getConstructor(String.class, Properties.class);
+                    .getConstructor(String.class, Properties.class, String.class, Object.class, boolean.class);
             conn = new NonClosableConnection(jdbcConnection.newInstance("jdbc:h2:file:" +
                     dataFolder.getAbsolutePath(),
-                    new Properties()));
+                    new Properties(), "root", "erc5gmv-xvg5CZQ0nzw", false));
             conn.setAutoCommit(true);
             Query.use(conn);
             Bukkit.getLogger().info("Connection to H2 SQlLite has been established.");

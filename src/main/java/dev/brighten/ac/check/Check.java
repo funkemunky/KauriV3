@@ -149,7 +149,9 @@ public class Check implements ECheck {
 
             if(currentResult.isCancelled()) return;
 
-            Anticheat.INSTANCE.getLogManager().insertLog(player, checkData, vl, System.currentTimeMillis(), info);
+            Anticheat.INSTANCE.getScheduler()
+                    .execute(() -> Anticheat.INSTANCE.getLogManager()
+                            .insertLog(player, checkData, vl, System.currentTimeMillis(), info));
 
             boolean dev = Anticheat.INSTANCE.getTps() < 18;
             //if(vl > 0) Anticheat.INSTANCE.loggerManager.addLog(player, this, info);

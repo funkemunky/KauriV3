@@ -162,7 +162,6 @@ public class PacketHandler {
                             player.getVelocityHandler().onPre(packet);
                         } else player.getVelocityHandler().onPost(packet);
                         if(ka.isEnd() && player.getInfo().getVelocityHistory().contains(velocity)) {
-                            player.getOnVelocityTasks().forEach(task -> task.accept(velocity));
                             player.getInfo().setDoingVelocity(false);
                             player.getInfo().getVelocity().reset();
                             synchronized (player.getInfo().getVelocityHistory()) {
@@ -170,6 +169,10 @@ public class PacketHandler {
                             }
                         }
                     });
+                    player.runKeepaliveAction(ka -> {
+                        if(player.getInfo().getVelocityHistory().contains(velocity))
+                            player.getOnVelocityTasks().forEach(task -> task.accept(velocity));
+                    }, 1);
                 }
                 break;
             }

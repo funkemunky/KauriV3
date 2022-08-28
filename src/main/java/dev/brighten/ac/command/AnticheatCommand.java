@@ -5,8 +5,10 @@ import co.aikar.commands.annotation.*;
 import co.aikar.commands.bukkit.contexts.OnlinePlayer;
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.check.Check;
+import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.logging.Log;
+import dev.brighten.ac.logging.sql.Query;
 import dev.brighten.ac.messages.Messages;
 import dev.brighten.ac.packet.handler.HandlerAbstract;
 import dev.brighten.ac.utils.*;
@@ -23,6 +25,7 @@ import org.bukkit.craftbukkit.v1_8_R3.util.CraftChatMessage;
 import org.bukkit.entity.Player;
 
 import java.io.UnsupportedEncodingException;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -41,6 +44,10 @@ public class AnticheatCommand extends BaseCommand {
         cc.registerCompletion("checks", (c) -> Anticheat.INSTANCE.getCheckManager().getCheckClasses().keySet()
                 .stream()  .sorted(Comparator.naturalOrder())
                 .map(name -> name.replace(" ", "_")).collect(Collectors.toList()));
+
+        cc.registerCompletion("checkIds", (c) -> Anticheat.INSTANCE.getCheckManager().getCheckClasses().values()
+                .stream().map(s -> s.getCheckClass().getAnnotation(CheckData.class).checkId())
+                .sorted(Comparator.naturalOrder()).collect(Collectors.toList()));
 
         BukkitCommandContexts contexts = (BukkitCommandContexts) Anticheat.INSTANCE.getCommandManager()
                 .getCommandContexts();
@@ -112,38 +119,64 @@ public class AnticheatCommand extends BaseCommand {
     }
 
     @Subcommand("logs")
-    @Syntax("[player]")
-    @CommandCompletion("@players")
+    @Syntax("[player] [check]")
+    @CommandCompletion("@players @checkIds")
     @CommandPermission("anticheat.command.logs")
     @Description("Get player logs")
-    public void onLogs(CommandSender sender, @Single String playername) {
+    public void onLogs(CommandSender sender, @Single String playername, @Single @Optional @Default("none") String check) {
         UUID uuid = Bukkit.getOfflinePlayer(playername).getUniqueId();
 
         sender.sendMessage(Color.Red + "Getting logs for " + playername + "...");
 
         Anticheat.INSTANCE.getScheduler().execute(() -> {
             List<String> logs = new ArrayList<>();
-            System.out.println("shit 1");
-            Anticheat.INSTANCE.getLogManager().runQuery("select * from logs where uuid=" + uuid.hashCode(), rs -> {
-                Log log = Log.builder()
-                        .uuid(UUID.fromString(rs.getString("uuid")))
-                        .checkId(rs.getString("check"))
-                        .data(rs.getString("data"))
-                        .vl(rs.getFloat("vl"))
-                        .time(rs.getLong("time"))
-                        .build();
 
-                System.out.println("Shit");
+            if(check.equals("none")) {
+                Query.prepare("select * from `logs` where `uuid` = ? limit 500").append(uuid.hashCode()).execute(rs -> {
+                    dev.brighten.ac.logging.Log log = Log.builder()
+                            .uuid(uuid)
+                            .checkId(rs.getString("check"))
+                            .data(rs.getString("data"))
+                            .vl(rs.getFloat("vl"))
+                            .time(rs.getTimestamp("time").getTime())
+                            .build();
 
-                logs.add("Flagged " + Anticheat.INSTANCE.getCheckManager().getIdToName().get(log.getCheckId()) + " data: " + log.getData() + " VL: " + log.getVl() + " at " + log.getTime());
-            });
-            String url = null;
-            try {
-                url = Pastebin.makePaste(String.join("\n", logs), playername + "'s Logs", Pastebin.Privacy.UNLISTED);
+                    logs.add("[" + rs.getTimestamp("time").toLocalDateTime()
+                            .format(DateTimeFormatter.ISO_DATE_TIME) + "] funkemunky failed "
+                            + Anticheat.INSTANCE.getCheckManager().getIdToName().get(log.getCheckId()) + "(VL: " + log.getVl() + ") {" + log.getData() + "}");
+                });
+            } else {
+                Query.prepare("select * from `logs` where `uuid` = ? and `check` = ? limit 500")
+                        .append(uuid.hashCode()).append(check).execute(rs -> {
+                    dev.brighten.ac.logging.Log log = Log.builder()
+                            .uuid(uuid)
+                            .checkId(rs.getString("check"))
+                            .data(rs.getString("data"))
+                            .vl(rs.getFloat("vl"))
+                            .time(rs.getTimestamp("time").getTime())
+                            .build();
 
-                sender.sendMessage(Color.Green + "Logs for " + playername + ": " + Color.White + url);
-            } catch (UnsupportedEncodingException e) {
-                throw new RuntimeException(e);
+                    logs.add("[" + rs.getTimestamp("time").toLocalDateTime()
+                            .format(DateTimeFormatter.ISO_DATE_TIME) + "] funkemunky failed "
+                            + Anticheat.INSTANCE.getCheckManager().getIdToName().get(log.getCheckId()) + "(VL: " + log.getVl() + ") {" + log.getData() + "}");
+                });
+            }
+
+            if(logs.size() == 0) {
+                if(check.equals("none")) {
+                    sender.sendMessage(Color.Gray + "There are no logs for player \"" + playername + "\"");
+                } else {
+                    sender.sendMessage(Color.Gray + " does not have any violations for check \"" + check + "\"");
+                }
+            } else {
+                String url = null;
+                try {
+                    url = Pastebin.makePaste(String.join("\n", logs), playername + "'s Logs", Pastebin.Privacy.UNLISTED);
+
+                    sender.sendMessage(Color.Green + "Logs for " + playername + ": " + Color.White + url);
+                } catch (UnsupportedEncodingException e) {
+                    throw new RuntimeException(e);
+                }
             }
         });
     }
