@@ -27,7 +27,6 @@ public class MySQL {
             Anticheat.INSTANCE.getLogger().log(Level.SEVERE, "File write error: database.db");
         }
         try {
-            Class.forName("org.h2.Driver");
             WrappedConstructor jdbcConnection = Reflections.getClass("org.h2.jdbc.JdbcConnection")
                     .getConstructor(String.class, Properties.class, String.class, Object.class, boolean.class);
             conn = new NonClosableConnection(jdbcConnection.newInstance("jdbc:h2:file:" +
@@ -38,8 +37,6 @@ public class MySQL {
             Bukkit.getLogger().info("Connection to H2 SQlLite has been established.");
         } catch (SQLException ex) {
             Anticheat.INSTANCE.getLogger().log(Level.SEVERE,"SQLite exception on initialize", ex);
-        } catch (ClassNotFoundException ex) {
-            Anticheat.INSTANCE.getLogger().log(Level.SEVERE, "You need the H2 JBDC library. Google it. Put it in /lib folder.");
         }
     }
 
