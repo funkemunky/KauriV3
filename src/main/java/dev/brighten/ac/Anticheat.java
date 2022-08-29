@@ -6,6 +6,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import dev.brighten.ac.api.AnticheatAPI;
 import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckManager;
+import dev.brighten.ac.command.AnticheatCommand;
 import dev.brighten.ac.data.PlayerRegistry;
 import dev.brighten.ac.depends.LibraryLoader;
 import dev.brighten.ac.depends.MavenLibrary;
@@ -21,8 +22,6 @@ import dev.brighten.ac.utils.annotation.ConfigSetting;
 import dev.brighten.ac.utils.annotation.Init;
 import dev.brighten.ac.utils.annotation.Invoke;
 import dev.brighten.ac.utils.math.RollingAverageDouble;
-import dev.brighten.ac.utils.objects.RemoteClassLoader;
-import dev.brighten.ac.utils.reflections.Reflections;
 import dev.brighten.ac.utils.reflections.types.WrappedClass;
 import dev.brighten.ac.utils.reflections.types.WrappedField;
 import dev.brighten.ac.utils.reflections.types.WrappedMethod;
@@ -31,13 +30,13 @@ import dev.brighten.ac.utils.timer.impl.TickTimer;
 import dev.brighten.ac.utils.world.WorldInfo;
 import lombok.Getter;
 import lombok.experimental.PackagePrivate;
+import me.mat1337.loader.plugin.LoaderPlugin;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.Plugin;
-import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.*;
 import java.util.concurrent.Executors;
@@ -53,7 +52,7 @@ import java.util.concurrent.atomic.AtomicLong;
 @MavenLibrary(groupId = "it.unimi.dsi", artifactId = "fastutil", version = "8.5.6", repo = @Repository(url = "https://repo1.maven.org/maven2"))
 @MavenLibrary(groupId = "org.ow2.asm", artifactId = "asm", version = "9.2", repo = @Repository(url = "https://repo1.maven.org/maven2"))
 @MavenLibrary(groupId = "org.ow2.asm", artifactId = "asm-tree", version = "9.2", repo = @Repository(url = "https://repo1.maven.org/maven2"))
-public class Anticheat extends JavaPlugin {
+public class Anticheat extends LoaderPlugin {
 
     public static Anticheat INSTANCE;
 
@@ -80,9 +79,13 @@ public class Anticheat extends JavaPlugin {
     @ConfigSetting(path = "logging", name = "verbose")
     private static boolean verboseLogging = true;
 
+    private WrappedMethod findClassMethod;
+
     public void onEnable() {
         INSTANCE = this;
         LibraryLoader.loadAll(getClass());
+
+        findClassMethod = new WrappedClass(getClassLoader2().getClass()).getMethod("findClass", String.class);
 
         scheduler = Executors.newScheduledThreadPool(2, new ThreadFactoryBuilder()
                 .setNameFormat("Anticheat Schedular")
@@ -91,17 +94,19 @@ public class Anticheat extends JavaPlugin {
 
         saveDefaultConfig();
 
-        commandManager = new BukkitCommandManager(this);
+        commandManager = new BukkitCommandManager(getPluginInstance());
         commandManager.enableUnstableAPI("help");
 
+        commandManager.registerCommand(new AnticheatCommand());
+
         new CommandPropertiesManager(commandManager, getDataFolder(),
-                getResource("command-messages.properties"));
+                getResource2("command-messages.properties"));
 
         packetProcessor = new PacketProcessor();
 
         new AnticheatAPI();
 
-        initializeScanner(getClass(), this,
+        initializeScanner(getPluginInstance().getClass(), getPluginInstance(),
                 null,
                 true,
                 true);
@@ -137,14 +142,13 @@ public class Anticheat extends JavaPlugin {
 
         Bukkit.getOnlinePlayers().forEach(HandlerAbstract.getHandler()::add);
     }
-
     public void onDisable() {
         scheduler.shutdown();
         commandManager.unregisterCommands();
 
         // Unregistering packet listeners for players
         HandlerAbstract.shutdown();
-        HandlerList.unregisterAll(this);
+        HandlerList.unregisterAll(getPluginInstance());
         packetProcessor.shutdown();
         packetProcessor = null;
         checkManager.getCheckClasses().clear();
@@ -158,7 +162,7 @@ public class Anticheat extends JavaPlugin {
 
         logManager.shutDown();
 
-        Bukkit.getScheduler().cancelTasks(this);
+        Bukkit.getScheduler().cancelTasks(getPluginInstance());
 
 
         // Unregistering APlayer objects
@@ -180,9 +184,9 @@ public class Anticheat extends JavaPlugin {
 
 
 
-    public void initializeScanner(Class<? extends Plugin> mainClass, Plugin plugin, ClassLoader loader,
+    public void initializeScanner(Class<?> mainClass, Plugin plugin, ClassLoader loader,
                                   boolean loadListeners, boolean loadCommands) {
-        initializeScanner(mainClass, plugin, loader, ClassScanner.scanFile(null, mainClass), loadListeners,
+        initializeScanner(mainClass, plugin, loader, ClassScanner.getNames(), loadListeners,
                 loadCommands);
     }
 
@@ -190,26 +194,17 @@ public class Anticheat extends JavaPlugin {
         return worldInfoMap.computeIfAbsent(world.getUID(), key -> new WorldInfo(world));
     }
 
-    public void initializeScanner(Class<? extends Plugin> mainClass, Plugin plugin, ClassLoader loader, Set<String> names,
+    public void initializeScanner(Class<?> mainClass, Plugin plugin, ClassLoader loader, Set<String> names,
                                   boolean loadListeners, boolean loadCommands) {
         names.stream()
                 .map(name -> {
-                    if(loader != null) {
-                        try {
-                            if(loader instanceof RemoteClassLoader) {
-                                return new WrappedClass(((RemoteClassLoader)loader).findClass(name));
-                            } else
-                                return new WrappedClass(Class.forName(name, true, loader));
-                        } catch (ClassNotFoundException e) {
-                            e.printStackTrace();
-                        }
-                        return null;
-                    } else {
-                        return Reflections.getClass(name);
-                    }
+                    return new WrappedClass(findClassMethod.invoke(getClassLoader2(), name));
                 })
                 .filter(c -> {
-                    if(c == null) return false;
+                    if(c.getParent() == null) {
+                        return false;
+                    }
+
                     Init init = c.getAnnotation(Init.class);
 
                     String[] required = init.requirePlugins();
@@ -333,7 +328,7 @@ public class Anticheat extends JavaPlugin {
                 lastTimeStamp.set(currentTime);
             }
             lastTick = currentTime;
-        }, this, 1L, 1L);
+        }, 1L, 1L);
     }
 
     public void onTickEnd(Runnable runnable) {

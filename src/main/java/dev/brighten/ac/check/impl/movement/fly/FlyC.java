@@ -43,6 +43,7 @@ public class FlyC extends Check {
 
         jumpCheck: {
             if(!jumped || player.getInfo().blockAbove.isNotPassed(1)
+                    || player.getInfo().climbTimer.isNotPassed(1)
                     || player.getInfo().slimeTimer.isNotPassed(1)
                     || player.getInfo().lastLiquid.isNotPassed(1)) break jumpCheck;
 

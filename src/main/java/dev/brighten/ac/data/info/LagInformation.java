@@ -1,4 +1,4 @@
-package dev.brighten.ac.data.handlers;
+package dev.brighten.ac.data.info;
 
 import dev.brighten.ac.utils.timer.Timer;
 import dev.brighten.ac.utils.timer.impl.MillisTimer;

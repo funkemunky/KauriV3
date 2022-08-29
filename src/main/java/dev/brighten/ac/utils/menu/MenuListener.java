@@ -119,7 +119,7 @@ public class MenuListener implements Listener {
                             this.cancel();
                         }
                     }
-                }.runTaskTimer(Anticheat.INSTANCE, 2L, 0L));
+                }.runTaskTimer(Anticheat.INSTANCE.getPluginInstance(), 2L, 0L));
             }
         }
         if(inventory instanceof AnvilInventory && anvils.containsKey(inventory)) {

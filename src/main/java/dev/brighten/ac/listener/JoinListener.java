@@ -19,7 +19,7 @@ import java.util.Optional;
 public class JoinListener implements Listener {
 
     public JoinListener() {
-        Anticheat.INSTANCE.getPacketProcessor().processAsync(Anticheat.INSTANCE, EventPriority.NORMAL, event -> {
+        Anticheat.INSTANCE.getPacketProcessor().processAsync(EventPriority.NORMAL, event -> {
             if(event.isCancelled()) return;
             Optional<APlayer> aplayer = Anticheat.INSTANCE.getPlayerRegistry()
                     .getPlayer(event.getPlayer().getUniqueId());
@@ -32,7 +32,7 @@ public class JoinListener implements Listener {
             });
         });
 
-        Anticheat.INSTANCE.getPacketProcessor().process(Anticheat.INSTANCE, EventPriority.HIGHEST, event -> {
+        Anticheat.INSTANCE.getPacketProcessor().process(EventPriority.HIGHEST, event -> {
             Optional<APlayer> op = Anticheat.INSTANCE.getPlayerRegistry().getPlayer(event.getPlayer().getUniqueId());
 
             if(!op.isPresent()) {
@@ -65,7 +65,7 @@ public class JoinListener implements Listener {
                     case BLOCK_CHANGE:
                     case MULTI_BLOCK_CHANGE:
                     case MAP_CHUNK: {
-                        if(player.getLagInfo().getLastClientTransaction().isPassed(100L) && player.getCreation().isPassed(2000L)) {
+                        if(player.getLagInfo().getLastClientTransaction().isPassed(100L) && player.getCreation().isPassed(6000L)) {
                             synchronized (player.getPacketQueue()) {
                                 player.getPacketQueue().add(event.getPacket());
                             }

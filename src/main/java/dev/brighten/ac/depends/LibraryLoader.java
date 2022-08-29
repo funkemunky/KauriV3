@@ -47,7 +47,7 @@ import java.util.Objects;
 public final class LibraryLoader {
 
     @SuppressWarnings("Guava")
-    private static final Supplier<URLClassLoaderAccess> URL_INJECTOR = Suppliers.memoize(() -> URLClassLoaderAccess.create((URLClassLoader) Anticheat.INSTANCE.getClass().getClassLoader()));
+    private static final Supplier<URLClassLoaderAccess> URL_INJECTOR = Suppliers.memoize(() -> URLClassLoaderAccess.create((URLClassLoader) Anticheat.INSTANCE.getPluginInstance().getClass().getClassLoader()));
 
     /**
      * Resolves all {@link MavenLibrary} annotations on the given object.
@@ -110,6 +110,9 @@ public final class LibraryLoader {
 
         try {
             URL_INJECTOR.get().addURL(saveLocation.toURI().toURL());
+            //val mapOfShit = JarUtil.loadJar(saveLocation);
+
+            //((Map<String, byte[]>)Anticheat.INSTANCE.getStuffs()).putAll(mapOfShit);
         } catch (Exception e) {
             throw new RuntimeException("Unable to load dependency: " + saveLocation.toString(), e);
         }

@@ -1,4 +1,4 @@
-package dev.brighten.ac.data.handlers;
+package dev.brighten.ac.data.info;
 
 import dev.brighten.ac.packet.wrapper.objects.PlayerCapabilities;
 import dev.brighten.ac.utils.KLocation;

@@ -1,11 +1,10 @@
 package dev.brighten.ac.handler.thread;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.data.APlayer;
-import dev.brighten.ac.utils.annotation.Init;
 import dev.brighten.ac.utils.MiscUtils;
 import dev.brighten.ac.utils.RunUtils;
+import dev.brighten.ac.utils.annotation.Init;
 import lombok.Getter;
 import org.bukkit.entity.Player;
 
@@ -59,7 +58,7 @@ public class ThreadHandler {
     private PlayerThread generatePlayerThread() {
         PlayerThread thread = new PlayerThread(Executors.newSingleThreadExecutor(new ThreadFactoryBuilder()
                 .setNameFormat("Kauri Player Thread " + services.size() + 1)
-                .setUncaughtExceptionHandler((t, e) -> RunUtils.task(e::printStackTrace, Anticheat.INSTANCE))
+                .setUncaughtExceptionHandler((t, e) -> RunUtils.task(e::printStackTrace))
                 .build()));
 
         services.add(thread);

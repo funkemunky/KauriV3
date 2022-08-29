@@ -11,7 +11,6 @@ import lombok.Getter;
 import lombok.val;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventPriority;
-import org.bukkit.plugin.Plugin;
 
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -41,12 +40,12 @@ public class PacketProcessor {
         }
     }
 
-    public PacketListener process(Plugin plugin, PacketListener listener, PacketType... types) {
-        return process(plugin, EventPriority.NORMAL, listener, types);
+    public PacketListener process(PacketListener listener, PacketType... types) {
+        return process(EventPriority.NORMAL, listener, types);
     }
 
-    public PacketListener process(Plugin plugin, EventPriority priority, PacketListener listener, PacketType... types) {
-        ListenerEntry entry = new ListenerEntry(plugin, priority, listener);
+    public PacketListener process(EventPriority priority, PacketListener listener, PacketType... types) {
+        ListenerEntry entry = new ListenerEntry(priority, listener);
         synchronized (processors) {
             for (PacketType type : types) {
                 processors.compute(type, (key, list) -> {
@@ -63,21 +62,21 @@ public class PacketProcessor {
         return listener;
     }
 
-    public PacketListener process(Plugin plugin, EventPriority priority, PacketListener listener) {
-        return process(plugin, priority, listener, PacketType.UNKNOWN);
+    public PacketListener process(EventPriority priority, PacketListener listener) {
+        return process(priority, listener, PacketType.UNKNOWN);
     }
 
-    public PacketListener processAsync(Plugin plugin, PacketListener listener, PacketType... types) {
-        return processAsync(plugin, EventPriority.NORMAL, listener, types);
+    public PacketListener processAsync(PacketListener listener, PacketType... types) {
+        return processAsync(EventPriority.NORMAL, listener, types);
     }
 
-    public PacketListener processAsync(Plugin plugin, EventPriority priority, PacketListener listener) {
-        return processAsync(plugin, priority, listener, PacketType.UNKNOWN);
+    public PacketListener processAsync(EventPriority priority, PacketListener listener) {
+        return processAsync(priority, listener, PacketType.UNKNOWN);
     }
 
-    public PacketListener processAsync(Plugin plugin, EventPriority priority, PacketListener listener,
+    public PacketListener processAsync(EventPriority priority, PacketListener listener,
                                             PacketType... types) {
-        ListenerEntry entry = new ListenerEntry(plugin, priority, listener);
+        ListenerEntry entry = new ListenerEntry(priority, listener);
         synchronized (asyncProcessors) {
             for (PacketType type : types) {
                 asyncProcessors.compute(type, (key, list) -> {
@@ -130,19 +129,6 @@ public class PacketProcessor {
         }
 
         return removedListener;
-    }
-
-    public void removeListeners(Plugin plugin) {
-        synchronized (processors) {
-            for (List<ListenerEntry> list : processors.values()) {
-                list.removeIf(entry -> entry.getPlugin().getName().equals(plugin.getName()));
-            }
-        }
-        synchronized (asyncProcessors) {
-            for (List<ListenerEntry> list : asyncProcessors.values()) {
-                list.removeIf(entry -> entry.getPlugin().getName().equals(plugin.getName()));
-            }
-        }
     }
 
     public Object call(Player player, Object packet, PacketType type) {

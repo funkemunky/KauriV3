@@ -1,4 +1,4 @@
-package dev.brighten.ac.data.handlers;
+package dev.brighten.ac.data.info;
 
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.data.APlayer;
@@ -23,7 +23,6 @@ public class BlockInformation {
     public boolean onClimbable, onSlab, onStairs, onHalfBlock, inLiquid, inLava, inWater, inWeb, onSlime, onIce,
             onSoulSand, blocksAbove, collidesVertically, bedNear, collidesHorizontally, blocksNear, inBlock, miscNear,
             collidedWithEntity, roseBush, inPortal, blocksBelow, pistonNear, fenceBelow, inScaffolding, inHoney;
-    public float currentFriction, fromFriction;
     public CollisionHandler
             handler = new CollisionHandler(new ArrayList<>(), new ArrayList<>(), new KLocation(0,0,0), null);
     public final List<SimpleCollisionBox> aboveCollisions = Collections.synchronizedList(new ArrayList<>()),

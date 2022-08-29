@@ -1,10 +1,15 @@
 package dev.brighten.ac.data;
 
 import dev.brighten.ac.Anticheat;
-import dev.brighten.ac.check.*;
-import dev.brighten.ac.data.handlers.*;
-import dev.brighten.ac.data.obj.*;
+import dev.brighten.ac.check.Check;
+import dev.brighten.ac.data.info.BlockInformation;
+import dev.brighten.ac.data.info.CheckHandler;
+import dev.brighten.ac.data.info.GeneralInformation;
+import dev.brighten.ac.data.info.LagInformation;
+import dev.brighten.ac.data.obj.InstantAction;
+import dev.brighten.ac.data.obj.NormalAction;
 import dev.brighten.ac.handler.EntityLocationHandler;
+import dev.brighten.ac.handler.MovementHandler;
 import dev.brighten.ac.handler.PotionHandler;
 import dev.brighten.ac.handler.VelocityHandler;
 import dev.brighten.ac.handler.block.BlockUpdateHandler;
@@ -17,8 +22,10 @@ import dev.brighten.ac.utils.KLocation;
 import dev.brighten.ac.utils.RunUtils;
 import dev.brighten.ac.utils.Tuple;
 import dev.brighten.ac.utils.objects.evicting.EvictingList;
+import dev.brighten.ac.utils.reflections.Reflections;
 import dev.brighten.ac.utils.reflections.impl.MinecraftReflection;
-import dev.brighten.ac.utils.reflections.types.WrappedField;
+import dev.brighten.ac.utils.reflections.types.WrappedClass;
+import dev.brighten.ac.utils.reflections.types.WrappedMethod;
 import dev.brighten.ac.utils.timer.Timer;
 import dev.brighten.ac.utils.timer.impl.MillisTimer;
 import lombok.Getter;
@@ -26,7 +33,7 @@ import lombok.Setter;
 import lombok.val;
 import net.minecraft.server.v1_8_R3.PacketPlayOutTransaction;
 import org.bukkit.entity.Player;
-import org.bukkit.event.Event;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.util.Vector;
 
 import java.util.*;
@@ -41,7 +48,7 @@ public class APlayer {
     @Getter
     private final UUID uuid;
     @Getter
-    private  MovementHandler movement;
+    private MovementHandler movement;
     @Getter
     private PotionHandler potionHandler;
 
@@ -92,10 +99,21 @@ public class APlayer {
     @Getter
     private boolean sendingPackets;
 
+    static WrappedClass bukkitClass = Reflections.getClass("org.bukkit.Bukkit");
+    static WrappedClass pluginManager = Reflections.getClass("org.bukkit.plugin.PluginManager");
+    static WrappedMethod method = pluginManager.getMethod("isPluginEnabled", String.class),
+            method2 = pluginManager.getMethod("getPlugin", String.class),
+            gpmanager = bukkitClass.getMethod("getPluginManager");
     public APlayer(Player player) {
         this.bukkitPlayer = player;
         this.uuid = player.getUniqueId();
         this.playerConnection = MinecraftReflection.getPlayerConnection(player);
+
+        Object pluginManagerObj = gpmanager.invoke(null);
+
+        if(method.invoke(pluginManagerObj, "EnterpriseLoader")) {
+            Plugin plugin = method2.invoke(pluginManagerObj, "EnterpriseLoader");
+        }
         load();
     }
 

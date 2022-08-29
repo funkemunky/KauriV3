@@ -11,8 +11,10 @@ import dev.brighten.ac.logging.Log;
 import dev.brighten.ac.logging.sql.Query;
 import dev.brighten.ac.messages.Messages;
 import dev.brighten.ac.packet.handler.HandlerAbstract;
-import dev.brighten.ac.utils.*;
-import dev.brighten.ac.utils.annotation.Init;
+import dev.brighten.ac.utils.Color;
+import dev.brighten.ac.utils.MiscUtils;
+import dev.brighten.ac.utils.Pastebin;
+import dev.brighten.ac.utils.Tuple;
 import dev.brighten.ac.utils.msg.ChatBuilder;
 import io.netty.buffer.Unpooled;
 import lombok.val;
@@ -32,7 +34,6 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-@Init(priority = Priority.LOW)
 @CommandAlias("anticheat|ac")
 @CommandPermission("anticheat.command")
 public class AnticheatCommand extends BaseCommand {

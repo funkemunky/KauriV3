@@ -1,4 +1,4 @@
-package dev.brighten.ac.data.handlers;
+package dev.brighten.ac.handler;
 
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.data.obj.CMove;
@@ -41,7 +41,7 @@ public class MovementHandler {
     private int moveTicks;
     private final List<KLocation> posLocs = new ArrayList<>();
     @Getter
-    private boolean checkMovement, accurateYawData, cinematic;
+    private boolean checkMovement, accurateYawData, cinematic, jumped, inAir;
     @Getter
     @Setter
     private boolean excuseNextFlying;
@@ -231,6 +231,16 @@ public class MovementHandler {
         if (player.getInfo().isSneaking()) player.getInfo().getLastSneak().reset();
         if (player.getBlockInfo().inLiquid) player.getInfo().getLastLiquid().reset();
         if(player.getBlockInfo().inWeb) player.getInfo().lastWeb.reset();
+
+        if (!to.isOnGround() && moveTicks > 0) {
+            if (!jumped && from.isOnGround()
+                    && deltaY >= 0) {
+                jumped = true;
+            } else {
+                inAir = true;
+                jumped = false;
+            }
+        } else jumped = inAir = false;
 
         player.getInfo().setGeneralCancel(player.getBukkitPlayer().getAllowFlight()
                 || moveTicks == 0

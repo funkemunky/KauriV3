@@ -82,7 +82,7 @@ public class KeepaliveProcessor implements Runnable {
 
     public void start() {
         if (task == null) {
-            task = RunUtils.taskTimer(this, Anticheat.INSTANCE, 20L, 0L);
+            task = RunUtils.taskTimer(this, 20L, 0L);
         }
     }
 
