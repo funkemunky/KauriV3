@@ -20,6 +20,8 @@ public class FlyC extends Check {
         super(player);
     }
 
+    private double slimeY = 0;
+
     WAction<WPacketPlayInFlying> flyingAction = packet -> {
         if(player.getMovement().getLastTeleport().isNotPassed((1))
                 || player.getMovement().getMoveTicks() <= 2
@@ -34,6 +36,17 @@ public class FlyC extends Check {
         // Adding only possible jump height with current circumstances
         possibleHeights.add(MovementUtils.getJumpHeight(player));
 
+        if(player.getBlockInfo().onSlime && packet.isOnGround() && player.getMovement().getDeltaY() < 0) {
+            double ldeltaY = player.getMovement().getLDeltaY() * -1, deltaY = player.getMovement().getDeltaY() * -1;
+
+            if(ldeltaY > deltaY) {
+                deltaY+= ldeltaY;
+            }
+            slimeY = deltaY;
+            debug("SlimeY: " + slimeY);
+        } else if(!player.getInfo().wasOnSlime)
+            slimeY = 0;
+
         // Adding all possible velocity deltaY.
         player.getVelocityHandler().getPossibleVectors().forEach(vec -> possibleHeights.add(vec.getY()));
 
@@ -44,6 +57,9 @@ public class FlyC extends Check {
         jumpCheck: {
             if(!jumped || player.getInfo().blockAbove.isNotPassed(1)
                     || player.getInfo().climbTimer.isNotPassed(1)
+                    || player.getInfo().wasOnSlime
+                    || player.getInfo().lastFence.isNotPassed(1)
+                    || player.getInfo().lastHalfBlock.isNotPassed(1)
                     || player.getInfo().slimeTimer.isNotPassed(1)
                     || player.getInfo().lastLiquid.isNotPassed(1)) break jumpCheck;
 
@@ -61,6 +77,9 @@ public class FlyC extends Check {
             flag("dy=%.5f p[%s]", player.getMovement().getDeltaY(), possibleHeights.stream()
                     .map(s -> String.valueOf(MathUtils.round(s, 5))).collect(Collectors.joining(";")));
         }
+
+        if(player.getInfo().wasOnSlime)
+            possibleHeights.add(slimeY);
 
         maximumHeightCheck: {
             if(player.getInfo().nearGround) break maximumHeightCheck;

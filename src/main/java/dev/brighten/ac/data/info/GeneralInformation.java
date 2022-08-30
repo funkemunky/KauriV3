@@ -28,7 +28,8 @@ public class GeneralInformation {
             lastPlace = new TickTimer(), climbTimer = new TickTimer(), lastUseItem = new TickTimer(),
             lastRespawn = new TickTimer(), lastEntityCollision = new TickTimer(), lastWeb = new TickTimer(),
             lastLiquid = new TickTimer(), lastBlockDig = new TickTimer(), lastBlockPlace = new TickTimer(),
-            lastBlockUpdate = new TickTimer(), lastMiscNear = new TickTimer(), lastHalfBlock = new TickTimer();
+            lastBlockUpdate = new TickTimer(), lastMiscNear = new TickTimer(), lastHalfBlock = new TickTimer(),
+            lastFence = new TickTimer();
     public LivingEntity target;
     public boolean serverGround, lastServerGround, canFly, nearGround, worldLoaded, generalCancel, inVehicle, creative,
             sneaking, lsneaking, sprinting, gliding, riptiding, wasOnSlime, onLadder, doingVelocity, breakingBlock;

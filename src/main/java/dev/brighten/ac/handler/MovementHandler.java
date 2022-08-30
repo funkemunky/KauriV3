@@ -230,7 +230,9 @@ public class MovementHandler {
         if (player.getInfo().isGliding()) player.getInfo().getLastElytra().reset();
         if (player.getInfo().isSneaking()) player.getInfo().getLastSneak().reset();
         if (player.getBlockInfo().inLiquid) player.getInfo().getLastLiquid().reset();
-        if(player.getBlockInfo().inWeb) player.getInfo().lastWeb.reset();
+        if (player.getBlockInfo().inWeb) player.getInfo().lastWeb.reset();
+        if (player.getBlockInfo().onHalfBlock) player.getInfo().getLastHalfBlock().reset();
+        if (player.getBlockInfo().fenceBelow) player.getInfo().getLastFence().reset();
 
         if (!to.isOnGround() && moveTicks > 0) {
             if (!jumped && from.isOnGround()

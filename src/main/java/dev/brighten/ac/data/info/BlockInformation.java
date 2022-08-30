@@ -238,7 +238,7 @@ public class BlockInformation {
                                                     .isIntersected(blockBox))
                                                 player.getInfo().setNearGround(true);
 
-                                            if(groundBox.isCollided(blockBox)) {
+                                            if(groundBox.copy().expandMin(0, -0.4, 0).isCollided(blockBox)) {
                                                 player.getInfo().setServerGround(true);
 
                                                 if(blockMaterial != null)
@@ -247,11 +247,13 @@ public class BlockInformation {
                                                         case BLUE_ICE:
                                                         case FROSTED_ICE:
                                                         case PACKED_ICE: {
-                                                            onIce = true;
+                                                            if(groundBox.isCollided(blockBox))
+                                                                onIce = true;
                                                             break;
                                                         }
                                                         case SOUL_SAND: {
-                                                            onSoulSand = true;
+                                                            if(groundBox.isCollided(blockBox))
+                                                                onSoulSand = true;
                                                             break;
                                                         }
                                                         case SLIME_BLOCK: {
