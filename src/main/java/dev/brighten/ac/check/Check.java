@@ -35,7 +35,10 @@ public class Check implements ECheck {
     private long lastFlagRun;
     @Getter
     @Setter
-    private boolean enabled, punishable;
+    private boolean enabled, punishable, cancellable;
+    @Getter
+    @Setter
+    private int punishVl;
     private final Timer lastAlert = new MillisTimer();
 
     public static Set<UUID> alertsEnabled = new HashSet<>();
@@ -179,7 +182,7 @@ public class Check implements ECheck {
                         .ifPresent(apl -> apl.getBukkitPlayer().spigot().sendMessage(toSend));
             }
 
-            if(punish && vl > checkData.punishVl()) {
+            if(punish && vl > punishVl) {
                 punish();
             }
             lastAlert.reset();

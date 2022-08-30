@@ -21,6 +21,9 @@ import dev.brighten.ac.utils.*;
 import dev.brighten.ac.utils.annotation.ConfigSetting;
 import dev.brighten.ac.utils.annotation.Init;
 import dev.brighten.ac.utils.annotation.Invoke;
+import dev.brighten.ac.utils.config.Configuration;
+import dev.brighten.ac.utils.config.ConfigurationProvider;
+import dev.brighten.ac.utils.config.YamlConfiguration;
 import dev.brighten.ac.utils.math.RollingAverageDouble;
 import dev.brighten.ac.utils.reflections.types.WrappedClass;
 import dev.brighten.ac.utils.reflections.types.WrappedField;
@@ -33,11 +36,12 @@ import lombok.experimental.PackagePrivate;
 import me.mat1337.loader.plugin.LoaderPlugin;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.Plugin;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -80,6 +84,7 @@ public class Anticheat extends LoaderPlugin {
     private static boolean verboseLogging = true;
 
     private WrappedMethod findClassMethod;
+    private Configuration anticheatConfig;
 
     public void onEnable() {
         INSTANCE = this;
@@ -92,7 +97,7 @@ public class Anticheat extends LoaderPlugin {
                 .setUncaughtExceptionHandler((t, e) -> RunUtils.task(e::printStackTrace))
                 .build());
 
-        saveDefaultConfig();
+        loadConfig();
 
         commandManager = new BukkitCommandManager(getPluginInstance());
         commandManager.enableUnstableAPI("help");
@@ -111,11 +116,11 @@ public class Anticheat extends LoaderPlugin {
                 true,
                 true);
 
-        if(!getConfig().contains("database.username")) {
-            getConfig().set("database.username", "dbuser");
+        if(!getAnticheatConfig().contains("database.username")) {
+            getAnticheatConfig().set("database.username", "dbuser");
         }
-        if(!getConfig().contains("database.password")) {
-            getConfig().set("database.password", UUID.randomUUID().toString());
+        if(!getAnticheatConfig().contains("database.password")) {
+            getAnticheatConfig().set("database.password", UUID.randomUUID().toString());
         }
 
         this.keepaliveProcessor = new KeepaliveProcessor();
@@ -182,7 +187,43 @@ public class Anticheat extends LoaderPlugin {
         packetHandler = null;
     }
 
+    public void saveConfig() {
+        try {
+            ConfigurationProvider.getProvider(YamlConfiguration.class)
+                    .save(getAnticheatConfig(), new File(getDataFolder().getPath() + File.separator + "anticheat.yml"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
+    public void reloadConfig() {
+        try {
+
+            anticheatConfig = ConfigurationProvider.getProvider(YamlConfiguration.class)
+                    .load(new File(getDataFolder().getPath() + File.separator + "anticheat.yml"));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void loadConfig() {
+        try {
+            File configFile = new File(getDataFolder(), "anticheat.yml");
+
+            if(!configFile.exists()) {
+                configFile.getParentFile().mkdirs();
+                if(!configFile.createNewFile()) {
+                    throw new RuntimeException("Could not create new anticheat.yml in plugin folder!" +
+                            "Insufficient write permissions?");
+                } else {
+                    MiscUtils.copy(INSTANCE.getResource2("anticheat.yml"), configFile);
+                }
+            }
+            anticheatConfig = ConfigurationProvider.getProvider(YamlConfiguration.class).load(configFile);
+        } catch(IOException e) {
+            throw new RuntimeException("Could not load \"anticheat.yml\"!", e);
+        }
+    }
 
     public void initializeScanner(Class<?> mainClass, Plugin plugin, ClassLoader loader,
                                   boolean loadListeners, boolean loadCommands) {
@@ -277,12 +318,12 @@ public class Anticheat extends LoaderPlugin {
                                     (setting.hide() ? "HIDDEN" : field.get(obj)));
 
 
-                            FileConfiguration config = plugin.getConfig();
+                            Configuration config = getAnticheatConfig();
 
                             if(config.get((setting.path().length() > 0 ? setting.path() + "." : "") + name) == null) {
                                 alog(true,"&7Value not set in config! Setting value...");
                                 config.set((setting.path().length() > 0 ? setting.path() + "." : "") + name, field.get(obj));
-                                plugin.saveConfig();
+                                saveConfig();
                             } else {
                                 Object configObj = config.get((setting.path().length() > 0 ? setting.path() + "." : "") + name);
                                 alog(true, "&7Set field to value &e%s&7.",

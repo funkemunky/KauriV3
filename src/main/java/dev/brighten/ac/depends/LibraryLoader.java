@@ -110,9 +110,6 @@ public final class LibraryLoader {
 
         try {
             URL_INJECTOR.get().addURL(saveLocation.toURI().toURL());
-            //val mapOfShit = JarUtil.loadJar(saveLocation);
-
-            //((Map<String, byte[]>)Anticheat.INSTANCE.getStuffs()).putAll(mapOfShit);
         } catch (Exception e) {
             throw new RuntimeException("Unable to load dependency: " + saveLocation.toString(), e);
         }

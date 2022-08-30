@@ -4,12 +4,12 @@ import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.utils.annotation.Init;
 import dev.brighten.ac.utils.reflections.Reflections;
 import dev.brighten.ac.utils.reflections.types.WrappedClass;
-import jdk.tools.jlink.resources.plugins;
 import org.bukkit.Bukkit;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.ClassNode;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.annotation.Annotation;
@@ -17,7 +17,6 @@ import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -31,18 +30,37 @@ public class ClassScanner {
     //TODO Get check classes too
     public static Set<WrappedClass> getClasses(Class<? extends Annotation> annotationClass,
                                                String packageName) {
-        Map<String, byte[]> map = (Map<String, byte[]>) Anticheat.INSTANCE.getStuffs();
-        return getNames().stream().filter(pkg -> pkg.startsWith(packageName) && findClass(map.get(pkg), annotationClass) != null)
-                .map(Reflections::getClass).collect(Collectors.toSet());
+        Map<String, byte[]> map = Anticheat.INSTANCE.getStuffs();
+        Map<String, byte[]> loadedClasses = Anticheat.INSTANCE.getLoadedClasses();
+        Set<WrappedClass> toReturn = new HashSet<>();
+
+        for (Map.Entry<String, byte[]> entry : map.entrySet()) {
+            boolean startsWith = entry.getKey().startsWith(packageName);
+            boolean hasAnnotation = findClass(new ByteArrayInputStream(entry.getValue()), annotationClass) != null;
+
+            if(startsWith && hasAnnotation) {
+                toReturn.add(Reflections.getClass(entry.getKey()));
+            }
+        }
+
+        for (Map.Entry<String, byte[]> entry : loadedClasses.entrySet()) {
+            boolean startsWith = entry.getKey().startsWith(packageName);
+            boolean hasAnnotation = findClass(new ByteArrayInputStream(entry.getValue()), annotationClass) != null;
+
+            if(startsWith && hasAnnotation) {
+                toReturn.add(Reflections.getClass(entry.getKey()));
+            }
+        }
+        return toReturn;
     }
 
     public static Set<String> getNames() {
-        Map<String, byte[]> map = (Map<String, byte[]>) Anticheat.INSTANCE.getStuffs();
+        Map<String, byte[]> map = Anticheat.INSTANCE.getStuffs();
 
         Set<String> nameSet = new HashSet<>();
 
-        for (String loadedClass : Anticheat.INSTANCE.getLoadedClasses()) {
-            InputStream stream = Anticheat.INSTANCE.getClassLoader2().getResourceAsStream(loadedClass);
+        for (String loadedClass : Anticheat.INSTANCE.getLoadedClasses().keySet()) {
+            InputStream stream = new ByteArrayInputStream(Anticheat.INSTANCE.getLoadedClasses().get(loadedClass));
 
             if(findClass(stream, Init.class) != null) {
                 nameSet.add(loadedClass);

@@ -1,20 +1,23 @@
 package dev.brighten.ac.check.impl.combat;
 
-import dev.brighten.ac.check.WAction;
+import dev.brighten.ac.api.check.CheckType;
 import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
-import dev.brighten.ac.api.check.CheckType;
+import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInUseEntity;
+import dev.brighten.ac.packet.wrapper.objects.EnumParticle;
 import dev.brighten.ac.utils.*;
 import dev.brighten.ac.utils.timer.Timer;
 import dev.brighten.ac.utils.timer.impl.TickTimer;
 import dev.brighten.ac.utils.world.EntityData;
 import dev.brighten.ac.utils.world.types.SimpleCollisionBox;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
 
 import java.util.*;
@@ -78,6 +81,8 @@ public class Hitbox extends Check {
                     SimpleCollisionBox box = (SimpleCollisionBox)
                             EntityData.getEntityBox(oldLocation.toVector(), target.one);
 
+                    box.draw(EnumParticle.FLAME, Bukkit.getOnlinePlayers().toArray(new Player[0]));
+
                     if(player.getPlayerVersion().isBelow(ProtocolVersion.V1_9)) {
                         box = box.expand(0.1325);
                     } else box = box.expand(0.0325);
@@ -86,6 +91,8 @@ public class Hitbox extends Check {
                 for (KLocation oldLocation : eloc.two.interpolatedLocations) {
                     SimpleCollisionBox box = (SimpleCollisionBox)
                             EntityData.getEntityBox(oldLocation.toVector(), target.one);
+
+                    box.draw(EnumParticle.FLAME, Bukkit.getOnlinePlayers().toArray(new Player[0]));
 
                     if(player.getPlayerVersion().isBelow(ProtocolVersion.V1_9)) {
                         box = box.expand(0.1325);
@@ -96,6 +103,8 @@ public class Hitbox extends Check {
                 for (KLocation oldLocation : eloc.one.interpolatedLocations) {
                     SimpleCollisionBox box = (SimpleCollisionBox)
                             EntityData.getEntityBox(oldLocation.toVector(), target.one);
+
+                    box.draw(EnumParticle.FLAME, Bukkit.getOnlinePlayers().toArray(new Player[0]));
 
                     if(player.getPlayerVersion().isBelow(ProtocolVersion.V1_9)) {
                         box = box.expand(0.1325);
