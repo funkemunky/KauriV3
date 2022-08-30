@@ -54,6 +54,29 @@ public class ClassScanner {
         return toReturn;
     }
 
+    public static Set<WrappedClass> getClasses(Class<? extends Annotation> annotationClass) {
+        Map<String, byte[]> map = Anticheat.INSTANCE.getStuffs();
+        Map<String, byte[]> loadedClasses = Anticheat.INSTANCE.getLoadedClasses();
+        Set<WrappedClass> toReturn = new HashSet<>();
+
+        for (Map.Entry<String, byte[]> entry : map.entrySet()) {
+            boolean hasAnnotation = findClass(new ByteArrayInputStream(entry.getValue()), annotationClass) != null;
+
+            if(hasAnnotation) {
+                toReturn.add(Reflections.getClass(entry.getKey()));
+            }
+        }
+
+        for (Map.Entry<String, byte[]> entry : loadedClasses.entrySet()) {
+            boolean hasAnnotation = findClass(new ByteArrayInputStream(entry.getValue()), annotationClass) != null;
+
+            if(hasAnnotation) {
+                toReturn.add(Reflections.getClass(entry.getKey()));
+            }
+        }
+        return toReturn;
+    }
+
     public static Set<String> getNames() {
         Map<String, byte[]> map = Anticheat.INSTANCE.getStuffs();
 

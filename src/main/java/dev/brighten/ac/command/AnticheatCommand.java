@@ -18,6 +18,7 @@ import dev.brighten.ac.utils.Tuple;
 import dev.brighten.ac.utils.msg.ChatBuilder;
 import io.netty.buffer.Unpooled;
 import lombok.val;
+import net.md_5.bungee.api.chat.TextComponent;
 import net.minecraft.server.v1_8_R3.PacketDataSerializer;
 import net.minecraft.server.v1_8_R3.PacketPlayOutCustomPayload;
 import net.minecraft.server.v1_8_R3.PacketPlayOutTitle;
@@ -199,7 +200,7 @@ public class AnticheatCommand extends BaseCommand {
         Anticheat.INSTANCE.getScheduler().execute(() -> {
 
             if(player == null) {
-                sender.spigot().sendMessage(Messages.NULL_APLAYER);
+                sender.sendMessage(TextComponent.toLegacyText(Messages.NULL_APLAYER));
                 return;
             }
 

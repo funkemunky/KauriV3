@@ -33,7 +33,6 @@ import lombok.Setter;
 import lombok.val;
 import net.minecraft.server.v1_8_R3.PacketPlayOutTransaction;
 import org.bukkit.entity.Player;
-import org.bukkit.plugin.Plugin;
 import org.bukkit.util.Vector;
 
 import java.util.*;
@@ -109,11 +108,6 @@ public class APlayer {
         this.uuid = player.getUniqueId();
         this.playerConnection = MinecraftReflection.getPlayerConnection(player);
 
-        Object pluginManagerObj = gpmanager.invoke(null);
-
-        if(method.invoke(pluginManagerObj, "EnterpriseLoader")) {
-            Plugin plugin = method2.invoke(pluginManagerObj, "EnterpriseLoader");
-        }
         load();
     }
 
