@@ -4,6 +4,7 @@ import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.utils.annotation.Init;
 import dev.brighten.ac.utils.reflections.Reflections;
 import dev.brighten.ac.utils.reflections.types.WrappedClass;
+import jdk.tools.jlink.resources.plugins;
 import org.bukkit.Bukkit;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.AnnotationNode;
@@ -30,24 +31,60 @@ public class ClassScanner {
     //TODO Get check classes too
     public static Set<WrappedClass> getClasses(Class<? extends Annotation> annotationClass,
                                                String packageName) {
-        return getNames().stream().filter(pkg -> pkg.startsWith(packageName) && findClass(map.get(n), Init.class) != null)
+        Map<String, byte[]> map = (Map<String, byte[]>) Anticheat.INSTANCE.getStuffs();
+        return getNames().stream().filter(pkg -> pkg.startsWith(packageName) && findClass(map.get(pkg), annotationClass) != null)
                 .map(Reflections::getClass).collect(Collectors.toSet());
     }
 
     public static Set<String> getNames() {
         Map<String, byte[]> map = (Map<String, byte[]>) Anticheat.INSTANCE.getStuffs();
 
-        return map.keySet().stream().filter(n -> {
-            return !n.endsWith(".yml") && !n.endsWith(".xml") && !n.endsWith(".") && !n.endsWith(".properties")
-                    && !n.contains("dev.brighten.ac.packet")
-                    && Character.isLetterOrDigit(n.charAt(n.length() - 1))
-                    && findClass(map.get(n), Init.class) != null;
-        }).collect(Collectors.toSet());
+        Set<String> nameSet = new HashSet<>();
+
+        for (String loadedClass : Anticheat.INSTANCE.getLoadedClasses()) {
+            InputStream stream = Anticheat.INSTANCE.getClassLoader2().getResourceAsStream(loadedClass);
+
+            if(findClass(stream, Init.class) != null) {
+                nameSet.add(loadedClass);
+            }
+        }
+
+        map.keySet().stream().filter(n -> !n.endsWith(".yml")
+                && !n.endsWith(".xml") && !n.endsWith(".") && !n.endsWith(".properties")
+                && !n.contains("dev.brighten.ac.packet")
+                && Character.isLetterOrDigit(n.charAt(n.length() - 1))
+                && findClass(map.get(n), Init.class) != null).forEach(nameSet::add);
+
+        return nameSet;
     }
 
     public static String findClass(byte[] array, Class<? extends Annotation> annotationClass) {
         try {
             ClassReader reader = new ClassReader(array);
+            ClassNode classNode = new ClassNode();
+            reader.accept(classNode, ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
+            String className = classNode.name.replace('/', '.');
+
+            final String anName = annotationClass.getName().replace(".", "/");
+            if (classNode.visibleAnnotations != null) {
+                for (Object node : classNode.visibleAnnotations) {
+                    AnnotationNode annotation = (AnnotationNode) node;
+                    if (annotation.desc
+                            .equals("L" + anName + ";")) {
+                        return className;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            //Bukkit.getLogger().info("Failed to scan");
+            //e.printStackTrace();
+        }
+        return null;
+    }
+
+    public static String findClass(InputStream stream, Class<? extends Annotation> annotationClass) {
+        try {
+            ClassReader reader = new ClassReader(stream);
             ClassNode classNode = new ClassNode();
             reader.accept(classNode, ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
             String className = classNode.name.replace('/', '.');

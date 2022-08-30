@@ -23,6 +23,8 @@ local.properties
 # PyDev specific (Python IDE for Eclipse)
 *.pydevproject
 
+*.iml
+
 # CDT-specific (C/C++ Development Tooling)
 .cproject
 
@@ -272,3 +274,5 @@ $RECYCLE.BIN/
 *.lnk
 
 # End of https://www.toptal.com/developers/gitignore/api/java,maven,intellij+all,eclipse,linux,macos,windows
+*.iml
+API/API.iml
