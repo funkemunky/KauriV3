@@ -1,10 +1,9 @@
 package dev.brighten.ac.logging.sql;
 
 import dev.brighten.ac.Anticheat;
-import dev.brighten.ac.utils.reflections.Reflections;
-import dev.brighten.ac.utils.reflections.types.WrappedConstructor;
 import lombok.SneakyThrows;
 import org.bukkit.Bukkit;
+import org.h2.jdbc.JdbcConnection;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,9 +26,7 @@ public class MySQL {
             Anticheat.INSTANCE.getLogger().log(Level.SEVERE, "File write error: database.db");
         }
         try {
-            WrappedConstructor jdbcConnection = Reflections.getClass("org.h2.jdbc.JdbcConnection")
-                    .getConstructor(String.class, Properties.class, String.class, Object.class, boolean.class);
-            conn = new NonClosableConnection(jdbcConnection.newInstance("jdbc:h2:file:" +
+            conn = new NonClosableConnection(new JdbcConnection("jdbc:h2:file:" +
                     dataFolder.getAbsolutePath(),
                     new Properties(), "root", "erc5gmv-xvg5CZQ0nzw", false));
             conn.setAutoCommit(true);

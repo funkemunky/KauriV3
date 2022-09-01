@@ -1,12 +1,10 @@
 package dev.brighten.ac;
 
-import co.aikar.commands.BaseCommand;
 import co.aikar.commands.BukkitCommandManager;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import dev.brighten.ac.api.AnticheatAPI;
 import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckManager;
-import dev.brighten.ac.command.AnticheatCommand;
 import dev.brighten.ac.data.PlayerRegistry;
 import dev.brighten.ac.depends.LibraryLoader;
 import dev.brighten.ac.depends.MavenLibrary;
@@ -20,13 +18,10 @@ import dev.brighten.ac.packet.listener.PacketProcessor;
 import dev.brighten.ac.utils.*;
 import dev.brighten.ac.utils.annotation.ConfigSetting;
 import dev.brighten.ac.utils.annotation.Init;
-import dev.brighten.ac.utils.annotation.Invoke;
 import dev.brighten.ac.utils.config.Configuration;
 import dev.brighten.ac.utils.config.ConfigurationProvider;
 import dev.brighten.ac.utils.config.YamlConfiguration;
 import dev.brighten.ac.utils.math.RollingAverageDouble;
-import dev.brighten.ac.utils.reflections.types.WrappedClass;
-import dev.brighten.ac.utils.reflections.types.WrappedField;
 import dev.brighten.ac.utils.reflections.types.WrappedMethod;
 import dev.brighten.ac.utils.timer.Timer;
 import dev.brighten.ac.utils.timer.impl.TickTimer;
@@ -37,8 +32,6 @@ import me.mat1337.loader.plugin.LoaderPlugin;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.event.HandlerList;
-import org.bukkit.event.Listener;
-import org.bukkit.plugin.Plugin;
 
 import java.io.File;
 import java.io.IOException;
@@ -90,8 +83,6 @@ public class Anticheat extends LoaderPlugin {
         INSTANCE = this;
         LibraryLoader.loadAll(getClass());
 
-        findClassMethod = new WrappedClass(getClassLoader2().getClass()).getMethod("findClass", String.class);
-
         scheduler = Executors.newScheduledThreadPool(2, new ThreadFactoryBuilder()
                 .setNameFormat("Anticheat Schedular")
                 .setUncaughtExceptionHandler((t, e) -> RunUtils.task(e::printStackTrace))
@@ -99,10 +90,10 @@ public class Anticheat extends LoaderPlugin {
 
         loadConfig();
 
+        IntegrityCheck.checkIntegrity();
+
         commandManager = new BukkitCommandManager(getPluginInstance());
         commandManager.enableUnstableAPI("help");
-
-        commandManager.registerCommand(new AnticheatCommand());
 
         new CommandPropertiesManager(commandManager, getDataFolder(),
                 getResource2("command-messages.properties"));
@@ -111,10 +102,8 @@ public class Anticheat extends LoaderPlugin {
 
         new AnticheatAPI();
 
-        initializeScanner(getPluginInstance().getClass(), getPluginInstance(),
-                null,
-                true,
-                true);
+        ClassScanner.initializeScanner(getPluginInstance().getClass(), getPluginInstance(),
+                ClassScanner.getNames());
 
         if(!getAnticheatConfig().contains("database.username")) {
             getAnticheatConfig().set("database.username", "dbuser");
@@ -225,114 +214,8 @@ public class Anticheat extends LoaderPlugin {
         }
     }
 
-    public void initializeScanner(Class<?> mainClass, Plugin plugin, ClassLoader loader,
-                                  boolean loadListeners, boolean loadCommands) {
-        initializeScanner(mainClass, plugin, loader, ClassScanner.getNames(), loadListeners,
-                loadCommands);
-    }
-
     public WorldInfo getWorldInfo(World world) {
         return worldInfoMap.computeIfAbsent(world.getUID(), key -> new WorldInfo(world));
-    }
-
-    public void initializeScanner(Class<?> mainClass, Plugin plugin, ClassLoader loader, Set<String> names,
-                                  boolean loadListeners, boolean loadCommands) {
-        names.stream()
-                .map(name -> {
-                    return new WrappedClass(findClassMethod.invoke(getClassLoader2(), name));
-                })
-                .filter(c -> {
-                    if(c.getParent() == null) {
-                        return false;
-                    }
-
-                    Init init = c.getAnnotation(Init.class);
-
-                    String[] required = init.requirePlugins();
-
-                    if(required.length > 0) {
-                        if(init.requireType() == Init.RequireType.ALL) {
-                            return Arrays.stream(required)
-                                    .allMatch(name -> {
-                                        if(name.contains("||")) {
-                                            return Arrays.stream(name.split("\\|\\|"))
-                                                    .anyMatch(n2 -> Bukkit.getPluginManager().isPluginEnabled(n2));
-                                        } else if(name.contains("&&")) {
-                                            return Arrays.stream(name.split("\\|\\|"))
-                                                    .allMatch(n2 -> Bukkit.getPluginManager().isPluginEnabled(n2));
-                                        } else return Bukkit.getPluginManager().isPluginEnabled(name);
-                                    });
-                        } else {
-                            return Arrays.stream(required)
-                                    .anyMatch(name -> {
-                                        if(name.contains("||")) {
-                                            return Arrays.stream(name.split("\\|\\|"))
-                                                    .anyMatch(n2 -> Bukkit.getPluginManager().isPluginEnabled(n2));
-                                        } else if(name.contains("&&")) {
-                                            return Arrays.stream(name.split("\\|\\|"))
-                                                    .allMatch(n2 -> Bukkit.getPluginManager().isPluginEnabled(n2));
-                                        } else return Bukkit.getPluginManager().isPluginEnabled(name);
-                                    });
-                        }
-                    }
-                    return true;
-                })
-                .sorted(Comparator.comparing(c ->
-                        c.getAnnotation(Init.class).priority().getPriority(), Comparator.reverseOrder()))
-                .forEach(c -> {
-                    Object obj = c.getParent().equals(mainClass) ? plugin : c.getConstructor().newInstance();
-                    Init annotation = c.getAnnotation(Init.class);
-
-                    if(loadListeners) {
-                        if(obj instanceof Listener) {
-                            Bukkit.getPluginManager().registerEvents((Listener)obj, plugin);
-                            alog(true,"&7Registered Bukkit listener &e"
-                                    + c.getParent().getSimpleName() + "&7.");
-                        }
-                    }
-
-                    if(obj instanceof BaseCommand) {
-                        alog(true,"&7Found BaseCommand for class &e"
-                                + c.getParent().getSimpleName() + "&7! Registering commands...");
-                        commandManager.registerCommand((BaseCommand)obj);
-                    }
-
-                    for (WrappedMethod method : c.getMethods()) {
-                        if(method.getMethod().isAnnotationPresent(Invoke.class)) {
-                            alog(true,"&7Invoking method &e" + method.getName() + " &7in &e"
-                                    + c.getClass().getSimpleName() + "&7...");
-                            method.invoke(obj);
-                        }
-                    }
-
-                    for (WrappedField field : c.getFields()) {
-                         if(field.isAnnotationPresent(ConfigSetting.class)) {
-                            ConfigSetting setting = field.getAnnotation(ConfigSetting.class);
-
-                            String name = setting.name().length() > 0
-                                    ? setting.name()
-                                    : field.getField().getName();
-
-                            alog(true, "&7Found ConfigSetting &e%s &7(default=&f%s&7).",
-                                    field.getField().getName(),
-                                    (setting.hide() ? "HIDDEN" : field.get(obj)));
-
-
-                            Configuration config = getAnticheatConfig();
-
-                            if(config.get((setting.path().length() > 0 ? setting.path() + "." : "") + name) == null) {
-                                alog(true,"&7Value not set in config! Setting value...");
-                                config.set((setting.path().length() > 0 ? setting.path() + "." : "") + name, field.get(obj));
-                                saveConfig();
-                            } else {
-                                Object configObj = config.get((setting.path().length() > 0 ? setting.path() + "." : "") + name);
-                                alog(true, "&7Set field to value &e%s&7.",
-                                        (setting.hide() ? "HIDDEN" : configObj));
-                                field.set(obj, configObj);
-                            }
-                        }
-                    }
-                });
     }
 
     public void alog(String log, Object... values) {

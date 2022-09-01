@@ -15,6 +15,7 @@ import dev.brighten.ac.utils.Color;
 import dev.brighten.ac.utils.MiscUtils;
 import dev.brighten.ac.utils.Pastebin;
 import dev.brighten.ac.utils.Tuple;
+import dev.brighten.ac.utils.annotation.Init;
 import dev.brighten.ac.utils.msg.ChatBuilder;
 import io.netty.buffer.Unpooled;
 import lombok.val;
@@ -35,6 +36,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+@Init
 @CommandAlias("anticheat|ac")
 @CommandPermission("anticheat.command")
 public class AnticheatCommand extends BaseCommand {
@@ -100,7 +102,6 @@ public class AnticheatCommand extends BaseCommand {
     }
 
     @Subcommand("alerts")
-    @HelpCommand
     @CommandPermission("anticheat.command.alerts")
     @Description("Toggle anticheat alerts")
     public void onAlerts(Player pl) {
