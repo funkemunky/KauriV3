@@ -271,6 +271,8 @@ public class Horizontal extends Check {
         previousFrom = player.getMovement().getFrom().getLoc().clone();
     };
 
+
+
     private static final float[] SIN_TABLE_FAST = new float[4096], SIN_TABLE_FAST_NEW = new float[4096];
     private static final float[] SIN_TABLE = new float[65536];
     private static final float radToIndex = roundToFloat(651.8986469044033D);

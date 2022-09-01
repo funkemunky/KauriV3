@@ -3,6 +3,7 @@ package dev.brighten.ac.data.info;
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.ProtocolVersion;
+import dev.brighten.ac.packet.wrapper.objects.EnumParticle;
 import dev.brighten.ac.utils.*;
 import dev.brighten.ac.utils.math.IntVector;
 import dev.brighten.ac.utils.world.BlockData;
@@ -75,8 +76,8 @@ public class BlockInformation {
 
         int startX = Location.locToBlock(player.getMovement().getTo().getLoc().x - 1 - dh);
         int endX = Location.locToBlock(player.getMovement().getTo().getLoc().x + 1 + dh);
-        int startY = Location.locToBlock(player.getMovement().getTo().getLoc().y - Math.max(0.6, 0.6 + Math.abs(dy)));
-        int endY = Location.locToBlock(player.getMovement().getTo().getLoc().y + Math.max(2.1, 2.1 + Math.abs(dy)));
+        int startY = Location.locToBlock(player.getMovement().getTo().getLoc().y - 0.6 + dy);
+        int endY = Location.locToBlock(player.getMovement().getTo().getLoc().y + 2.4 + dy);
         int startZ = Location.locToBlock(player.getMovement().getTo().getLoc().z - 1 - dh);
         int endZ = Location.locToBlock(player.getMovement().getTo().getLoc().z + 1 + dh);
 
@@ -113,7 +114,7 @@ public class BlockInformation {
             aboveCollisions.clear();
         }
         final World world = player.getBukkitPlayer().getWorld();
-        int it = 9 * 9;
+        int it = 10 * 10;
 
         if(player.getMovement().getFrom().getBox() != null) {
             SimpleCollisionBox boundsForCollision = player.getMovement().getFrom().getBox().copy().shrink(0.001D, 0.001D, 0.001D);
@@ -152,10 +153,10 @@ public class BlockInformation {
                 Chunk chunk = world.getChunkAt(chunkx, chunkz);
                 if (chunk != null) {
                     int cz = chunkz << 4;
-                    int xstart = Math.max(startX, cx);
-                    int xend = Math.min(endX, cx + 16);
-                    int zstart = Math.max(startZ, cz);
-                    int zend = Math.min(endZ, cz + 16);
+                    int xstart = startX < cx ? cx : startX;
+                    int xend = endX < cx + 16 ? endX : cx + 16;
+                    int zstart = startZ < cz ? cz : startZ;
+                    int zend = endZ < cz + 16 ? endZ : cz + 16;
 
                     for (int x = xstart; x <= xend; ++x) {
                         for (int z = zstart; z <= zend; ++z) {

@@ -8,6 +8,7 @@ import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
 import dev.brighten.ac.utils.MathUtils;
 import dev.brighten.ac.utils.MovementUtils;
+import org.bukkit.potion.PotionEffect;
 
 import java.util.ArrayList;
 import java.util.Comparator;

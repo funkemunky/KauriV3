@@ -11,6 +11,7 @@ import lombok.Setter;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
+import org.bukkit.potion.PotionEffect;
 import org.bukkit.util.Vector;
 
 import java.util.ArrayList;
@@ -31,6 +32,7 @@ public class GeneralInformation {
             lastBlockUpdate = new TickTimer(), lastMiscNear = new TickTimer(), lastHalfBlock = new TickTimer(),
             lastFence = new TickTimer();
     public LivingEntity target;
+    public Optional<PotionEffect> groundJumpBoost;
     public boolean serverGround, lastServerGround, canFly, nearGround, worldLoaded, generalCancel, inVehicle, creative,
             sneaking, lsneaking, sprinting, gliding, riptiding, wasOnSlime, onLadder, doingVelocity, breakingBlock;
     public List<Entity> nearbyEntities = Collections.emptyList();

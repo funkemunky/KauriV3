@@ -19,7 +19,6 @@ public class NoFallB extends Check {
 
     private int airBuffer, groundBuffer;
 
-    @Async
     WAction<WPacketPlayInFlying> flying = packet -> {
         if(player.getMovement().getLastTeleport().isNotPassed(3)
                 || player.getMovement().getMoveTicks() < 2

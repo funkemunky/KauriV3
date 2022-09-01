@@ -60,7 +60,7 @@ public class BlockUpdateHandler {
 
         player.getInfo().getLastPlace().reset();
 
-        Deque<Material> possible = getPossibleMaterials(pos);
+        Deque<Material> possible = getDirectPossibleMaterials(pos);
         possible.add(place.getItemStack().getType());
     }
 
@@ -71,7 +71,7 @@ public class BlockUpdateHandler {
     public void onDig(WPacketPlayInBlockDig dig) {
         player.getInfo().lastBlockUpdate.reset();
         if(dig.getDigType() == WPacketPlayInBlockDig.EnumPlayerDigType.STOP_DESTROY_BLOCK) {
-            Deque<Material> possible = getPossibleMaterials(dig.getBlockPos());
+            Deque<Material> possible = getDirectPossibleMaterials(dig.getBlockPos());
             possible.clear();
             possible.add(Material.AIR);
         }
@@ -165,5 +165,25 @@ public class BlockUpdateHandler {
 
             return blockI;
         }));
+    }
+
+    private Deque<Material> getDirectPossibleMaterials(IntVector loc) {
+         return blockInformation.compute(loc, (blockLoc, blockI) -> {
+            if(blockI == null) {
+                blockI = new LinkedList<>();
+
+                val optional = BlockUtils
+                        .getBlockAsync(loc.toBukkitVector()
+                                .toLocation(player.getBukkitPlayer().getWorld()));
+
+                if(optional.isPresent()) {
+                    Block block = optional.get();
+
+                    blockI.add(block.getType());
+                }
+            }
+
+            return blockI;
+        });
     }
 }

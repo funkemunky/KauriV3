@@ -17,6 +17,7 @@ import lombok.Setter;
 import lombok.val;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
+import org.bukkit.potion.PotionEffectType;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -206,6 +207,7 @@ public class MovementHandler {
             player.getInfo().setWasOnSlime(player.getBlockInfo().onSlime);
             groundTicks++;
             airTicks = 0;
+            player.getInfo().groundJumpBoost = player.getPotionHandler().getEffectByType(PotionEffectType.JUMP);
         } else {
             airTicks++;
             groundTicks = 0;

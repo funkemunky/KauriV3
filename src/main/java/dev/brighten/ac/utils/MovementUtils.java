@@ -20,7 +20,7 @@ public class MovementUtils {
     public static double getJumpHeight(APlayer data) {
         float baseHeight = 0.42f;
 
-        baseHeight+= data.getPotionHandler().getEffectByType(PotionEffectType.JUMP).map(ef -> ef.getAmplifier() + 1)
+        baseHeight+= data.getInfo().groundJumpBoost.map(ef -> ef.getAmplifier() + 1)
                 .orElse(0) * 0.1f;
 
         return baseHeight;
