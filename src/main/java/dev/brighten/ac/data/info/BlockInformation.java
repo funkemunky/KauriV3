@@ -75,12 +75,12 @@ public class BlockInformation {
         else if(dy < -10) dy = -10;
         if(dh > 10) dh = 10;
 
-        int startX = Location.locToBlock(player.getMovement().getTo().getLoc().x - 0.4 - dh);
-        int endX = Location.locToBlock(player.getMovement().getTo().getLoc().x + 0.4 + dh);
-        int startY = Location.locToBlock(player.getMovement().getTo().getLoc().y - 0.4 + dy);
-        int endY = Location.locToBlock(player.getMovement().getTo().getLoc().y + 2.2 + dy);
-        int startZ = Location.locToBlock(player.getMovement().getTo().getLoc().z - 0.4 - dh);
-        int endZ = Location.locToBlock(player.getMovement().getTo().getLoc().z + 0.4 + dh);
+        int startX = Location.locToBlock(player.getMovement().getTo().getLoc().x - 0.6 - dh);
+        int endX = Location.locToBlock(player.getMovement().getTo().getLoc().x + 0.6 + dh);
+        int startY = Location.locToBlock(player.getMovement().getTo().getLoc().y - 0.6 + dy);
+        int endY = Location.locToBlock(player.getMovement().getTo().getLoc().y + 2.4 + dy);
+        int startZ = Location.locToBlock(player.getMovement().getTo().getLoc().z - 0.6 - dh);
+        int endZ = Location.locToBlock(player.getMovement().getTo().getLoc().z + 0.6 + dh);
 
         SimpleCollisionBox waterBox = player.getMovement().getTo().getBox().copy().expand(0, -.38, 0);
 
@@ -211,8 +211,8 @@ public class BlockInformation {
 
                                     SimpleCollisionBox box = player.getMovement().getTo().getBox().copy();
 
-                                    box.expand(Math.abs(player.getMovement().getDeltaX()) + 0.1, -0.001,
-                                            Math.abs(player.getMovement().getDeltaZ()) + 0.1);
+                                    box.expand(Math.abs(player.getMovement().getDeltaXZ() / 2) + 0.1, -0.001,
+                                            Math.abs(player.getMovement().getDeltaXZ() / 2) + 0.1);
                                     if (blockBox.isCollided(box))
                                         collidesHorizontally = true;
 

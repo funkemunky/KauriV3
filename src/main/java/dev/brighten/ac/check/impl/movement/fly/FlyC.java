@@ -51,7 +51,7 @@ public class FlyC extends Check {
         // Adding all possible velocity deltaY.
         player.getVelocityHandler().getPossibleVectors().forEach(vec -> possibleHeights.add(vec.getY()));
 
-        if(player.getBlockInfo().onHalfBlock) {
+        if(player.getInfo().lastHalfBlock.isNotPassed(1)) {
             possibleHeights.add(0.5);
         }
 
@@ -59,6 +59,7 @@ public class FlyC extends Check {
             if(!jumped || player.getInfo().blockAbove.isNotPassed(1)
                     || player.getInfo().climbTimer.isNotPassed(1)
                     || player.getInfo().wasOnSlime
+                    || player.getBlockInfo().nearSteppableEntity
                     || player.getInfo().lastFence.isNotPassed(1)
                     || player.getInfo().lastHalfBlock.isNotPassed(1)
                     || player.getInfo().slimeTimer.isNotPassed(1)
@@ -83,7 +84,7 @@ public class FlyC extends Check {
             possibleHeights.add(slimeY);
 
         maximumHeightCheck: {
-            if(player.getInfo().nearGround) break maximumHeightCheck;
+            if(player.getInfo().nearGround || player.getBlockInfo().nearSteppableEntity) break maximumHeightCheck;
 
             double maxHeight = possibleHeights.stream().max(Comparator.comparing(c -> c)).orElse(1.5) + 0.05f;
 

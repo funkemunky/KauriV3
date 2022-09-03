@@ -18,6 +18,7 @@ import org.bukkit.potion.PotionEffectType;
 import org.bukkit.util.Vector;
 
 import java.util.Deque;
+import java.util.stream.Collectors;
 
 @CheckData(name = "Horizontal", checkId = "horizontala", type = CheckType.MOVEMENT)
 public class Horizontal extends Check {
@@ -263,9 +264,8 @@ public class Horizontal extends Check {
                 } else debug("bad movement");
             } else if (buffer > 0) buffer -= 0.05f;
 
-            debug("smallest=%s f=%s lf=%s pm=%.5f dxz=%.5f b=%.1f f/s=%.2f,%.2f soulsand=%s ", smallestDelta, frictionList, lfrictionList, pmotion,
-                    player.getMovement().getDeltaXZ(), buffer, forward, strafe,
-                    player.getBlockInfo().onSoulSand);
+            debug("smallest=%s efcs=[%s] pm=%.5f dxz=%.5f b=%.1f", smallestDelta, player.getPotionHandler().potionEffects.stream().map(pe -> pe.getType().getName() + ";" + pe.getAmplifier()).collect(Collectors.joining(", ")), pmotion,
+                    player.getMovement().getDeltaXZ(), buffer);
         }
         lastLastClientGround = player.getMovement().getFrom().isOnGround();
         previousFrom = player.getMovement().getFrom().getLoc().clone();
