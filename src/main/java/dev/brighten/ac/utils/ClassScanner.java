@@ -1,10 +1,18 @@
 package dev.brighten.ac.utils;
 
+import co.aikar.commands.BaseCommand;
 import dev.brighten.ac.Anticheat;
+import dev.brighten.ac.utils.annotation.ConfigSetting;
 import dev.brighten.ac.utils.annotation.Init;
+import dev.brighten.ac.utils.annotation.Invoke;
+import dev.brighten.ac.utils.config.Configuration;
 import dev.brighten.ac.utils.reflections.Reflections;
 import dev.brighten.ac.utils.reflections.types.WrappedClass;
+import dev.brighten.ac.utils.reflections.types.WrappedField;
+import dev.brighten.ac.utils.reflections.types.WrappedMethod;
 import org.bukkit.Bukkit;
+import org.bukkit.event.Listener;
+import org.bukkit.plugin.Plugin;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.ClassNode;
@@ -54,6 +62,105 @@ public class ClassScanner {
         return toReturn;
     }
 
+    private static WrappedMethod findClassMethod =
+            new WrappedClass(Anticheat.INSTANCE.getClassLoader2().getClass()).getMethod("findClass", String.class);
+    public static void initializeScanner(Class<?> mainClass, Plugin plugin, Set<String> names) {
+        names.stream()
+                .map(name -> {
+                    return new WrappedClass(findClassMethod.invoke(Anticheat.INSTANCE.getClassLoader2(), name));
+                })
+                .filter(c -> {
+                    if(c.getParent() == null) {
+                        return false;
+                    }
+
+                    Init init = c.getAnnotation(Init.class);
+
+                    String[] required = init.requirePlugins();
+
+                    if(required.length > 0) {
+                        if(init.requireType() == Init.RequireType.ALL) {
+                            return Arrays.stream(required)
+                                    .allMatch(name -> {
+                                        if(name.contains("||")) {
+                                            return Arrays.stream(name.split("\\|\\|"))
+                                                    .anyMatch(n2 -> Bukkit.getPluginManager().isPluginEnabled(n2));
+                                        } else if(name.contains("&&")) {
+                                            return Arrays.stream(name.split("\\|\\|"))
+                                                    .allMatch(n2 -> Bukkit.getPluginManager().isPluginEnabled(n2));
+                                        } else return Bukkit.getPluginManager().isPluginEnabled(name);
+                                    });
+                        } else {
+                            return Arrays.stream(required)
+                                    .anyMatch(name -> {
+                                        if(name.contains("||")) {
+                                            return Arrays.stream(name.split("\\|\\|"))
+                                                    .anyMatch(n2 -> Bukkit.getPluginManager().isPluginEnabled(n2));
+                                        } else if(name.contains("&&")) {
+                                            return Arrays.stream(name.split("\\|\\|"))
+                                                    .allMatch(n2 -> Bukkit.getPluginManager().isPluginEnabled(n2));
+                                        } else return Bukkit.getPluginManager().isPluginEnabled(name);
+                                    });
+                        }
+                    }
+                    return true;
+                })
+                .sorted(Comparator.comparing(c ->
+                        c.getAnnotation(Init.class).priority().getPriority(), Comparator.reverseOrder()))
+                .forEach(c -> {
+                    Object obj = c.getParent().equals(mainClass) ? plugin : c.getConstructor().newInstance();
+                    Init annotation = c.getAnnotation(Init.class);
+
+                    if(obj instanceof Listener) {
+                        Bukkit.getPluginManager().registerEvents((Listener)obj, plugin);
+                        Anticheat.INSTANCE.alog(true,"&7Registered Bukkit listener &e"
+                                + c.getParent().getSimpleName() + "&7.");
+                    }
+
+                    if(obj instanceof BaseCommand) {
+                        Anticheat.INSTANCE.alog(true,"&7Found BaseCommand for class &e"
+                                + c.getParent().getSimpleName() + "&7! Registering commands...");
+                        Anticheat.INSTANCE.getCommandManager().registerCommand((BaseCommand)obj);
+                    }
+
+                    for (WrappedMethod method : c.getMethods()) {
+                        if(method.getMethod().isAnnotationPresent(Invoke.class)) {
+                            Anticheat.INSTANCE.alog(true,"&7Invoking method &e" + method.getName() + " &7in &e"
+                                    + c.getClass().getSimpleName() + "&7...");
+                            method.invoke(obj);
+                        }
+                    }
+
+                    for (WrappedField field : c.getFields()) {
+                        if(field.isAnnotationPresent(ConfigSetting.class)) {
+                            ConfigSetting setting = field.getAnnotation(ConfigSetting.class);
+
+                            String name = setting.name().length() > 0
+                                    ? setting.name()
+                                    : field.getField().getName();
+
+                            Anticheat.INSTANCE.alog(true, "&7Found ConfigSetting &e%s &7(default=&f%s&7).",
+                                    field.getField().getName(),
+                                    (setting.hide() ? "HIDDEN" : field.get(obj)));
+
+
+                            Configuration config = Anticheat.INSTANCE.getAnticheatConfig();
+
+                            if(config.get((setting.path().length() > 0 ? setting.path() + "." : "") + name) == null) {
+                                Anticheat.INSTANCE.alog(true,"&7Value not set in config! Setting value...");
+                                config.set((setting.path().length() > 0 ? setting.path() + "." : "") + name, field.get(obj));
+                                Anticheat.INSTANCE.saveConfig();
+                            } else {
+                                Object configObj = config.get((setting.path().length() > 0 ? setting.path() + "." : "") + name);
+                                Anticheat.INSTANCE.alog(true, "&7Set field to value &e%s&7.",
+                                        (setting.hide() ? "HIDDEN" : configObj));
+                                field.set(obj, configObj);
+                            }
+                        }
+                    }
+                });
+    }
+
     public static Set<WrappedClass> getClasses(Class<? extends Annotation> annotationClass) {
         Map<String, byte[]> map = Anticheat.INSTANCE.getStuffs();
         Map<String, byte[]> loadedClasses = Anticheat.INSTANCE.getLoadedClasses();
@@ -78,7 +185,7 @@ public class ClassScanner {
     }
 
     public static Set<String> getNames() {
-        Map<String, byte[]> map = Anticheat.INSTANCE.getStuffs();
+        Map<String, byte[]> map = new HashMap<>(Anticheat.INSTANCE.getStuffs());
 
         Set<String> nameSet = new HashSet<>();
 
