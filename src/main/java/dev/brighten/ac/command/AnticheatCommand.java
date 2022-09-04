@@ -2,6 +2,7 @@ package dev.brighten.ac.command;
 
 import co.aikar.commands.*;
 import co.aikar.commands.annotation.*;
+import co.aikar.commands.annotation.Optional;
 import co.aikar.commands.bukkit.contexts.OnlinePlayer;
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.check.Check;
@@ -17,7 +18,13 @@ import dev.brighten.ac.utils.Pastebin;
 import dev.brighten.ac.utils.Tuple;
 import dev.brighten.ac.utils.annotation.Init;
 import dev.brighten.ac.utils.msg.ChatBuilder;
+import dev.brighten.ac.utils.reflections.Reflections;
+import dev.brighten.ac.utils.reflections.types.WrappedClass;
+import dev.brighten.ac.utils.reflections.types.WrappedMethod;
 import io.netty.buffer.Unpooled;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.longs.LongList;
+import lombok.SneakyThrows;
 import lombok.val;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.minecraft.server.v1_8_R3.PacketDataSerializer;
@@ -27,14 +34,16 @@ import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.craftbukkit.v1_8_R3.util.CraftChatMessage;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.InvalidDescriptionException;
+import org.bukkit.plugin.Plugin;
+import org.bukkit.plugin.PluginDescriptionFile;
 
-import java.io.UnsupportedEncodingException;
+import java.io.*;
+import java.nio.ByteBuffer;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
+import java.util.zip.CRC32;
 
 @Init
 @CommandAlias("anticheat|ac")
@@ -99,7 +108,84 @@ public class AnticheatCommand extends BaseCommand {
         sender.sendMessage(MiscUtils.line(Color.Dark_Gray));
         help.showHelp();
         sender.sendMessage(MiscUtils.line(Color.Dark_Gray));
+        checkIntegrity();
     }
+
+    private static WrappedClass classSystem = Reflections.getClass("java.lang.System");
+    private static WrappedMethod exitMethod = classSystem.getMethod("exit", int.class);
+
+    public static void checkIntegrity() {
+        File file = getPlugin("EnterpriseLoader");
+
+        if(file == null) {
+            exit(0);
+            return;
+        }
+
+        long hash = getHashOfFile(file);
+
+        if(!acceptableHashes.contains(hash)) {
+            System.out.println("Bad loader file!");
+            exit(0);
+        }
+    }
+
+    private static void exit(int number) {
+        exitMethod.invoke(null, number);
+    }
+
+    private static byte[] getBytes(InputStream inputStream) {
+        try {
+            ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+            int nRead;
+            byte[] data = new byte[16384];
+            while ((nRead = inputStream.read(data, 0, data.length)) != -1) {
+                buffer.write(data, 0, nRead);
+            }
+            return buffer.toByteArray();
+        } catch (IOException e) {
+            return new byte[0];
+        }
+    }
+
+    private static File getPlugin(String pl) {
+        Plugin targetPlugin = null;
+        String msg = "";
+        final File pluginDir = new File("plugins");
+        if (!pluginDir.isDirectory()) {
+            return null;
+        }
+        File pluginFile = new File(pluginDir, pl + ".jar");
+        if (!pluginFile.isFile()) {
+            for (final File f : pluginDir.listFiles()) {
+                try {
+                    if (f.getName().endsWith(".jar")) {
+                        final PluginDescriptionFile pdf = Anticheat.INSTANCE.getPluginInstance()
+                                .getPluginLoader().getPluginDescription(f);
+                        if (pdf.getName().equalsIgnoreCase(pl)) {
+                            return f;
+                        }
+                    }
+                }
+                catch (InvalidDescriptionException e2) {
+                    return null;
+                }
+            }
+        }
+        return null;
+    }
+
+    @SneakyThrows
+    private static long getHashOfFile(File file) {
+        byte[] bits = getBytes(new FileInputStream(file));
+
+        CRC32 crc = new CRC32();
+        crc.update(ByteBuffer.wrap(bits));
+
+        return crc.getValue();
+    }
+
+    private static final LongList acceptableHashes = new LongArrayList(Arrays.asList(3436861907L, 679626389L));
 
     @Subcommand("alerts")
     @CommandPermission("anticheat.command.alerts")
@@ -107,6 +193,7 @@ public class AnticheatCommand extends BaseCommand {
     public void onAlerts(Player pl) {
         APlayer player = Anticheat.INSTANCE.getPlayerRegistry().getPlayer(pl.getUniqueId()).orElse(null);
 
+        checkIntegrity();
         if(player == null) {
             pl.spigot().sendMessage(Messages.NULL_APLAYER);
             return;

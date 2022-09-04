@@ -16,11 +16,9 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.val;
 import net.md_5.bungee.api.ChatColor;
-import net.md_5.bungee.api.chat.BaseComponent;
-import net.md_5.bungee.api.chat.ComponentBuilder;
-import net.md_5.bungee.api.chat.HoverEvent;
-import net.md_5.bungee.api.chat.TextComponent;
+import net.md_5.bungee.api.chat.*;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -98,10 +96,12 @@ public class Check implements ECheck {
         } else {
             player.getInfo().getLastCancel().reset();
 
-            KLocation fromLoc = player.getInfo().getLastKnownGoodPosition() != null
-                    ? player.getInfo().getLastKnownGoodPosition() : player.getMovement().getFrom().getLoc();
+            Location ground = player.getInfo().isServerGround() ? player.getMovement().getFrom().getLoc()
+                    .toLocation(player.getBukkitPlayer().getWorld())
+                    : MovementUtils.findGroundLocation(player.getMovement().getFrom().getLoc()
+                    .toLocation(player.getBukkitPlayer().getWorld()), 10);
 
-            player.getBukkitPlayer().teleport(fromLoc.toLocation(player.getBukkitPlayer().getWorld()));
+            player.getBukkitPlayer().teleport(ground);
         }
     }
 
@@ -172,6 +172,8 @@ public class Check implements ECheck {
             text.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponent[] {
                     createTxt("&eDescription&8: &f%desc%" +
                             "\n&eInfo: &f%info%\n&r\n&7&oClick to teleport to player.", info)}));
+
+            text.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, CheckConfig.clickCommand));
 
             components.add(text);
 

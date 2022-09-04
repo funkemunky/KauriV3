@@ -4,13 +4,18 @@ import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.utils.reflections.impl.MinecraftReflection;
 import dev.brighten.ac.utils.reflections.types.WrappedField;
+import dev.brighten.ac.utils.world.BlockData;
+import dev.brighten.ac.utils.world.CollisionBox;
+import dev.brighten.ac.utils.world.types.SimpleCollisionBox;
 import lombok.val;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
-import org.bukkit.potion.PotionEffectType;
 
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Optional;
 
 public class MovementUtils {
@@ -82,6 +87,83 @@ public class MovementUtils {
             default:
                 return 0.6f;
         }
+    }
+
+    public static Location findGroundLocation(APlayer player, int lowestBelow) {
+        // Player is on the ground, so no need to calculate
+        if(player.getInfo().isServerGround()) {
+            return player.getMovement().getTo().getLoc().toLocation(player.getBukkitPlayer().getWorld());
+        }
+        int x = MathHelper.floor_double(player.getMovement().getTo().getX()),
+                startY = MathHelper.floor_double(player.getMovement().getTo().getY()),
+                z = MathHelper.floor_double(player.getMovement().getTo().getZ());
+
+        for(int y = startY ; y > startY - lowestBelow ; y--) {
+            val block = BlockUtils
+                    .getBlockAsync(new Location(player.getBukkitPlayer().getWorld(), x, y, z));
+
+            if(!block.isPresent()) break; //No point in continuing since the one below will still be not present.
+
+            if(Materials.checkFlag(block.get().getType(), Materials.SOLID)
+                    && Materials.checkFlag(block.get().getType(), Materials.LIQUID)) {
+                CollisionBox box = BlockData.getData(block.get().getType())
+                        .getBox(block.get(), ProtocolVersion.getGameVersion());
+
+                if(box instanceof SimpleCollisionBox) {
+                    SimpleCollisionBox sbox = (SimpleCollisionBox) box;
+
+                    return new Location(block.get().getWorld(), x, sbox.yMax, z);
+                } else {
+                    List<SimpleCollisionBox> sboxes = new ArrayList<>();
+
+                    box.downCast(sboxes);
+
+                    double maxY = sboxes.stream().max(Comparator.comparing(sbox -> sbox.yMax)).map(s -> s.yMax)
+                            .orElse(y + 1.);
+
+                    return new Location(block.get().getWorld(), x, maxY, z);
+                }
+            }
+        }
+
+        return new Location(player.getBukkitPlayer().getWorld(), player.getMovement().getTo().getX(), startY, player.getMovement().getTo().getZ());
+    }
+
+    public static Location findGroundLocation(Location toStart, int lowestBelow) {
+        // Player is on the ground, so no need to calculate
+        int x = MathHelper.floor_double(toStart.getX()),
+                startY = MathHelper.floor_double(toStart.getY()),
+                z = MathHelper.floor_double(toStart.getZ());
+
+        for(int y = startY ; y > startY - lowestBelow ; y--) {
+            val block = BlockUtils
+                    .getBlockAsync(new Location(toStart.getWorld(), x, y, z));
+
+            if(!block.isPresent()) break; //No point in continuing since the one below will still be not present.
+
+            if(Materials.checkFlag(block.get().getType(), Materials.SOLID)
+                    && Materials.checkFlag(block.get().getType(), Materials.LIQUID)) {
+                CollisionBox box = BlockData.getData(block.get().getType())
+                        .getBox(block.get(), ProtocolVersion.getGameVersion());
+
+                if(box instanceof SimpleCollisionBox) {
+                    SimpleCollisionBox sbox = (SimpleCollisionBox) box;
+
+                    return new Location(block.get().getWorld(), x, sbox.yMax, z);
+                } else {
+                    List<SimpleCollisionBox> sboxes = new ArrayList<>();
+
+                    box.downCast(sboxes);
+
+                    double maxY = sboxes.stream().max(Comparator.comparing(sbox -> sbox.yMax)).map(s -> s.yMax)
+                            .orElse(y + 1.);
+
+                    return new Location(block.get().getWorld(), x, maxY, z);
+                }
+            }
+        }
+
+        return new Location(toStart.getWorld(), toStart.getX(), startY, toStart.getZ());
     }
 
     public static float getTotalHeight(float initial) {
