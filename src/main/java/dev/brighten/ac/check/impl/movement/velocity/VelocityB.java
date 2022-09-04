@@ -72,6 +72,7 @@ public class VelocityB extends Check {
             if (player.getMovement().getMoveTicks() == 0
                     || player.getInfo().isGeneralCancel()
                     || player.getBlockInfo().onClimbable
+                    || player.getInfo().lastWeb.isNotPassed(2)
                     || player.getInfo().lastLiquid.isNotPassed(2)
                     || player.getBlockInfo().collidesHorizontally) {
                 ticks = 0;

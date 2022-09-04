@@ -52,6 +52,7 @@ public class NoFallB extends Check {
 
         if(!packet.isOnGround() && player.getInfo().vehicleSwitch.isPassed(20)
                 && !player.getBlockInfo().inLiquid
+                && player.getInfo().lastWeb.isPassed(1)
                 && ((player.getInfo().isServerGround() || player.getBlockInfo().blocksBelow)
                 && dground && !player.getBlockInfo().onHalfBlock)) {
             if((airBuffer +=10) > 30) {
