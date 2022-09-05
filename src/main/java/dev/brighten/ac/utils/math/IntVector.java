@@ -25,7 +25,7 @@ public class IntVector {
 
     @Override
     public String toString() {
-        return String.format("IntVector[%s, %s, %s]", x, y, z);
+        return "IntVector[" + x + ", " +  y + ", " + z + "]";
     }
 
     @Override

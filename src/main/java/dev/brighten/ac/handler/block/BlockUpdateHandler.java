@@ -11,6 +11,7 @@ import dev.brighten.ac.utils.Tuple;
 import dev.brighten.ac.utils.XMaterial;
 import dev.brighten.ac.utils.math.IntVector;
 import dev.brighten.ac.utils.world.types.RayCollision;
+import dev.brighten.ac.utils.wrapper.Wrapper;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.bukkit.Material;
@@ -148,23 +149,7 @@ public class BlockUpdateHandler {
     }
 
     public Deque<Material> getPossibleMaterials(IntVector loc) {
-        return new LinkedList<>(blockInformation.compute(loc, (blockLoc, blockI) -> {
-            if(blockI == null) {
-                blockI = new LinkedList<>();
-
-                val optional = BlockUtils
-                        .getBlockAsync(loc.toBukkitVector()
-                                .toLocation(player.getBukkitPlayer().getWorld()));
-
-                if(optional.isPresent()) {
-                    Block block = optional.get();
-
-                    blockI.add(block.getType());
-                }
-            }
-
-            return blockI;
-        }));
+        return new LinkedList<>(getDirectPossibleMaterials(loc));
     }
 
     private Deque<Material> getDirectPossibleMaterials(IntVector loc) {
@@ -172,15 +157,10 @@ public class BlockUpdateHandler {
             if(blockI == null) {
                 blockI = new LinkedList<>();
 
-                val optional = BlockUtils
-                        .getBlockAsync(loc.toBukkitVector()
-                                .toLocation(player.getBukkitPlayer().getWorld()));
+               Material type = Wrapper.getInstance().getType(player.getBukkitPlayer().getWorld(),
+                       loc.getX(), loc.getY(), loc.getZ());
 
-                if(optional.isPresent()) {
-                    Block block = optional.get();
-
-                    blockI.add(block.getType());
-                }
+                blockI.add(type);
             }
 
             return blockI;

@@ -7,6 +7,7 @@ import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
 import dev.brighten.ac.utils.Color;
+import dev.brighten.ac.utils.annotation.Async;
 import dev.brighten.ac.utils.timer.Timer;
 import dev.brighten.ac.utils.timer.impl.TickTimer;
 
@@ -21,6 +22,7 @@ public class Aim extends Check {
     private float buffer;
     protected Timer lastGrid = new TickTimer(3);
 
+    @Async
     WAction<WPacketPlayInFlying> onFlying = (packet) -> {
         if(!packet.isLooked()) return;
 

@@ -7,13 +7,12 @@ import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
-import dev.brighten.ac.utils.BlockUtils;
 import dev.brighten.ac.utils.KLocation;
 import dev.brighten.ac.utils.MathHelper;
 import dev.brighten.ac.utils.math.IntVector;
+import dev.brighten.ac.utils.wrapper.Wrapper;
+import lombok.val;
 import org.bukkit.Material;
-import org.bukkit.block.Block;
-import org.bukkit.craftbukkit.v1_8_R3.util.CraftMagicNumbers;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.util.Vector;
 
@@ -39,19 +38,6 @@ public class Horizontal extends Check {
 
         check:
         {
-            Block underBlock = BlockUtils.getBlock((previousFrom != null ? player.getMovement().getFrom().getLoc() : player.getMovement().getTo().getLoc())
-                    .toLocation(player.getBukkitPlayer().getWorld())
-                    .subtract(0, 1, 0)),
-                    lastUnderBlock = BlockUtils.getBlock((previousFrom != null ? previousFrom : player.getMovement().getFrom().getLoc())
-                            .toLocation(player.getBukkitPlayer().getWorld())
-                            .subtract(0, 1, 0));
-            if (underBlock == null || lastUnderBlock == null)
-                break check;
-
-            Deque<Material> frictionList = player.getBlockUpdateHandler()
-                    .getPossibleMaterials(new IntVector(underBlock.getX(), underBlock.getY(), underBlock.getZ())),
-                    lfrictionList = player.getBlockUpdateHandler()
-                            .getPossibleMaterials(new IntVector(lastUnderBlock.getX(), lastUnderBlock.getY(), lastUnderBlock.getZ()));
 
             if (!packet.isMoved()
                     || player.getMovement().getMoveTicks() == 0
@@ -62,6 +48,18 @@ public class Horizontal extends Check {
                     || player.getBlockInfo().collidesHorizontally) {
                 break check;
             }
+
+            val underBlockLoc = previousFrom != null ? player.getMovement().getFrom().getLoc() : player.getMovement().getTo().getLoc();
+            val lastUnderBlockLoc = previousFrom != null ? previousFrom : player.getMovement().getFrom().getLoc();
+
+            Deque<Material> frictionList = player.getBlockUpdateHandler()
+                    .getPossibleMaterials(new IntVector(MathHelper.floor_double(underBlockLoc.x),
+                            MathHelper.floor_double(underBlockLoc.y), MathHelper.floor_double(underBlockLoc.z))),
+                    lfrictionList = player.getBlockUpdateHandler()
+                            .getPossibleMaterials(new IntVector(MathHelper.floor_double(lastUnderBlockLoc.x),
+                                    MathHelper.floor_double(lastUnderBlockLoc.y),
+                                    MathHelper.floor_double(lastUnderBlockLoc.z)));
+
             double smallestDelta = Double.MAX_VALUE;
 
             double pmotionx = 0, pmotionz = 0;
@@ -73,13 +71,13 @@ public class Horizontal extends Check {
                     for (Material underMaterial : frictionList) {
                         for (Material lastUnderMaterial : lfrictionList) {
                             for (int s = -1; s < 2; s++) {
-                                for (boolean sprinting : TRUE_FALSE) {
+                                for (boolean sprinting : getSprintIteration(f)) {
                                     for (int fastMath = 0; fastMath <= 2; fastMath++) {
                                         for (boolean attack : TRUE_FALSE) {
                                             for (boolean motionModifiers : TRUE_FALSE) {
                                                 for (boolean using : TRUE_FALSE) {
-                                                    for (boolean sneaking : TRUE_FALSE) {
-                                                        for (boolean jumped : TRUE_FALSE) {
+                                                    for (boolean sneaking : getSneakingIteration(sprinting)) {
+                                                        for (boolean jumped : getJumpingIteration(sprinting)) {
 
                                                             float forward = f, strafe = s;
 
@@ -92,8 +90,8 @@ public class Horizontal extends Check {
                                                                 strafe *= 0.3;
                                                             }
 
-                                                            float friction = CraftMagicNumbers.getBlock(underMaterial).frictionFactor;
-                                                            float lfriction = CraftMagicNumbers.getBlock(lastUnderMaterial).frictionFactor;
+                                                            float friction = Wrapper.getInstance().getFriction(underMaterial);
+                                                            float lfriction = Wrapper.getInstance().getFriction(lastUnderMaterial);
 
                                                             if (using) {
                                                                 forward *= 0.2;
@@ -272,7 +270,21 @@ public class Horizontal extends Check {
     };
 
 
+    private static boolean[] getSprintIteration(int f) {
+        if(f > 0) {
+            return new boolean[] {true, false};
+        }
 
+        return new boolean[] {false};
+    }
+
+    private static boolean[] getSneakingIteration(boolean sprinting) {
+        return sprinting ? new boolean[] {false} : new boolean[] {true, false};
+    }
+
+    private static boolean[] getJumpingIteration(boolean sprinting) {
+        return sprinting ? new boolean[] {true, false} : new boolean[] {false};
+    }
     private static final float[] SIN_TABLE_FAST = new float[4096], SIN_TABLE_FAST_NEW = new float[4096];
     private static final float[] SIN_TABLE = new float[65536];
     private static final float radToIndex = roundToFloat(651.8986469044033D);

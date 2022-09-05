@@ -53,6 +53,7 @@ public class VelocityB extends Check {
 
         check:
         {
+            if (ticks == 0) break check;
             Block underBlock = BlockUtils.getBlock((previousFrom != null ? player.getMovement().getFrom().getLoc() : player.getMovement().getTo().getLoc())
                     .toLocation(player.getBukkitPlayer().getWorld())
                     .subtract(0, 1, 0)),
@@ -66,8 +67,6 @@ public class VelocityB extends Check {
                     .getPossibleMaterials(new IntVector(underBlock.getX(), underBlock.getY(), underBlock.getZ())),
                     lfrictionList = player.getBlockUpdateHandler()
                             .getPossibleMaterials(new IntVector(lastUnderBlock.getX(), lastUnderBlock.getY(), lastUnderBlock.getZ()));
-
-            if (ticks == 0) break check;
 
             if (player.getMovement().getMoveTicks() == 0
                     || player.getInfo().isGeneralCancel()

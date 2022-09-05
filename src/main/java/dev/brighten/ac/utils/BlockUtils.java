@@ -80,18 +80,14 @@ public class BlockUtils {
     public static boolean isUsable(Material material) {
         if(material.isEdible()) return true;
 
-        XMaterial xmat = XMaterial.matchXMaterial(material);
-
-        switch (xmat) {
+        switch (material) {
             case STONE_SWORD:
             case DIAMOND_SWORD:
             case GOLDEN_SWORD:
             case IRON_SWORD:
-            case NETHERITE_SWORD:
             case WOODEN_SWORD:
             case SHIELD:
             case BOW:
-            case CROSSBOW:
                 return true;
             default:
                 return false;

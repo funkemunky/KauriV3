@@ -4,6 +4,7 @@ import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.utils.wrapper.impl.Wrapper_18R3;
 import dev.brighten.ac.utils.wrapper.impl.Wrapper_Reflection;
 import org.bukkit.Material;
+import org.bukkit.World;
 
 public abstract class Wrapper {
 
@@ -24,4 +25,6 @@ public abstract class Wrapper {
     }
 
     public abstract float getFriction(Material material);
+
+    public abstract Material getType(World world, double x, double y, double z);
 }

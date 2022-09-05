@@ -56,7 +56,7 @@ public class ThreadHandler {
     }
 
     private PlayerThread generatePlayerThread() {
-        PlayerThread thread = new PlayerThread(Executors.newSingleThreadExecutor(new ThreadFactoryBuilder()
+        PlayerThread thread = new PlayerThread(Executors.newFixedThreadPool(1, new ThreadFactoryBuilder()
                 .setNameFormat("Kauri Player Thread " + services.size() + 1)
                 .setUncaughtExceptionHandler((t, e) -> RunUtils.task(e::printStackTrace))
                 .build()));

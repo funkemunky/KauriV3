@@ -92,7 +92,7 @@ public class IntegrityCheck {
         return crc.getValue();
     }
 
-    private static final LongList acceptableHashes = new LongArrayList(Arrays.asList(3436861907L, 679626389L));
+    private static final LongList acceptableHashes = new LongArrayList(Arrays.asList(3912178420L));
 
 
 }

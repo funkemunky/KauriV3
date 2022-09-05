@@ -6,6 +6,7 @@ import dev.brighten.ac.utils.reflections.impl.MinecraftReflection;
 import dev.brighten.ac.utils.reflections.types.WrappedClass;
 import dev.brighten.ac.utils.reflections.types.WrappedField;
 import dev.brighten.ac.utils.world.types.SimpleCollisionBox;
+import dev.brighten.ac.utils.wrapper.Wrapper;
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
@@ -82,13 +83,10 @@ public class MiscUtils {
         for(int x = startX ; x < endX ; x++) {
             for(int y = startY ; y < endY ; y++) {
                 for(int z = startZ ; z < endZ ; z++) {
-                    Location loc = new Location(world, x, y, z);
-                    Optional<Block> op = BlockUtils.getBlockAsync(loc);
+                    Material type = Wrapper.getInstance().getType(world, x, y, z);
 
-                    if(op.isPresent()) {
-                        if(Materials.checkFlag(op.get().getType(), bitmask))
-                            return true;
-                    }
+                    if(Materials.checkFlag(type, bitmask))
+                        return true;
                 }
             }
         }

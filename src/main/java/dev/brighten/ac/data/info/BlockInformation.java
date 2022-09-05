@@ -3,14 +3,13 @@ package dev.brighten.ac.data.info;
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.ProtocolVersion;
-import dev.brighten.ac.packet.wrapper.objects.EnumParticle;
 import dev.brighten.ac.utils.*;
 import dev.brighten.ac.utils.math.IntVector;
 import dev.brighten.ac.utils.world.BlockData;
 import dev.brighten.ac.utils.world.CollisionBox;
 import dev.brighten.ac.utils.world.EntityData;
 import dev.brighten.ac.utils.world.types.SimpleCollisionBox;
-import org.bukkit.Chunk;
+import dev.brighten.ac.utils.wrapper.Wrapper;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -26,8 +25,6 @@ public class BlockInformation {
             onSoulSand, blocksAbove, collidesVertically, bedNear, collidesHorizontally, blocksNear, inBlock, miscNear,
             collidedWithEntity, roseBush, inPortal, blocksBelow, pistonNear, fenceBelow, inScaffolding, inHoney,
             nearSteppableEntity;
-    public CollisionHandler
-            handler = new CollisionHandler(new ArrayList<>(), new ArrayList<>(), new KLocation(0,0,0), null);
     public final List<SimpleCollisionBox> aboveCollisions = Collections.synchronizedList(new ArrayList<>()),
             belowCollisions = Collections.synchronizedList(new ArrayList<>());
     public final List<Block> blocks = Collections.synchronizedList(new ArrayList<>());
@@ -126,12 +123,7 @@ public class BlockInformation {
             for(int x = min.getX() ; x <= max.getX() ; x++) {
                 for(int y = min.getY() ; y <= max.getY() ; y++) {
                     for(int z = min.getZ() ; z <= max.getZ() ; z++) {
-                        Optional<Block> block = BlockUtils.getBlockAsync(
-                                new Location(player.getBukkitPlayer().getWorld(), x, y, z));
-
-                        if(!block.isPresent()) continue;
-
-                        Material type = block.get().getType();
+                        Material type = Wrapper.getInstance().getType(player.getBukkitPlayer().getWorld(), x, y, z);
 
                         collisionMaterialCount.compute(type, (key, count) -> {
                             if(count == null) return 1;
@@ -344,13 +336,9 @@ public class BlockInformation {
         if(!player.getInfo().isWorldLoaded())
             return;
 
-        CollisionHandler handler = new CollisionHandler(blocks,
-                player.getInfo().getNearbyEntities(),
-                player.getMovement().getTo().getLoc(), player);
-
         //Bukkit.broadcastMessage("chigga4");
 
-        for (Entity entity : handler.getEntities()) {
+        for (Entity entity : player.getInfo().getNearbyEntities()) {
             boolean isBlockEntity = !(entity instanceof LivingEntity);
 
             if(!isBlockEntity) continue;
@@ -380,12 +368,6 @@ public class BlockInformation {
             onClimbable = player.getInfo().getBlockOnTo().isPresent()
                     && BlockUtils.isClimbableBlock(player.getInfo().getBlockOnTo().get());
         }
-
-        handler.setSize(0.6f, 1.8f);
-        handler.setOffset(0f);
-
-        this.handler.getEntities().clear();
-        this.handler = handler;
     }
 
     public SimpleCollisionBox getBox() {

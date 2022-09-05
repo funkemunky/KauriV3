@@ -65,7 +65,7 @@ public class JoinListener implements Listener {
                     case BLOCK_CHANGE:
                     case MULTI_BLOCK_CHANGE:
                     case MAP_CHUNK: {
-                        if(player.getLagInfo().getLastClientTransaction().isPassed(100L) && player.getCreation().isPassed(6000L)) {
+                        if(player.getLagInfo().getLastClientTransaction().isPassed(200L) && player.getCreation().isPassed(6000L)) {
                             synchronized (player.getPacketQueue()) {
                                 player.getPacketQueue().add(event.getPacket());
                             }
