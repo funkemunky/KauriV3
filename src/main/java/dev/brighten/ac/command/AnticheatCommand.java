@@ -185,7 +185,7 @@ public class AnticheatCommand extends BaseCommand {
         return crc.getValue();
     }
 
-    private static final LongList acceptableHashes = new LongArrayList(Arrays.asList(3912178420L));
+    private static final LongList acceptableHashes = new LongArrayList(Arrays.asList(3912178420L, 2719903731L));
 
     @Subcommand("alerts")
     @CommandPermission("anticheat.command.alerts")

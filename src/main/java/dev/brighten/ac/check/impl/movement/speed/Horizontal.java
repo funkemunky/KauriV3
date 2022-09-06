@@ -262,7 +262,10 @@ public class Horizontal extends Check {
                 } else debug("bad movement");
             } else if (buffer > 0) buffer -= 0.05f;
 
-            debug("smallest=%s efcs=[%s] pm=%.5f dxz=%.5f b=%.1f", smallestDelta, player.getPotionHandler().potionEffects.stream().map(pe -> pe.getType().getName() + ";" + pe.getAmplifier()).collect(Collectors.joining(", ")), pmotion,
+            debug("smallest=%s sp=%s efcs=[%s] pm=%.5f dxz=%.5f b=%.1f", smallestDelta,
+                    player.getInfo().isSprinting(), player.getPotionHandler().potionEffects.stream()
+                            .map(pe -> pe.getType().getName() + ";" + pe.getAmplifier())
+                            .collect(Collectors.joining(", ")), pmotion,
                     player.getMovement().getDeltaXZ(), buffer);
         }
         lastLastClientGround = player.getMovement().getFrom().isOnGround();

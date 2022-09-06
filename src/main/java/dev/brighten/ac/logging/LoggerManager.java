@@ -3,22 +3,27 @@ package dev.brighten.ac.logging;
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.data.APlayer;
-import dev.brighten.ac.logging.sql.ExecutableStatement;
-import dev.brighten.ac.logging.sql.MySQL;
 import dev.brighten.ac.logging.sql.Query;
 import dev.brighten.ac.logging.sql.ResultSetIterator;
+import dev.brighten.ac.utils.RunUtils;
+import dev.brighten.log.socket.OutRequest;
+import dev.brighten.log.socket.RequestType;
+import dev.brighten.log.utils.EncryptionUtils;
 
-import java.sql.Timestamp;
-import java.util.ArrayList;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.security.KeyPair;
+import java.security.PublicKey;
+import java.util.Base64;
 import java.util.Deque;
 import java.util.LinkedList;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 
 public class LoggerManager {
 
     private final Deque<Log> logList = new LinkedList<>();
+    private KeyPair keys;
+    private PublicKey encryptKey;
 
     /*
      * Structure of Log
@@ -26,57 +31,68 @@ public class LoggerManager {
      */
     public void init() {
         // Starting up H2
-        MySQL.initH2();
+        Anticheat.INSTANCE.getLogger().info("Generating RSA...");
+        keys = EncryptionUtils.Companion.geneateRsa();
+        try {
+            Anticheat.INSTANCE.getLogger().info("Sending init request to log server...");
+            OutRequest request = new OutRequest(RequestType.INITIALIZE.toString(), "localhost", null);
 
-        Query.prepare("CREATE TABLE IF NOT EXISTS `logs` (" +
-                "`id` INT NOT NULL AUTO_INCREMENT," +
-                "`uuid` INT NOT NULL," +
-                "`check` VARCHAR(32) NOT NULL," +
-                "`vl` FLOAT NOT NULL," +
-                "`data` MEDIUMTEXT NOT NULL," +
-                "`time` TIMESTAMP NOT NULL," +
-                "PRIMARY KEY (`id`)" +
-                ");").execute();
+            String encoded = Base64.getEncoder().encodeToString(keys.getPublic().getEncoded());
+            System.out.println(encoded);
+            request.getObjects().writeUTF(encoded);
 
-        Query.prepare("create index if not exists `uuid_1` on `logs` (`uuid`)")
-                .execute();
-        Query.prepare("create index if not exists `uuid_check_1` on `logs` (`uuid`, `check`)")
-                        .execute();
+            request.write();
 
-        Anticheat.INSTANCE.getScheduler().scheduleAtFixedRate(() -> {
-            if(logList.size() > 0) {
-                synchronized (logList) {
-                    final StringBuilder values = new StringBuilder();
+            Anticheat.INSTANCE.getLogger().info("Sent!");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 
-                    List<Object> objectsToInsert = new ArrayList<>();
-                    Log log = null;
-                    int amount = 0;
-                    while((log = logList.poll()) != null) {
-                        objectsToInsert.add(log.getUuid().hashCode());
-                        objectsToInsert.add(log.getCheckId());
-                        objectsToInsert.add(log.getVl());
-                        objectsToInsert.add(log.getData());
-                        objectsToInsert.add(new Timestamp(log.getTime()));
+        Anticheat.INSTANCE.getSocketManager().onInputReceived(event -> {
+            if(event.getRequest().getHeader().equals(RequestType.INITIALIZE.toString())) {
+                System.out.println("Received key from server!");
+                ObjectInputStream objectStream = event.getRequest().getObjects();
+                try {
+                    String publicKeyString = objectStream.readUTF();
 
-                        if(++amount >= 150) break;
-                    }
-
-                    for (int i = 0; i < amount; i++) {
-                        values.append(i > 0 ? "," : "").append("(?, ?, ?, ?, ?)");
-                    }
-
-                    ExecutableStatement statement = Query.prepare("INSERT INTO `logs` " +
-                                    "(`uuid`,`check`,`vl`,`data`,`time`) VALUES" + values.toString())
-                            .append(objectsToInsert.toArray());
-
-                    statement.execute();
-
-                    Anticheat.INSTANCE.getLogger().info("Saved " + amount + " logs!");
-
-                    objectsToInsert.clear();
+                    encryptKey = EncryptionUtils.Companion.publicKeyFromString(publicKeyString);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
                 }
             }
-        }, 5, 10, TimeUnit.SECONDS);
+        });
+
+        RunUtils.taskTimerAsync(() -> {
+            System.out.println("Running ping!");
+
+            OutRequest request = new OutRequest(RequestType.PING.toString(),
+                    "localhost",
+                    encryptKey);
+
+            try {
+                request.getObjects().writeLong(System.currentTimeMillis());
+                request.write();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }, 80, 40);
+
+        Anticheat.INSTANCE.socketManager.onInputReceived(event -> {
+            if(event.getRequest().getHeader().equals(RequestType.PING.toString())) {
+                ObjectInputStream objects = event.getRequest().getObjects(keys.getPrivate());
+
+                try {
+                    long serverTime = objects.readLong();
+                    long extense = objects.readLong();
+
+                    long ping = System.currentTimeMillis() - serverTime + extense;
+
+                    System.out.println("Ping: " + ping + "ms");
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        });
     }
 
     public void insertLog(APlayer player, CheckData checkData, float vl, long time, String data) {
@@ -94,6 +110,6 @@ public class LoggerManager {
     }
 
     public void shutDown() {
-        MySQL.shutdown();
+
     }
 }
