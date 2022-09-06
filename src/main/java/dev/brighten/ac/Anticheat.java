@@ -27,7 +27,6 @@ import dev.brighten.ac.utils.timer.Timer;
 import dev.brighten.ac.utils.timer.impl.TickTimer;
 import dev.brighten.ac.utils.world.WorldInfo;
 import dev.brighten.loader.LoaderPlugin;
-import dev.brighten.log.socket.LogSocketManager;
 import lombok.Getter;
 import lombok.experimental.PackagePrivate;
 import org.bukkit.Bukkit;
@@ -62,7 +61,6 @@ public class Anticheat extends LoaderPlugin {
     private KeepaliveProcessor keepaliveProcessor;
     private PacketHandler packetHandler;
     private LoggerManager logManager;
-    public LogSocketManager socketManager;
     private int currentTick;
     private Deque<Runnable> onTickEnd = new LinkedList<>();
     private ServerInjector injector;
@@ -118,8 +116,6 @@ public class Anticheat extends LoaderPlugin {
         this.checkManager = new CheckManager();
         this.playerRegistry = new PlayerRegistry();
         this.packetHandler = new PacketHandler();
-        this.socketManager = new LogSocketManager();
-        socketManager.startSockets();
         logManager = new LoggerManager();
 
         keepaliveProcessor.start();
@@ -157,8 +153,6 @@ public class Anticheat extends LoaderPlugin {
         keepaliveProcessor = null;
         ProtocolAPI.INSTANCE = null;
         tps = null;
-
-        socketManager.shutdownSockets();
 
         logManager.shutDown();
 

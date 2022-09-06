@@ -1,20 +1,22 @@
 package dev.brighten.ac.packet.handler;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.MapMaker;
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.wrapper.PacketType;
 import dev.brighten.ac.packet.wrapper.WPacket;
 import dev.brighten.ac.packet.wrapper.login.WPacketHandshakingInSetProtocol;
+import dev.brighten.ac.utils.reflections.impl.CraftReflection;
 import dev.brighten.ac.utils.reflections.impl.MinecraftReflection;
+import dev.brighten.ac.utils.reflections.types.WrappedClass;
 import io.netty.channel.*;
 import net.minecraft.server.v1_8_R3.PacketLoginInStart;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.lang.reflect.Method;
+import java.util.*;
 import java.util.logging.Level;
 
 public class ModernHandler extends HandlerAbstract {
@@ -26,6 +28,7 @@ public class ModernHandler extends HandlerAbstract {
     private ChannelInboundHandlerAdapter serverChannelHandler;
     private ChannelInitializer<Channel> beginInitProtocol;
     private ChannelInitializer<Channel> endInitProtocol;
+    private List<Channel> serverChannels = Lists.newArrayList();
 
     public ModernHandler() {
         endInitProtocol = new ChannelInitializer<Channel>() {
@@ -64,6 +67,42 @@ public class ModernHandler extends HandlerAbstract {
             }
 
         };
+
+        Object mcServer = CraftReflection.getMinecraftServer();
+        Object serverConnection = MinecraftReflection.getServerConnection(mcServer);
+        boolean looking = true;
+
+        // We need to synchronize against this list
+        for (Method m : mcServer.getClass().getMethods()) {
+            if (m.getParameterTypes().length == 0 && m.getReturnType()
+                    .isAssignableFrom(MinecraftReflection.serverConnection.getParent())) {
+                try {
+                    Object result = m.invoke(mcServer);
+                    if (result != null) serverConnection = result;
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        for (int i = 0; looking; i++) {
+            List<Object> list =  new WrappedClass(serverConnection.getClass()).getFieldByType(List.class, i)
+                    .get(serverConnection);
+
+            for (Object item : list) {
+                //if (!ChannelFuture.class.isInstance(item))
+                //	break;
+
+                // Channel future that contains the server connection
+                Channel serverChannel = ((ChannelFuture) item).channel();
+
+                serverChannels.add(serverChannel);
+                serverChannel.pipeline().addFirst(serverChannelHandler);
+                Bukkit.getLogger().info("Server channel handler injected (" + serverChannel + ")");
+                looking = false;
+            }
+        }
+
     }
 
     @Override
@@ -147,9 +186,7 @@ public class ModernHandler extends HandlerAbstract {
             } else if(type == PacketType.LOGIN_HANDSHAKE) {
                 WPacketHandshakingInSetProtocol packet = (WPacketHandshakingInSetProtocol) PacketType.processType(type, msg);
 
-                System.out.println("Received handshake");
                 if(packet.getProtocol() == WPacketHandshakingInSetProtocol.EnumProtocol.LOGIN) {
-                    System.out.println("Setting protocol version number " + packet.getVersionNumber());
                     protocolLookup.put(ctx.channel(), packet.getVersionNumber());
                 }
             }

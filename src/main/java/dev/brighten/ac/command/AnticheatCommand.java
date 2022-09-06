@@ -1,15 +1,13 @@
 package dev.brighten.ac.command;
 
 import co.aikar.commands.*;
-import co.aikar.commands.annotation.*;
 import co.aikar.commands.annotation.Optional;
+import co.aikar.commands.annotation.*;
 import co.aikar.commands.bukkit.contexts.OnlinePlayer;
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.data.APlayer;
-import dev.brighten.ac.logging.Log;
-import dev.brighten.ac.logging.sql.Query;
 import dev.brighten.ac.messages.Messages;
 import dev.brighten.ac.packet.handler.HandlerAbstract;
 import dev.brighten.ac.utils.Color;
@@ -40,6 +38,7 @@ import org.bukkit.plugin.PluginDescriptionFile;
 
 import java.io.*;
 import java.nio.ByteBuffer;
+import java.sql.Timestamp;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -222,51 +221,31 @@ public class AnticheatCommand extends BaseCommand {
             List<String> logs = new ArrayList<>();
 
             if(check.equals("none")) {
-                Query.prepare("select * from `logs` where `uuid` = ? limit 500").append(uuid.hashCode()).execute(rs -> {
-                    dev.brighten.ac.logging.Log log = Log.builder()
-                            .uuid(uuid)
-                            .checkId(rs.getString("check"))
-                            .data(rs.getString("data"))
-                            .vl(rs.getFloat("vl"))
-                            .time(rs.getTimestamp("time").getTime())
-                            .build();
+                Anticheat.INSTANCE.getLogManager().getLogs(uuid, logsList -> {
+                  logsList.forEach(log -> {
+                      logs.add("[" + new Timestamp(log.getTime()).toLocalDateTime()
+                              .format(DateTimeFormatter.ISO_DATE_TIME) + "] funkemunky failed "
+                              + Anticheat.INSTANCE.getCheckManager().getIdToName().get(log.getCheckId()) + "(VL: " + log.getVl() + ") {" + log.getData() + "}");
+                  });
+                    if(logs.size() == 0) {
+                        if(check.equals("none")) {
+                            sender.sendMessage(Color.Gray + "There are no logs for player \"" + playername + "\"");
+                        } else {
+                            sender.sendMessage(Color.Gray + " does not have any violations for check \"" + check + "\"");
+                        }
+                    } else {
+                        String url = null;
+                        try {
+                            url = Pastebin.makePaste(String.join("\n", logs), playername + "'s Logs", Pastebin.Privacy.UNLISTED);
 
-                    logs.add("[" + rs.getTimestamp("time").toLocalDateTime()
-                            .format(DateTimeFormatter.ISO_DATE_TIME) + "] funkemunky failed "
-                            + Anticheat.INSTANCE.getCheckManager().getIdToName().get(log.getCheckId()) + "(VL: " + log.getVl() + ") {" + log.getData() + "}");
+                            sender.sendMessage(Color.Green + "Logs for " + playername + ": " + Color.White + url);
+                        } catch (UnsupportedEncodingException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
                 });
             } else {
-                Query.prepare("select * from `logs` where `uuid` = ? and `check` = ? limit 500")
-                        .append(uuid.hashCode()).append(check).execute(rs -> {
-                    dev.brighten.ac.logging.Log log = Log.builder()
-                            .uuid(uuid)
-                            .checkId(rs.getString("check"))
-                            .data(rs.getString("data"))
-                            .vl(rs.getFloat("vl"))
-                            .time(rs.getTimestamp("time").getTime())
-                            .build();
 
-                    logs.add("[" + rs.getTimestamp("time").toLocalDateTime()
-                            .format(DateTimeFormatter.ISO_DATE_TIME) + "] funkemunky failed "
-                            + Anticheat.INSTANCE.getCheckManager().getIdToName().get(log.getCheckId()) + "(VL: " + log.getVl() + ") {" + log.getData() + "}");
-                });
-            }
-
-            if(logs.size() == 0) {
-                if(check.equals("none")) {
-                    sender.sendMessage(Color.Gray + "There are no logs for player \"" + playername + "\"");
-                } else {
-                    sender.sendMessage(Color.Gray + " does not have any violations for check \"" + check + "\"");
-                }
-            } else {
-                String url = null;
-                try {
-                    url = Pastebin.makePaste(String.join("\n", logs), playername + "'s Logs", Pastebin.Privacy.UNLISTED);
-
-                    sender.sendMessage(Color.Green + "Logs for " + playername + ": " + Color.White + url);
-                } catch (UnsupportedEncodingException e) {
-                    throw new RuntimeException(e);
-                }
             }
         });
     }

@@ -1,29 +1,24 @@
 package dev.brighten.ac.logging;
 
+import com.neovisionaries.ws.client.WebSocket;
+import com.neovisionaries.ws.client.WebSocketAdapter;
+import com.neovisionaries.ws.client.WebSocketException;
+import com.neovisionaries.ws.client.WebSocketFactory;
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.data.APlayer;
-import dev.brighten.ac.logging.sql.Query;
-import dev.brighten.ac.logging.sql.ResultSetIterator;
-import dev.brighten.ac.utils.RunUtils;
-import dev.brighten.log.socket.OutRequest;
-import dev.brighten.log.socket.RequestType;
-import dev.brighten.log.utils.EncryptionUtils;
+import me.mat1337.loader.utils.json.JSONObject;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.security.KeyPair;
-import java.security.PublicKey;
-import java.util.Base64;
-import java.util.Deque;
-import java.util.LinkedList;
+import java.io.*;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 
 public class LoggerManager {
 
     private final Deque<Log> logList = new LinkedList<>();
-    private KeyPair keys;
-    private PublicKey encryptKey;
+    private String license;
 
     /*
      * Structure of Log
@@ -31,68 +26,41 @@ public class LoggerManager {
      */
     public void init() {
         // Starting up H2
-        Anticheat.INSTANCE.getLogger().info("Generating RSA...");
-        keys = EncryptionUtils.Companion.geneateRsa();
-        try {
-            Anticheat.INSTANCE.getLogger().info("Sending init request to log server...");
-            OutRequest request = new OutRequest(RequestType.INITIALIZE.toString(), "localhost", null);
+        license = Anticheat.INSTANCE.getPluginInstance().getConfig().getString("license");
 
-            String encoded = Base64.getEncoder().encodeToString(keys.getPublic().getEncoded());
-            System.out.println(encoded);
-            request.getObjects().writeUTF(encoded);
-
-            request.write();
-
-            Anticheat.INSTANCE.getLogger().info("Sent!");
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-        Anticheat.INSTANCE.getSocketManager().onInputReceived(event -> {
-            if(event.getRequest().getHeader().equals(RequestType.INITIALIZE.toString())) {
-                System.out.println("Received key from server!");
-                ObjectInputStream objectStream = event.getRequest().getObjects();
+        Anticheat.INSTANCE.getScheduler().scheduleAtFixedRate(() -> {
+            if(logList.size() > 0) {
                 try {
-                    String publicKeyString = objectStream.readUTF();
+                    WebSocket socket =  new WebSocketFactory().createSocket("ws://port.funkemunky.cc/chat").connect();
 
-                    encryptKey = EncryptionUtils.Companion.publicKeyFromString(publicKeyString);
-                } catch (IOException e) {
+                    System.out.println("Writing logs");
+                    Log log;
+                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                    ObjectOutputStream oos = new ObjectOutputStream(baos);
+
+                    oos.writeUTF("LOG_WRITE");
+                    oos.writeUTF(license());
+
+                    int i = 0;
+                    while((log = logList.poll()) != null && i++ < 100) {
+                        oos.writeUTF(log.toJson());
+                    }
+
+                    System.out.println("Wrote " + i + " logs");
+                    oos.close();
+                    socket.sendBinary(baos.toByteArray());
+                    baos.close();
+
+                    socket.disconnect();
+                } catch (IOException | WebSocketException e) {
                     throw new RuntimeException(e);
                 }
             }
-        });
+        }, 10, 10, TimeUnit.SECONDS);
+    }
 
-        RunUtils.taskTimerAsync(() -> {
-            System.out.println("Running ping!");
-
-            OutRequest request = new OutRequest(RequestType.PING.toString(),
-                    "localhost",
-                    encryptKey);
-
-            try {
-                request.getObjects().writeLong(System.currentTimeMillis());
-                request.write();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }, 80, 40);
-
-        Anticheat.INSTANCE.socketManager.onInputReceived(event -> {
-            if(event.getRequest().getHeader().equals(RequestType.PING.toString())) {
-                ObjectInputStream objects = event.getRequest().getObjects(keys.getPrivate());
-
-                try {
-                    long serverTime = objects.readLong();
-                    long extense = objects.readLong();
-
-                    long ping = System.currentTimeMillis() - serverTime + extense;
-
-                    System.out.println("Ping: " + ping + "ms");
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        });
+    private String license() {
+        return license;
     }
 
     public void insertLog(APlayer player, CheckData checkData, float vl, long time, String data) {
@@ -105,8 +73,52 @@ public class LoggerManager {
                 .build());
     }
 
-    public void runQuery(String query, ResultSetIterator iterator) {
-        Query.prepare(query).execute(iterator);
+    public void getLogs(UUID uuid, Consumer<List<Log>> logsConsumer) {
+        try {
+            WebSocket socket = new WebSocketFactory().createSocket("ws://port.funkemunky.cc/chat").connect();
+
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            ObjectOutputStream oos = new ObjectOutputStream(baos);
+
+            oos.writeUTF("LOG_REQ_UUID");
+            oos.writeUTF(license());
+
+            oos.writeUTF(uuid.toString());
+            oos.close();
+            System.out.println("Sending binary");
+            socket.sendBinary(baos.toByteArray()).addListener(new WebSocketAdapter() {
+
+                @Override
+                public void onBinaryMessage(WebSocket websocket, byte[] data) throws Exception {
+                    ByteArrayInputStream bais = new ByteArrayInputStream(data);
+                    ObjectInputStream ois = new ObjectInputStream(bais);
+
+                    List<Log> logs = new ArrayList<>();
+                    while(ois.available() > 0) {
+                        String logString = ois.readUTF();
+                        JSONObject logObject = new JSONObject(logString);
+
+                        logs.add(Log.builder()
+                                        .vl((float)logObject.getDouble("vl"))
+                                        .checkId(logObject.getString("checkId"))
+                                        .data(logObject.getString("data"))
+                                        .time(logObject.getLong("time"))
+                                .uuid(UUID.fromString(logObject.getString("uuid"))).build());
+                    }
+
+                    logsConsumer.accept(logs);
+                    websocket.disconnect();
+                }
+            });
+
+            if(socket.isOpen()) System.out.println("Open");
+            else System.out.println("Not open!");
+        } catch(WebSocketException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
     }
 
     public void shutDown() {
