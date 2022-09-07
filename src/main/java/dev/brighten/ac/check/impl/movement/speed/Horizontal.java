@@ -258,7 +258,6 @@ public class Horizontal extends Check {
                     buffer = Math.min(3.5f, buffer); //Ensuring we don't have a run-away buffer
                     flag("smallest=%s b=%.1f to=%s dxz=%.2f", smallestDelta, buffer,
                             player.getMovement().getTo().getLoc(), player.getMovement().getDeltaXZ());
-                    cancel();
                 } else debug("bad movement");
             } else if (buffer > 0) buffer -= 0.05f;
 

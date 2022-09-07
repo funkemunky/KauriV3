@@ -7,11 +7,12 @@ import com.neovisionaries.ws.client.WebSocketFactory;
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.data.APlayer;
-import me.mat1337.loader.utils.json.JSONObject;
+import dev.brighten.ac.utils.json.JSONObject;
 
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
 
@@ -28,8 +29,10 @@ public class LoggerManager {
         // Starting up H2
         license = Anticheat.INSTANCE.getPluginInstance().getConfig().getString("license");
 
+        AtomicLong lastWrite = new AtomicLong();
         Anticheat.INSTANCE.getScheduler().scheduleAtFixedRate(() -> {
-            if(logList.size() > 0) {
+            long now = System.currentTimeMillis();
+            if(logList.size() > 0 && (now - lastWrite.get() > 2000L || logList.size() > 600)) {
                 try {
                     WebSocket socket =  new WebSocketFactory().createSocket("ws://port.funkemunky.cc/chat").connect();
 
@@ -42,11 +45,16 @@ public class LoggerManager {
                     oos.writeUTF(license());
 
                     int i = 0;
-                    while((log = logList.poll()) != null && i++ < 100) {
+                    while((log = logList.poll()) != null && i++ < 400) {
                         oos.writeUTF(log.toJson());
                     }
 
-                    System.out.println("Wrote " + i + " logs");
+                    if(i == 0) {
+                        logList.clear();
+                    }
+
+                    System.out.println("Wrote " + i + " logs;" + logList.size());
+                    lastWrite.set(now);
                     oos.close();
                     socket.sendBinary(baos.toByteArray());
                     baos.close();
@@ -56,7 +64,7 @@ public class LoggerManager {
                     throw new RuntimeException(e);
                 }
             }
-        }, 10, 10, TimeUnit.SECONDS);
+        }, 100, 100, TimeUnit.MILLISECONDS);
     }
 
     private String license() {
@@ -73,54 +81,146 @@ public class LoggerManager {
                 .build());
     }
 
-    public void getLogs(UUID uuid, Consumer<List<Log>> logsConsumer) {
-        try {
-            WebSocket socket = new WebSocketFactory().createSocket("ws://port.funkemunky.cc/chat").connect();
 
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            ObjectOutputStream oos = new ObjectOutputStream(baos);
+    public void getLogs(UUID uuid, Consumer<List<Log>> logConsumer) {
+        getLogs(uuid, 500, 0, logConsumer);
+    }
+    public void getLogs(UUID uuid, int limit, int skip, Consumer<List<Log>> logsConsumer) {
+        Anticheat.INSTANCE.getScheduler().execute(() -> {
+            try {
+                WebSocket socket = createSocket(logsConsumer).connect();
 
-            oos.writeUTF("LOG_REQ_UUID");
-            oos.writeUTF(license());
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                ObjectOutputStream oos = new ObjectOutputStream(baos);
 
-            oos.writeUTF(uuid.toString());
-            oos.close();
-            System.out.println("Sending binary");
-            socket.sendBinary(baos.toByteArray()).addListener(new WebSocketAdapter() {
+                oos.writeUTF("LOG_REQ_UUID");
+                oos.writeUTF(license());
 
-                @Override
-                public void onBinaryMessage(WebSocket websocket, byte[] data) throws Exception {
-                    ByteArrayInputStream bais = new ByteArrayInputStream(data);
-                    ObjectInputStream ois = new ObjectInputStream(bais);
+                oos.writeUTF(uuid.toString());
+                oos.writeInt(skip);
+                oos.writeInt(limit);
 
-                    List<Log> logs = new ArrayList<>();
-                    while(ois.available() > 0) {
-                        String logString = ois.readUTF();
-                        JSONObject logObject = new JSONObject(logString);
-
-                        logs.add(Log.builder()
-                                        .vl((float)logObject.getDouble("vl"))
-                                        .checkId(logObject.getString("checkId"))
-                                        .data(logObject.getString("data"))
-                                        .time(logObject.getLong("time"))
-                                .uuid(UUID.fromString(logObject.getString("uuid"))).build());
-                    }
-
-                    logsConsumer.accept(logs);
-                    websocket.disconnect();
-                }
-            });
-
-            if(socket.isOpen()) System.out.println("Open");
-            else System.out.println("Not open!");
-        } catch(WebSocketException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
+                oos.close();
+                socket.sendBinary(baos.toByteArray());
+            } catch(WebSocketException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 
+    public void getLogs(UUID uuid, String checkId, Consumer<List<Log>> logConsumer) {
+        getLogs(uuid, checkId, 500, 0, logConsumer);
+    }
+
+    public void getLogs(UUID uuid, String checkId, int limit, int skip, Consumer<List<Log>> logsConsumer) {
+        Anticheat.INSTANCE.getScheduler().execute(() -> {
+            try {
+                WebSocket socket = createSocket(logsConsumer).connect();
+
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                ObjectOutputStream oos = new ObjectOutputStream(baos);
+
+                oos.writeUTF("LOG_REQ_UUID_CHECK");
+                oos.writeUTF(license());
+                oos.writeUTF(uuid.toString());
+                oos.writeUTF(checkId);
+                oos.writeInt(skip);
+                oos.writeInt(limit);
+
+
+                oos.close();
+                socket.sendBinary(baos.toByteArray());
+            } catch(WebSocketException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+    public void getLogs(UUID uuid, String checkId, long timeBefore, long timeAfter,
+                        Consumer<List<Log>> logsConsumer) {
+        getLogs(uuid, checkId, timeBefore, timeAfter, 500, 0, logsConsumer);
+    }
+    public void getLogs(UUID uuid, String checkId, long timeBefore, long timeAfter, int limit, int skip,
+                        Consumer<List<Log>> logsConsumer) {
+        Anticheat.INSTANCE.getScheduler().execute(() -> {
+            try {
+                WebSocket socket = createSocket(logsConsumer).connect();
+
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                ObjectOutputStream oos = new ObjectOutputStream(baos);
+
+                oos.writeUTF("LOG_REQ_UUID_CHECK_TIME");
+                oos.writeUTF(license());
+                oos.writeUTF(checkId);
+                oos.writeLong(timeBefore);
+                oos.writeLong(timeAfter);
+                oos.writeInt(skip);
+                oos.writeInt(limit);
+
+
+                oos.writeUTF(uuid.toString());
+                oos.close();
+                socket.sendBinary(baos.toByteArray());
+            } catch(WebSocketException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+    public void getRecentLogs(int limit, Consumer<List<Log>> logsConsumer) {
+        Anticheat.INSTANCE.getScheduler().execute(() -> {
+            try {
+                WebSocket socket = createSocket(logsConsumer).connect();
+
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                ObjectOutputStream oos = new ObjectOutputStream(baos);
+
+                oos.writeUTF("LOG_REQ_UUID_CHECK");
+                oos.writeUTF(license());
+                oos.writeInt(limit);
+
+                oos.close();
+                socket.sendBinary(baos.toByteArray());
+            } catch (WebSocketException | IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+    private WebSocket createSocket(Consumer<List<Log>> logsConsumer) throws IOException {
+        return new WebSocketFactory().createSocket("ws://port.funkemunky.cc/chat")
+                .addListener(new WebSocketAdapter() {
+
+                    @Override
+                    public void onBinaryMessage(WebSocket websocket, byte[] data) throws Exception {
+                        ByteArrayInputStream bais = new ByteArrayInputStream(data);
+                        ObjectInputStream ois = new ObjectInputStream(bais);
+
+                        System.out.println("Received!: " + ois.available());
+                        List<Log> logs = new ArrayList<>();
+                        while(ois.available() > 0) {
+                            String logString = ois.readUTF();
+                            JSONObject logObject = new JSONObject(logString);
+
+                            logs.add(Log.builder()
+                                    .vl((float)logObject.getDouble("vl"))
+                                    .checkId(logObject.getString("checkId"))
+                                    .data(logObject.getString("data"))
+                                    .time(logObject.getLong("time"))
+                                    .uuid(UUID.fromString(logObject.getString("uuid"))).build());
+                        }
+
+                        logsConsumer.accept(logs);
+                        websocket.disconnect();
+                    }
+                });
+    }
     public void shutDown() {
 
     }

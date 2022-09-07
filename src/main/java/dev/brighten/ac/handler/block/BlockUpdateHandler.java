@@ -18,11 +18,10 @@ import org.bukkit.Material;
 import org.bukkit.block.Block;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 
 @RequiredArgsConstructor
 public class BlockUpdateHandler {
-    private final Map<IntVector, Deque<Material>> blockInformation = new ConcurrentHashMap<>();
+    private final Map<IntVector, Deque<Material>> blockInformation = new Hashtable<>(100, 0.1f);
 
     private final APlayer player;
 
@@ -61,7 +60,7 @@ public class BlockUpdateHandler {
 
         player.getInfo().getLastPlace().reset();
 
-        Deque<Material> possible = getDirectPossibleMaterials(pos);
+        Deque<Material> possible = getPossibleMaterials(pos);
         possible.add(place.getItemStack().getType());
     }
 
@@ -72,7 +71,7 @@ public class BlockUpdateHandler {
     public void onDig(WPacketPlayInBlockDig dig) {
         player.getInfo().lastBlockUpdate.reset();
         if(dig.getDigType() == WPacketPlayInBlockDig.EnumPlayerDigType.STOP_DESTROY_BLOCK) {
-            Deque<Material> possible = getDirectPossibleMaterials(dig.getBlockPos());
+            Deque<Material> possible = getPossibleMaterials(dig.getBlockPos());
             possible.clear();
             possible.add(Material.AIR);
         }
@@ -80,44 +79,13 @@ public class BlockUpdateHandler {
 
     public void runUpdate(WPacketPlayOutBlockChange packet) {
         player.getInfo().lastBlockUpdate.reset();
-        Deque<Material> blockInfo = blockInformation.compute(packet.getBlockLocation(), (blockLoc, blockI) -> {
-            if(blockI == null) {
-                blockI = new LinkedList<>();
-
-                val optional = BlockUtils
-                        .getBlockAsync(packet.getBlockLocation().toBukkitVector()
-                                .toLocation(player.getBukkitPlayer().getWorld()));
-
-                if(optional.isPresent()) {
-                    Block block = optional.get();
-
-                    blockI.add(block.getType());
-                }
-            }
-
-            return blockI;
-        });
-
-        // Updating block information
-        player.runInstantAction(k -> {
-            if(!k.isEnd()) {
-                blockInfo.add(packet.getMaterial());
-            } else if(blockInfo.size() > 1) {
-                blockInfo.removeFirst();
-            }
-        });
-    }
-
-    public void runUpdate(WPacketPlayOutMultiBlockChange packet) {
-        player.getInfo().lastBlockUpdate.reset();
-        List<Tuple<Deque<Material>, Material>> changes = new ArrayList<>();
-        for (WPacketPlayOutMultiBlockChange.BlockChange change : packet.getChanges()) {
-            Deque<Material> blockInfo = blockInformation.compute(change.getLocation(), (blockLoc, blockI) -> {
+        synchronized (blockInformation) {
+            Deque<Material> blockInfo = blockInformation.compute(packet.getBlockLocation(), (blockLoc, blockI) -> {
                 if(blockI == null) {
                     blockI = new LinkedList<>();
 
                     val optional = BlockUtils
-                            .getBlockAsync(change.getLocation().toBukkitVector()
+                            .getBlockAsync(packet.getBlockLocation().toBukkitVector()
                                     .toLocation(player.getBukkitPlayer().getWorld()));
 
                     if(optional.isPresent()) {
@@ -129,10 +97,44 @@ public class BlockUpdateHandler {
 
                 return blockI;
             });
-
-            changes.add(new Tuple<>(blockInfo, change.getMaterial()));
+            // Updating block information
+            player.runInstantAction(k -> {
+                if (!k.isEnd()) {
+                    blockInfo.add(packet.getMaterial());
+                } else if (blockInfo.size() > 1) {
+                    blockInfo.removeFirst();
+                }
+            });
         }
+    }
 
+    public void runUpdate(WPacketPlayOutMultiBlockChange packet) {
+        player.getInfo().lastBlockUpdate.reset();
+        List<Tuple<Deque<Material>, Material>> changes = new ArrayList<>();
+        synchronized (blockInformation) {
+            for (WPacketPlayOutMultiBlockChange.BlockChange change : packet.getChanges()) {
+                Deque<Material> blockInfo = blockInformation.compute(change.getLocation(), (blockLoc, blockI) -> {
+                    if(blockI == null) {
+                        blockI = new LinkedList<>();
+
+                        val optional = BlockUtils
+                                .getBlockAsync(change.getLocation().toBukkitVector()
+                                        .toLocation(player.getBukkitPlayer().getWorld()));
+
+                        if(optional.isPresent()) {
+                            Block block = optional.get();
+
+                            blockI.add(block.getType());
+                        }
+                    }
+
+                    return blockI;
+                });
+
+                changes.add(new Tuple<>(blockInfo, change.getMaterial()));
+            }
+
+        }
         player.runInstantAction(k -> {
             if(!k.isEnd()) {
                 for (Tuple<Deque<Material>, Material> tuple : changes) {
@@ -149,21 +151,22 @@ public class BlockUpdateHandler {
     }
 
     public Deque<Material> getPossibleMaterials(IntVector loc) {
-        return new LinkedList<>(getDirectPossibleMaterials(loc));
-    }
+        synchronized (blockInformation) {
 
-    private Deque<Material> getDirectPossibleMaterials(IntVector loc) {
-         return blockInformation.compute(loc, (blockLoc, blockI) -> {
+            Deque<Material> blockI = blockInformation.get(loc);
+
             if(blockI == null) {
                 blockI = new LinkedList<>();
 
-               Material type = Wrapper.getInstance().getType(player.getBukkitPlayer().getWorld(),
-                       loc.getX(), loc.getY(), loc.getZ());
+                Material type = Wrapper.getInstance().getType(player.getBukkitPlayer().getWorld(),
+                        loc.getX(), loc.getY(), loc.getZ());
 
                 blockI.add(type);
+
+                blockInformation.put(loc, blockI);
             }
 
             return blockI;
-        });
+        }
     }
 }

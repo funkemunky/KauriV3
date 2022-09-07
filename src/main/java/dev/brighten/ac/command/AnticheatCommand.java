@@ -212,48 +212,66 @@ public class AnticheatCommand extends BaseCommand {
     @CommandCompletion("@players @checkIds")
     @CommandPermission("anticheat.command.logs")
     @Description("Get player logs")
-    public void onLogs(CommandSender sender, @Single String playername, @Single @Optional @Default("none") String check) {
+    public void onLogs(CommandSender sender, @Single String playername,
+                       @Single @Optional @Default("none") String check) {
         UUID uuid = Bukkit.getOfflinePlayer(playername).getUniqueId();
 
         sender.sendMessage(Color.Red + "Getting logs for " + playername + "...");
 
-        Anticheat.INSTANCE.getScheduler().execute(() -> {
-            List<String> logs = new ArrayList<>();
+        List<String> logs = new ArrayList<>();
 
-            if(check.equals("none")) {
-                Anticheat.INSTANCE.getLogManager().getLogs(uuid, logsList -> {
-                  logsList.forEach(log -> {
-                      logs.add("[" + new Timestamp(log.getTime()).toLocalDateTime()
-                              .format(DateTimeFormatter.ISO_DATE_TIME) + "] funkemunky failed "
-                              + Anticheat.INSTANCE.getCheckManager().getIdToName().get(log.getCheckId()) + "(VL: " + log.getVl() + ") {" + log.getData() + "}");
-                  });
-                    if(logs.size() == 0) {
-                        if(check.equals("none")) {
-                            sender.sendMessage(Color.Gray + "There are no logs for player \"" + playername + "\"");
-                        } else {
-                            sender.sendMessage(Color.Gray + " does not have any violations for check \"" + check + "\"");
-                        }
-                    } else {
-                        String url = null;
-                        try {
-                            url = Pastebin.makePaste(String.join("\n", logs), playername + "'s Logs", Pastebin.Privacy.UNLISTED);
-
-                            sender.sendMessage(Color.Green + "Logs for " + playername + ": " + Color.White + url);
-                        } catch (UnsupportedEncodingException e) {
-                            throw new RuntimeException(e);
-                        }
-                    }
+        if(check.equals("none")) {
+            Anticheat.INSTANCE.getLogManager().getLogs(uuid, logsList -> {
+                logsList.forEach(log -> {
+                    logs.add("[" + new Timestamp(log.getTime()).toLocalDateTime()
+                            .format(DateTimeFormatter.ISO_DATE_TIME) + "] funkemunky failed "
+                            + Anticheat.INSTANCE.getCheckManager().getIdToName().get(log.getCheckId()) + "(VL: "
+                            + log.getVl() + ") {" + log.getData() + "}");
                 });
-            } else {
+                if(logs.size() == 0) {
+                    sender.sendMessage(Color.Gray + "There are no logs for player \"" + playername + "\"");
+                } else {
+                    String url = null;
+                    try {
+                        url = Pastebin.makePaste(String.join("\n", logs), playername + "'s Logs",
+                                Pastebin.Privacy.UNLISTED);
 
-            }
-        });
+                        sender.sendMessage(Color.Green + "Logs for " + playername + ": " + Color.White + url);
+                    } catch (UnsupportedEncodingException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            });
+        } else {
+            Anticheat.INSTANCE.getLogManager().getLogs(uuid, check, logsList -> {
+                logsList.forEach(log -> {
+                    logs.add("[" + new Timestamp(log.getTime()).toLocalDateTime()
+                            .format(DateTimeFormatter.ISO_DATE_TIME) + "] funkemunky failed "
+                            + Anticheat.INSTANCE.getCheckManager().getIdToName().get(log.getCheckId())
+                            + "(VL: " + log.getVl() + ") {" + log.getData() + "}");
+                });
+                if(logs.size() == 0) {
+                    sender.sendMessage(Color.Gray + " does not have any violations for check \"" + check + "\"");
+                } else {
+                    String url = null;
+                    try {
+                        url = Pastebin.makePaste(String.join("\n", logs), playername + "'s Logs",
+                                Pastebin.Privacy.UNLISTED);
+
+                        sender.sendMessage(Color.Green + "Logs for " + playername + ": " + Color.White + url);
+                    } catch (UnsupportedEncodingException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            });
+        }
     }
 
     @Subcommand("title")
     @Private
     public void onTitle(CommandSender sender, OnlinePlayer target, String title) {
-        PacketPlayOutTitle packetSubtitle = new PacketPlayOutTitle(PacketPlayOutTitle.EnumTitleAction.TITLE, CraftChatMessage.fromString(Color.translate(title))[0]);
+        PacketPlayOutTitle packetSubtitle = new PacketPlayOutTitle(PacketPlayOutTitle.EnumTitleAction.TITLE,
+                CraftChatMessage.fromString(Color.translate(title))[0]);
         HandlerAbstract.getHandler().sendPacket(target.getPlayer(), packetSubtitle);
         sender.sendMessage(Color.Green + "Sent title!");
     }

@@ -1,12 +1,11 @@
 package dev.brighten.ac.check.impl.movement.nofall;
 
-import dev.brighten.ac.check.WAction;
+import dev.brighten.ac.api.check.CheckType;
 import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
-import dev.brighten.ac.api.check.CheckType;
+import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
-import dev.brighten.ac.utils.annotation.Async;
 
 @CheckData(name = "NoFall (A)", checkId = "nofalla", type = CheckType.MOVEMENT)
 public class NoFallA extends Check {
@@ -18,14 +17,13 @@ public class NoFallA extends Check {
     private static double divisor = 1. / 64.;
     private float buffer;
 
-    @Async
     WAction<WPacketPlayInFlying> flying = packet -> {
-        if(player.getInfo().isGeneralCancel()
+        if(!packet.isMoved()
+                || player.getInfo().isGeneralCancel()
                 || (player.getMovement().getDeltaXZ() == 0 && player.getMovement().getDeltaY() == 0)
                 || player.getBlockInfo().inLiquid
                 || player.getInfo().velocity.isNotPassed(1)
-                || player.getMovement().getLastTeleport().isNotPassed(1)
-                || !packet.isMoved()) {
+                || player.getMovement().getLastTeleport().isNotPassed(1)) {
             if(buffer > 0) buffer-= 0.5f;
             return;
         }

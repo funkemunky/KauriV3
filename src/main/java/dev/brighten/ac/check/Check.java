@@ -128,6 +128,26 @@ public class Check implements ECheck {
         }
     }
 
+    static List<TextComponent> devComponents = new ArrayList<>(), components = new ArrayList<>();
+    static {
+
+        for (BaseComponent dev : new ComponentBuilder("[").color(ChatColor.DARK_GRAY).append("Dev")
+                .color(ChatColor.RED).append("]").color(ChatColor.DARK_GRAY).create()) {
+            devComponents.add((TextComponent)dev);
+        }
+
+        BaseComponent[] textComp = new ComponentBuilder("[").color(ChatColor.DARK_GRAY).append("!")
+                .color(ChatColor.DARK_RED).append("]").color(ChatColor.DARK_GRAY).append(" %player%")
+                .color(ChatColor.WHITE).append(" flagged").color(ChatColor.GRAY).append(" %check%")
+                .color(ChatColor.WHITE).append(" (").color(ChatColor.DARK_GRAY).append("x%vl%")
+                .color(ChatColor.YELLOW).append(")").color(ChatColor.DARK_GRAY).create();
+
+        for (BaseComponent bc : textComp) {
+            devComponents.add(new TextComponent((TextComponent)bc));
+            components.add(new TextComponent((TextComponent)bc));
+        }
+    }
+
     public void flag(String information, Object... variables) {
         flag(true, information, variables);
     }
@@ -135,11 +155,11 @@ public class Check implements ECheck {
     public void flag(boolean punish, String information, Object... variables) {
         vl++;
         if(System.currentTimeMillis() - lastFlagRun < 50L) return;
+        lastFlagRun = System.currentTimeMillis();
 
         Anticheat.INSTANCE.getScheduler().execute(() -> {
             if(Anticheat.INSTANCE.getTps() < 18)
                 vl = 0;
-            lastFlagRun = System.currentTimeMillis();
 
             final String info = String.format(information, variables);
 
@@ -156,38 +176,41 @@ public class Check implements ECheck {
                     .execute(() -> Anticheat.INSTANCE.getLogManager()
                             .insertLog(player, checkData, vl, System.currentTimeMillis(), info));
 
-            boolean dev = Anticheat.INSTANCE.getTps() < 18;
-            //if(vl > 0) Anticheat.INSTANCE.loggerManager.addLog(player, this, info);
+           if(lastAlert.isPassed(200L)) {
+               boolean dev = Anticheat.INSTANCE.getTps() < 18;
+               //if(vl > 0) Anticheat.INSTANCE.loggerManager.addLog(player, this, info);
 
-            //Sending Discord webhook alert
+               //Sending Discord webhook alert
 
-            List<TextComponent> components = new ArrayList<>();
+               List<BaseComponent> toSend = new ArrayList<>();
 
-            if(dev) {
-                components.add(new TextComponent(createTxt("&8[&cDev&8] ")));
-            }
-            val text = createTxt("&8[&4!&8] &f%player% &7flagged &f%check%" +
-                    " &8(&ex%vl%&8)", info);
+               for (TextComponent tc : components) {
+                   TextComponent ntc = new TextComponent(tc);
+                   ntc.setText(formatAlert(tc.getText(), info));
 
-            text.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponent[] {
-                    createTxt("&eDescription&8: &f%desc%" +
-                            "\n&eInfo: &f%info%\n&r\n&7&oClick to teleport to player.", info)}));
+                   ntc.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder("Description:")
+                           .color(ChatColor.YELLOW)
+                           .append(formatAlert(" %desc%\n", info)).color(ChatColor.WHITE).append("Info:")
+                           .color(ChatColor.YELLOW)
+                           .append(formatAlert(" %info%\n", info)).color(ChatColor.WHITE)
+                           .append("\n").append("Click to teleport to player")
+                           .create()));
+                   ntc.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND,
+                           addPlaceHolders(CheckConfig.clickCommand)));
 
-            text.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, CheckConfig.clickCommand));
+                   toSend.add(ntc);
+               }
 
-            components.add(text);
-
-            TextComponent[] toSend = components.toArray(new TextComponent[0]);
-
-            for (UUID uuid : alertsEnabled) {
-                Anticheat.INSTANCE.getPlayerRegistry().getPlayer(uuid)
-                        .ifPresent(apl -> apl.getBukkitPlayer().spigot().sendMessage(toSend));
-            }
-
-            if(punish && vl > punishVl) {
-                punish();
-            }
-            lastAlert.reset();
+               for (UUID uuid : alertsEnabled) {
+                   Anticheat.INSTANCE.getPlayerRegistry().getPlayer(uuid)
+                           .ifPresent(apl -> apl.getBukkitPlayer().spigot().sendMessage(toSend
+                                   .toArray(new BaseComponent[0])));
+               }
+               lastAlert.reset();
+           }
+           if(punish && vl > punishVl) {
+               punish();
+           }
         });
     }
 

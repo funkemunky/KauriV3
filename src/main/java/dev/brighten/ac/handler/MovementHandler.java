@@ -19,10 +19,7 @@ import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.potion.PotionEffectType;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 @RequiredArgsConstructor
 public class MovementHandler {
@@ -81,6 +78,10 @@ public class MovementHandler {
         } else moveTicks = 0;
 
         updateLocations(packet);
+
+        if(packet.isMoved()) {
+            player.getBlockInfo().runCollisionCheck();
+        }
         if (moveTicks > 0) {
 
             // Updating block locations
@@ -105,8 +106,6 @@ public class MovementHandler {
                             deltaXZ + Math.abs(deltaY)));
                 }
             }
-
-            player.getBlockInfo().runCollisionCheck();
 
             if(player.getBlockInfo().blocksAbove) {
                 player.getInfo().getBlockAbove().reset();
@@ -209,6 +208,7 @@ public class MovementHandler {
             airTicks = 0;
             player.getInfo().groundJumpBoost = player.getPotionHandler().getEffectByType(PotionEffectType.JUMP);
         } else {
+            player.getInfo().groundJumpBoost = Optional.empty();
             airTicks++;
             groundTicks = 0;
         }

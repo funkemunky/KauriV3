@@ -2,8 +2,8 @@ package dev.brighten.ac.logging;
 
 import lombok.Builder;
 import lombok.Getter;
-import me.mat1337.loader.utils.json.JSONException;
-import me.mat1337.loader.utils.json.JSONObject;
+import dev.brighten.ac.utils.json.JSONException;
+import dev.brighten.ac.utils.json.JSONObject;
 
 import java.util.UUID;
 

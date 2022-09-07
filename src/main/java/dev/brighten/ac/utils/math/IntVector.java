@@ -6,8 +6,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.bukkit.util.Vector;
 
-import java.util.Objects;
-
 @AllArgsConstructor
 @NoArgsConstructor
 public class IntVector {
@@ -30,14 +28,18 @@ public class IntVector {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if(!(o instanceof IntVector)) return false;
+
         IntVector intVector = (IntVector) o;
         return x == intVector.x && y == intVector.y && z == intVector.z;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(x, y, z);
+        int hash = 7;
+        hash = 79 * hash + (int)(Double.doubleToLongBits(this.x) ^ Double.doubleToLongBits(this.x) >>> 32);
+        hash = 79 * hash + (int)(Double.doubleToLongBits(this.y) ^ Double.doubleToLongBits(this.y) >>> 32);
+        hash = 79 * hash + (int)(Double.doubleToLongBits(this.z) ^ Double.doubleToLongBits(this.z) >>> 32);
+        return hash;
     }
 }

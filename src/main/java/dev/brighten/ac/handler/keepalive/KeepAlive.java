@@ -20,7 +20,7 @@ public class KeepAlive {
         this.id = id;
     }
 
-    public final Int2ObjectMap<KAReceived> receivedKeepalive = new Int2ObjectOpenHashMap<>();
+    public final Int2ObjectMap<KAReceived> receivedKeepalive = new Int2ObjectOpenHashMap<>(400);
 
     public void received(APlayer player) {
         receivedKeepalive.put(player.getBukkitPlayer().getUniqueId().hashCode(),
