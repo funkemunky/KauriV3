@@ -21,7 +21,7 @@ import java.util.*;
 
 @RequiredArgsConstructor
 public class BlockUpdateHandler {
-    private final Map<IntVector, Deque<Material>> blockInformation = new Hashtable<>(100, 0.1f);
+    private final Map<IntVector, Deque<Material>> blockInformation = new HashMap<>();
 
     private final APlayer player;
 
