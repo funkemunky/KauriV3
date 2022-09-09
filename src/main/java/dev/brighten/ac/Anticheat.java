@@ -10,6 +10,7 @@ import dev.brighten.ac.depends.LibraryLoader;
 import dev.brighten.ac.depends.MavenLibrary;
 import dev.brighten.ac.depends.Repository;
 import dev.brighten.ac.handler.PacketHandler;
+import dev.brighten.ac.handler.entity.FakeEntityTracker;
 import dev.brighten.ac.handler.keepalive.KeepaliveProcessor;
 import dev.brighten.ac.handler.protocolsupport.ProtocolAPI;
 import dev.brighten.ac.logging.LoggerManager;
@@ -60,6 +61,8 @@ public class Anticheat extends LoaderPlugin {
     private KeepaliveProcessor keepaliveProcessor;
     private PacketHandler packetHandler;
     private LoggerManager logManager;
+
+    private FakeEntityTracker fakeTracker;
     private int currentTick;
     private Deque<Runnable> onTickEnd = new LinkedList<>();
     private ServerInjector injector;
@@ -133,6 +136,8 @@ public class Anticheat extends LoaderPlugin {
             e.printStackTrace();
         }
 
+        fakeTracker = new FakeEntityTracker();
+
         Bukkit.getOnlinePlayers().forEach(HandlerAbstract.getHandler()::add);
     }
     public void onDisable() {
@@ -140,7 +145,7 @@ public class Anticheat extends LoaderPlugin {
         commandManager.unregisterCommands();
 
         // Unregistering packet listeners for players
-        HandlerAbstract.shutdown();
+        HandlerAbstract.getHandler().shutdown();
         HandlerList.unregisterAll(getPluginInstance());
         packetProcessor.shutdown();
         packetProcessor = null;
@@ -152,6 +157,9 @@ public class Anticheat extends LoaderPlugin {
         keepaliveProcessor = null;
         ProtocolAPI.INSTANCE = null;
         tps = null;
+
+        fakeTracker.despawnAll();
+        fakeTracker = null;
 
         logManager.shutDown();
 

@@ -23,12 +23,11 @@ public class BlockInformation {
     private APlayer player;
     public boolean onClimbable, onSlab, onStairs, onHalfBlock, inLiquid, inLava, inWater, inWeb, onSlime, onIce,
             onSoulSand, blocksAbove, collidesVertically, bedNear, collidesHorizontally, blocksNear, inBlock, miscNear,
-            collidedWithEntity, roseBush, inPortal, blocksBelow, pistonNear, fenceBelow, inScaffolding, inHoney,
+            collidedWithEntity, roseBush, fenceNear, inPortal, blocksBelow, pistonNear, fenceBelow, inScaffolding, inHoney,
             nearSteppableEntity;
     public final List<SimpleCollisionBox> aboveCollisions = Collections.synchronizedList(new ArrayList<>()),
             belowCollisions = Collections.synchronizedList(new ArrayList<>());
     public final List<Block> blocks = Collections.synchronizedList(new ArrayList<>());
-    private static EnumMap<Material, XMaterial> matchMaterial = new EnumMap<>(Material.class);
     //Caching material
     private final Material cobweb = XMaterial.COBWEB.parseMaterial(),
             rosebush = XMaterial.ROSE_BUSH.parseMaterial(),
@@ -36,18 +35,12 @@ public class BlockInformation {
             honey = XMaterial.HONEY_BLOCK.parseMaterial();
     public final Map<Material, Integer> collisionMaterialCount = new HashMap<>();
 
-    static {
-        for (Material mat : Material.values()) {
-            matchMaterial.put(mat, XMaterial.matchXMaterial(mat));
-        }
-    }
-
-    public static XMaterial getXMaterial(Material material) {
-        return matchMaterial.getOrDefault(material, null);
-    }
-
     public BlockInformation(APlayer objectData) {
         this.player = objectData;
+    }
+
+    private SimpleCollisionBox newBox(double width, double height) {
+        return new SimpleCollisionBox(player.getMovement().getTo().getLoc(), width, height);
     }
 
     public void runCollisionCheck() {
@@ -148,6 +141,7 @@ public class BlockInformation {
                                 player.getBlockUpdateHandler().getPossibleMaterials(new IntVector(x, y, z));
 
                         BlockUtils.getBlockAsync(new Location(world, x, y, z)).ifPresent(blocks::add);
+
                         for (Material type : types) {
                             if (type != Material.AIR) {
 
@@ -177,25 +171,26 @@ public class BlockInformation {
                                     }
                                 }
 
-                                if(normalBox.copy().expand(0.1, 0, 0.1).offset(0, -1, 0)
+                                if(normalBox.copy().expand(0.1, 0, 0.1)
+                                        .expandMax(0, -0.4, 0).expandMin(0, -0.55, 0)
                                         .isCollided(blockBox)) {
                                     synchronized (belowCollisions) {
                                         blockBox.downCast(belowCollisions);
                                     }
+                                }
+
+                                if(Materials.checkFlag(type, Materials.SOLID)) {
+                                    SimpleCollisionBox groundBox = newBox(0.6, 0.1)
+                                            .expandMax(0, -0.5, 0);
 
                                     if(Materials.checkFlag(type, Materials.FENCE)
                                             || Materials.checkFlag(type, Materials.WALL)) {
                                         fenceBelow = true;
                                     }
-                                }
 
-                                if(Materials.checkFlag(type, Materials.SOLID)) {
-                                    SimpleCollisionBox groundBox = normalBox.copy()
-                                            .offset(0, -.49, 0).expandMax(0, -1.2, 0);
+                                    XMaterial blockMaterial = BlockUtils.getXMaterial(type);
 
-                                    XMaterial blockMaterial = getXMaterial(type);
-
-                                    if(normalBox.copy().expand(0.4, 0, 0.4).expandMin(0, -1, 0)
+                                    if(newBox(1.4, 0).expandMin(0, -1, 0)
                                             .isIntersected(blockBox))
                                         blocksBelow = true;
 
@@ -270,8 +265,10 @@ public class BlockInformation {
                                         else
                                         if(Materials.checkFlag(type, Materials.STAIRS))
                                             onStairs = true;
-                                        else
-                                        if(blockMaterial != null)
+                                        else if(Materials.checkFlag(type, Materials.FENCE)
+                                                || Materials.checkFlag(type, Materials.WALL)) {
+                                            fenceNear = true;
+                                        } else if(blockMaterial != null)
                                             switch(blockMaterial) {
                                                 case CAKE:
                                                 case BREWING_STAND:
@@ -315,7 +312,7 @@ public class BlockInformation {
                                             }
                                     }
                                 } else if(blockBox.isCollided(normalBox)) {
-                                    XMaterial blockMaterial = getXMaterial(type);
+                                    XMaterial blockMaterial = BlockUtils.getXMaterial(type);
 
                                     if(blockMaterial != null)
                                         switch(blockMaterial) {
@@ -335,8 +332,6 @@ public class BlockInformation {
 
         if(!player.getInfo().isWorldLoaded())
             return;
-
-        //Bukkit.broadcastMessage("chigga4");
 
         for (Entity entity : player.getInfo().getNearbyEntities()) {
             boolean isBlockEntity = !(entity instanceof LivingEntity);

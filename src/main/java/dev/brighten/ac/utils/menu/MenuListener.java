@@ -2,6 +2,7 @@ package dev.brighten.ac.utils.menu;
 
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.packet.ProtocolVersion;
+import dev.brighten.ac.utils.BlockUtils;
 import dev.brighten.ac.utils.Color;
 import dev.brighten.ac.utils.annotation.Init;
 import dev.brighten.ac.utils.XMaterial;
@@ -54,7 +55,7 @@ public class MenuListener implements Listener {
 
             if (menu != null) {
                 final ItemStack stack = event.getCurrentItem();
-                if ((stack == null || stack.getType() == XMaterial.AIR.parseMaterial()))
+                if ((stack == null || BlockUtils.getXMaterial(stack.getType()) == XMaterial.AIR))
                     return;
 
                 int slot = event.getSlot();

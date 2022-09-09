@@ -16,7 +16,6 @@ import org.bukkit.entity.Player;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
 
 public class MovementUtils {
 
@@ -73,10 +72,10 @@ public class MovementUtils {
     }
 
     public static float getFriction(Block block) {
-        Optional<XMaterial> matched = XMaterial.matchXMaterial(block.getType().name());
+        XMaterial matched = BlockUtils.getXMaterial(block.getType());
 
-        if(!matched.isPresent()) return 0.6f;
-        switch(matched.get()) {
+        if(matched == null) return 0.6f;
+        switch(matched) {
             case SLIME_BLOCK:
                 return 0.8f;
             case ICE:

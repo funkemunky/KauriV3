@@ -1,5 +1,6 @@
 package dev.brighten.ac.utils.menu.type.impl;
 
+import dev.brighten.ac.utils.BlockUtils;
 import dev.brighten.ac.utils.ItemBuilder;
 import dev.brighten.ac.utils.XMaterial;
 import dev.brighten.ac.utils.menu.Menu;
@@ -66,8 +67,8 @@ public class PagedMenu implements Menu {
     @Override
     public void fillRange(int startingIndex, int endingIndex, Button button) {
         IntStream.range(startingIndex, endingIndex)
-                .filter(i -> contents.get(i) == null || contents.get(i).getStack().getType()
-                        .equals(XMaterial.AIR.parseMaterial()))
+                .filter(i -> contents.get(i) == null || BlockUtils.getXMaterial(contents.get(i).getStack().getType())
+                        .equals(XMaterial.AIR))
                 .forEach(i -> setItem(i, button));
     }
 

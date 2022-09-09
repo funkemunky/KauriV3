@@ -28,11 +28,6 @@ public abstract class HandlerAbstract{
         Bukkit.getOnlinePlayers().forEach(handler::add);
     }
 
-    public static void shutdown() {
-        Bukkit.getOnlinePlayers().forEach(handler::remove);
-        handler = null;
-    }
-
     public abstract void add(Player player);
 
     public abstract void remove(Player player);
@@ -41,5 +36,9 @@ public abstract class HandlerAbstract{
 
     public abstract void sendPacket(APlayer player, Object packet);
 
+    public void shutdown() {
+        Bukkit.getOnlinePlayers().forEach(handler::remove);
+        handler = null;
+    }
     public abstract int getProtocolVersion(Player player);
 }

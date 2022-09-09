@@ -37,8 +37,10 @@ public class Hitbox extends Check {
     }
 
     WAction<WPacketPlayInUseEntity> useEntity = packet -> {
+        Entity entity = packet.getEntity(player.getBukkitPlayer().getWorld());
+        if(entity == null) return;
         if(packet.getAction() == WPacketPlayInUseEntity.EnumEntityUseAction.ATTACK
-                && allowedEntityTypes.contains(packet.getEntity(player.getBukkitPlayer().getWorld()).getType())) {
+                && allowedEntityTypes.contains(entity.getType())) {
             attacks.add(new Tuple<>(packet.getEntity(player.getBukkitPlayer().getWorld()), player.getMovement().getTo().getLoc().clone()));
         }
     };

@@ -1,6 +1,7 @@
 package dev.brighten.ac.utils.world.blocks;
 
 import dev.brighten.ac.packet.ProtocolVersion;
+import dev.brighten.ac.utils.BlockUtils;
 import dev.brighten.ac.utils.Materials;
 import dev.brighten.ac.utils.XMaterial;
 import dev.brighten.ac.utils.world.CollisionBox;
@@ -56,7 +57,7 @@ public class DynamicPane implements CollisionFactory {
     }
 
     private static boolean isPane(Material m) {
-        final XMaterial mat = XMaterial.matchXMaterial(m);
+        XMaterial mat = BlockUtils.getXMaterial(m);
 
         return mat == XMaterial.IRON_BARS || mat.name().contains("PANE")
                 || mat.name().contains("THIN");

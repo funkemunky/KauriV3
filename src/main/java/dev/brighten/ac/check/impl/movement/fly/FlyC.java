@@ -8,7 +8,6 @@ import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
 import dev.brighten.ac.utils.MathUtils;
 import dev.brighten.ac.utils.MovementUtils;
-import org.bukkit.potion.PotionEffect;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -51,7 +50,8 @@ public class FlyC extends Check {
         // Adding all possible velocity deltaY.
         player.getVelocityHandler().getPossibleVectors().forEach(vec -> possibleHeights.add(vec.getY()));
 
-        if(player.getInfo().lastHalfBlock.isNotPassed(1)) {
+        if(player.getInfo().lastHalfBlock.isNotPassed(1)
+                || player.getInfo().lastFence.isNotPassed(1) || player.getBlockInfo().fenceNear) {
             possibleHeights.add(0.5);
         }
 
@@ -61,6 +61,7 @@ public class FlyC extends Check {
                     || player.getInfo().wasOnSlime
                     || player.getBlockInfo().nearSteppableEntity
                     || player.getInfo().lastFence.isNotPassed(1)
+                    || player.getBlockInfo().fenceNear
                     || player.getInfo().lastHalfBlock.isNotPassed(1)
                     || player.getInfo().slimeTimer.isNotPassed(1)
                     || player.getInfo().lastLiquid.isNotPassed(1)) break jumpCheck;

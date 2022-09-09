@@ -63,7 +63,7 @@ public class MiscUtils {
                     Optional<Block> op = BlockUtils.getBlockAsync(loc);
 
                     if(op.isPresent()) {
-                        if(XMaterial.matchXMaterial(op.get().getType()).equals(xmaterial))
+                        if(BlockUtils.getXMaterial(op.get().getType()).equals(xmaterial))
                             return true;
                     }
                 }

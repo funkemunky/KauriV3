@@ -216,10 +216,11 @@ public class ItemBuilder {
      * @since 1.1
      */
     public ItemBuilder color(Color color) {
-        if (is.getType() == XMaterial.LEATHER_BOOTS.parseMaterial()
-                || is.getType() == XMaterial.LEATHER_CHESTPLATE .parseMaterial()
-                || is.getType() == XMaterial.LEATHER_HELMET.parseMaterial()
-                || is.getType() == XMaterial.LEATHER_LEGGINGS.parseMaterial()) {
+        XMaterial type = BlockUtils.getXMaterial(is.getType());
+        if (type == XMaterial.LEATHER_BOOTS
+                || type == XMaterial.LEATHER_CHESTPLATE
+                || type == XMaterial.LEATHER_HELMET
+                || type == XMaterial.LEATHER_LEGGINGS) {
             LeatherArmorMeta meta = (LeatherArmorMeta) is.getItemMeta();
             meta.setColor(color);
             is.setItemMeta(meta);

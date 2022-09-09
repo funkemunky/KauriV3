@@ -20,7 +20,7 @@ public class FlyD extends Check {
     WAction<WPacketPlayInFlying> flyingPacket = packet -> {
         if(!packet.isMoved() || player.getMovement().getMoveTicks() <= 2
                 || player.getBlockInfo().miscNear || player.getBlockInfo().onSlab
-                || player.getBlockInfo().fenceBelow
+                || player.getBlockInfo().fenceBelow || player.getBlockInfo().fenceNear
                 || player.getBlockInfo().onStairs || player.getInfo().isGeneralCancel()) return;
         double deltaY = player.getMovement().getDeltaY();
 

@@ -22,10 +22,7 @@ import dev.brighten.ac.utils.KLocation;
 import dev.brighten.ac.utils.RunUtils;
 import dev.brighten.ac.utils.Tuple;
 import dev.brighten.ac.utils.objects.evicting.EvictingList;
-import dev.brighten.ac.utils.reflections.Reflections;
 import dev.brighten.ac.utils.reflections.impl.MinecraftReflection;
-import dev.brighten.ac.utils.reflections.types.WrappedClass;
-import dev.brighten.ac.utils.reflections.types.WrappedMethod;
 import dev.brighten.ac.utils.timer.Timer;
 import dev.brighten.ac.utils.timer.impl.MillisTimer;
 import lombok.Getter;
@@ -92,17 +89,10 @@ public class APlayer {
     private final List<Consumer<Vector>> onVelocityTasks = new ArrayList<>();
     public final EvictingList<Tuple<KLocation, Double>> pastLocations = new EvictingList<>(20);
 
-
-
     @Setter
     @Getter
     private boolean sendingPackets;
 
-    static WrappedClass bukkitClass = Reflections.getClass("org.bukkit.Bukkit");
-    static WrappedClass pluginManager = Reflections.getClass("org.bukkit.plugin.PluginManager");
-    static WrappedMethod method = pluginManager.getMethod("isPluginEnabled", String.class),
-            method2 = pluginManager.getMethod("getPlugin", String.class),
-            gpmanager = bukkitClass.getMethod("getPluginManager");
     public APlayer(Player player) {
         this.bukkitPlayer = player;
         this.uuid = player.getUniqueId();
@@ -202,6 +192,10 @@ public class APlayer {
 
     public void addPlayerTick() {
         playerTick++;
+    }
+
+    public void sendPacket(Object packet) {
+        HandlerAbstract.getHandler().sendPacket(this, packet);
     }
 
     @Override

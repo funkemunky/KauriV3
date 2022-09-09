@@ -8,6 +8,7 @@ import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.data.APlayer;
+import dev.brighten.ac.handler.entity.FakeMob;
 import dev.brighten.ac.messages.Messages;
 import dev.brighten.ac.packet.handler.HandlerAbstract;
 import dev.brighten.ac.utils.Color;
@@ -205,6 +206,49 @@ public class AnticheatCommand extends BaseCommand {
             Check.alertsEnabled.add(player.getBukkitPlayer().getUniqueId());
             pl.spigot().sendMessage(Messages.ALERTS_ON);
         }
+    }
+
+    @Subcommand("spawnbot")
+    @CommandPermission("anticheat.command.spawnbot")
+    @Description("Spawn test bot")
+    public void onBot(Player player) {
+        FakeMob fakePlayer = new FakeMob(player.getLocation().getWorld());
+
+        fakePlayer.spawn(player.getLocation(), Anticheat.INSTANCE.getPlayerRegistry()
+                .getPlayer(player.getUniqueId()).orElseThrow(() -> new RuntimeException("shit")));
+
+        player.sendMessage(Color.Green + "Spawned entity with ID: " + fakePlayer.getEntityId());
+    }
+
+    @Subcommand("botinvis")
+    @Syntax("[id] [boolean]")
+    @CommandPermission("anticheat.command.botinvis")
+    @Description("Shit")
+    public void onInvis(CommandSender sender, int botId, boolean invis) {
+        FakeMob player = Anticheat.INSTANCE.getFakeTracker().getEntityById(botId);
+
+        if(player == null) {
+            sender.sendMessage(Color.Red + "Bot with ID " + botId + " does not exist!");
+            return;
+        }
+
+        player.setInvisible(invis);
+        sender.sendMessage(Color.Green + (invis ? "Made invis" : "Removed invis") + " on bot " + botId);
+    }
+
+    @Subcommand("despawnbot")
+    @CommandPermission("anticheat.command.despawnBot")
+    @Syntax("[botId]")
+    public void despawnBot(CommandSender sender, int botId) {
+        FakeMob player = Anticheat.INSTANCE.getFakeTracker().getEntityById(botId);
+
+        if(player == null) {
+            sender.sendMessage(Color.Red + "Bot with ID " + botId + " does not exist!");
+            return;
+        }
+
+        player.despawn();
+        sender.sendMessage(Color.Green + "Despawned bot!");
     }
 
     @Subcommand("logs")

@@ -22,13 +22,19 @@ public interface PacketConverter {
 
     WPacketPlayOutEntityEffect processEntityEffect(Object object);
 
+    Object processEntityEffect(WPacketPlayOutEntityEffect object);
+
     WPacketPlayOutPosition processServerPosition(Object object);
 
     WPacketPlayOutAttachEntity processAttach(Object object);
 
     WPacketPlayOutEntity processOutEntity(Object object);
 
+    Object processOutEntity(WPacketPlayOutEntity packet);
+
     WPacketPlayOutEntityTeleport processEntityTeleport(Object object);
+
+    Object processEntityTeleport(WPacketPlayOutEntityTeleport packet);
 
     WPacketHandshakingInSetProtocol processHandshakingProtocol(Object object);
 
@@ -53,4 +59,20 @@ public interface PacketConverter {
     Object processChat(WPacketPlayInChat packet);
 
     WPacketPlayOutPlayerInfo processInfo(Object object);
+
+    WPacketPlayOutNamedEntitySpawn processNamedEntitySpawn(Object object);
+
+    Object processNamedEntitySpawn(WPacketPlayOutNamedEntitySpawn packet);
+
+    WPacketPlayOutSpawnEntityLiving processSpawnLiving(Object object);
+
+    Object processSpawnLiving(WPacketPlayOutSpawnEntityLiving packet);
+
+    WPacketPlayOutRemoveEntityEffect processRemoveEffect(Object object);
+
+    Object processRemoveEffect(WPacketPlayOutRemoveEntityEffect packet);
+
+    WPacketPlayOutEntityMetadata processEntityMetadata(Object object);
+
+    Object processEntityMetadata(WPacketPlayOutEntityMetadata packet);
 }

@@ -6,7 +6,10 @@ import dev.brighten.ac.packet.wrapper.login.WPacketHandshakingInSetProtocol;
 import dev.brighten.ac.packet.wrapper.objects.EnumParticle;
 import dev.brighten.ac.packet.wrapper.objects.PlayerCapabilities;
 import dev.brighten.ac.packet.wrapper.objects.WrappedEnumDirection;
+import dev.brighten.ac.packet.wrapper.objects.WrappedWatchableObject;
 import dev.brighten.ac.packet.wrapper.out.*;
+import dev.brighten.ac.utils.MathHelper;
+import dev.brighten.ac.utils.MiscUtils;
 import dev.brighten.ac.utils.math.IntVector;
 import dev.brighten.ac.utils.reflections.types.WrappedClass;
 import dev.brighten.ac.utils.reflections.types.WrappedField;
@@ -15,18 +18,22 @@ import net.minecraft.server.v1_8_R3.*;
 import org.bukkit.Material;
 import org.bukkit.craftbukkit.v1_8_R3.inventory.CraftItemStack;
 import org.bukkit.craftbukkit.v1_8_R3.util.CraftMagicNumbers;
+import org.bukkit.entity.EntityType;
 import org.bukkit.util.Vector;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.List;
 import java.util.stream.Collectors;
 
 public class Processor_18 implements PacketConverter {
     @Override
     public WPacketPlayInFlying processFlying(Object object) {
         PacketPlayInFlying flying = (PacketPlayInFlying) object;
-        return WPacketPlayInFlying.builder().x(flying.a()).y(flying.b()).z(flying.c()).yaw(flying.d())
+        WPacketPlayInFlying f = WPacketPlayInFlying.builder().x(flying.a()).y(flying.b()).z(flying.c()).yaw(flying.d())
                 .pitch(flying.e()).onGround(flying.f()).moved(flying.g()).looked(flying.h()).build();
+
+        return f;
     }
 
     private static WrappedClass classUseEntity = new WrappedClass(PacketPlayInUseEntity.class);
@@ -35,10 +42,12 @@ public class Processor_18 implements PacketConverter {
     public WPacketPlayInUseEntity processUseEntity(Object object) {
         PacketPlayInUseEntity useEntity = (PacketPlayInUseEntity) object;
 
-        return WPacketPlayInUseEntity.builder().entityId(fieldEntityId.get(useEntity))
+        WPacketPlayInUseEntity ue = WPacketPlayInUseEntity.builder().entityId(fieldEntityId.get(useEntity))
                 .action(WPacketPlayInUseEntity.EnumEntityUseAction.valueOf(useEntity.a().name()))
                 .vector(useEntity.b() != null ? new Vector(useEntity.b().a, useEntity.b().b, useEntity.b().c) : null)
                 .build();
+
+        return ue;
     }
 
     private static final WrappedClass classAbilities = new WrappedClass(PacketPlayInAbilities.class),
@@ -48,11 +57,12 @@ public class Processor_18 implements PacketConverter {
 
     private static final WrappedField outfieldFlySpeed = outClassAbilities.getFieldByType(float.class, 0),
             outfieldWalkSpeed = outClassAbilities.getFieldByType(float.class, 1);
+
     @Override
     public WPacketPlayInAbilities processAbilities(Object object) {
         PacketPlayInAbilities abilities = (PacketPlayInAbilities) object;
 
-        return WPacketPlayInAbilities.builder()
+        WPacketPlayInAbilities a = WPacketPlayInAbilities.builder()
                 .capabilities(PlayerCapabilities.builder()
                         .isInvulnerable(abilities.a())
                         .isFlying(abilities.isFlying())
@@ -62,12 +72,20 @@ public class Processor_18 implements PacketConverter {
                         .walkSpeed(fieldWalkSpeed.get(abilities))
                         .build())
                 .build();
+
+
+
+        return a;
     }
 
     @Override
     public WPacketPlayInArmAnimation processAnimation(Object object) {
         PacketPlayInArmAnimation packet = (PacketPlayInArmAnimation) object;
-        return WPacketPlayInArmAnimation.builder().timestamp(packet.timestamp).build();
+        WPacketPlayInArmAnimation aa = WPacketPlayInArmAnimation.builder().timestamp(packet.timestamp).build();
+
+
+
+        return aa;
     }
 
     @Override
@@ -76,10 +94,15 @@ public class Processor_18 implements PacketConverter {
 
         BlockPosition pos = packet.a();
 
-        return WPacketPlayInBlockDig.builder().blockPos(new IntVector(pos.getX(), pos.getY(), pos.getZ()))
+        WPacketPlayInBlockDig bd = WPacketPlayInBlockDig.builder()
+                .blockPos(new IntVector(pos.getX(), pos.getY(), pos.getZ()))
                 .direction(WrappedEnumDirection.valueOf(packet.b().name()))
                 .digType(WPacketPlayInBlockDig.EnumPlayerDigType.valueOf(packet.c().name()))
                 .build();
+
+
+
+        return bd;
     }
 
     @Override
@@ -88,11 +111,16 @@ public class Processor_18 implements PacketConverter {
 
         BlockPosition pos = packet.a();
 
-        return WPacketPlayInBlockPlace.builder().blockPos(new IntVector(pos.getX(), pos.getY(), pos.getZ()))
+        WPacketPlayInBlockPlace bp = WPacketPlayInBlockPlace.builder()
+                .blockPos(new IntVector(pos.getX(), pos.getY(), pos.getZ()))
                 .direction(WrappedEnumDirection.values()[Math.min(packet.getFace(), 5)])
                 .itemStack(CraftItemStack.asCraftMirror(packet.getItemStack()))
                 .vecX(packet.d()).vecY(packet.e()).vecZ(packet.f())
                 .build();
+
+
+
+        return bp;
     }
 
 
@@ -102,15 +130,22 @@ public class Processor_18 implements PacketConverter {
     public WPacketPlayInCloseWindow processCloseWindow(Object object) {
         PacketPlayInCloseWindow packet = (PacketPlayInCloseWindow) object;
 
-        return WPacketPlayInCloseWindow.builder().id(fieldWindowId.get(packet)).build();
+        WPacketPlayInCloseWindow cw = WPacketPlayInCloseWindow.builder().id(fieldWindowId.get(packet)).build();
+
+
+
+        return cw;
     }
 
     @Override
     public WPacketPlayInEntityAction processEntityAction(Object object) {
         PacketPlayInEntityAction packet = (PacketPlayInEntityAction) object;
 
-        return WPacketPlayInEntityAction.builder().action(WPacketPlayInEntityAction.EnumPlayerAction
+        WPacketPlayInEntityAction ea = WPacketPlayInEntityAction.builder().action(WPacketPlayInEntityAction.EnumPlayerAction
                 .valueOf(packet.b().name())).build();
+
+
+        return ea;
     }
 
     @Override
@@ -123,11 +158,35 @@ public class Processor_18 implements PacketConverter {
             throw new RuntimeException(e);
         }
 
-        return WPacketPlayOutEntityEffect.builder().entityId(serializer.e())
+        WPacketPlayOutEntityEffect ee = WPacketPlayOutEntityEffect.builder().entityId(serializer.e())
                 .effectId(serializer.readByte())
                 .amplifier(serializer.readByte())
                 .duration(serializer.e())
                 .flags(serializer.readByte()).build();
+
+
+
+        return ee;
+    }
+
+    @Override
+    public Object processEntityEffect(WPacketPlayOutEntityEffect packet) {
+        PacketPlayOutEntityEffect vanilla = new PacketPlayOutEntityEffect();
+        PacketDataSerializer serializer = new PacketDataSerializer(Unpooled.buffer());
+
+        serializer.b(packet.getEntityId());
+        serializer.writeByte(packet.getEffectId());
+        serializer.writeByte(packet.getAmplifier());
+        serializer.b(packet.getDuration());
+        serializer.writeByte(packet.getFlags());
+
+        try {
+            vanilla.a(serializer);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        return vanilla;
     }
 
     @Override
@@ -140,7 +199,7 @@ public class Processor_18 implements PacketConverter {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        return WPacketPlayOutPosition.builder()
+        WPacketPlayOutPosition p = WPacketPlayOutPosition.builder()
                 .x(serializer.readDouble())
                 .y(serializer.readDouble())
                 .z(serializer.readDouble())
@@ -150,6 +209,10 @@ public class Processor_18 implements PacketConverter {
                         .map(f -> WPacketPlayOutPosition.EnumPlayerTeleportFlags.valueOf(f.name()))
                         .collect(Collectors.toSet()))
                 .build();
+
+
+
+        return p;
     }
 
     @Override
@@ -164,11 +227,15 @@ public class Processor_18 implements PacketConverter {
         }
 
 
-        return WPacketPlayOutAttachEntity.builder()
+        WPacketPlayOutAttachEntity ae =  WPacketPlayOutAttachEntity.builder()
                 .attachedEntityId(serial.readInt())
                 .holdingEntityId(serial.readInt())
                 .isLeashModifer((int)(serial.readUnsignedByte()) == 1)
                 .build();
+
+
+
+        return ae;
     }
 
     @Override
@@ -209,11 +276,79 @@ public class Processor_18 implements PacketConverter {
             looked = true;
         }
 
-        return WPacketPlayOutEntity.builder()
+        WPacketPlayOutEntity e = WPacketPlayOutEntity.builder()
                 .id(id)
                 .x(x / 32D).y(y / 32D).z(z / 32D).yaw(yaw / 256.0F * 360.0F).pitch(pitch / 256.0F * 360.0F)
                 .onGround(ground).moved(moved).looked(looked)
                 .build();
+
+
+
+        return e;
+    }
+
+    @Override
+    public Object processOutEntity(WPacketPlayOutEntity packet) {
+        PacketDataSerializer serial = new PacketDataSerializer(Unpooled.buffer());
+
+        serial.b(packet.getId()); //No matter what this will always be written
+
+        Object packetToReturn = null;
+
+        if(packet.isLooked() && packet.isMoved()) { // Moved and looked
+            serial.writeByte(MathHelper.floor_double(packet.getX() * 32.));
+            serial.writeByte(MathHelper.floor_double(packet.getY() * 32.));
+            serial.writeByte(MathHelper.floor_double(packet.getZ() * 32.));
+            serial.writeByte((byte)((int)(packet.getYaw() * 256.F / 360.F)));
+            serial.writeByte((byte)((int)(packet.getPitch() * 256.F / 360.F)));
+            serial.writeBoolean(packet.isOnGround());
+
+            PacketPlayOutEntity.PacketPlayOutRelEntityMoveLook vanilla = new PacketPlayOutEntity.PacketPlayOutRelEntityMoveLook();
+
+            try {
+                vanilla.a(serial);
+                packetToReturn = vanilla;
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        } else if(packet.isLooked()) { // Only looked
+            serial.writeByte((byte)((int)(packet.getYaw() * 256.F / 360.F)));
+            serial.writeByte((byte)((int)(packet.getPitch() * 256.F / 360.F)));
+            serial.writeBoolean(packet.isOnGround());
+
+            PacketPlayOutEntity.PacketPlayOutEntityLook vanilla = new PacketPlayOutEntity.PacketPlayOutEntityLook();
+
+            try {
+                vanilla.a(serial);
+                packetToReturn = vanilla;
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        } else if(packet.isMoved()) { // Only moved
+            serial.writeByte(MathHelper.floor_double(packet.getX() * 32.));
+            serial.writeByte(MathHelper.floor_double(packet.getY() * 32.));
+            serial.writeByte(MathHelper.floor_double(packet.getZ() * 32.));
+            serial.writeBoolean(packet.isOnGround());
+
+            PacketPlayOutEntity.PacketPlayOutRelEntityMove vanilla = new PacketPlayOutEntity.PacketPlayOutRelEntityMove();
+
+            try {
+                vanilla.a(serial);
+                packetToReturn = vanilla;
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        } else {
+            PacketPlayOutEntity vanilla = new PacketPlayOutEntity();
+
+            try {
+                vanilla.a(serial);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            packetToReturn = vanilla;
+        }
+        return packetToReturn;
     }
 
     @Override
@@ -227,7 +362,7 @@ public class Processor_18 implements PacketConverter {
             throw new RuntimeException(e);
         }
 
-        return WPacketPlayOutEntityTeleport.builder()
+        WPacketPlayOutEntityTeleport et = WPacketPlayOutEntityTeleport.builder()
                 .entityId(serial.e())
                 .x(serial.readInt() / 32D)
                 .y(serial.readInt() / 32D)
@@ -236,6 +371,31 @@ public class Processor_18 implements PacketConverter {
                 .pitch(serial.readByte() / 256.0F * 360.0F)
                 .onGround(serial.readBoolean())
                 .build();
+
+
+        return et;
+    }
+
+    @Override
+    public Object processEntityTeleport(WPacketPlayOutEntityTeleport packet) {
+        PacketDataSerializer serial = new PacketDataSerializer(Unpooled.buffer());
+        PacketPlayOutEntityTeleport vanilla = new PacketPlayOutEntityTeleport();
+
+        serial.b(packet.getEntityId());
+        serial.writeInt(MathHelper.floor_double(packet.getX() * 32.));
+        serial.writeInt(MathHelper.floor_double(packet.getY() * 32.));
+        serial.writeInt(MathHelper.floor_double(packet.getZ() * 32.));
+        serial.writeByte((byte)((int)(packet.getYaw() * 256.F / 360.F)));
+        serial.writeByte((byte)((int)(packet.getPitch() * 256.F / 360.F)));
+        serial.writeBoolean(packet.isOnGround());
+
+        try {
+            vanilla.b(serial);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        return vanilla;
     }
 
     @Override
@@ -249,12 +409,16 @@ public class Processor_18 implements PacketConverter {
             throw new RuntimeException(e);
         }
 
-        return WPacketHandshakingInSetProtocol.builder()
+        WPacketHandshakingInSetProtocol isp = WPacketHandshakingInSetProtocol.builder()
                 .versionNumber(serial.e())
                 .hostname(serial.c(32767))
                 .port(serial.readUnsignedShort())
-                .protocol(WPacketHandshakingInSetProtocol.EnumProtocol.valueOf(EnumProtocol.a(serial.e()).name()))
+                .protocol(WPacketHandshakingInSetProtocol.EnumProtocol.valueOf(EnumProtocol.a(serial.e()).toString()))
                 .build();
+
+
+
+        return isp;
     }
 
     @Override
@@ -266,10 +430,13 @@ public class Processor_18 implements PacketConverter {
         IntVector vecPos = new IntVector(blockPos.getX(), blockPos.getY(), blockPos.getZ());
         Material material = CraftMagicNumbers.getMaterial(packet.block.getBlock());
 
-        return WPacketPlayOutBlockChange.builder()
+        WPacketPlayOutBlockChange change = WPacketPlayOutBlockChange.builder()
                 .blockLocation(vecPos)
                 .material(material)
                 .build();
+
+
+        return change;
     }
 
     @Override
@@ -290,10 +457,14 @@ public class Processor_18 implements PacketConverter {
             blockChanges[i] = new WPacketPlayOutMultiBlockChange.BlockChange(loc, blockType);
         }
 
-        return WPacketPlayOutMultiBlockChange.builder()
+        WPacketPlayOutMultiBlockChange change = WPacketPlayOutMultiBlockChange.builder()
                 .chunk(chunkLoc)
                 .changes(blockChanges)
                 .build();
+
+
+
+        return change;
     }
 
     @Override
@@ -301,18 +472,22 @@ public class Processor_18 implements PacketConverter {
         PacketPlayOutEntityVelocity packet = (PacketPlayOutEntityVelocity) object;
         PacketDataSerializer serial = serialize(packet);
 
-        return WPacketPlayOutEntityVelocity.builder()
+        WPacketPlayOutEntityVelocity velocity = WPacketPlayOutEntityVelocity.builder()
                 .entityId(serial.e())
                 .deltaX(serial.readShort() / 8000D)
                 .deltaY(serial.readShort() / 8000D)
                 .deltaZ(serial.readShort() / 8000D)
                 .build();
+
+
+
+        return velocity;
     }
 
     @Override
     public WPacketPlayOutAbilities processOutAbilities(Object object) {
         PacketPlayOutAbilities packet = (PacketPlayOutAbilities) object;
-        return WPacketPlayOutAbilities.builder()
+        WPacketPlayOutAbilities ab =  WPacketPlayOutAbilities.builder()
                 .capabilities(PlayerCapabilities.builder()
                         .isInvulnerable(packet.a())
                         .isFlying(packet.b())
@@ -322,6 +497,10 @@ public class Processor_18 implements PacketConverter {
                         .walkSpeed(outfieldWalkSpeed.get(packet))
                         .build())
                 .build();
+
+
+
+        return ab;
     }
 
     @Override
@@ -354,7 +533,7 @@ public class Processor_18 implements PacketConverter {
 
         int[] data = new int[particle.d()];
 
-        return WPacketPlayOutWorldParticles.builder()
+        WPacketPlayOutWorldParticles part = WPacketPlayOutWorldParticles.builder()
                 .particle(particle)
                 .longD(serial.readBoolean())
                 .x(serial.readFloat())
@@ -367,6 +546,10 @@ public class Processor_18 implements PacketConverter {
                 .amount(serial.readInt())
                 .data(Arrays.stream(data).map(i -> serial.e()).toArray())
                 .build();
+
+
+
+        return part;
     }
 
     @Override
@@ -379,9 +562,13 @@ public class Processor_18 implements PacketConverter {
     @Override
     public WPacketPlayInChat processChat(Object object) {
         PacketPlayInChat packet = (PacketPlayInChat) object;
-        return WPacketPlayInChat.builder()
+
+        WPacketPlayInChat chat = WPacketPlayInChat.builder()
                 .message(packet.a())
                 .build();
+
+
+        return chat;
     }
 
     @Override
@@ -395,7 +582,171 @@ public class Processor_18 implements PacketConverter {
         return null;
     }
 
-    private PacketDataSerializer serialize(Packet packet) {
+    private static final WrappedClass wrappedNamedEntitySpawn = new WrappedClass(PacketPlayOutNamedEntitySpawn.class);
+    private static final WrappedField dataWatcherField = wrappedNamedEntitySpawn.getFieldByType(DataWatcher.class, 0);
+    @Override
+    public WPacketPlayOutNamedEntitySpawn processNamedEntitySpawn(Object object) {
+        PacketPlayOutNamedEntitySpawn packet = (PacketPlayOutNamedEntitySpawn) object;
+        PacketDataSerializer serial = serialize(packet);
+
+
+        WPacketPlayOutNamedEntitySpawn nes = WPacketPlayOutNamedEntitySpawn.builder().entityId(serial.e()).uuid(serial.g())
+                .x(serial.readInt() / 32.).y(serial.readInt() / 32.).z(serial.readInt() / 32.)
+                .yaw(serial.readByte() * 360.F / 256.F).pitch(serial.readByte() * 360.F / 256.F)
+                .itemInHand(MiscUtils.getById(serial.readShort()))
+                .build();
+
+
+
+        return nes;
+    }
+
+    @Override
+    public Object processNamedEntitySpawn(WPacketPlayOutNamedEntitySpawn packet) {
+        PacketPlayOutNamedEntitySpawn vanilla = new PacketPlayOutNamedEntitySpawn();
+        PacketDataSerializer serializer = new PacketDataSerializer(Unpooled.buffer());
+
+        try {
+            serializer.b(packet.getEntityId());
+            serializer.a(packet.getUuid());
+            serializer.writeInt(MathHelper.floor_double(packet.getX() * 32.));
+            serializer.writeInt(MathHelper.floor_double(packet.getY() * 32.));
+            serializer.writeInt(MathHelper.floor_double(packet.getZ() * 32.));
+            serializer.writeByte((byte)((int)(packet.getYaw() * 256.0F / 360.0F)));
+            serializer.writeByte((byte)((int)(packet.getPitch() * 256.0F / 360.0F)));
+            serializer.writeShort(packet.getItemInHand() == null ? 0 : packet.getItemInHand().getId());
+            dataWatcherField.set(vanilla, new DataWatcher(null));
+            new DataWatcher(null).a(serializer);
+
+            vanilla.a(serializer);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return vanilla;
+    }
+
+    @Override
+    public WPacketPlayOutSpawnEntityLiving processSpawnLiving(Object object) {
+        PacketPlayOutSpawnEntityLiving packet = (PacketPlayOutSpawnEntityLiving) object;
+        PacketDataSerializer s = serialize(packet);
+
+        WPacketPlayOutSpawnEntityLiving sel = WPacketPlayOutSpawnEntityLiving.builder().entityId(s.e())
+                .type(EntityType.fromId(s.readByte() & 255)).x(s.readInt() / 32.).y(s.readInt() / 32.)
+                .z(s.readInt()/ 32.).yaw(s.readByte() * 360.F / 256.F).pitch(s.readByte() * 360.F / 256.F)
+                .headYaw(s.readByte() * 360.F / 256.F).vX(s.readShort() / 8000.).vY(s.readShort() / 8000.)
+                .vZ(s.readShort() / 8000.).build();
+
+
+
+        return sel;
+    }
+
+    private static WrappedClass classSpawnEntityLiving = new WrappedClass(PacketPlayOutSpawnEntityLiving.class);
+    private static WrappedField splDataWatcher = classSpawnEntityLiving.getFieldByType(DataWatcher.class, 0);
+    @Override
+    public Object processSpawnLiving(WPacketPlayOutSpawnEntityLiving packet) {
+        PacketPlayOutSpawnEntityLiving vanilla = new PacketPlayOutSpawnEntityLiving();
+        PacketDataSerializer serializer = new PacketDataSerializer(Unpooled.buffer());
+
+        serializer.b(packet.getEntityId());
+        serializer.writeByte(packet.getType().getTypeId() & 255);
+        serializer.writeInt(MathHelper.floor_double(packet.getX() * 32.));
+        serializer.writeInt(MathHelper.floor_double(packet.getY() * 32.));
+        serializer.writeInt(MathHelper.floor_double(packet.getZ() * 32.));
+        serializer.writeByte((byte)((int)(packet.getYaw() * 256.0F / 360.0F)));
+        serializer.writeByte((byte)((int)(packet.getPitch() * 256.0F / 360.0F)));
+        serializer.writeByte((byte)((int)(packet.getHeadYaw() * 256.0F / 360.0F)));
+        serializer.writeShort((int)(packet.getVX() * 8000.));
+        serializer.writeShort((int)(packet.getVY() * 8000.));
+        serializer.writeShort((int)(packet.getVZ() * 8000.));
+
+        try {
+            DataWatcher watcher = new DataWatcher(null);
+            splDataWatcher.set(vanilla, watcher);
+            watcher.a(serializer);
+            vanilla.a(serializer);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        return vanilla;
+    }
+
+    @Override
+    public WPacketPlayOutRemoveEntityEffect processRemoveEffect(Object object) {
+        PacketPlayOutRemoveEntityEffect packet = (PacketPlayOutRemoveEntityEffect) object;
+
+        PacketDataSerializer serializer = serialize(packet);
+
+        WPacketPlayOutRemoveEntityEffect ree = WPacketPlayOutRemoveEntityEffect.builder()
+                .entityId(serializer.e())
+                .effectId(serializer.readUnsignedByte()).build();
+
+
+
+        return ree;
+    }
+
+    @Override
+    public Object processRemoveEffect(WPacketPlayOutRemoveEntityEffect packet) {
+        PacketPlayOutRemoveEntityEffect vanilla = new PacketPlayOutRemoveEntityEffect();
+
+        PacketDataSerializer serial = new PacketDataSerializer(Unpooled.buffer());
+
+        serial.b(packet.getEntityId());
+        serial.writeByte(packet.getEffectId());
+
+        try {
+            vanilla.b(serial);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return vanilla;
+    }
+
+    @Override
+    public WPacketPlayOutEntityMetadata processEntityMetadata(Object object) {
+        PacketPlayOutEntityMetadata packet = (PacketPlayOutEntityMetadata) object;
+
+        PacketDataSerializer serialized = serialize(packet);
+
+        try {
+            int entityId = serialized.e();
+            List<DataWatcher.WatchableObject> watchedObject = DataWatcher.b(serialized);
+
+            WPacketPlayOutEntityMetadata em =  WPacketPlayOutEntityMetadata.builder().entityId(entityId)
+                    .watchedObjects(watchedObject.stream().map(WrappedWatchableObject::new)
+                    .collect(Collectors.toList())).build();
+
+
+            return em;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public Object processEntityMetadata(WPacketPlayOutEntityMetadata packet) {
+        PacketPlayOutEntityMetadata vanilla = new PacketPlayOutEntityMetadata();
+
+        PacketDataSerializer serialized = new PacketDataSerializer(Unpooled.buffer());
+
+        serialized.b(packet.getEntityId());
+
+        List<DataWatcher.WatchableObject> watchedObjects = packet.getWatchedObjects().stream()
+                .map(w -> (DataWatcher.WatchableObject)w.getVanillaObject()).collect(Collectors.toList());
+
+        try {
+            DataWatcher.a(watchedObjects, serialized);
+            vanilla.a(serialized);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        return vanilla;
+    }
+
+    private PacketDataSerializer serialize(Packet<?> packet) {
         PacketDataSerializer serial = new PacketDataSerializer(Unpooled.buffer());
         try {
             packet.b(serial);

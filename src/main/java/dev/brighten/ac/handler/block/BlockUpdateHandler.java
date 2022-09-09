@@ -12,6 +12,7 @@ import dev.brighten.ac.utils.XMaterial;
 import dev.brighten.ac.utils.math.IntVector;
 import dev.brighten.ac.utils.world.types.RayCollision;
 import dev.brighten.ac.utils.wrapper.Wrapper;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.bukkit.Material;
@@ -21,7 +22,7 @@ import java.util.*;
 
 @RequiredArgsConstructor
 public class BlockUpdateHandler {
-    private final Map<IntVector, Deque<Material>> blockInformation = new HashMap<>();
+    private final Map<IntVector, Deque<Material>> blockInformation = new Object2ObjectOpenHashMap<>();
 
     private final APlayer player;
 
@@ -39,7 +40,7 @@ public class BlockUpdateHandler {
         IntVector pos = place.getBlockPos().clone();
 
         // Some dumbass shit I have to do because Minecraft with Lilypads
-        if(place.getItemStack() != null && XMaterial.matchXMaterial(place.getItemStack().getType()).equals(XMaterial.LILY_PAD)) {
+        if(place.getItemStack() != null && BlockUtils.getXMaterial(place.getItemStack().getType()).equals(XMaterial.LILY_PAD)) {
             RayCollision rayCollision = new RayCollision(player.getBukkitPlayer().getEyeLocation().toVector(),
                     player.getBukkitPlayer().getLocation().getDirection());
             Block block = rayCollision.getClosestBlockOfType(player.getBukkitPlayer().getWorld(), Materials.LIQUID, 5);

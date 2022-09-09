@@ -1,5 +1,6 @@
 package dev.brighten.ac.utils.menu.type.impl;
 
+import dev.brighten.ac.utils.BlockUtils;
 import dev.brighten.ac.utils.XMaterial;
 import dev.brighten.ac.utils.menu.Menu;
 import dev.brighten.ac.utils.menu.button.Button;
@@ -71,8 +72,8 @@ public class ChestMenu implements Menu {
     @Override
     public void fillRange(int startingIndex, int endingIndex, Button button) {
         IntStream.range(startingIndex, endingIndex)
-                .filter(i -> contents[i] == null || contents[i].getStack().getType()
-                        .equals(XMaterial.AIR.parseMaterial()))
+                .filter(i -> contents[i] == null || BlockUtils.getXMaterial(contents[i].getStack().getType())
+                        .equals(XMaterial.AIR))
                 .forEach(i -> setItem(i, button));
     }
 

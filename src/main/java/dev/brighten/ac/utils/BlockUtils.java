@@ -11,6 +11,7 @@ import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.inventory.ItemStack;
 
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -18,6 +19,17 @@ import java.util.Optional;
 public class BlockUtils {
 
     public static Map<Material, BoundingBox> collisionBoundingBoxes = new HashMap<>();
+    private static final EnumMap<Material, XMaterial> matchMaterial = new EnumMap<>(Material.class);
+
+    static {
+        for (Material mat : Material.values()) {
+            matchMaterial.put(mat, XMaterial.matchXMaterial(mat));
+        }
+    }
+
+    public static XMaterial getXMaterial(Material material) {
+        return matchMaterial.get(material);
+    }
 
     @Deprecated
     public static Block getBlock(Location location) {

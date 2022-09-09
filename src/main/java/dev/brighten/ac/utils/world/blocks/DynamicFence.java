@@ -36,7 +36,7 @@ public class DynamicFence implements CollisionFactory {
     }
 
     static boolean isBlacklisted(Material m) {
-        XMaterial material = XMaterial.matchXMaterial(m);
+        XMaterial material = BlockUtils.getXMaterial(m);
         switch(material) {
             case BEACON:
             case STICK:

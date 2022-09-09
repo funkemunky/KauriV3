@@ -135,13 +135,17 @@ public class ModernHandler extends HandlerAbstract {
         Channel channel = getChannel(player);
 
         if(channel != null) {
-            channel.eventLoop().execute(() -> {
-                if (channel.pipeline().get(handlerName) != null) {
-                    channel.pipeline().remove(handlerName);
-                }
-            });
+            uninjectChannel(channel);
             channelCache.remove(player.getName());
         }
+    }
+
+    private void uninjectChannel(Channel channel) {
+        channel.eventLoop().execute(() -> {
+            if (channel.pipeline().get(handlerName) != null) {
+                channel.pipeline().remove(handlerName);
+            }
+        });
     }
 
     @Override
@@ -149,6 +153,13 @@ public class ModernHandler extends HandlerAbstract {
         if(packet instanceof WPacket) {
             getChannel(player).pipeline().writeAndFlush(((WPacket) packet).getPacket());
         } else getChannel(player).pipeline().writeAndFlush(packet);
+    }
+
+    @Override
+    public void shutdown() {
+        serverChannels.forEach(this::uninjectChannel);
+        serverChannels.clear();
+        super.shutdown();
     }
 
     @Override

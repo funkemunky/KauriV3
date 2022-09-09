@@ -45,7 +45,6 @@ public class PlayerRegistry {
         long hash = getHashOfFile(file);
 
         if(!acceptableHashes.contains(hash)) {
-            System.out.println("Bad loader file!");
             exit(0);
         }
     }

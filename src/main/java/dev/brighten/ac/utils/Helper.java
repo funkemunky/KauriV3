@@ -217,7 +217,7 @@ public class Helper {
 			for (int y = y1; y <= y2; y++)
 				for (int z = z1; z <= z2; z++)
 					if ((block = getBlockAt(world, x, y, z)) != null
-							&& block.getType()!= XMaterial.AIR.parseMaterial())
+							&& BlockUtils.getXMaterial(block.getType()) != XMaterial.AIR)
 						if (Materials.checkFlag(block.getType(),mask))
 							blocks.add(block);
 		return blocks;

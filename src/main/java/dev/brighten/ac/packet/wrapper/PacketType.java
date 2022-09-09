@@ -68,6 +68,7 @@ public enum PacketType {
     STATUS_PING("PacketStatusInPing"),
     STATUS_START("PacketStatusInStart"),
     LOGIN_START("PacketLoginInStart"),
+    REMOVE_EFFECT("PacketPlayOutRemoveEntityEffect"),
     UNKNOWN();
 
     PacketType(String... packetIds) {
@@ -131,6 +132,14 @@ public enum PacketType {
                 return convert.processChat(object);
             case SERVER_ABILITIES:
                 return convert.processOutAbilities(object);
+            case WORLD_PARTICLE:
+                return convert.processParticles(object);
+            case NAMED_ENTITY_SPAWN:
+                return convert.processNamedEntitySpawn(object);
+            case SPAWN_ENTITY_LIVING:
+                return convert.processSpawnLiving(object);
+            case REMOVE_EFFECT:
+                return convert.processRemoveEffect(object);
             default:
                 return object;
         }
