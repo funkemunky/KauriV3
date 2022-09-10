@@ -19,6 +19,7 @@ import org.bukkit.Material;
 import org.bukkit.craftbukkit.v1_8_R3.inventory.CraftItemStack;
 import org.bukkit.craftbukkit.v1_8_R3.util.CraftMagicNumbers;
 import org.bukkit.entity.EntityType;
+import org.bukkit.potion.PotionEffectType;
 import org.bukkit.util.Vector;
 
 import java.io.IOException;
@@ -633,8 +634,8 @@ public class Processor_18 implements PacketConverter {
         WPacketPlayOutSpawnEntityLiving sel = WPacketPlayOutSpawnEntityLiving.builder().entityId(s.e())
                 .type(EntityType.fromId(s.readByte() & 255)).x(s.readInt() / 32.).y(s.readInt() / 32.)
                 .z(s.readInt()/ 32.).yaw(s.readByte() * 360.F / 256.F).pitch(s.readByte() * 360.F / 256.F)
-                .headYaw(s.readByte() * 360.F / 256.F).vX(s.readShort() / 8000.).vY(s.readShort() / 8000.)
-                .vZ(s.readShort() / 8000.).build();
+                .headYaw(s.readByte() * 360.F / 256.F).motionX(s.readShort() / 8000.).motionY(s.readShort() / 8000.)
+                .motionZ(s.readShort() / 8000.).build();
 
 
 
@@ -656,9 +657,9 @@ public class Processor_18 implements PacketConverter {
         serializer.writeByte((byte)((int)(packet.getYaw() * 256.0F / 360.0F)));
         serializer.writeByte((byte)((int)(packet.getPitch() * 256.0F / 360.0F)));
         serializer.writeByte((byte)((int)(packet.getHeadYaw() * 256.0F / 360.0F)));
-        serializer.writeShort((int)(packet.getVX() * 8000.));
-        serializer.writeShort((int)(packet.getVY() * 8000.));
-        serializer.writeShort((int)(packet.getVZ() * 8000.));
+        serializer.writeShort((int)(packet.getMotionX() * 8000.));
+        serializer.writeShort((int)(packet.getMotionY() * 8000.));
+        serializer.writeShort((int)(packet.getMotionZ() * 8000.));
 
         try {
             DataWatcher watcher = new DataWatcher(null);
@@ -680,7 +681,7 @@ public class Processor_18 implements PacketConverter {
 
         WPacketPlayOutRemoveEntityEffect ree = WPacketPlayOutRemoveEntityEffect.builder()
                 .entityId(serializer.e())
-                .effectId(serializer.readUnsignedByte()).build();
+                .effect(PotionEffectType.getById(serializer.readUnsignedByte())).build();
 
 
 
@@ -694,7 +695,7 @@ public class Processor_18 implements PacketConverter {
         PacketDataSerializer serial = new PacketDataSerializer(Unpooled.buffer());
 
         serial.b(packet.getEntityId());
-        serial.writeByte(packet.getEffectId());
+        serial.writeByte(packet.getEffect().getId());
 
         try {
             vanilla.b(serial);
