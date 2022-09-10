@@ -208,7 +208,7 @@ public class Check implements ECheck {
                }
                lastAlert.reset();
            }
-           if(punish && vl > punishVl) {
+           if(punish && vl >= punishVl) {
                punish();
            }
         });
