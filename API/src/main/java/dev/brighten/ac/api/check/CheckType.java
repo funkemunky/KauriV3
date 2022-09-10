@@ -9,5 +9,6 @@ public enum CheckType {
     CRASH,
     EXPLOIT,
     INTERACT,
-    ORDER
+    ORDER,
+    BADPACKETS
 }

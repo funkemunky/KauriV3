@@ -1,4 +1,4 @@
-package dev.brighten.ac.check.impl.order;
+package dev.brighten.ac.check.impl.packet.order;
 
 import dev.brighten.ac.api.check.CheckType;
 import dev.brighten.ac.check.Check;
