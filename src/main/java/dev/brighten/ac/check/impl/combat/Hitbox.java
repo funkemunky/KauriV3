@@ -25,7 +25,7 @@ public class Hitbox extends Check {
     private float buffer;
     private int hbuffer;
 
-    public Timer lastAimOnTarget = new TickTimer();
+    public Timer lastAimOnTarget = new TickTimer(), lastPosition = new TickTimer();
     private final Queue<Tuple<Entity, KLocation>> attacks = new LinkedBlockingQueue<>();
 
     private static final EnumSet<EntityType> allowedEntityTypes = EnumSet.of(EntityType.ZOMBIE, EntityType.SHEEP,
@@ -75,34 +75,35 @@ public class Hitbox extends Check {
             boolean collided = false; //Using this to compare smaller numbers than Double.MAX_VALUE. Slightly faster
 
             List<SimpleCollisionBox> boxes = new ArrayList<>();
+            double expand = 0.005;
+            if(player.getPlayerVersion().isBelow(ProtocolVersion.V1_9)) {
+                expand+= 0.1;
+            }
+
+            //Accounting for potential movement updates not sent to the server
+            if(lastPosition.isPassed(1)) {
+                expand+= 0.03;
+            }
+
             if(eloc.two != null) {
                 for (KLocation oldLocation : eloc.one.interpolatedLocations) {
                     SimpleCollisionBox box = (SimpleCollisionBox)
                             EntityData.getEntityBox(oldLocation.toVector(), target.one);
 
-                    if(player.getPlayerVersion().isBelow(ProtocolVersion.V1_9)) {
-                        box = box.expand(0.1325);
-                    } else box = box.expand(0.0325);
-                    boxes.add(box);
+                    boxes.add(box.expand(expand));
                 }
                 for (KLocation oldLocation : eloc.two.interpolatedLocations) {
                     SimpleCollisionBox box = (SimpleCollisionBox)
                             EntityData.getEntityBox(oldLocation.toVector(), target.one);
 
-                    if(player.getPlayerVersion().isBelow(ProtocolVersion.V1_9)) {
-                        box = box.expand(0.1325);
-                    } else box = box.expand(0.0325);
-                    boxes.add(box);
+                    boxes.add(box.expand(expand));
                 }
             } else {
                 for (KLocation oldLocation : eloc.one.interpolatedLocations) {
                     SimpleCollisionBox box = (SimpleCollisionBox)
                             EntityData.getEntityBox(oldLocation.toVector(), target.one);
 
-                    if(player.getPlayerVersion().isBelow(ProtocolVersion.V1_9)) {
-                        box = box.expand(0.1325);
-                    } else box = box.expand(0.0325);
-                    boxes.add(box);
+                    boxes.add(box.expand(expand));
                 }
             }
 
@@ -178,6 +179,8 @@ public class Hitbox extends Check {
                 debug("Missed!");
             }
         }
+        if(packet.isMoved())
+            lastPosition.reset();
     };
 
 }
