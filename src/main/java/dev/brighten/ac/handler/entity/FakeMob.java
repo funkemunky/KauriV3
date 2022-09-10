@@ -68,7 +68,7 @@ public class FakeMob {
             zombie.setInvisible(true);
         } else {
             WPacketPlayOutRemoveEntityEffect packet = WPacketPlayOutRemoveEntityEffect.builder()
-                    .effectId(PotionEffectType.INVISIBILITY.getId() & 255).entityId(entityId).build();
+                    .effect(PotionEffectType.INVISIBILITY).entityId(entityId).build();
 
             for (APlayer player : watching) {
                 player.sendPacket(packet);
