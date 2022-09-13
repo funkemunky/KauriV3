@@ -7,6 +7,7 @@ import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.wrapper.PacketType;
 import dev.brighten.ac.packet.wrapper.WPacket;
 import dev.brighten.ac.packet.wrapper.login.WPacketHandshakingInSetProtocol;
+import dev.brighten.ac.utils.RunUtils;
 import dev.brighten.ac.utils.reflections.impl.CraftReflection;
 import dev.brighten.ac.utils.reflections.impl.MinecraftReflection;
 import dev.brighten.ac.utils.reflections.types.WrappedClass;
@@ -37,7 +38,7 @@ public class ModernHandler extends HandlerAbstract {
             protected void initChannel(Channel channel) throws Exception {
                 try {
                     // Stop injecting channels
-                    if (!Anticheat.INSTANCE.isEnabled()) {
+                    if (Anticheat.INSTANCE.isEnabled()) {
                         channel.eventLoop().submit(() -> injectChannel(channel));
                     }
                 } catch (Exception e) {
@@ -68,47 +69,47 @@ public class ModernHandler extends HandlerAbstract {
 
         };
 
-        Object mcServer = CraftReflection.getMinecraftServer();
-        Object serverConnection = MinecraftReflection.getServerConnection(mcServer);
-        boolean looking = true;
+        RunUtils.task(() -> {
+            Object mcServer = CraftReflection.getMinecraftServer();
+            Object serverConnection = MinecraftReflection.getServerConnection(mcServer);
+            boolean looking = true;
 
-        // We need to synchronize against this list
-        for (Method m : mcServer.getClass().getMethods()) {
-            if (m.getParameterTypes().length == 0 && m.getReturnType()
-                    .isAssignableFrom(MinecraftReflection.serverConnection.getParent())) {
-                try {
-                    Object result = m.invoke(mcServer);
-                    if (result != null) serverConnection = result;
-                } catch (Exception e) {
-                    e.printStackTrace();
+            // We need to synchronize against this list
+            for (Method m : mcServer.getClass().getMethods()) {
+                if (m.getParameterTypes().length == 0 && m.getReturnType()
+                        .isAssignableFrom(MinecraftReflection.serverConnection.getParent())) {
+                    try {
+                        Object result = m.invoke(mcServer);
+                        if (result != null) serverConnection = result;
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                 }
             }
-        }
 
-        for (int i = 0; looking; i++) {
-            List<Object> list =  new WrappedClass(serverConnection.getClass()).getFieldByType(List.class, i)
-                    .get(serverConnection);
+            for (int i = 0; looking; i++) {
+                List<Object> list =  new WrappedClass(serverConnection.getClass()).getFieldByType(List.class, i)
+                        .get(serverConnection);
 
-            for (Object item : list) {
-                //if (!ChannelFuture.class.isInstance(item))
-                //	break;
+                for (Object item : list) {
+                    //if (!ChannelFuture.class.isInstance(item))
+                    //	break;
 
-                // Channel future that contains the server connection
-                Channel serverChannel = ((ChannelFuture) item).channel();
+                    // Channel future that contains the server connection
+                    Channel serverChannel = ((ChannelFuture) item).channel();
 
-                serverChannels.add(serverChannel);
-                serverChannel.pipeline().addFirst(serverChannelHandler);
-                Bukkit.getLogger().info("Server channel handler injected (" + serverChannel + ")");
-                looking = false;
+                    serverChannels.add(serverChannel);
+                    serverChannel.pipeline().addFirst(serverChannelHandler);
+                    Bukkit.getLogger().info("Server channel handler injected (" + serverChannel + ")");
+                    looking = false;
+                }
             }
-        }
-
+        });
     }
 
     @Override
     public void add(Player player) {
         try {
-            System.out.println("Adding " + player.getName() + " to packets");
             Channel channel = getChannel(player);
 
             injectChannel(channel).player = player;
@@ -157,9 +158,18 @@ public class ModernHandler extends HandlerAbstract {
 
     @Override
     public void shutdown() {
-        serverChannels.forEach(this::uninjectChannel);
+        Bukkit.getOnlinePlayers().forEach(this::remove);
+        for (Channel serverChannel : serverChannels) {
+            serverChannel.eventLoop().execute(() -> {
+                final ChannelPipeline pipeline = serverChannel.pipeline();
+                try {
+                    pipeline.remove(serverChannelHandler);
+                } catch (NoSuchElementException e) {
+                    // That's fine
+                }
+            });
+        }
         serverChannels.clear();
-        super.shutdown();
     }
 
     @Override
@@ -182,7 +192,7 @@ public class ModernHandler extends HandlerAbstract {
         private Player player;
 
         @Override
-        public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+        public void channelRead(ChannelHandlerContext ctx, Object msg) {
             String name = msg.getClass().getName();
             int index = name.lastIndexOf(".");
             String packetName = name.substring(index + 1);
@@ -212,9 +222,19 @@ public class ModernHandler extends HandlerAbstract {
                     }
                 } catch (Throwable throwable) {
                     throwable.printStackTrace();
-                    super.channelRead(ctx, msg);
+                    try {
+                        super.channelRead(ctx, msg);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                 }
-            } else super.channelRead(ctx, msg);
+            } else {
+                try {
+                    super.channelRead(ctx, msg);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
         }
 
         @Override

@@ -37,7 +37,7 @@ public abstract class HandlerAbstract{
     public abstract void sendPacket(APlayer player, Object packet);
 
     public void shutdown() {
-        Bukkit.getOnlinePlayers().forEach(handler::remove);
+        handler.shutdown();
         handler = null;
     }
     public abstract int getProtocolVersion(Player player);

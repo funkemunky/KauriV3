@@ -33,7 +33,7 @@ public class BlockInformation {
             rosebush = XMaterial.ROSE_BUSH.parseMaterial(),
             scaffolding = XMaterial.SCAFFOLDING.parseMaterial(),
             honey = XMaterial.HONEY_BLOCK.parseMaterial();
-    public final Map<Material, Integer> collisionMaterialCount = new HashMap<>();
+    public final Map<Material, Integer> collisionMaterialCount = new EnumMap<>(Material.class);
 
     public BlockInformation(APlayer objectData) {
         this.player = objectData;
@@ -130,6 +130,19 @@ public class BlockInformation {
         int xstart = Math.min(startX, endX), xend = Math.max(startX, endX);
         int zstart = Math.min(startZ, endZ), zend = Math.max(startZ, endZ);
 
+        SimpleCollisionBox boundsForCollision = player.getMovement().getFrom().getBox() != null ? player.getMovement().getFrom().getBox().copy().shrink(0.001D, 0.001D, 0.001D) : null;
+
+        IntVector min;
+        IntVector max;
+
+        if(boundsForCollision != null) {
+            min = new IntVector((int) boundsForCollision.xMin, (int) boundsForCollision.yMin, (int) boundsForCollision.zMin);
+            max = new IntVector((int) boundsForCollision.xMax, (int) boundsForCollision.yMax, (int) boundsForCollision.zMax);
+        } else {
+            min = new IntVector(Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE);
+            max = new IntVector(Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE);
+        }
+
         loop: {
             for (int x = xstart; x <= xend; ++x) {
                 for (int z = zstart; z <= zend; ++z) {
@@ -137,6 +150,8 @@ public class BlockInformation {
                         if (it-- <= 0) {
                             break loop;
                         }
+
+
                         final Deque<Material> types =
                                 player.getBlockUpdateHandler().getPossibleMaterials(new IntVector(x, y, z));
 
@@ -147,6 +162,15 @@ public class BlockInformation {
 
                                 CollisionBox blockBox = BlockData.getData(type)
                                         .getBox(world, new IntVector(x, y, z), player.getPlayerVersion());
+
+                                // Checking of within boundsForCollision
+                                if(x >= min.getX() && x <= max.getX() && y >= min.getY() && y <= max.getY() && z >= min.getZ() && z <= max.getZ()) {
+                                    collisionMaterialCount.compute(type, (key, count) -> {
+                                        if(count == null) return 1;
+
+                                        return count + 1;
+                                    });
+                                }
 
                                 if(blockBox.isCollided(normalBox)) {
                                     if(type.equals(cobweb))
@@ -169,6 +193,10 @@ public class BlockInformation {
                                     synchronized (aboveCollisions) {
                                         blockBox.downCast(aboveCollisions);
                                     }
+                                }
+
+                                if(Materials.checkFlag(type, Materials.FENCE) && player.getMovement().getDeltaY() == 0.5) {
+                                    System.out.println(blockBox);
                                 }
 
                                 if(normalBox.copy().expand(0.1, 0, 0.1)

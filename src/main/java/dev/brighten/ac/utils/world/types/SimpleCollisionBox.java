@@ -12,6 +12,7 @@ import org.bukkit.util.Vector;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 public class SimpleCollisionBox implements CollisionBox {
     public double xMin, yMin, zMin, xMax, yMax, zMax;
@@ -349,5 +350,30 @@ public class SimpleCollisionBox implements CollisionBox {
         double hxz = Math.hypot(xMin - box.xMin, zMin - box.zMin);
 
         return hxz - (xwidth + zwidth + bxwidth + bzwidth) / 4;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        SimpleCollisionBox that = (SimpleCollisionBox) o;
+        return Double.compare(that.xMin, xMin) == 0 && Double.compare(that.yMin, yMin) == 0 && Double.compare(that.zMin, zMin) == 0 && Double.compare(that.xMax, xMax) == 0 && Double.compare(that.yMax, yMax) == 0 && Double.compare(that.zMax, zMax) == 0;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(xMin, yMin, zMin, xMax, yMax, zMax);
+    }
+
+    @Override
+    public String toString() {
+        return "SimpleCollisionBox{" +
+                "xMin=" + xMin +
+                ", yMin=" + yMin +
+                ", zMin=" + zMin +
+                ", xMax=" + xMax +
+                ", yMax=" + yMax +
+                ", zMax=" + zMax +
+                '}';
     }
 }
