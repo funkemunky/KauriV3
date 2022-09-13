@@ -20,7 +20,7 @@ import org.bukkit.potion.PotionEffectType;
 
 import java.util.Deque;
 
-@CheckData(name = "Velocity (B)", checkId = "velocityb", type = CheckType.MOVEMENT)
+@CheckData(name = "Velocity (Horizontal)", checkId = "velocityb", type = CheckType.MOVEMENT)
 public class VelocityB extends Check {
     private Timer lastVelocity = new TickTimer();
 
