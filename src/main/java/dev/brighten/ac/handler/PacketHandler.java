@@ -282,17 +282,25 @@ public class PacketHandler {
                     player.getEntityLocationHandler().getTargetOfFakeMob(mob.getEntityId())
                             .ifPresent(targetId -> {
                                 player.getEntityLocationHandler().removeFakeMob(targetId);
+                                player.getInfo().lastFakeBotHit.reset();
                             });
                 } else {
                     Entity target = packet.getEntity(player.getBukkitPlayer().getWorld());
 
                     if(target instanceof LivingEntity) {
-                        if(Math.random() > 0.9) {
+                        if(player.getInfo().lastFakeBotHit.isPassed(400) && Math.random() > 0.9) {
                             player.getEntityLocationHandler().canCreateMob.add(target.getEntityId());
                         }
                         player.getInfo().setTarget((LivingEntity) target);
                     }
                 }
+                break;
+            }
+            case ARM_ANIMATION: {
+                long delta = timestamp - player.getInfo().lastArmSwing;
+
+                player.getInfo().cps.add(1000D / delta, timestamp);
+                player.getInfo().lastArmSwing = timestamp;
                 break;
             }
             case BLOCK_PLACE: {

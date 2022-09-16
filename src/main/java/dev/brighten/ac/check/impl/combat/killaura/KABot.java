@@ -20,8 +20,8 @@ public class KABot extends Check {
     WAction<WPacketPlayInUseEntity> packet = packet -> {
         val optional = player.getEntityLocationHandler().getFakeMob(packet.getEntityId());
 
-        if(optional.isPresent()) {
-            if(++buffer > 1) {
+        if(optional.isPresent() && player.getEntityLocationHandler().clientHasEntity.get()) {
+            if(++buffer > 3) {
                 flag("Attacked player without attacking bot!");
             }
         } else buffer = 0;

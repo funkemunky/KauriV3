@@ -41,13 +41,16 @@ public class FakeMob {
     }
      */
     public void spawn(boolean invisible, Location location, APlayer... players) {
+        spawn(invisible, location, new ArrayList<>(), players);
+    }
+
+    public void spawn(boolean invisible, Location location, List<WrappedWatchableObject> objects, APlayer... players) {
         if(watching.size() > 0) {
             despawn();
         }
 
         watching = new ArrayList<>();
         for (APlayer player : players) {
-            List<WrappedWatchableObject> objects = new ArrayList<>();
             if(invisible) {
                 objects.add(new WrappedWatchableObject(0, 0, (byte)((byte)1 << 5)));
             }

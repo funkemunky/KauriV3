@@ -4,6 +4,7 @@ import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.handler.entity.FakeMob;
 import dev.brighten.ac.packet.ProtocolVersion;
+import dev.brighten.ac.packet.wrapper.objects.WrappedWatchableObject;
 import dev.brighten.ac.packet.wrapper.out.*;
 import dev.brighten.ac.utils.EntityLocation;
 import dev.brighten.ac.utils.Tuple;
@@ -18,6 +19,7 @@ import org.bukkit.entity.EntityType;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @RequiredArgsConstructor
 public class EntityLocationHandler {
@@ -25,12 +27,13 @@ public class EntityLocationHandler {
     private final APlayer data;
 
     private final Map<UUID, Tuple<EntityLocation, EntityLocation>> entityLocationMap = new ConcurrentHashMap<>();
-    private final Map<Integer, FakeMob> fakeMobs = new Int2ObjectArrayMap<>();
+    private final Map<Integer, List<FakeMob>> fakeMobs = new Int2ObjectArrayMap<>();
     private final Map<Integer, Integer> fakeMobToEntityId = new Int2ObjectArrayMap<>();
     private final Timer lastFlying = new MillisTimer();
 
     public Set<Integer> canCreateMob = new HashSet<>();
     public int streak;
+    public AtomicBoolean clientHasEntity = new AtomicBoolean(false);
 
     private static final EnumSet<EntityType> allowedEntityTypes = EnumSet.of(EntityType.ZOMBIE, EntityType.SHEEP,
             EntityType.BLAZE, EntityType.SKELETON, EntityType.PLAYER, EntityType.VILLAGER, EntityType.IRON_GOLEM,
@@ -48,7 +51,7 @@ public class EntityLocationHandler {
         return Optional.ofNullable(entityLocationMap.get(entity.getUniqueId()));
     }
 
-    public Optional<FakeMob> getFakeMob(int entityId) {
+    public Optional<List<FakeMob>> getFakeMob(int entityId) {
         return Optional.ofNullable(fakeMobs.get(entityId));
     }
 
@@ -224,50 +227,79 @@ public class EntityLocationHandler {
     public void onEntityDestroy(WPacketPlayOutEntityDestroy packet) {
         for(int id : packet.getEntityIds()) {
             if(fakeMobs.containsKey(id)) {
-                FakeMob mob = fakeMobs.get(id);
-                mob.despawn();
-                fakeMobToEntityId.remove(mob.getEntityId());
+                List<FakeMob> mobs = fakeMobs.get(id);
+
+                for (FakeMob mob : mobs) {
+                    mob.despawn();
+                    fakeMobToEntityId.remove(mob.getEntityId());
+                }
                 fakeMobs.remove(id);
+                clientHasEntity.set(false);
             }
         }
     }
 
     public void removeFakeMob(int id) {
         if(fakeMobs.containsKey(id)) {
-            FakeMob mob = fakeMobs.get(id);
-            mob.despawn();
-            fakeMobToEntityId.remove(mob.getEntityId());
+            List<FakeMob> mobs = fakeMobs.get(id);
+
+            for (FakeMob mob : mobs) {
+                mob.despawn();
+                fakeMobToEntityId.remove(mob.getEntityId());
+            }
             fakeMobs.remove(id);
         }
+        clientHasEntity.set(false);
     }
+
+    private static double[] offsets = new double[]{-1.25, 0, 1.25};
 
     private void createFakeMob(int entityId, Location location) {
         if(!canCreateMob.contains(entityId)) return;
-        FakeMob mob = new FakeMob(EntityType.GIANT);
 
-        mob.spawn(true, location, data);
+        List<FakeMob> mobs = new ArrayList<>();
 
-        this.fakeMobs.put(entityId, mob);
-        fakeMobToEntityId.put(mob.getEntityId(), entityId);
+        clientHasEntity.set(false);
+        for (double offset : offsets) {
+            FakeMob mob = new FakeMob(EntityType.MAGMA_CUBE);
+
+            mob.spawn(true, location.clone().add(offset, offset, offset),
+                    new ArrayList<>(Arrays.asList(new WrappedWatchableObject(0, 16, (byte)10))), data);
+
+            fakeMobToEntityId.put(mob.getEntityId(), entityId);
+
+            mobs.add(mob);
+        }
+
+        this.fakeMobs.put(entityId, mobs);
         canCreateMob.remove(entityId);
+
+        data.runKeepaliveAction(ka -> clientHasEntity.set(true));
     }
 
     public void processFakeMobs(int entityId, boolean rel, double x, double y, double z) {
-        FakeMob fakeMob = fakeMobs.get(entityId);
+        List<FakeMob> fakeMobs = this.fakeMobs.get(entityId);
 
-        if(fakeMob == null) {
+        if(fakeMobs == null) {
             if(!rel) {
                 createFakeMob(entityId, new Location(data.getBukkitPlayer().getWorld(), x, y, z));
-                fakeMob = fakeMobs.get(entityId);
-
-                if(fakeMob == null) return;
-            } else return;
+            }
+            return;
         }
 
-        if(rel) {
-            fakeMob.move(x, y, z);
-        } else {
-            fakeMob.teleport(x, y, z, 0, 0);
+        if(fakeMobs.size() != offsets.length) {
+            fakeMobs.forEach(fakeMob -> removeFakeMob(fakeMob.getEntityId()));
+        }
+
+        int current = 0;
+        for (FakeMob fakeMob : fakeMobs) {
+            double offset = offsets[current++];
+
+            if(rel) {
+                fakeMob.move(x, y, z);
+            } else {
+                fakeMob.teleport(x + offset, y + offset, z + offset, 0, 0);
+            }
         }
     }
 }
