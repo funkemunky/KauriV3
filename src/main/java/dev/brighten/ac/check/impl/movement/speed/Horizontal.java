@@ -41,6 +41,7 @@ public class Horizontal extends Check {
 
             if (!packet.isMoved()
                     || player.getMovement().getMoveTicks() == 0
+                    || player.getMovement().getLastTeleport().isNotPassed(1)
                     || player.getInfo().getVelocity().isNotPassed(2)
                     || player.getInfo().isGeneralCancel()
                     || player.getBlockInfo().onClimbable
@@ -54,10 +55,10 @@ public class Horizontal extends Check {
 
             Deque<Material> frictionList = player.getBlockUpdateHandler()
                     .getPossibleMaterials(new IntVector(MathHelper.floor_double(underBlockLoc.x),
-                            MathHelper.floor_double(underBlockLoc.y), MathHelper.floor_double(underBlockLoc.z))),
+                            MathHelper.floor_double(underBlockLoc.y - 1), MathHelper.floor_double(underBlockLoc.z))),
                     lfrictionList = player.getBlockUpdateHandler()
                             .getPossibleMaterials(new IntVector(MathHelper.floor_double(lastUnderBlockLoc.x),
-                                    MathHelper.floor_double(lastUnderBlockLoc.y),
+                                    MathHelper.floor_double(lastUnderBlockLoc.y - 1),
                                     MathHelper.floor_double(lastUnderBlockLoc.z)));
 
             double smallestDelta = Double.MAX_VALUE;
@@ -122,6 +123,16 @@ public class Horizontal extends Check {
                                                                         lmotionZ*= 0.4;
                                                                     }
                                                                 }
+
+                                                                /*if(!sneaking && player.getBlockInfo().onSlime
+                                                                        && player.getBlockInfo().collisionMaterialCount
+                                                                        .containsKey(Material.SLIME_BLOCK)) {
+                                                                    for(int i = 0 ; i < player.getBlockInfo()
+                                                                            .collisionMaterialCount
+                                                                            .get(Material.SLIME_BLOCK) ; i++) {
+                                                                        lmotionX*=
+                                                                    }
+                                                                }*/
 
                                                                 if(player.getBlockInfo().inWeb) {
                                                                     lmotionX*= 0.25;
@@ -281,7 +292,7 @@ public class Horizontal extends Check {
     }
 
     private static boolean[] getSneakingIteration(boolean sprinting) {
-        return sprinting ? new boolean[] {false} : new boolean[] {true, false};
+        return new boolean[] {true, false};
     }
 
     private static boolean[] getJumpingIteration(boolean sprinting) {

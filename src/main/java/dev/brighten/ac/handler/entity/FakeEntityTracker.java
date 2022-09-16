@@ -22,7 +22,7 @@ public class FakeEntityTracker {
     }
 
     public void despawnAll() {
-        entityMap.forEach((id, entity) -> entity.despawn());
+        entityMap.values().forEach(FakeMob::despawn);
         entityMap.clear();
     }
 }

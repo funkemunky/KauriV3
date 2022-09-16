@@ -21,13 +21,15 @@ public class FlyB extends Check {
 
     @Async
     WAction<WPacketPlayInFlying> flying = packet -> {
-        if(player.getInfo().isNearGround()) lastNearGround.reset();
+        if((player.getInfo().isNearGround() && !player.getBlockInfo().collidesHorizontally)
+                || player.getInfo().isServerGround()) lastNearGround.reset();
         if(!packet.isMoved() || player.getInfo().isGeneralCancel()) return;
 
         if(player.getMovement().getDeltaY() - player.getMovement().getLDeltaY() > 0.01
-                && player.getMovement().getMoveTicks() > 3
+                && player.getMovement().getMoveTicks() > 1
                 && player.getInfo().getLastPlace().isPassed(3)
                 && lastNearGround.isPassed(2)
+                && !player.getInfo().onLadder
                 && player.getInfo().lastLiquid.isPassed(1)
                 && player.getInfo().climbTimer.isPassed(1)
                 && player.getInfo().getVelocity().isPassed(2)

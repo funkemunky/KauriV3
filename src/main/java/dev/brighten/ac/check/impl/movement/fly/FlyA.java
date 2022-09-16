@@ -1,15 +1,15 @@
 package dev.brighten.ac.check.impl.movement.fly;
 
-import dev.brighten.ac.check.WAction;
+import dev.brighten.ac.api.check.CheckType;
 import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
-import dev.brighten.ac.api.check.CheckType;
+import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
-import dev.brighten.ac.utils.annotation.Async;
 import dev.brighten.ac.utils.MathUtils;
 import dev.brighten.ac.utils.MovementUtils;
+import dev.brighten.ac.utils.annotation.Async;
 import dev.brighten.ac.utils.timer.Timer;
 import dev.brighten.ac.utils.timer.impl.MillisTimer;
 
@@ -41,10 +41,6 @@ public class FlyA extends Check {
             predicted = MovementUtils.getJumpHeight(player);
         }
 
-        if(Math.abs(predicted) < 0.005 && ProtocolVersion.getGameVersion().isOrAbove(ProtocolVersion.V1_9)) {
-            predicted = 0;
-        }
-
         // There will be missed movements that we can't account for if we had to predict the player's next position
         // twice, so we shouldn't flag regardless.
         boolean willBeWeirdNext = didNextPrediction;
@@ -59,6 +55,13 @@ public class FlyA extends Check {
                 predicted = toCheck;
                 didNextPrediction = true;
             }
+        }
+
+        if(ProtocolVersion.getGameVersion().isBelow(ProtocolVersion.V1_9)) {
+            if(Math.abs(predicted) < 0.005)
+                predicted = 0;
+        } else if(Math.abs(predicted) < 0.003) {
+            predicted = 0;
         }
 
         double deltaPredict = MathUtils.getDelta(player.getMovement().getDeltaY(), predicted);
@@ -77,7 +80,8 @@ public class FlyA extends Check {
                 && !player.getInfo().isServerGround()
                 && !player.getBlockInfo().onHalfBlock
                 && player.getInfo().getVelocity().isPassed(1)
-                && !player.getBlockInfo().onSlime && deltaPredict > 0.001) {
+                && !player.getBlockInfo().onSlime
+                && deltaPredict > (player.getInfo().getClientAirTicks() < 3 ? 0.017 : 0.001)) {
             if(++buffer > 3) {
                 buffer = 3;
                 flag("dY=%.3f p=%.3f dx=%.3f", player.getMovement().getDeltaY(), predicted,

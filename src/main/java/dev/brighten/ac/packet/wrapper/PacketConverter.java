@@ -75,4 +75,6 @@ public interface PacketConverter {
     WPacketPlayOutEntityMetadata processEntityMetadata(Object object);
 
     Object processEntityMetadata(WPacketPlayOutEntityMetadata packet);
+
+    WPacketPlayOutEntityDestroy processEntityDestroy(Object object);
 }

@@ -36,6 +36,7 @@ public class NoFallA extends Check {
                     && player.getInfo().slimeTimer.isPassed(2)
                     && player.getInfo().getBlockAbove().isPassed(3)
                     && !player.getInfo().isServerGround()
+                    && !player.getBlockInfo().fenceNear
                     && (player.getMovement().getDeltaY() >= 0
                     && (Math.abs(player.getMovement().getTo().getLoc().y) % divisor != 0
                     || Math.abs(player.getMovement().getDeltaY()) % divisor != 0)

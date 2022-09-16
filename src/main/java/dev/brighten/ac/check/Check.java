@@ -11,7 +11,7 @@ import dev.brighten.ac.api.event.result.PunishResult;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.utils.*;
 import dev.brighten.ac.utils.timer.Timer;
-import dev.brighten.ac.utils.timer.impl.MillisTimer;
+import dev.brighten.ac.utils.timer.impl.TickTimer;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.val;
@@ -21,6 +21,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 public class Check implements ECheck {
@@ -37,7 +38,8 @@ public class Check implements ECheck {
     @Getter
     @Setter
     private int punishVl;
-    private final Timer lastAlert = new MillisTimer();
+    private static final Timer alertCountReset = new TickTimer();
+    private static final AtomicInteger alertCount = new AtomicInteger(0);
 
     public static Set<UUID> alertsEnabled = new HashSet<>();
 
@@ -96,7 +98,8 @@ public class Check implements ECheck {
         } else {
             player.getInfo().getLastCancel().reset();
 
-            Location ground = player.getInfo().isServerGround() ? player.getMovement().getFrom().getLoc()
+            Location ground = player.getInfo().isServerGround() && player.getMovement().getLastTeleport().isPassed(1)
+                    ? player.getMovement().getFrom().getLoc()
                     .toLocation(player.getBukkitPlayer().getWorld())
                     : MovementUtils.findGroundLocation(player.getMovement().getFrom().getLoc()
                     .toLocation(player.getBukkitPlayer().getWorld()), 10);
@@ -176,7 +179,12 @@ public class Check implements ECheck {
                     .execute(() -> Anticheat.INSTANCE.getLogManager()
                             .insertLog(player, checkData, vl, System.currentTimeMillis(), info));
 
-           if(lastAlert.isPassed(200L)) {
+            if(alertCountReset.isPassed(20)) {
+                alertCount.set(0);
+                alertCountReset.reset();
+            }
+
+           if(alertCount.incrementAndGet() < 30) {
                boolean dev = Anticheat.INSTANCE.getTps() < 18;
                //if(vl > 0) Anticheat.INSTANCE.loggerManager.addLog(player, this, info);
 
@@ -206,7 +214,7 @@ public class Check implements ECheck {
                            .ifPresent(apl -> apl.getBukkitPlayer().spigot().sendMessage(toSend
                                    .toArray(new BaseComponent[0])));
                }
-               lastAlert.reset();
+               alertCountReset.reset();
            }
            if(punish && vl >= punishVl) {
                punish();

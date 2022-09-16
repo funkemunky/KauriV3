@@ -2,19 +2,15 @@ package dev.brighten.ac.handler.entity;
 
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.data.APlayer;
+import dev.brighten.ac.packet.wrapper.objects.WrappedWatchableObject;
 import dev.brighten.ac.packet.wrapper.out.WPacketPlayOutEntity;
-import dev.brighten.ac.packet.wrapper.out.WPacketPlayOutEntityEffect;
+import dev.brighten.ac.packet.wrapper.out.WPacketPlayOutEntityMetadata;
 import dev.brighten.ac.packet.wrapper.out.WPacketPlayOutEntityTeleport;
-import dev.brighten.ac.packet.wrapper.out.WPacketPlayOutRemoveEntityEffect;
+import dev.brighten.ac.packet.wrapper.out.WPacketPlayOutSpawnEntityLiving;
 import lombok.Getter;
-import net.minecraft.server.v1_8_R3.EntityZombie;
 import net.minecraft.server.v1_8_R3.PacketPlayOutEntityDestroy;
-import net.minecraft.server.v1_8_R3.PacketPlayOutSpawnEntityLiving;
 import org.bukkit.Location;
-import org.bukkit.World;
-import org.bukkit.craftbukkit.v1_8_R3.CraftWorld;
 import org.bukkit.entity.EntityType;
-import org.bukkit.potion.PotionEffectType;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -25,32 +21,52 @@ import java.util.concurrent.ThreadLocalRandom;
 public class FakeMob {
     private int entityId;
     private EntityType type;
-    private EntityZombie zombie;
 
     private List<APlayer> watching = Collections.emptyList();
 
-    public FakeMob(World world) {
+    public FakeMob(EntityType type) {
         entityId = ThreadLocalRandom.current().nextInt(15000, 20000);
-
-        zombie = new EntityZombie(((CraftWorld)world).getHandle());
-        entityId = zombie.getId();
+        this.type = type;
     }
 
-    public void spawn(Location location, APlayer... players) {
+    /*
+    protected void b(int i, boolean flag) {
+        byte b0 = this.datawatcher.getByte(0);
+        if (flag) {
+            this.datawatcher.watch(0, (byte)(b0 | 1 << i));
+        } else {
+            this.datawatcher.watch(0, (byte)(b0 & ~(1 << i)));
+        }
+
+    }
+     */
+    public void spawn(boolean invisible, Location location, APlayer... players) {
         if(watching.size() > 0) {
             despawn();
         }
 
-        zombie = new EntityZombie(((CraftWorld)location.getWorld()).getHandle());
-        zombie.setInvisible(true);
-        zombie.setLocation(location.getX(), location.getY(), location.getZ(), location.getYaw(), location.getPitch());
-        zombie.setHealth(20f);
-
-        entityId = zombie.getId();
         watching = new ArrayList<>();
         for (APlayer player : players) {
-            PacketPlayOutSpawnEntityLiving living = new PacketPlayOutSpawnEntityLiving(zombie);
-            player.sendPacket(living);
+            List<WrappedWatchableObject> objects = new ArrayList<>();
+            if(invisible) {
+                objects.add(new WrappedWatchableObject(0, 0, (byte)((byte)1 << 5)));
+            }
+            WPacketPlayOutSpawnEntityLiving packet = WPacketPlayOutSpawnEntityLiving.builder()
+                    .entityId(entityId)
+                    .type(type)
+                    .x(location.getX())
+                    .y(location.getY())
+                    .z(location.getZ())
+                    .yaw(location.getYaw())
+                    .pitch(location.getPitch())
+                    .headYaw(location.getYaw())
+                    .motionX(0)
+                    .motionY(0)
+                    .motionZ(0)
+                    .watchedObjects(objects)
+                    .build();
+
+            player.sendPacket(packet);
             watching.add(player);
         }
 
@@ -58,23 +74,20 @@ public class FakeMob {
     }
 
     public void setInvisible(boolean invisible) {
+        List<WrappedWatchableObject> objects = new ArrayList<>();
+
         if(invisible) {
-            WPacketPlayOutEntityEffect packet = WPacketPlayOutEntityEffect.builder().entityId(entityId)
-                    .effectId(PotionEffectType.INVISIBILITY.getId() & 255).amplifier((byte)0).duration(32767).flags((byte)0x02).build();
-
-            for (APlayer player : watching) {
-                player.sendPacket(packet);
-            }
-            zombie.setInvisible(true);
+            objects.add(new WrappedWatchableObject(0, 0, (byte)((byte)1 << 5)));
         } else {
-            WPacketPlayOutRemoveEntityEffect packet = WPacketPlayOutRemoveEntityEffect.builder()
-                    .effect(PotionEffectType.INVISIBILITY).entityId(entityId).build();
-
-            for (APlayer player : watching) {
-                player.sendPacket(packet);
-            }
-            zombie.setInvisible(false);
+            objects.add(new WrappedWatchableObject(0, 0, (byte)~((byte)1 << 5)));
         }
+
+        WPacketPlayOutEntityMetadata packet = WPacketPlayOutEntityMetadata.builder()
+                .entityId(entityId)
+                .watchedObjects(objects)
+                .build();
+
+        watching.forEach(player -> player.sendPacket(packet));
     }
 
     public void despawn() {
@@ -84,13 +97,12 @@ public class FakeMob {
             aPlayer.sendPacket(destroyEntity);
         }
         watching = Collections.emptyList();
-        zombie = null;
 
         Anticheat.INSTANCE.getFakeTracker().untrackEntity(this);
     }
 
     public void move(double dx, double dy, double dz) {
-        WPacketPlayOutEntity packet = WPacketPlayOutEntity.builder().x(dx).y(dy).z(dz).moved(true).build();
+        WPacketPlayOutEntity packet = WPacketPlayOutEntity.builder().id(entityId).x(dx).y(dy).z(dz).moved(true).build();
 
         for (APlayer player : watching) {
             player.sendPacket(packet);
@@ -98,7 +110,7 @@ public class FakeMob {
     }
 
     public void move(double dx, double dy, double dz, float dyaw, float dpitch) {
-        WPacketPlayOutEntity packet = WPacketPlayOutEntity.builder().x(dx).y(dy).z(dz).yaw(dyaw)
+        WPacketPlayOutEntity packet = WPacketPlayOutEntity.builder().id(entityId).x(dx).y(dy).z(dz).yaw(dyaw)
                 .pitch(dpitch).moved(true).looked(true).build();
 
         for (APlayer player : watching) {
@@ -107,7 +119,7 @@ public class FakeMob {
     }
 
     public void move(float dyaw, float dpitch) {
-        WPacketPlayOutEntity packet = WPacketPlayOutEntity.builder().yaw(dyaw).pitch(dpitch)
+        WPacketPlayOutEntity packet = WPacketPlayOutEntity.builder().id(entityId).yaw(dyaw).pitch(dpitch)
                 .looked(true).build();
 
         for (APlayer player : watching) {

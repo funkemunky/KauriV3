@@ -3,6 +3,7 @@ package dev.brighten.ac.handler;
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.data.obj.NormalAction;
+import dev.brighten.ac.handler.entity.FakeMob;
 import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.packet.wrapper.PacketType;
 import dev.brighten.ac.packet.wrapper.in.*;
@@ -228,6 +229,12 @@ public class PacketHandler {
                 }
                 break;
             }
+            case ENTITY_DESTROY: {
+                WPacketPlayOutEntityDestroy packet = (WPacketPlayOutEntityDestroy) packetObject;
+
+                player.getEntityLocationHandler().onEntityDestroy(packet);
+                break;
+            }
             case ENTITY_ACTION: {
                 WPacketPlayInEntityAction packet = (WPacketPlayInEntityAction) packetObject;
 
@@ -269,10 +276,22 @@ public class PacketHandler {
             case USE_ENTITY: {
                 WPacketPlayInUseEntity packet = (WPacketPlayInUseEntity) packetObject;
 
-                Entity target = packet.getEntity(player.getBukkitPlayer().getWorld());
+                FakeMob mob = Anticheat.INSTANCE.getFakeTracker().getEntityById(packet.getEntityId());
 
-                if(target instanceof LivingEntity) {
-                    player.getInfo().setTarget((LivingEntity) target);
+                if(mob != null) {
+                    player.getEntityLocationHandler().getTargetOfFakeMob(mob.getEntityId())
+                            .ifPresent(targetId -> {
+                                player.getEntityLocationHandler().removeFakeMob(targetId);
+                            });
+                } else {
+                    Entity target = packet.getEntity(player.getBukkitPlayer().getWorld());
+
+                    if(target instanceof LivingEntity) {
+                        if(Math.random() > 0.9) {
+                            player.getEntityLocationHandler().canCreateMob.add(target.getEntityId());
+                        }
+                        player.getInfo().setTarget((LivingEntity) target);
+                    }
                 }
                 break;
             }

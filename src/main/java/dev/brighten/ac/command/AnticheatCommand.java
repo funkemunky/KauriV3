@@ -32,6 +32,7 @@ import net.minecraft.server.v1_8_R3.PacketPlayOutTitle;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.craftbukkit.v1_8_R3.util.CraftChatMessage;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.InvalidDescriptionException;
 import org.bukkit.plugin.Plugin;
@@ -211,13 +212,12 @@ public class AnticheatCommand extends BaseCommand {
     @Subcommand("spawnbot")
     @CommandPermission("anticheat.command.spawnbot")
     @Description("Spawn test bot")
-    public void onBot(Player player) {
-        FakeMob fakePlayer = new FakeMob(player.getLocation().getWorld());
+    public void onBot(APlayer player) {
+        FakeMob fakePlayer = new FakeMob(EntityType.ZOMBIE);
 
-        fakePlayer.spawn(player.getLocation(), Anticheat.INSTANCE.getPlayerRegistry()
-                .getPlayer(player.getUniqueId()).orElseThrow(() -> new RuntimeException("shit")));
+        fakePlayer.spawn(true, player.getBukkitPlayer().getLocation(), player);
 
-        player.sendMessage(Color.Green + "Spawned entity with ID: " + fakePlayer.getEntityId());
+        player.getBukkitPlayer().sendMessage(Color.Green + "Spawned entity with ID: " + fakePlayer.getEntityId());
     }
 
     @Subcommand("botinvis")

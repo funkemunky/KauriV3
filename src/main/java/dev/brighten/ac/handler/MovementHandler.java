@@ -10,6 +10,8 @@ import dev.brighten.ac.utils.*;
 import dev.brighten.ac.utils.objects.evicting.EvictingList;
 import dev.brighten.ac.utils.timer.Timer;
 import dev.brighten.ac.utils.timer.impl.TickTimer;
+import dev.brighten.ac.utils.world.CollisionBox;
+import dev.brighten.ac.utils.world.types.RayCollision;
 import dev.brighten.ac.utils.world.types.SimpleCollisionBox;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -39,7 +41,9 @@ public class MovementHandler {
     private int moveTicks;
     private final List<KLocation> posLocs = new ArrayList<>();
     @Getter
-    private boolean checkMovement, accurateYawData, cinematic, jumped, inAir;
+    private final List<CollisionBox> lookingAtBoxes = new ArrayList<>();
+    @Getter
+    private boolean checkMovement, accurateYawData, cinematic, jumped, inAir, lookingAtBlock;
     @Getter
     @Setter
     private boolean excuseNextFlying;
@@ -141,7 +145,18 @@ public class MovementHandler {
 
             val origin = this.to.getLoc().clone();
 
-            origin.y += player.getInfo().isSneaking() ? 1.54 : 1.62;
+            origin.y += player.getInfo().isSneaking()
+                    ? (player.getPlayerVersion().isBelow(ProtocolVersion.V1_14) ? 1.54 : 1.27f) : 1.62;
+
+            RayCollision collision = new RayCollision(origin.toVector(), MathUtils.getDirection(origin));
+
+            synchronized (lookingAtBoxes) {
+                lookingAtBoxes.clear();
+                lookingAtBoxes.addAll(collision
+                        .boxesOnRay(player.getBukkitPlayer().getWorld(),
+                        player.getBukkitPlayer().getGameMode().equals(GameMode.CREATIVE) ? 6.0 : 5.0));
+                lookingAtBlock = lookingAtBoxes.size() > 0;
+            }
 
             if (lastTeleport.isPassed(1)) {
                 predictionHandling:

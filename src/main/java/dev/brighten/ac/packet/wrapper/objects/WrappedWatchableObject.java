@@ -23,7 +23,7 @@ public class WrappedWatchableObject extends WObject {
     private static WrappedField firstIntField, dataValueIdField, dataWatcherObjectField,
             dataWatcherObjectIdField, dataSerializerField, watchedObjectField, watchedField;
 
-    private int firstInt, dataValueId;
+    private int objectType, dataValueId;
     private Object watchedObject, dataWatcherObject, serializer;
     private boolean watched;
 
@@ -31,13 +31,20 @@ public class WrappedWatchableObject extends WObject {
         super(object);
     }
 
+    public WrappedWatchableObject(int objectType, int dataValueId, Object watchedObject) {
+        super(constructor.newInstance(objectType, dataValueId, watchedObject));
+
+        this.dataValueId = dataValueId;
+        this.watchedObject = watchedObject;
+    }
+
     @Override
     public void processVanilla() {
         if(ProtocolVersion.getGameVersion().isBelow(ProtocolVersion.V1_9)) {
-            firstInt = fetch(firstIntField);
+            objectType = fetch(firstIntField);
             dataValueId = fetch(dataValueIdField);
         } else {
-            firstInt = -1;
+            objectType = -1;
             dataWatcherObject = fetch(dataWatcherObjectField);
             dataValueId = dataWatcherObjectIdField.get(dataWatcherObject);
             serializer = dataSerializerField.get(dataWatcherObject);
@@ -48,7 +55,7 @@ public class WrappedWatchableObject extends WObject {
 
     @Override
     public Object toVanillaObject() {
-        return constructor.newInstance(firstInt, dataValueId, watchedObject);
+        return constructor.newInstance(objectType, dataValueId, watchedObject);
     }
 
     static {

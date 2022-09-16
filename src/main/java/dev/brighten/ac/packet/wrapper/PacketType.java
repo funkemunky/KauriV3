@@ -140,6 +140,10 @@ public enum PacketType {
                 return convert.processSpawnLiving(object);
             case REMOVE_EFFECT:
                 return convert.processRemoveEffect(object);
+            case ENTITY_METADATA:
+                return convert.processEntityMetadata(object);
+            case ENTITY_DESTROY:
+                return convert.processEntityDestroy(object);
             default:
                 return object;
         }

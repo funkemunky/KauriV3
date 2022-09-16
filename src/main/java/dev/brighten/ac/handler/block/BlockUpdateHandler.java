@@ -165,6 +165,13 @@ public class BlockUpdateHandler {
                 blockI.add(type);
 
                 blockInformation.put(loc, blockI);
+            } else if(blockI.size() == 0) {
+                Material type = Wrapper.getInstance().getType(player.getBukkitPlayer().getWorld(),
+                        loc.getX(), loc.getY(), loc.getZ());
+
+                blockI.add(type);
+
+                blockInformation.put(loc, blockI);
             }
 
             return blockI;
