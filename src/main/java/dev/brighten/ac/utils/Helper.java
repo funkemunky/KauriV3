@@ -58,6 +58,7 @@ public class Helper {
 		}
 	}
 
+
 	public static void drawCuboid(SimpleCollisionBox box, EnumParticle particle, Collection<? extends Player> players) {
 		Step.GenericStepper<Float> x = Step.step((float)box.xMin, 0.241F, (float)box.xMax);
 		Step.GenericStepper<Float> y = Step.step((float)box.yMin, 0.241F, (float)box.yMax);

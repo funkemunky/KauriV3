@@ -38,7 +38,7 @@ public class Check implements ECheck {
     @Getter
     @Setter
     private int punishVl;
-    private static final Timer alertCountReset = new TickTimer();
+    private static final Timer alertCountReset = new TickTimer(), lastPunish = new TickTimer();
     private static final AtomicInteger alertCount = new AtomicInteger(0);
 
     public static Set<UUID> alertsEnabled = new HashSet<>();
@@ -184,7 +184,7 @@ public class Check implements ECheck {
                 alertCountReset.reset();
             }
 
-           if(alertCount.incrementAndGet() < 30) {
+           if(alertCount.incrementAndGet() < 40) {
                boolean dev = Anticheat.INSTANCE.getTps() < 18;
                //if(vl > 0) Anticheat.INSTANCE.loggerManager.addLog(player, this, info);
 
@@ -223,7 +223,9 @@ public class Check implements ECheck {
     }
 
     public void punish() {
-        if(!punishable) return;
+        if(!punishable || lastPunish.isNotPassed(20)) return;
+
+        lastPunish.reset();
 
         PunishResult result = PunishResult.builder().cancelled(false).build();
 
@@ -240,7 +242,6 @@ public class Check implements ECheck {
                 }
             });
         }
-        vl = 0;
     }
 
     private TextComponent createTxt(String txt) {

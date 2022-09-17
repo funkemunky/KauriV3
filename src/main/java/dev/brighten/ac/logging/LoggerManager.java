@@ -32,7 +32,7 @@ public class LoggerManager {
         AtomicLong lastWrite = new AtomicLong();
         Anticheat.INSTANCE.getScheduler().scheduleAtFixedRate(() -> {
             long now = System.currentTimeMillis();
-            if(logList.size() > 0 && (now - lastWrite.get() > 2000L || logList.size() > 600)) {
+            if(logList.size() > 0 && (now - lastWrite.get() > 10000L || logList.size() > 600)) {
                 try {
                     WebSocket socket =  new WebSocketFactory().createSocket("ws://port.funkemunky.cc/chat").connect();
 
@@ -64,7 +64,7 @@ public class LoggerManager {
                     throw new RuntimeException(e);
                 }
             }
-        }, 100, 100, TimeUnit.MILLISECONDS);
+        }, 200, 200, TimeUnit.MILLISECONDS);
     }
 
     private String license() {
