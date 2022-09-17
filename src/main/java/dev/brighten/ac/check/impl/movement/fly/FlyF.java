@@ -18,6 +18,7 @@ public class FlyF extends Check {
                 || player.getInfo().blockAbove.isNotPassed(4)
                 || player.getInfo().climbTimer.isNotPassed(2)
                 || packet.isOnGround()
+                || player.getInfo().getVelocity().isNotPassed(4)
                 || player.getMovement().getMoveTicks() < 3
                 || player.getInfo().isGeneralCancel()) return;
 
