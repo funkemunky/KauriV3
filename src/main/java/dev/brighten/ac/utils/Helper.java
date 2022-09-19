@@ -60,9 +60,9 @@ public class Helper {
 
 
 	public static void drawCuboid(SimpleCollisionBox box, EnumParticle particle, Collection<? extends Player> players) {
-		Step.GenericStepper<Float> x = Step.step((float)box.xMin, 0.241F, (float)box.xMax);
-		Step.GenericStepper<Float> y = Step.step((float)box.yMin, 0.241F, (float)box.yMax);
-		Step.GenericStepper<Float> z = Step.step((float)box.zMin, 0.241F, (float)box.zMax);
+		Step.GenericStepper<Float> x = Step.step((float)box.minX, 0.241F, (float)box.maxX);
+		Step.GenericStepper<Float> y = Step.step((float)box.minY, 0.241F, (float)box.maxY);
+		Step.GenericStepper<Float> z = Step.step((float)box.minZ, 0.241F, (float)box.maxZ);
 		Iterator var6 = x.iterator();
 
 		while(var6.hasNext()) {
@@ -151,12 +151,12 @@ public class Helper {
 	}
 
 	public static SimpleCollisionBox wrap(SimpleCollisionBox a, SimpleCollisionBox b) {
-		double minX = Math.min(a.xMin, b.xMin);
-		double minY = Math.min(a.yMin, b.yMin);
-		double minZ = Math.min(a.zMin, b.zMin);
-		double maxX = Math.max(a.xMax, b.xMax);
-		double maxY = Math.max(a.yMax, b.yMax);
-		double maxZ = Math.max(a.zMax, b.zMax);
+		double minX = Math.min(a.minX, b.minX);
+		double minY = Math.min(a.minY, b.minY);
+		double minZ = Math.min(a.minZ, b.minZ);
+		double maxX = Math.max(a.maxX, b.maxX);
+		double maxY = Math.max(a.maxY, b.maxY);
+		double maxZ = Math.max(a.maxZ, b.maxZ);
 		return new SimpleCollisionBox(minX, minY, minZ, maxX, maxY, maxZ);
 	}
 
@@ -165,12 +165,12 @@ public class Helper {
 			SimpleCollisionBox wrap = box.get(0).copy();
 			for (int i = 1; i < box.size(); i++) {
 				SimpleCollisionBox a = box.get(i);
-				if (wrap.xMin > a.xMin) wrap.xMin = a.xMin;
-				if (wrap.yMin > a.yMin) wrap.yMin = a.yMin;
-				if (wrap.zMin > a.zMin) wrap.zMin = a.zMin;
-				if (wrap.xMax < a.xMax) wrap.xMax = a.xMax;
-				if (wrap.yMax < a.yMax) wrap.yMax = a.yMax;
-				if (wrap.zMax < a.zMax) wrap.zMax = a.zMax;
+				if (wrap.minX > a.minX) wrap.minX = a.minX;
+				if (wrap.minY > a.minY) wrap.minY = a.minY;
+				if (wrap.minZ > a.minZ) wrap.minZ = a.minZ;
+				if (wrap.maxX < a.maxX) wrap.maxX = a.maxX;
+				if (wrap.maxY < a.maxY) wrap.maxY = a.maxY;
+				if (wrap.maxZ < a.maxZ) wrap.maxZ = a.maxZ;
 			}
 			return wrap;
 		}
@@ -188,9 +188,9 @@ public class Helper {
 
 		other.downCast(downcasted);
 
-		return downcasted.stream().anyMatch(box -> box.xMax >= toCheck.xMin && box.xMin <= toCheck.xMax
-				&& box.yMax >= toCheck.yMin && box.yMin <= toCheck.yMax && box.zMax >= toCheck.zMin
-				&& box.zMin <= toCheck.zMax);
+		return downcasted.stream().anyMatch(box -> box.maxX >= toCheck.minX && box.minX <= toCheck.maxX
+				&& box.maxY >= toCheck.minY && box.minY <= toCheck.maxY && box.maxZ >= toCheck.minZ
+				&& box.minZ <= toCheck.maxZ);
 	}
 
 	public static List<Block> blockCollisions(List<Block> blocks, CollisionBox box, int material) {
@@ -206,12 +206,12 @@ public class Helper {
 	}
 
 	public static List<Block> getBlocksNearby2(World world, SimpleCollisionBox collisionBox, int mask) {
-		int x1 = (int) Math.floor(collisionBox.xMin);
-		int y1 = (int) Math.floor(collisionBox.yMin);
-		int z1 = (int) Math.floor(collisionBox.zMin);
-		int x2 = (int) Math.ceil(collisionBox.xMax);
-		int y2 = (int) Math.ceil(collisionBox.yMax);
-		int z2 = (int) Math.ceil(collisionBox.zMax);
+		int x1 = (int) Math.floor(collisionBox.minX);
+		int y1 = (int) Math.floor(collisionBox.minY);
+		int z1 = (int) Math.floor(collisionBox.minZ);
+		int x2 = (int) Math.ceil(collisionBox.maxX);
+		int y2 = (int) Math.ceil(collisionBox.maxY);
+		int z2 = (int) Math.ceil(collisionBox.maxZ);
 		List<Block> blocks = new LinkedList<>();
 		Block block;
 		for (int x = x1; x <= x2; x++)

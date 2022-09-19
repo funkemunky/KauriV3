@@ -49,12 +49,12 @@ public class MiscUtils {
         }
     }
     public static boolean isInMaterialBB(World world, SimpleCollisionBox entityBox, XMaterial xmaterial) {
-        int startX = MathHelper.floor_double(entityBox.xMin);
-        int startY = MathHelper.floor_double(entityBox.yMin);
-        int startZ = MathHelper.floor_double(entityBox.zMin);
-        int endX = MathHelper.floor_double(entityBox.xMax + 1D);
-        int endY = MathHelper.floor_double(entityBox.yMax + 1D);
-        int endZ = MathHelper.floor_double(entityBox.zMax + 1D);
+        int startX = MathHelper.floor_double(entityBox.minX);
+        int startY = MathHelper.floor_double(entityBox.minY);
+        int startZ = MathHelper.floor_double(entityBox.minZ);
+        int endX = MathHelper.floor_double(entityBox.maxX + 1D);
+        int endY = MathHelper.floor_double(entityBox.maxY + 1D);
+        int endZ = MathHelper.floor_double(entityBox.maxZ + 1D);
 
         for(int x = startX ; x < endX ; x++) {
             for(int y = startY ; y < endY ; y++) {
@@ -73,12 +73,12 @@ public class MiscUtils {
     }
 
     public static boolean isInMaterialBB(World world, SimpleCollisionBox entityBox, int bitmask) {
-        int startX = MathHelper.floor_double(entityBox.xMin);
-        int startY = MathHelper.floor_double(entityBox.yMin);
-        int startZ = MathHelper.floor_double(entityBox.zMin);
-        int endX = MathHelper.floor_double(entityBox.xMax + 1D);
-        int endY = MathHelper.floor_double(entityBox.yMax + 1D);
-        int endZ = MathHelper.floor_double(entityBox.zMax + 1D);
+        int startX = MathHelper.floor_double(entityBox.minX);
+        int startY = MathHelper.floor_double(entityBox.minY);
+        int startZ = MathHelper.floor_double(entityBox.minZ);
+        int endX = MathHelper.floor_double(entityBox.maxX + 1D);
+        int endY = MathHelper.floor_double(entityBox.maxY + 1D);
+        int endZ = MathHelper.floor_double(entityBox.maxZ + 1D);
 
         for(int x = startX ; x < endX ; x++) {
             for(int y = startY ; y < endY ; y++) {

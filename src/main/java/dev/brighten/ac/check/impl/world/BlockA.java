@@ -49,13 +49,13 @@ public class BlockA extends Check {
 
         final SimpleCollisionBox simpleBox = ((SimpleCollisionBox) box);
 
-        if(Math.abs(simpleBox.yMax - simpleBox.yMin) != 1.
-                || Math.abs(simpleBox.xMax - simpleBox.xMin) != 1.
-                || Math.abs(simpleBox.zMax - simpleBox.zMin) != 1.) {
+        if(Math.abs(simpleBox.maxY - simpleBox.minY) != 1.
+                || Math.abs(simpleBox.maxX - simpleBox.minX) != 1.
+                || Math.abs(simpleBox.maxZ - simpleBox.minZ) != 1.) {
             debug("not full block: x=%.1f y=%.1f z=%.1f",
-                    Math.abs(simpleBox.xMax - simpleBox.xMin),
-                    Math.abs(simpleBox.yMax - simpleBox.yMin),
-                    Math.abs(simpleBox.zMax - simpleBox.zMin));
+                    Math.abs(simpleBox.maxX - simpleBox.minX),
+                    Math.abs(simpleBox.maxY - simpleBox.minY),
+                    Math.abs(simpleBox.maxZ - simpleBox.minZ));
             return;
         }
 

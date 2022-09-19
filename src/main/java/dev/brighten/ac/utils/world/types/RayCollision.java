@@ -246,32 +246,32 @@ public class RayCollision implements CollisionBox {
         double tFar;
         double tNear;
         if (invDirX >= 0.0D) {
-            tNear = (aab.xMin - ray.originX) * invDirX;
-            tFar = (aab.xMax - ray.originX) * invDirX;
+            tNear = (aab.minX - ray.originX) * invDirX;
+            tFar = (aab.maxX - ray.originX) * invDirX;
         } else {
-            tNear = (aab.xMax - ray.originX) * invDirX;
-            tFar = (aab.xMin - ray.originX) * invDirX;
+            tNear = (aab.maxX - ray.originX) * invDirX;
+            tFar = (aab.minX - ray.originX) * invDirX;
         }
 
         double tymin;
         double tymax;
         if (invDirY >= 0.0D) {
-            tymin = (aab.yMin - ray.originY) * invDirY;
-            tymax = (aab.yMax - ray.originY) * invDirY;
+            tymin = (aab.minY - ray.originY) * invDirY;
+            tymax = (aab.maxY - ray.originY) * invDirY;
         } else {
-            tymin = (aab.yMax - ray.originY) * invDirY;
-            tymax = (aab.yMin - ray.originY) * invDirY;
+            tymin = (aab.maxY - ray.originY) * invDirY;
+            tymax = (aab.minY - ray.originY) * invDirY;
         }
 
         if (tNear <= tymax && tymin <= tFar) {
             double tzmin;
             double tzmax;
             if (invDirZ >= 0.0D) {
-                tzmin = (aab.zMin - ray.originZ) * invDirZ;
-                tzmax = (aab.zMax - ray.originZ) * invDirZ;
+                tzmin = (aab.minZ - ray.originZ) * invDirZ;
+                tzmax = (aab.maxZ - ray.originZ) * invDirZ;
             } else {
-                tzmin = (aab.zMax - ray.originZ) * invDirZ;
-                tzmax = (aab.zMin - ray.originZ) * invDirZ;
+                tzmin = (aab.maxZ - ray.originZ) * invDirZ;
+                tzmax = (aab.minZ - ray.originZ) * invDirZ;
             }
 
             if (tNear <= tzmax && tzmin <= tFar) {
@@ -299,32 +299,32 @@ public class RayCollision implements CollisionBox {
         double tFar;
         double tNear;
         if (invDirX >= 0.0D) {
-            tNear = (aab.xMin - ray.originX) * invDirX;
-            tFar = (aab.xMax - ray.originX) * invDirX;
+            tNear = (aab.minX - ray.originX) * invDirX;
+            tFar = (aab.maxX - ray.originX) * invDirX;
         } else {
-            tNear = (aab.xMax - ray.originX) * invDirX;
-            tFar = (aab.xMin - ray.originX) * invDirX;
+            tNear = (aab.maxX - ray.originX) * invDirX;
+            tFar = (aab.minX - ray.originX) * invDirX;
         }
 
         double tymin;
         double tymax;
         if (invDirY >= 0.0D) {
-            tymin = (aab.yMin - ray.originY) * invDirY;
-            tymax = (aab.yMax - ray.originY) * invDirY;
+            tymin = (aab.minY - ray.originY) * invDirY;
+            tymax = (aab.maxY - ray.originY) * invDirY;
         } else {
-            tymin = (aab.yMax - ray.originY) * invDirY;
-            tymax = (aab.yMin - ray.originY) * invDirY;
+            tymin = (aab.maxY - ray.originY) * invDirY;
+            tymax = (aab.minY - ray.originY) * invDirY;
         }
 
         if (tNear <= tymax && tymin <= tFar) {
             double tzmin;
             double tzmax;
             if (invDirZ >= 0.0D) {
-                tzmin = (aab.zMin - ray.originZ) * invDirZ;
-                tzmax = (aab.zMax - ray.originZ) * invDirZ;
+                tzmin = (aab.minZ - ray.originZ) * invDirZ;
+                tzmax = (aab.maxZ - ray.originZ) * invDirZ;
             } else {
-                tzmin = (aab.zMax - ray.originZ) * invDirZ;
-                tzmax = (aab.zMin - ray.originZ) * invDirZ;
+                tzmin = (aab.maxZ - ray.originZ) * invDirZ;
+                tzmax = (aab.minZ - ray.originZ) * invDirZ;
             }
 
             if (tNear <= tzmax && tzmin <= tFar) {

@@ -244,11 +244,11 @@ public class MinecraftReflection {
         if(ProtocolVersion.getGameVersion().isBelow(ProtocolVersion.V1_8)) {
             return idioticOldStaticConstructorAABB
                     .invoke(null,
-                            box.xMin, box.yMin, box.zMin,
-                            box.xMax, box.yMax, box.zMax);
+                            box.minX, box.minY, box.minZ,
+                            box.maxX, box.maxY, box.maxZ);
         } else return aabbConstructor
-                .newInstance(box.xMin, box.yMin, box.zMin,
-                        box.xMax, box.yMax, box.zMax);
+                .newInstance(box.minX, box.minY, box.minZ,
+                        box.maxX, box.maxY, box.maxZ);
     }
 
     //Either bukkit or vanilla world object can be used.

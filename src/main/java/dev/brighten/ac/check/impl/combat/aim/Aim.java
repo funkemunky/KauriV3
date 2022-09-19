@@ -1,4 +1,4 @@
-package dev.brighten.ac.check.impl.combat;
+package dev.brighten.ac.check.impl.combat.aim;
 
 import dev.brighten.ac.api.check.CheckType;
 import dev.brighten.ac.check.Check;

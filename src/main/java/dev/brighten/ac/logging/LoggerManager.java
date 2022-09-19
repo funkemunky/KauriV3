@@ -37,7 +37,6 @@ public class LoggerManager {
                     WebSocket socket =  new WebSocketFactory().createSocket("ws://port.funkemunky.cc/chat").connect();
 
                     System.out.println("Writing logs");
-                    Log log;
                     ByteArrayOutputStream baos = new ByteArrayOutputStream();
                     ObjectOutputStream oos = new ObjectOutputStream(baos);
 
@@ -45,8 +44,12 @@ public class LoggerManager {
                     oos.writeUTF(license());
 
                     int i = 0;
-                    while((log = logList.poll()) != null && i++ < 400) {
-                        oos.writeUTF(log.toJson());
+                    while(logList.size() > 0 && i++ < 400) {
+                        Log log = logList.poll();
+
+                        if(log != null) {
+                            oos.writeUTF(log.toJson());
+                        }
                     }
 
                     if(i == 0) {
@@ -61,7 +64,7 @@ public class LoggerManager {
 
                     socket.disconnect();
                 } catch (IOException | WebSocketException e) {
-                    throw new RuntimeException(e);
+                    e.printStackTrace();
                 }
             }
         }, 200, 200, TimeUnit.MILLISECONDS);

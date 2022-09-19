@@ -9,7 +9,6 @@ import dev.brighten.ac.utils.world.BlockData;
 import dev.brighten.ac.utils.world.CollisionBox;
 import dev.brighten.ac.utils.world.EntityData;
 import dev.brighten.ac.utils.world.types.SimpleCollisionBox;
-import dev.brighten.ac.utils.wrapper.Wrapper;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -74,21 +73,21 @@ public class BlockInformation {
 
         SimpleCollisionBox waterBox = player.getMovement().getTo().getBox().copy().expand(0, -.38, 0);
 
-        waterBox.xMin = MathHelper.floor_double(waterBox.xMin);
-        waterBox.yMin = MathHelper.floor_double(waterBox.yMin);
-        waterBox.zMin = MathHelper.floor_double(waterBox.zMin);
-        waterBox.xMax = MathHelper.floor_double(waterBox.xMax + 1.);
-        waterBox.yMax = MathHelper.floor_double(waterBox.yMax + 1.);
-        waterBox.zMax = MathHelper.floor_double(waterBox.zMax + 1.);
+        waterBox.minX = MathHelper.floor_double(waterBox.minX);
+        waterBox.minY = MathHelper.floor_double(waterBox.minY);
+        waterBox.minZ = MathHelper.floor_double(waterBox.minZ);
+        waterBox.maxX = MathHelper.floor_double(waterBox.maxX + 1.);
+        waterBox.maxY = MathHelper.floor_double(waterBox.maxY + 1.);
+        waterBox.maxZ = MathHelper.floor_double(waterBox.maxZ + 1.);
 
         SimpleCollisionBox lavaBox = player.getMovement().getTo().getBox().copy().expand(-.1f, -.4f, -.1f);
 
-        lavaBox.xMin = MathHelper.floor_double(waterBox.xMin);
-        lavaBox.yMin = MathHelper.floor_double(waterBox.yMin);
-        lavaBox.zMin = MathHelper.floor_double(waterBox.zMin);
-        lavaBox.xMax = MathHelper.floor_double(waterBox.xMax + 1.);
-        lavaBox.yMax = MathHelper.floor_double(waterBox.yMax + 1.);
-        lavaBox.zMax = MathHelper.floor_double(waterBox.zMax + 1.);
+        lavaBox.minX = MathHelper.floor_double(waterBox.minX);
+        lavaBox.minY = MathHelper.floor_double(waterBox.minY);
+        lavaBox.minZ = MathHelper.floor_double(waterBox.minZ);
+        lavaBox.maxX = MathHelper.floor_double(waterBox.maxX + 1.);
+        lavaBox.maxY = MathHelper.floor_double(waterBox.maxY + 1.);
+        lavaBox.maxZ = MathHelper.floor_double(waterBox.maxZ + 1.);
 
         SimpleCollisionBox normalBox = player.getMovement().getTo().getBox().copy();
 
@@ -107,26 +106,6 @@ public class BlockInformation {
         final World world = player.getBukkitPlayer().getWorld();
         int it = 10 * 10;
 
-        if(player.getMovement().getFrom().getBox() != null) {
-            SimpleCollisionBox boundsForCollision = player.getMovement().getFrom().getBox().copy().shrink(0.001D, 0.001D, 0.001D);
-
-            IntVector min = new IntVector((int) boundsForCollision.xMin, (int) boundsForCollision.yMin, (int) boundsForCollision.zMin);
-            IntVector max = new IntVector((int) boundsForCollision.xMax, (int) boundsForCollision.yMax, (int) boundsForCollision.zMax);
-
-            for(int x = min.getX() ; x <= max.getX() ; x++) {
-                for(int y = min.getY() ; y <= max.getY() ; y++) {
-                    for(int z = min.getZ() ; z <= max.getZ() ; z++) {
-                        Material type = Wrapper.getInstance().getType(player.getBukkitPlayer().getWorld(), x, y, z);
-
-                        collisionMaterialCount.compute(type, (key, count) -> {
-                            if(count == null) return 1;
-
-                            return count + 1;
-                        });
-                    }
-                }
-            }
-        }
         int xstart = Math.min(startX, endX), xend = Math.max(startX, endX);
         int zstart = Math.min(startZ, endZ), zend = Math.max(startZ, endZ);
 
@@ -136,8 +115,8 @@ public class BlockInformation {
         IntVector max;
 
         if(boundsForCollision != null) {
-            min = new IntVector((int) boundsForCollision.xMin, (int) boundsForCollision.yMin, (int) boundsForCollision.zMin);
-            max = new IntVector((int) boundsForCollision.xMax, (int) boundsForCollision.yMax, (int) boundsForCollision.zMax);
+            min = new IntVector((int) boundsForCollision.minX, (int) boundsForCollision.minY, (int) boundsForCollision.minZ);
+            max = new IntVector((int) boundsForCollision.maxX, (int) boundsForCollision.maxY, (int) boundsForCollision.maxZ);
         } else {
             min = new IntVector(Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE);
             max = new IntVector(Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE);

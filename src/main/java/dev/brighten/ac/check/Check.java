@@ -175,9 +175,8 @@ public class Check implements ECheck {
 
             if(currentResult.isCancelled()) return;
 
-            Anticheat.INSTANCE.getScheduler()
-                    .execute(() -> Anticheat.INSTANCE.getLogManager()
-                            .insertLog(player, checkData, vl, System.currentTimeMillis(), info));
+            Anticheat.INSTANCE.getLogManager()
+                    .insertLog(player, checkData, vl, System.currentTimeMillis(), info);
 
             if(alertCountReset.isPassed(20)) {
                 alertCount.set(0);
@@ -186,7 +185,6 @@ public class Check implements ECheck {
 
            if(alertCount.incrementAndGet() < 40) {
                boolean dev = Anticheat.INSTANCE.getTps() < 18;
-               //if(vl > 0) Anticheat.INSTANCE.loggerManager.addLog(player, this, info);
 
                //Sending Discord webhook alert
 
@@ -226,15 +224,23 @@ public class Check implements ECheck {
         if(!punishable || lastPunish.isNotPassed(20)) return;
 
         lastPunish.reset();
-
-        PunishResult result = PunishResult.builder().cancelled(false).build();
+        System.out.println("tried to punish");
 
         List<String> commands = CheckConfig.punishmentCommands.stream().map(this::addPlaceHolders)
                 .collect(Collectors.toList());
+
+        PunishResult result = PunishResult.builder().cancelled(false).commands(commands).build();
+
         for (AnticheatEvent event : AnticheatAPI.INSTANCE.getAllEvents()) {
             result = event.onPunish(player.getBukkitPlayer(),this,  commands, result.isCancelled());
         }
         PunishResult finalResult = result;
+        if(finalResult == null) {
+            System.out.println("Result is null");
+        } else {
+            System.out.println("Is cancelled: " + finalResult.isCancelled());
+            System.out.println("Commands: " + String.join(",", finalResult.getCommands()));
+        }
         if(finalResult != null && finalResult.getCommands() != null && !finalResult.isCancelled()) {
             RunUtils.task(() -> {
                 for (String punishmentCommand : finalResult.getCommands()) {

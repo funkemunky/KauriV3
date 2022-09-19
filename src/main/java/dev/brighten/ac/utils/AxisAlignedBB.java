@@ -34,12 +34,12 @@ public class AxisAlignedBB {
     }
 
     public AxisAlignedBB(SimpleCollisionBox box) {
-        this.minX = box.xMin;
-        this.minY = box.yMin;
-        this.minZ = box.zMin;
-        this.maxX = box.xMax;
-        this.maxY = box.yMax;
-        this.maxZ = box.zMax;
+        this.minX = box.minX;
+        this.minY = box.minY;
+        this.minZ = box.minZ;
+        this.maxX = box.maxX;
+        this.maxY = box.maxY;
+        this.maxZ = box.maxZ;
     }
 
     public AxisAlignedBB(Location blockposition, Location blockposition1) {

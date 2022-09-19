@@ -61,8 +61,8 @@ public class KATrace extends Check {
             for (CollisionBox lookingAtBox : player.getMovement().getLookingAtBoxes()) {
                 if((lookingAtBox instanceof SimpleCollisionBox)) {
                     SimpleCollisionBox box = (SimpleCollisionBox) lookingAtBox;
-                    if(box.xMin % 1 != 0 || box.yMin % 1 != 0 || box.zMin % 1 != 0
-                            || box.xMax % 1 != 0 || box.yMax % 1 != 0 || box.zMax % 1 != 0)
+                    if(box.minX % 1 != 0 || box.minY % 1 != 0 || box.minZ % 1 != 0
+                            || box.maxX % 1 != 0 || box.maxY % 1 != 0 || box.maxZ % 1 != 0)
                         continue;
 
                     Vector point = collision.collisionPoint(box.copy().shrink(0.005f, 0.005f, 0.005f));

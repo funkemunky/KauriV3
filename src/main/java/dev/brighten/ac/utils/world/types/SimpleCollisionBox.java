@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Objects;
 
 public class SimpleCollisionBox implements CollisionBox {
-    public double xMin, yMin, zMin, xMax, yMax, zMax;
+    public double minX, minY, minZ, maxX, maxY, maxZ;
 
     public SimpleCollisionBox() {
         this(0, 0, 0, 0, 0, 0);
@@ -23,35 +23,35 @@ public class SimpleCollisionBox implements CollisionBox {
 
     public SimpleCollisionBox(double xMin, double yMin, double zMin, double xMax, double yMax, double zMax) {
         if (xMin < xMax) {
-            this.xMin = xMin;
-            this.xMax = xMax;
+            this.minX = xMin;
+            this.maxX = xMax;
         } else {
-            this.xMin = xMax;
-            this.xMax = xMin;
+            this.minX = xMax;
+            this.maxX = xMin;
         }
         if (yMin < yMax) {
-            this.yMin = yMin;
-            this.yMax = yMax;
+            this.minY = yMin;
+            this.maxY = yMax;
         } else {
-            this.yMin = yMax;
-            this.yMax = yMin;
+            this.minY = yMax;
+            this.maxY = yMin;
         }
         if (zMin < zMax) {
-            this.zMin = zMin;
-            this.zMax = zMax;
+            this.minZ = zMin;
+            this.maxZ = zMax;
         } else {
-            this.zMin = zMax;
-            this.zMax = zMin;
+            this.minZ = zMax;
+            this.maxZ = zMin;
         }
     }
 
     public SimpleCollisionBox(double width, double height) {
-        xMin = -(width / 2);
-        yMin = 0;
-        zMin = -(width / 2);
-        xMax = width / 2;
-        yMax = height;
-        zMax = width / 2;
+        minX = -(width / 2);
+        minY = 0;
+        minZ = -(width / 2);
+        maxX = width / 2;
+        maxY = height;
+        maxZ = width / 2;
     }
 
     public SimpleCollisionBox(Vector min, Vector max) {
@@ -70,7 +70,7 @@ public class SimpleCollisionBox implements CollisionBox {
         this(vec.getX(), vec.getY(), vec.getZ(), vec.getX(), vec.getY(), vec.getZ());
 
         expand(width / 2, 0, width / 2);
-        yMax+= height;
+        maxY += height;
     }
 
     public SimpleCollisionBox(BoundingBox box) {
@@ -83,45 +83,45 @@ public class SimpleCollisionBox implements CollisionBox {
 
     public void sort() {
         double temp = 0;
-        if (xMin >= xMax) {
-            temp = xMin;
-            this.xMin = xMax;
-            this.xMax = temp;
+        if (minX >= maxX) {
+            temp = minX;
+            this.minX = maxX;
+            this.maxX = temp;
         }
-        if (yMin >= yMax) {
-            temp = yMin;
-            this.yMin = yMax;
-            this.yMax = temp;
+        if (minY >= maxY) {
+            temp = minY;
+            this.minY = maxY;
+            this.maxY = temp;
         }
-        if (zMin >= zMax) {
-            temp = zMin;
-            this.zMin = zMax;
-            this.zMax = temp;
+        if (minZ >= maxZ) {
+            temp = minZ;
+            this.minZ = maxZ;
+            this.maxZ = temp;
         }
     }
 
     public SimpleCollisionBox copy() {
-        return new SimpleCollisionBox(xMin, yMin, zMin, xMax, yMax, zMax);
+        return new SimpleCollisionBox(minX, minY, minZ, maxX, maxY, maxZ);
     }
 
     public SimpleCollisionBox offset(double x, double y, double z) {
-        this.xMin += x;
-        this.yMin += y;
-        this.zMin += z;
-        this.xMax += x;
-        this.yMax += y;
-        this.zMax += z;
+        this.minX += x;
+        this.minY += y;
+        this.minZ += z;
+        this.maxX += x;
+        this.maxY += y;
+        this.maxZ += z;
         return this;
     }
 
     @Override
     public SimpleCollisionBox shrink(double x, double y, double z) {
-        this.xMin += x;
-        this.yMin += y;
-        this.zMin += z;
-        this.xMax -= x;
-        this.yMax -= y;
-        this.zMax -= z;
+        this.minX += x;
+        this.minY += y;
+        this.minZ += z;
+        this.maxX -= x;
+        this.maxY -= y;
+        this.maxZ -= z;
 
         return this;
     }
@@ -137,26 +137,47 @@ public class SimpleCollisionBox implements CollisionBox {
     }
 
     public SimpleCollisionBox expandMin(double x, double y, double z) {
-        this.xMin += x;
-        this.yMin += y;
-        this.zMin += z;
+        this.minX += x;
+        this.minY += y;
+        this.minZ += z;
         return this;
     }
 
     public SimpleCollisionBox expandMax(double x, double y, double z) {
-        this.xMax += x;
-        this.yMax += y;
-        this.zMax += z;
+        this.maxX += x;
+        this.maxY += y;
+        this.maxZ += z;
         return this;
     }
 
     public SimpleCollisionBox expand(double x, double y, double z) {
-        this.xMin -= x;
-        this.yMin -= y;
-        this.zMin -= z;
-        this.xMax += x;
-        this.yMax += y;
-        this.zMax += z;
+        this.minX -= x;
+        this.minY -= y;
+        this.minZ -= z;
+        this.maxX += x;
+        this.maxY += y;
+        this.maxZ += z;
+        return this;
+    }
+    public SimpleCollisionBox addCoord(double x, double y, double z) {
+        if (x < 0.0D) {
+            minX += x;
+        } else if (x > 0.0D) {
+            maxX += x;
+        }
+
+        if (y < 0.0D) {
+            minY += y;
+        } else if (y > 0.0D) {
+            maxY += y;
+        }
+
+        if (z < 0.0D) {
+            minZ += z;
+        } else if (z > 0.0D) {
+            maxZ += z;
+        }
+
         return this;
     }
 
@@ -166,64 +187,35 @@ public class SimpleCollisionBox implements CollisionBox {
     }
 
     public SimpleCollisionBox expand(double value) {
-        this.xMin -= value;
-        this.yMin -= value;
-        this.zMin -= value;
-        this.xMax += value;
-        this.yMax += value;
-        this.zMax += value;
+        this.minX -= value;
+        this.minY -= value;
+        this.minZ -= value;
+        this.maxX += value;
+        this.maxY += value;
+        this.maxZ += value;
         return this;
     }
 
     public Vector[] corners() {
         sort();
         Vector[] vectors = new Vector[8];
-        vectors[0] = new Vector(xMin,yMin,zMin);
-        vectors[1] = new Vector(xMin,yMin,zMax);
-        vectors[2] = new Vector(xMax,yMin,zMin);
-        vectors[3] = new Vector(xMax,yMin,zMax);
-        vectors[4] = new Vector(xMin,yMax,zMin);
-        vectors[5] = new Vector(xMin,yMax,zMax);
-        vectors[6] = new Vector(xMax,yMax,zMin);
-        vectors[7] = new Vector(xMax,yMax,zMax);
+        vectors[0] = new Vector(minX, minY, minZ);
+        vectors[1] = new Vector(minX, minY, maxZ);
+        vectors[2] = new Vector(maxX, minY, minZ);
+        vectors[3] = new Vector(maxX, minY, maxZ);
+        vectors[4] = new Vector(minX, maxY, minZ);
+        vectors[5] = new Vector(minX, maxY, maxZ);
+        vectors[6] = new Vector(maxX, maxY, minZ);
+        vectors[7] = new Vector(maxX, maxY, maxZ);
         return vectors;
     }
 
     public Vector min() {
-        return new Vector(xMin, yMin, zMin);
+        return new Vector(minX, minY, minZ);
     }
 
     public Vector max() {
-        return new Vector(xMax, yMax, zMax);
-    }
-
-    public SimpleCollisionBox addCoord(double x, double y, double z) {
-        double d0 = this.xMin;
-        double d1 = this.yMin;
-        double d2 = this.zMin;
-        double d3 = this.xMax;
-        double d4 = this.yMax;
-        double d5 = this.zMax;
-
-        if (x < 0.0D) {
-            d0 += x;
-        } else if (x > 0.0D) {
-            d3 += x;
-        }
-
-        if (y < 0.0D) {
-            d1 += y;
-        } else if (y > 0.0D) {
-            d4 += y;
-        }
-
-        if (z < 0.0D) {
-            d2 += z;
-        } else if (z > 0.0D) {
-            d5 += z;
-        }
-
-        return this;
+        return new Vector(maxX, maxY, maxZ);
     }
 
     @Override
@@ -232,9 +224,9 @@ public class SimpleCollisionBox implements CollisionBox {
             SimpleCollisionBox box = ((SimpleCollisionBox) other);
             box.sort();
             sort();
-            return box.xMax >= this.xMin && box.xMin <= this.xMax
-                    && box.yMax >= this.yMin && box.yMin <= this.yMax
-                    && box.zMax >= this.zMin && box.zMin <= this.zMax;
+            return box.maxX >= this.minX && box.minX <= this.maxX
+                    && box.maxY >= this.minY && box.minY <= this.maxY
+                    && box.maxZ >= this.minZ && box.minZ <= this.maxZ;
         } else {
             return other.isCollided(this);
             // throw new IllegalStateException("Attempted to check collision with " + other.getClass().getSimpleName());
@@ -247,9 +239,9 @@ public class SimpleCollisionBox implements CollisionBox {
             SimpleCollisionBox box = (SimpleCollisionBox) other;
             box.sort();
             sort();
-            return box.xMax > this.xMin && box.xMin < this.xMax
-                    && box.yMax > this.yMin && box.yMin < this.yMax
-                    && box.zMax > this.zMin && box.zMin < this.zMax;
+            return box.maxX > this.minX && box.minX < this.maxX
+                    && box.maxY > this.minY && box.minY < this.maxY
+                    && box.maxZ > this.minZ && box.minZ < this.maxZ;
         } else {
             return other.isIntersected(this);
         }
@@ -261,15 +253,15 @@ public class SimpleCollisionBox implements CollisionBox {
      * calculated offset.  Otherwise return the calculated offset.
      */
     public double calculateXOffset(SimpleCollisionBox other, double offsetX) {
-        if (other.yMax > this.yMin && other.yMin < this.yMax && other.zMax > this.zMin && other.zMin < this.zMax) {
-            if (offsetX > 0.0D && other.xMax <= this.xMin) {
-                double d1 = this.xMin - other.xMax;
+        if (other.maxY > this.minY && other.minY < this.maxY && other.maxZ > this.minZ && other.minZ < this.maxZ) {
+            if (offsetX > 0.0D && other.maxX <= this.minX) {
+                double d1 = this.minX - other.maxX;
 
                 if (d1 < offsetX) {
                     offsetX = d1;
                 }
-            } else if (offsetX < 0.0D && other.xMin >= this.xMax) {
-                double d0 = this.xMax - other.xMin;
+            } else if (offsetX < 0.0D && other.minX >= this.maxX) {
+                double d0 = this.maxX - other.minX;
 
                 if (d0 > offsetX) {
                     offsetX = d0;
@@ -288,15 +280,15 @@ public class SimpleCollisionBox implements CollisionBox {
      * calculated offset.  Otherwise return the calculated offset.
      */
     public double calculateYOffset(SimpleCollisionBox other, double offsetY) {
-        if (other.xMax > this.xMin && other.xMin < this.xMax && other.zMax > this.zMin && other.zMin < this.zMax) {
-            if (offsetY > 0.0D && other.yMax <= this.yMin) {
-                double d1 = this.yMin - other.yMax;
+        if (other.maxX > this.minX && other.minX < this.maxX && other.maxZ > this.minZ && other.minZ < this.maxZ) {
+            if (offsetY > 0.0D && other.maxY <= this.minY) {
+                double d1 = this.minY - other.maxY;
 
                 if (d1 < offsetY) {
                     offsetY = d1;
                 }
-            } else if (offsetY < 0.0D && other.yMin >= this.yMax) {
-                double d0 = this.yMax - other.yMin;
+            } else if (offsetY < 0.0D && other.minY >= this.maxY) {
+                double d0 = this.maxY - other.minY;
 
                 if (d0 > offsetY) {
                     offsetY = d0;
@@ -315,15 +307,15 @@ public class SimpleCollisionBox implements CollisionBox {
      * calculated offset.  Otherwise return the calculated offset.
      */
     public double calculateZOffset(SimpleCollisionBox other, double offsetZ) {
-        if (other.xMax > this.xMin && other.xMin < this.xMax && other.yMax > this.yMin && other.yMin < this.yMax) {
-            if (offsetZ > 0.0D && other.zMax <= this.zMin) {
-                double d1 = this.zMin - other.zMax;
+        if (other.maxX > this.minX && other.minX < this.maxX && other.maxY > this.minY && other.minY < this.maxY) {
+            if (offsetZ > 0.0D && other.maxZ <= this.minZ) {
+                double d1 = this.minZ - other.maxZ;
 
                 if (d1 < offsetZ) {
                     offsetZ = d1;
                 }
-            } else if (offsetZ < 0.0D && other.zMin >= this.zMax) {
-                double d0 = this.zMax - other.zMin;
+            } else if (offsetZ < 0.0D && other.minZ >= this.maxZ) {
+                double d0 = this.maxZ - other.minZ;
 
                 if (d0 > offsetZ) {
                     offsetZ = d0;
@@ -337,7 +329,7 @@ public class SimpleCollisionBox implements CollisionBox {
     }
 
     public BoundingBox toBoundingBox() {
-        return new BoundingBox(new Vector(xMin, yMin, zMin), new Vector(xMax, yMax, zMax));
+        return new BoundingBox(new Vector(minX, minY, minZ), new Vector(maxX, maxY, maxZ));
     }
 
     public <T> T toAxisAlignedBB() {
@@ -345,9 +337,9 @@ public class SimpleCollisionBox implements CollisionBox {
     }
 
     public double distance(SimpleCollisionBox box) {
-        double xwidth = (xMax - xMin) / 2, zwidth = (zMax - zMin) / 2;
-        double bxwidth = (box.xMax - box.xMin) / 2, bzwidth = (box.zMax - box.zMin) / 2;
-        double hxz = Math.hypot(xMin - box.xMin, zMin - box.zMin);
+        double xwidth = (maxX - minX) / 2, zwidth = (maxZ - minZ) / 2;
+        double bxwidth = (box.maxX - box.minX) / 2, bzwidth = (box.maxZ - box.minZ) / 2;
+        double hxz = Math.hypot(minX - box.minX, minZ - box.minZ);
 
         return hxz - (xwidth + zwidth + bxwidth + bzwidth) / 4;
     }
@@ -357,23 +349,23 @@ public class SimpleCollisionBox implements CollisionBox {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         SimpleCollisionBox that = (SimpleCollisionBox) o;
-        return Double.compare(that.xMin, xMin) == 0 && Double.compare(that.yMin, yMin) == 0 && Double.compare(that.zMin, zMin) == 0 && Double.compare(that.xMax, xMax) == 0 && Double.compare(that.yMax, yMax) == 0 && Double.compare(that.zMax, zMax) == 0;
+        return Double.compare(that.minX, minX) == 0 && Double.compare(that.minY, minY) == 0 && Double.compare(that.minZ, minZ) == 0 && Double.compare(that.maxX, maxX) == 0 && Double.compare(that.maxY, maxY) == 0 && Double.compare(that.maxZ, maxZ) == 0;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(xMin, yMin, zMin, xMax, yMax, zMax);
+        return Objects.hash(minX, minY, minZ, maxX, maxY, maxZ);
     }
 
     @Override
     public String toString() {
         return "SimpleCollisionBox{" +
-                "xMin=" + xMin +
-                ", yMin=" + yMin +
-                ", zMin=" + zMin +
-                ", xMax=" + xMax +
-                ", yMax=" + yMax +
-                ", zMax=" + zMax +
+                "xMin=" + minX +
+                ", yMin=" + minY +
+                ", zMin=" + minZ +
+                ", xMax=" + maxX +
+                ", yMax=" + maxY +
+                ", zMax=" + maxZ +
                 '}';
     }
 }

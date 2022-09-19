@@ -77,6 +77,7 @@ public class FlyA extends Check {
                 && player.getInfo().getLastLiquid().isPassed(2)
                 && !player.getBlockInfo().fenceBelow
                 && !packet.isOnGround()
+                && player.getInfo().worldLoaded
                 && !player.getInfo().isServerGround()
                 && !player.getBlockInfo().onHalfBlock
                 && player.getInfo().getVelocity().isPassed(1)

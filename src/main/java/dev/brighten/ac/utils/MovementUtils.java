@@ -37,7 +37,7 @@ public class MovementUtils {
     public static boolean isOnLadder(APlayer data) {
         try {
             int i = MathHelper.floor_double(data.getMovement().getTo().getLoc().x);
-            int j = MathHelper.floor_double(data.getMovement().getTo().getBox().yMin);
+            int j = MathHelper.floor_double(data.getMovement().getTo().getBox().minY);
             int k = MathHelper.floor_double(data.getMovement().getTo().getLoc().z);
             Block block = BlockUtils.getBlock(new Location(data.getBukkitPlayer().getWorld(), i, j, k));
 
@@ -111,13 +111,13 @@ public class MovementUtils {
                 if(box instanceof SimpleCollisionBox) {
                     SimpleCollisionBox sbox = (SimpleCollisionBox) box;
 
-                    return new Location(block.get().getWorld(), x, sbox.yMax, z);
+                    return new Location(block.get().getWorld(), x, sbox.maxY, z);
                 } else {
                     List<SimpleCollisionBox> sboxes = new ArrayList<>();
 
                     box.downCast(sboxes);
 
-                    double maxY = sboxes.stream().max(Comparator.comparing(sbox -> sbox.yMax)).map(s -> s.yMax)
+                    double maxY = sboxes.stream().max(Comparator.comparing(sbox -> sbox.maxY)).map(s -> s.maxY)
                             .orElse(y + 1.);
 
                     return new Location(block.get().getWorld(), x, maxY, z);
@@ -148,13 +148,13 @@ public class MovementUtils {
                 if(box instanceof SimpleCollisionBox) {
                     SimpleCollisionBox sbox = (SimpleCollisionBox) box;
 
-                    return new Location(block.get().getWorld(), x, sbox.yMax, z);
+                    return new Location(block.get().getWorld(), x, sbox.maxY, z);
                 } else {
                     List<SimpleCollisionBox> sboxes = new ArrayList<>();
 
                     box.downCast(sboxes);
 
-                    double maxY = sboxes.stream().max(Comparator.comparing(sbox -> sbox.yMax)).map(s -> s.yMax)
+                    double maxY = sboxes.stream().max(Comparator.comparing(sbox -> sbox.maxY)).map(s -> s.maxY)
                             .orElse(y + 1.);
 
                     return new Location(block.get().getWorld(), x, maxY, z);
