@@ -7,10 +7,7 @@ import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
-import dev.brighten.ac.utils.Helper;
-import dev.brighten.ac.utils.KLocation;
-import dev.brighten.ac.utils.Materials;
-import dev.brighten.ac.utils.MathHelper;
+import dev.brighten.ac.utils.*;
 import dev.brighten.ac.utils.math.IntVector;
 import dev.brighten.ac.utils.world.types.SimpleCollisionBox;
 import dev.brighten.ac.utils.wrapper.Wrapper;
@@ -27,10 +24,13 @@ import java.util.stream.Collectors;
 
 @CheckData(name = "Horizontal", checkId = "horizontala", type = CheckType.MOVEMENT)
 public class Horizontal extends Check {
-    private boolean lastLastClientGround;
-    private float buffer;
+    private boolean lastLastClientGround, lOnGround;
+    private float buffer, vbuffer;
+    private boolean maybeSetToZero;
     private Vector velocity;
     private int vTicks;
+    private double ldeltaX = 0, ldeltaY = 0, ldeltaZ = 0;
+    
     private KLocation previousFrom;
     private static final boolean[] TRUE_FALSE = new boolean[]{true, false};
 
@@ -41,7 +41,7 @@ public class Horizontal extends Check {
     }
 
     WAction<WPacketPlayInFlying> flying = packet -> {
-
+        boolean overrideSet = false;
         check:
         {
 
@@ -55,12 +55,19 @@ public class Horizontal extends Check {
                 break check;
             }
 
-            double smallestDelta = Double.MAX_VALUE;
+            double smallDelta = Double.MAX_VALUE, smallestDeltaXZ = Double.MAX_VALUE, smallestDeltaY = Double.MAX_VALUE;
 
-            double pmotionx = 0, pmotionz = 0;
+            double pmotionx = 0, pmotiony = 0, pmotionz = 0;
             boolean onGround = player.getMovement().getFrom().isOnGround();
+            boolean didBlockCollisionsInfluence = false;
 
             List<Iteration> iterations = getIteration();
+
+            String debug = "";
+
+            double xOverride = player.getMovement().getDeltaX(),
+                    yOverride = player.getMovement().getDeltaY(),
+                    zOverride = player.getMovement().getDeltaZ();
 
             for (Iteration it : iterations) {
                 float forward = it.f, strafe = it.s;
@@ -89,8 +96,17 @@ public class Horizontal extends Check {
                 double aiMoveSpeed = player.getBukkitPlayer().getWalkSpeed() / 2;
 
                 float drag = 0.91f;
-                double lmotionX = player.getMovement().getLDeltaX(),
-                        lmotionZ = player.getMovement().getLDeltaZ();
+                double lmotionX = ldeltaX,
+                        lmotionY = ldeltaY,
+                        lmotionZ = ldeltaZ;
+
+                lmotionY-= 0.08;
+                lmotionY*= 0.98f;
+
+                //Less than 0.05
+                if(((lmotionX * lmotionX) + (lmotionZ * lmotionZ) + (lmotionY * lmotionY)) < 0.0025) {
+                    break check;
+                }
 
                 if(player.getBlockInfo().onSoulSand
                         && player.getBlockInfo().collisionMaterialCount.
@@ -128,11 +144,6 @@ public class Horizontal extends Check {
                         lmotionZ = 0;
                 }
 
-                //Less than 0.05
-                if(((lmotionX * lmotionX) + (lmotionZ * lmotionZ)) < 0.0025
-                        && player.getMovement().getDeltaXZ() < 0.2) {
-                    break check;
-                }
                 // Attack slowdown
                 if (it.attack) {
                     lmotionX *= 0.6;
@@ -199,12 +210,81 @@ public class Horizontal extends Check {
                     }
                 }
 
-                List<SimpleCollisionBox> collisionBoxes = Helper.toCollisionsDowncasted(Helper.blockCollisions
-                        (player.getBlockInfo().blocks, player.getMovement().getFrom().getBox().copy()
-                                .addCoord(lmotionX ,player.getMovement().getDeltaY(), lmotionZ), Materials.SOLID));
+                if(it.jumped) lmotionY = MovementUtils.getJumpHeight(player);
+
+                if(Math.abs(lmotionY) < (ProtocolVersion.getGameVersion().isBelow(ProtocolVersion.V1_9) ? 0.005 : 0.003)) {
+                    lmotionY = 0;
+                }
+
                 SimpleCollisionBox box = player.getMovement().getFrom().getBox().copy();
 
-                box.offset(0, player.getMovement().getDeltaY(), 0);
+                double originalX = lmotionX, originalY = lmotionY, originalZ = lmotionZ;
+                if(it.sneaking && onGround) {
+                    double d6;
+
+                    // 1.9+ changes from 0.05 to 0.03
+                    double protocolOffset = 0.05D;
+
+                    for (d6 = protocolOffset; lmotionX != 0.0D && Helper.getCollisions
+                            (player.getBukkitPlayer().getWorld(), box.copy()
+                                    .offset(lmotionX, 0 ,0), Materials.SOLID).isEmpty(); originalX = lmotionX) {
+                        if (lmotionX < d6 && lmotionX >= -d6) {
+                            lmotionX = 0.0D;
+                        } else if (lmotionX > 0.0D) {
+                            lmotionX -= d6;
+                        } else {
+                            lmotionX += d6;
+                        }
+                    }
+
+                    for (; lmotionZ != 0.0D && Helper.getCollisions
+                            (player.getBukkitPlayer().getWorld(), box.copy()
+                                    .offset(0, 0 ,lmotionZ), Materials.SOLID).isEmpty(); originalZ = lmotionZ) {
+                        if (lmotionZ < d6 && lmotionZ >= -d6) {
+                            lmotionZ = 0.0D;
+                        } else if (lmotionZ > 0.0D) {
+                            lmotionZ -= d6;
+                        } else {
+                            lmotionZ += d6;
+                        }
+                    }
+
+                    for (; lmotionX != 0.0D && lmotionZ != 0.0D && Helper.getCollisions
+                            (player.getBukkitPlayer().getWorld(), box.copy()
+                                    .offset(lmotionX, -1.0 ,lmotionZ), Materials.SOLID).isEmpty();
+                         originalZ = lmotionZ) {
+                        if (lmotionX < d6 && lmotionX >= -d6) {
+                            lmotionX = 0.0D;
+                        } else if (lmotionX > 0.0D) {
+                            lmotionX -= d6;
+                        } else {
+                            lmotionX += d6;
+                        }
+
+                        originalX = lmotionX;
+
+                        if (lmotionZ < d6 && lmotionZ >= -d6) {
+                            lmotionZ = 0.0D;
+                        } else if (lmotionZ > 0.0D) {
+                            lmotionZ -= d6;
+                        } else {
+                            lmotionZ += d6;
+                        }
+                    }
+                }
+
+                List<SimpleCollisionBox> collisionBoxes = Helper.getCollisions
+                        (player.getBukkitPlayer().getWorld(), box.copy()
+                                .addCoord(lmotionX ,lmotionY, lmotionZ), Materials.SOLID);
+
+                for (SimpleCollisionBox blockBox : collisionBoxes) {
+                    lmotionY = blockBox.calculateYOffset(box, lmotionY);
+                }
+
+                box = box.offset(0, lmotionY, 0);
+
+                boolean stepped = onGround && originalY != lmotionY && originalY < 0;
+                
                 for (SimpleCollisionBox blockBox : collisionBoxes) {
                     lmotionX = blockBox.calculateXOffset(box, lmotionX);
                 }
@@ -214,18 +294,129 @@ public class Horizontal extends Check {
                     lmotionZ = blockBox.calculateZOffset(box, lmotionZ);
                 }
 
+                box = box.offset(0, 0, lmotionZ);
+                
+                if(stepped && (lmotionX != originalX || lmotionZ != originalZ)) {
+                    double d11 = lmotionX;
+                    double d7 = lmotionY;
+                    double d8 = lmotionZ;
+                    SimpleCollisionBox axisalignedbb3 = box;
+
+                    box = player.getMovement().getFrom().getBox().copy();
+
+                    lmotionY = 0.6; //Step height
+                    List<SimpleCollisionBox> list = Helper
+                            .getCollisions(player.getBukkitPlayer().getWorld(),
+                                    box.copy().addCoord(originalX, lmotionY, originalZ),
+                                    Materials.SOLID);
+                    SimpleCollisionBox axisalignedbb4 = box;
+                    SimpleCollisionBox axisalignedbb5 = axisalignedbb4.copy().addCoord(originalX, 0.0D, originalZ);
+                    double d9 = lmotionY;
+
+                    for (SimpleCollisionBox axisalignedbb6 : list) {
+                        d9 = axisalignedbb6.calculateYOffset(axisalignedbb5, d9);
+                    }
+
+                    axisalignedbb4 = axisalignedbb4.copy().offset(0.0D, d9, 0.0D);
+                    double d15 = originalX;
+
+                    for (SimpleCollisionBox axisalignedbb7 : list) {
+                        d15 = axisalignedbb7.calculateXOffset(axisalignedbb4, d15);
+                    }
+
+                    axisalignedbb4 = axisalignedbb4.offset(d15, 0.0D, 0.0D);
+
+                    double d16 = originalZ;
+
+                    for (SimpleCollisionBox axisalignedbb8 : list) {
+                        d16 = axisalignedbb8.calculateZOffset(axisalignedbb4, d16);
+                    }
+
+                    axisalignedbb4 = axisalignedbb4.offset(0.0D, 0.0D, d16);
+                    SimpleCollisionBox axisalignedbb14 = box;
+                    double d17 = lmotionY;
+
+                    for (SimpleCollisionBox axisalignedbb9 : list) {
+                        d17 = axisalignedbb9.calculateYOffset(axisalignedbb14, d17);
+                    }
+
+                    axisalignedbb14 = axisalignedbb14.copy().offset(0.0D, d17, 0.0D);
+                    double d18 = originalX;
+
+                    for (SimpleCollisionBox axisalignedbb10 : list) {
+                        d18 = axisalignedbb10.calculateXOffset(axisalignedbb14, d18);
+                    }
+
+                    axisalignedbb14 = axisalignedbb14.copy().offset(d18, 0.0D, 0.0D);
+                    double d19 = originalZ;
+
+                    for (SimpleCollisionBox axisalignedbb11 : list) {
+                        d19 = axisalignedbb11.calculateZOffset(axisalignedbb14, d19);
+                    }
+
+                    axisalignedbb14 = axisalignedbb14.copy().offset(0.0D, 0.0D, d19);
+                    double d20 = d15 * d15 + d16 * d16;
+                    double d10 = d18 * d18 + d19 * d19;
+
+                    if (d20 > d10) {
+                        lmotionX = d15;
+                        lmotionZ = d16;
+                        lmotionY = -d9;
+                        box = axisalignedbb4;
+                    } else {
+                        lmotionX = d18;
+                        lmotionZ = d19;
+                        lmotionY = -d17;
+                        box = axisalignedbb14;
+                    }
+
+                    for (SimpleCollisionBox axisalignedbb12 : list) {
+                        lmotionY = axisalignedbb12.calculateYOffset(box, lmotionY);
+                    }
+
+                    box = box.copy().offset(0.0D, lmotionY, 0.0D);
+
+                    if (d11 * d11 + d8 * d8 >= lmotionX * lmotionX + lmotionZ * lmotionZ) {
+                        lmotionX = d11;
+                        lmotionY = d7;
+                        lmotionZ = d8;
+                        box = axisalignedbb3;
+                    }
+                }
+
+                lmotionX = ((box.minX + box.maxX) / 2.0D) - player.getMovement().getFrom().getX();
+                lmotionY = box.minY - player.getMovement().getFrom().getY();
+                lmotionZ = ((box.minZ + box.maxZ) / 2.0D) - player.getMovement().getFrom().getZ();
+
                 double diffX = player.getMovement().getDeltaX() - lmotionX,
+                        diffY = player.getMovement().getDeltaY() - lmotionY,
                         diffZ = player.getMovement().getDeltaZ() - lmotionZ;
                 double delta = (diffX * diffX) + (diffZ * diffZ);
+                double deltaAll = delta + (diffY * diffY);
+                double deltaY = Math.abs(lmotionY - player.getMovement().getDeltaY());
 
-                if (delta < smallestDelta) {
-                    smallestDelta = delta;
+                if (deltaAll < smallDelta) {
+                    smallDelta = deltaAll;
+                    smallestDeltaXZ = delta;
+                    smallestDeltaY = deltaY;
                     pmotionx = lmotionX;
                     pmotionz = lmotionZ;
+                    pmotiony = lmotionY;
 
-                    if (delta < 4E-17) {
+                    if(stepped) {
+                        overrideSet = true;
+                        yOverride = 0;
+                        xOverride = player.getMovement().getDeltaX();
+                        zOverride = player.getMovement().getDeltaZ();
+                    } else overrideSet = false;
+
+                    debug = "oY: " + originalY + ", ly:" + lmotionY + " stepped: " + stepped;
+
+                    if (deltaAll < 1E-16) {
                         this.strafe = it.s * 0.98f;
                         this.forward = it.f * 0.98f;
+
+                        didBlockCollisionsInfluence = collisionBoxes.size() > 0;
 
                         if (player.getInfo().getLastCancel().isPassed(2))
                             player.getInfo()
@@ -236,26 +427,50 @@ public class Horizontal extends Check {
                     }
                 }
             }
+
+            if(overrideSet) {
+                ldeltaX = xOverride;
+                ldeltaY = yOverride;
+                ldeltaZ = zOverride;
+            }
+
+            debug(debug);
             iterations.clear();
 
             double pmotion = Math.hypot(pmotionx, pmotionz);
             final double precision = getPrecision();
 
             if (player.getMovement().getDeltaXZ() > pmotion
-                    && smallestDelta > (precision)
+                    && smallestDeltaXZ > (precision)
                     && player.getMovement().getDeltaXZ() > 0.1) {
-                if ((buffer += smallestDelta > 58E-5 ? 1 : 0.5) > 1) {
+                if ((buffer += smallestDeltaXZ > 58E-5 ? 1 : 0.5) > 1) {
                     buffer = Math.min(3.5f, buffer); //Ensuring we don't have a run-away buffer
-                    flag("smallest=%s b=%.1f to=%s dxz=%.2f", smallestDelta, buffer,
+                    flag("smallest=%s b=%.1f to=%s dxz=%.2f", smallestDeltaXZ, buffer,
                             player.getMovement().getTo().getLoc(), player.getMovement().getDeltaXZ());
+                    cancel();
                 } else debug("bad movement");
             } else if (buffer > 0) buffer -= 0.05f;
 
-            debug("smallest=%s sp=%s efcs=[%s] pm=%.5f dxz=%.5f b=%.1f", smallestDelta,
+            if(smallestDeltaY > 1E-10) {
+                double finalSmallestDeltaY = smallestDeltaY;
+                if(++vbuffer > 1) {
+                    cancel();
+                    find(Vertical.class)
+                            .ifPresent(vc -> vc.flag("dy=%.4f;sd=%s", player.getMovement().getDeltaY(), finalSmallestDeltaY));
+                }
+            } else if(vbuffer > 0) vbuffer--;
+
+            debug("sx=%s sy=%s py=%.5f dy=%.5f sp=%s efcs=[%s] pm=%.5f dxz=%.5f b=%.1f col=%s", smallestDeltaXZ, smallestDeltaY,
+                    pmotiony, player.getMovement().getDeltaY(),
                     player.getInfo().isSprinting(), player.getPotionHandler().potionEffects.stream()
                             .map(pe -> pe.getType().getName() + ";" + pe.getAmplifier())
                             .collect(Collectors.joining(", ")), pmotion,
-                    player.getMovement().getDeltaXZ(), buffer);
+                    player.getMovement().getDeltaXZ(), buffer, didBlockCollisionsInfluence);
+        }
+        if(!overrideSet) {
+            ldeltaX = player.getMovement().getDeltaX();
+            ldeltaY = player.getMovement().getDeltaY();
+            ldeltaZ = player.getMovement().getDeltaZ();
         }
         lastLastClientGround = player.getMovement().getFrom().isOnGround();
         previousFrom = player.getMovement().getFrom().getLoc().clone();
@@ -329,6 +544,7 @@ public class Horizontal extends Check {
     private static boolean[] getJumpingIteration(boolean sprinting) {
         return sprinting ? new boolean[] {true, false} : new boolean[] {false};
     }
+
     private static final float[] SIN_TABLE_FAST = new float[4096], SIN_TABLE_FAST_NEW = new float[4096];
     private static final float[] SIN_TABLE = new float[65536];
     private static final float radToIndex = roundToFloat(651.8986469044033D);

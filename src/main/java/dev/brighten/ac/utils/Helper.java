@@ -205,6 +205,31 @@ public class Helper {
 				.collect(Collectors.toCollection(LinkedList::new));
 	}
 
+	public static List<SimpleCollisionBox> getCollisions(World world, SimpleCollisionBox collisionBox, int mask) {
+		int x1 = (int) Math.floor(collisionBox.minX);
+		int y1 = (int) Math.floor(collisionBox.minY);
+		int z1 = (int) Math.floor(collisionBox.minZ);
+		int x2 = (int) Math.floor(collisionBox.maxX + 1);
+		int y2 = (int) Math.floor(collisionBox.maxY + 1);
+		int z2 = (int) Math.floor(collisionBox.maxZ + 1);
+		List<SimpleCollisionBox> collisionBoxes = new ArrayList<>();
+		Block block;
+		for (int x = x1; x < x2; x++)
+			for (int y = y1 - 1; y < y2; y++)
+				for (int z = z1; z < z2; z++)
+					if ((block = getBlockAt(world, x, y, z)) != null
+							&& BlockUtils.getXMaterial(block.getType()) != XMaterial.AIR)
+						if (Materials.checkFlag(block.getType(),mask)) {
+							CollisionBox box = BlockData.getData(block.getType())
+									.getBox(block, ProtocolVersion.getGameVersion());
+
+							if(box.isIntersected(collisionBox)) {
+								box.downCast(collisionBoxes);
+							}
+						}
+		return collisionBoxes;
+	}
+
 	public static List<Block> getBlocksNearby2(World world, SimpleCollisionBox collisionBox, int mask) {
 		int x1 = (int) Math.floor(collisionBox.minX);
 		int y1 = (int) Math.floor(collisionBox.minY);

@@ -46,8 +46,8 @@ public class BlockInformation {
         if(!Anticheat.INSTANCE.isEnabled())
             return;
 
-        double dy = player.getMovement().getDeltaY();
-        double dh = player.getMovement().getDeltaXZ();
+        double dy = Math.abs(player.getMovement().getDeltaY()) * 2;
+        double dh = player.getMovement().getDeltaXZ() * 2;
 
         blocks.clear();
 
@@ -61,15 +61,14 @@ public class BlockInformation {
         collisionMaterialCount.clear();
 
         if(dy > 10) dy = 10;
-        else if(dy < -10) dy = -10;
         if(dh > 10) dh = 10;
 
-        int startX = Location.locToBlock(player.getMovement().getTo().getLoc().x - 0.6 - dh);
-        int endX = Location.locToBlock(player.getMovement().getTo().getLoc().x + 0.6 + dh);
-        int startY = Location.locToBlock(player.getMovement().getTo().getLoc().y - 0.6 + dy);
-        int endY = Location.locToBlock(player.getMovement().getTo().getLoc().y + 2.4 + dy);
-        int startZ = Location.locToBlock(player.getMovement().getTo().getLoc().z - 0.6 - dh);
-        int endZ = Location.locToBlock(player.getMovement().getTo().getLoc().z + 0.6 + dh);
+        int startX = Location.locToBlock(player.getMovement().getTo().getLoc().x - 1 - dh);
+        int endX = Location.locToBlock(player.getMovement().getTo().getLoc().x + 1 + dh);
+        int startY = Location.locToBlock(player.getMovement().getTo().getLoc().y - 1 - dy);
+        int endY = Location.locToBlock(player.getMovement().getTo().getLoc().y + 2.82 + dy);
+        int startZ = Location.locToBlock(player.getMovement().getTo().getLoc().z - 1 - dh);
+        int endZ = Location.locToBlock(player.getMovement().getTo().getLoc().z + 1 + dh);
 
         SimpleCollisionBox waterBox = player.getMovement().getTo().getBox().copy().expand(0, -.38, 0);
 
@@ -104,7 +103,7 @@ public class BlockInformation {
             aboveCollisions.clear();
         }
         final World world = player.getBukkitPlayer().getWorld();
-        int it = 10 * 10;
+        int it = 12 * 12;
 
         int xstart = Math.min(startX, endX), xend = Math.max(startX, endX);
         int zstart = Math.min(startZ, endZ), zend = Math.max(startZ, endZ);

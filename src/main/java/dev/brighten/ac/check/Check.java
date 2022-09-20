@@ -131,6 +131,10 @@ public class Check implements ECheck {
         }
     }
 
+    public <T> Optional<T> find(Class<T> checkClass) {
+        return Optional.ofNullable((T) player.getCheckHandler().findCheck((Class<? extends Check>) checkClass));
+    }
+
     static List<TextComponent> devComponents = new ArrayList<>(), components = new ArrayList<>();
     static {
 
@@ -160,71 +164,68 @@ public class Check implements ECheck {
         if(System.currentTimeMillis() - lastFlagRun < 50L) return;
         lastFlagRun = System.currentTimeMillis();
 
-        Anticheat.INSTANCE.getScheduler().execute(() -> {
-            if(Anticheat.INSTANCE.getTps() < 18)
-                vl = 0;
+        if(Anticheat.INSTANCE.getTps() < 18)
+            vl = 0;
 
-            final String info = String.format(information, variables);
+        final String info = String.format(information, variables);
 
-            FlagResult currentResult = FlagResult.builder().cancelled(false).build();
+        FlagResult currentResult = FlagResult.builder().cancelled(false).build();
 
-            for (AnticheatEvent event : AnticheatAPI.INSTANCE.getAllEvents()) {
-                currentResult = event.onFlag(player.getBukkitPlayer(), this, info,
-                        currentResult.isCancelled());
+        for (AnticheatEvent event : AnticheatAPI.INSTANCE.getAllEvents()) {
+            currentResult = event.onFlag(player.getBukkitPlayer(), this, info,
+                    currentResult.isCancelled());
+        }
+
+        if(currentResult.isCancelled()) return;
+
+        Anticheat.INSTANCE.getLogManager()
+                .insertLog(player, checkData, vl, System.currentTimeMillis(), info);
+
+        if(alertCountReset.isPassed(20)) {
+            alertCount.set(0);
+            alertCountReset.reset();
+        }
+
+        if(alertCount.incrementAndGet() < 40) {
+            boolean dev = Anticheat.INSTANCE.getTps() < 18;
+
+            //Sending Discord webhook alert
+
+            List<BaseComponent> toSend = new ArrayList<>();
+
+            for (TextComponent tc : components) {
+                TextComponent ntc = new TextComponent(tc);
+                ntc.setText(formatAlert(tc.getText(), info));
+
+                ntc.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder("Description:")
+                        .color(ChatColor.YELLOW)
+                        .append(formatAlert(" %desc%\n", info)).color(ChatColor.WHITE).append("Info:")
+                        .color(ChatColor.YELLOW)
+                        .append(formatAlert(" %info%\n", info)).color(ChatColor.WHITE)
+                        .append("\n").append("Click to teleport to player")
+                        .create()));
+                ntc.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND,
+                        addPlaceHolders(CheckConfig.clickCommand)));
+
+                toSend.add(ntc);
             }
 
-            if(currentResult.isCancelled()) return;
-
-            Anticheat.INSTANCE.getLogManager()
-                    .insertLog(player, checkData, vl, System.currentTimeMillis(), info);
-
-            if(alertCountReset.isPassed(20)) {
-                alertCount.set(0);
-                alertCountReset.reset();
+            for (UUID uuid : alertsEnabled) {
+                Anticheat.INSTANCE.getPlayerRegistry().getPlayer(uuid)
+                        .ifPresent(apl -> apl.getBukkitPlayer().spigot().sendMessage(toSend
+                                .toArray(new BaseComponent[0])));
             }
-
-           if(alertCount.incrementAndGet() < 40) {
-               boolean dev = Anticheat.INSTANCE.getTps() < 18;
-
-               //Sending Discord webhook alert
-
-               List<BaseComponent> toSend = new ArrayList<>();
-
-               for (TextComponent tc : components) {
-                   TextComponent ntc = new TextComponent(tc);
-                   ntc.setText(formatAlert(tc.getText(), info));
-
-                   ntc.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder("Description:")
-                           .color(ChatColor.YELLOW)
-                           .append(formatAlert(" %desc%\n", info)).color(ChatColor.WHITE).append("Info:")
-                           .color(ChatColor.YELLOW)
-                           .append(formatAlert(" %info%\n", info)).color(ChatColor.WHITE)
-                           .append("\n").append("Click to teleport to player")
-                           .create()));
-                   ntc.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND,
-                           addPlaceHolders(CheckConfig.clickCommand)));
-
-                   toSend.add(ntc);
-               }
-
-               for (UUID uuid : alertsEnabled) {
-                   Anticheat.INSTANCE.getPlayerRegistry().getPlayer(uuid)
-                           .ifPresent(apl -> apl.getBukkitPlayer().spigot().sendMessage(toSend
-                                   .toArray(new BaseComponent[0])));
-               }
-               alertCountReset.reset();
-           }
-           if(punish && vl >= punishVl) {
-               punish();
-           }
-        });
+            alertCountReset.reset();
+        }
+        if(punish && vl >= punishVl) {
+            punish();
+        }
     }
 
     public void punish() {
         if(!punishable || lastPunish.isNotPassed(20)) return;
 
         lastPunish.reset();
-        System.out.println("tried to punish");
 
         List<String> commands = CheckConfig.punishmentCommands.stream().map(this::addPlaceHolders)
                 .collect(Collectors.toList());
@@ -235,12 +236,6 @@ public class Check implements ECheck {
             result = event.onPunish(player.getBukkitPlayer(),this,  commands, result.isCancelled());
         }
         PunishResult finalResult = result;
-        if(finalResult == null) {
-            System.out.println("Result is null");
-        } else {
-            System.out.println("Is cancelled: " + finalResult.isCancelled());
-            System.out.println("Commands: " + String.join(",", finalResult.getCommands()));
-        }
         if(finalResult != null && finalResult.getCommands() != null && !finalResult.isCancelled()) {
             RunUtils.task(() -> {
                 for (String punishmentCommand : finalResult.getCommands()) {
