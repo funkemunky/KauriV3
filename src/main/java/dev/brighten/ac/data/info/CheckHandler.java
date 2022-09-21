@@ -6,11 +6,17 @@ import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.data.obj.ActionStore;
 import dev.brighten.ac.data.obj.CancellableActionStore;
 import dev.brighten.ac.data.obj.TimedActionStore;
+import dev.brighten.ac.packet.wrapper.WPacket;
 import dev.brighten.ac.utils.Tuple;
+import dev.brighten.ac.utils.reflections.types.WrappedClass;
 import dev.brighten.ac.utils.reflections.types.WrappedField;
 import lombok.RequiredArgsConstructor;
+import net.minecraft.server.v1_8_R3.Packet;
+import org.bukkit.Bukkit;
 import org.bukkit.event.Event;
 
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.*;
 
 @RequiredArgsConstructor
@@ -105,6 +111,85 @@ public class CheckHandler {
                         } else {
                             CancellableActionStore[] newArray = Arrays.copyOf(array, array.length + 1);
                             newArray[array.length] = new CancellableActionStore(action, checkClass.getCheckClass().getParent());
+                            return newArray;
+                        }
+                    });
+                }
+            }
+        }
+    }
+
+    public void registerActions(Object object) {
+        scanForActions(object.getClass());
+    }
+
+    private void scanForActions(Class<?> clazz) {
+        WrappedClass wclass = new WrappedClass(clazz);
+        for (WrappedField field : wclass.getFields()) {
+            if(!WAction.class.isAssignableFrom(field.getType())
+                    && !WCancellable.class.isAssignableFrom(field.getType())
+                    && !WTimedAction.class.isAssignableFrom(field.getType())) continue;
+
+            Type genericType = field.getField().getGenericType();
+            Type type = null;
+
+            if(genericType instanceof ParameterizedType) {
+                type = ((ParameterizedType) genericType).getActualTypeArguments()[0];
+            } else type = genericType;
+
+            if(type == null) {
+                Bukkit.getLogger().warning("Could not get type for field " + field.getField().getName()
+                        + " in class " + clazz.getClass().getSimpleName());
+
+                continue;
+            }
+
+            if(!Packet.class.isAssignableFrom((Class<?>) type)
+                    && !WPacket.class.isAssignableFrom((Class<?>) type)
+                    && !Event.class.isAssignableFrom((Class<?>) type)) {
+                Bukkit.getLogger().warning("Type " + ((Class<?>) type).getSimpleName() + " is not a valid type for field "
+                        + field.getField().getName() + " in class " + clazz.getClass().getSimpleName());
+                continue;
+            }
+
+            if(field.getType().equals(WAction.class)) {
+                WAction<?> action = field.get(clazz);
+
+                synchronized (events) {
+                    events.compute((Class<?>)type, (packetClass, array) -> {
+                        if (array == null) {
+                            return new ActionStore[] {new ActionStore(action, wclass.getParent())};
+                        } else {
+                            ActionStore[] newArray = Arrays.copyOf(array, array.length + 1);
+                            newArray[array.length] = new ActionStore(action, wclass.getParent());
+                            return newArray;
+                        }
+                    });
+                }
+            } else if(field.getType().equals(WTimedAction.class)) { //This will always be TimedAction
+                WTimedAction<?> action = field.get(clazz);
+
+                synchronized (eventsWithTimestamp) {
+                    eventsWithTimestamp.compute((Class<?>)type, (packetClass, array) -> {
+                        if (array == null) {
+                            return new TimedActionStore[] {new TimedActionStore(action, wclass.getParent())};
+                        } else {
+                            TimedActionStore[] newArray = Arrays.copyOf(array, array.length + 1);
+                            newArray[array.length] = new TimedActionStore(action, wclass.getParent());
+                            return newArray;
+                        }
+                    });
+                }
+            } else if(field.getType().equals(WCancellable.class)) {
+                WCancellable<?> action = field.get(clazz);
+                synchronized (cancellableEvents) {
+                    cancellableEvents.compute((Class<?>)type, (packetClass, array) -> {
+                        if (array == null) {
+                            return new CancellableActionStore[]
+                                    {new CancellableActionStore(action, wclass.getParent())};
+                        } else {
+                            CancellableActionStore[] newArray = Arrays.copyOf(array, array.length + 1);
+                            newArray[array.length] = new CancellableActionStore(action, wclass.getParent());
                             return newArray;
                         }
                     });
