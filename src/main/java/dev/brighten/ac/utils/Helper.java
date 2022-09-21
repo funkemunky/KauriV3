@@ -214,9 +214,9 @@ public class Helper {
 		int z2 = (int) Math.floor(collisionBox.maxZ + 1);
 		List<SimpleCollisionBox> collisionBoxes = new ArrayList<>();
 		Block block;
-		for (int x = x1; x < x2; x++)
-			for (int y = y1 - 1; y < y2; y++)
-				for (int z = z1; z < z2; z++)
+		for (int x = x1; x < x2; ++x)
+			for (int y = y1 - 1; y < y2; ++y)
+				for (int z = z1; z < z2; ++z)
 					if ((block = getBlockAt(world, x, y, z)) != null
 							&& BlockUtils.getXMaterial(block.getType()) != XMaterial.AIR)
 						if (Materials.checkFlag(block.getType(),mask)) {

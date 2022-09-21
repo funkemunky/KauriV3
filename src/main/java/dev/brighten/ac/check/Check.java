@@ -5,7 +5,6 @@ import dev.brighten.ac.api.AnticheatAPI;
 import dev.brighten.ac.api.check.CheckType;
 import dev.brighten.ac.api.check.ECheck;
 import dev.brighten.ac.api.event.AnticheatEvent;
-import dev.brighten.ac.api.event.result.CancelResult;
 import dev.brighten.ac.api.event.result.FlagResult;
 import dev.brighten.ac.api.event.result.PunishResult;
 import dev.brighten.ac.data.APlayer;
@@ -18,7 +17,6 @@ import lombok.val;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.*;
 import org.bukkit.Bukkit;
-import org.bukkit.Location;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -85,6 +83,7 @@ public class Check implements ECheck {
     }
 
     public void cancel() {
+        /*
         CancelResult result = CancelResult.builder().cancelled(false).build();
 
         for (AnticheatEvent event : AnticheatAPI.INSTANCE.getAllEvents()) {
@@ -105,7 +104,7 @@ public class Check implements ECheck {
                     .toLocation(player.getBukkitPlayer().getWorld()), 10);
 
             player.getBukkitPlayer().teleport(ground);
-        }
+        }*/
     }
 
     public void debug(String information, Object... variables) {
@@ -164,62 +163,64 @@ public class Check implements ECheck {
         if(System.currentTimeMillis() - lastFlagRun < 50L) return;
         lastFlagRun = System.currentTimeMillis();
 
-        if(Anticheat.INSTANCE.getTps() < 18)
-            vl = 0;
+       Anticheat.INSTANCE.getScheduler().execute(() -> {
+           if(Anticheat.INSTANCE.getTps() < 18)
+               vl = 0;
 
-        final String info = String.format(information, variables);
+           final String info = String.format(information, variables);
 
-        FlagResult currentResult = FlagResult.builder().cancelled(false).build();
+           FlagResult currentResult = FlagResult.builder().cancelled(false).build();
 
-        for (AnticheatEvent event : AnticheatAPI.INSTANCE.getAllEvents()) {
-            currentResult = event.onFlag(player.getBukkitPlayer(), this, info,
-                    currentResult.isCancelled());
-        }
+           for (AnticheatEvent event : AnticheatAPI.INSTANCE.getAllEvents()) {
+               currentResult = event.onFlag(player.getBukkitPlayer(), this, info,
+                       currentResult.isCancelled());
+           }
 
-        if(currentResult.isCancelled()) return;
+           if(currentResult.isCancelled()) return;
 
-        Anticheat.INSTANCE.getLogManager()
-                .insertLog(player, checkData, vl, System.currentTimeMillis(), info);
+           Anticheat.INSTANCE.getLogManager()
+                   .insertLog(player, checkData, vl, System.currentTimeMillis(), info);
 
-        if(alertCountReset.isPassed(20)) {
-            alertCount.set(0);
-            alertCountReset.reset();
-        }
+           if(alertCountReset.isPassed(20)) {
+               alertCount.set(0);
+               alertCountReset.reset();
+           }
 
-        if(alertCount.incrementAndGet() < 40) {
-            boolean dev = Anticheat.INSTANCE.getTps() < 18;
+           if(alertCount.incrementAndGet() < 40) {
+               boolean dev = Anticheat.INSTANCE.getTps() < 18;
 
-            //Sending Discord webhook alert
+               //Sending Discord webhook alert
 
-            List<BaseComponent> toSend = new ArrayList<>();
+               List<BaseComponent> toSend = new ArrayList<>();
 
-            for (TextComponent tc : components) {
-                TextComponent ntc = new TextComponent(tc);
-                ntc.setText(formatAlert(tc.getText(), info));
+               for (TextComponent tc : components) {
+                   TextComponent ntc = new TextComponent(tc);
+                   ntc.setText(formatAlert(tc.getText(), info));
 
-                ntc.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder("Description:")
-                        .color(ChatColor.YELLOW)
-                        .append(formatAlert(" %desc%\n", info)).color(ChatColor.WHITE).append("Info:")
-                        .color(ChatColor.YELLOW)
-                        .append(formatAlert(" %info%\n", info)).color(ChatColor.WHITE)
-                        .append("\n").append("Click to teleport to player")
-                        .create()));
-                ntc.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND,
-                        addPlaceHolders(CheckConfig.clickCommand)));
+                   ntc.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder("Description:")
+                           .color(ChatColor.YELLOW)
+                           .append(formatAlert(" %desc%\n", info)).color(ChatColor.WHITE).append("Info:")
+                           .color(ChatColor.YELLOW)
+                           .append(formatAlert(" %info%\n", info)).color(ChatColor.WHITE)
+                           .append("\n").append("Click to teleport to player")
+                           .create()));
+                   ntc.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND,
+                           addPlaceHolders(CheckConfig.clickCommand)));
 
-                toSend.add(ntc);
-            }
+                   toSend.add(ntc);
+               }
 
-            for (UUID uuid : alertsEnabled) {
-                Anticheat.INSTANCE.getPlayerRegistry().getPlayer(uuid)
-                        .ifPresent(apl -> apl.getBukkitPlayer().spigot().sendMessage(toSend
-                                .toArray(new BaseComponent[0])));
-            }
-            alertCountReset.reset();
-        }
-        if(punish && vl >= punishVl) {
-            punish();
-        }
+               for (UUID uuid : alertsEnabled) {
+                   Anticheat.INSTANCE.getPlayerRegistry().getPlayer(uuid)
+                           .ifPresent(apl -> apl.getBukkitPlayer().spigot().sendMessage(toSend
+                                   .toArray(new BaseComponent[0])));
+               }
+               alertCountReset.reset();
+           }
+           if(punish && vl >= punishVl) {
+               punish();
+           }
+       });
     }
 
     public void punish() {

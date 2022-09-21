@@ -1,8 +1,6 @@
 package dev.brighten.ac.check.impl.movement;
 
-import dev.brighten.ac.api.check.CheckType;
 import dev.brighten.ac.check.Check;
-import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.WTimedAction;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.ProtocolVersion;
@@ -21,7 +19,6 @@ import org.bukkit.util.Vector;
 
 import java.util.*;
 
-@CheckData(name = "Phase", checkId = "phase", type = CheckType.MOVEMENT)
 public class Phase extends Check {
 
     private static final Set<Material> allowedMaterials = EnumSet.noneOf(Material.class);

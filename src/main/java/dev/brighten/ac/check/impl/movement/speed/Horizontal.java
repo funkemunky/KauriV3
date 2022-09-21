@@ -15,6 +15,7 @@ import lombok.AllArgsConstructor;
 import lombok.val;
 import org.bukkit.Material;
 import org.bukkit.potion.PotionEffectType;
+import org.bukkit.util.Vector;
 
 import java.util.ArrayList;
 import java.util.Deque;
@@ -22,12 +23,13 @@ import java.util.List;
 
 @CheckData(name = "Horizontal", checkId = "horizontala", type = CheckType.MOVEMENT)
 public class Horizontal extends Check {
-    private boolean lastLastClientGround;
+    private boolean lastLastClientGround, stepped;
     private float buffer, vbuffer;
     private boolean maybeSkippedPos;
     private int lastFlying;
     
     private KLocation previousFrom;
+    private Vector motionX = new Vector(0,0,0);
     private static final boolean[] TRUE_FALSE = new boolean[]{true, false};
 
     public double strafe, forward;
@@ -47,6 +49,7 @@ public class Horizontal extends Check {
                     || player.getInfo().isGeneralCancel()
                     || player.getBlockInfo().onClimbable
                     || player.getInfo().lastLiquid.isNotPassed(2)) {
+                motionX = new Vector(player.getMovement().getDeltaX(), player.getMovement().getDeltaY(), player.getMovement().getDeltaZ());
                 break check;
             }
 
@@ -57,6 +60,8 @@ public class Horizontal extends Check {
 
             List<Iteration> iterations = getIteration();
 
+            boolean found = false;
+            double precision = getPrecision();
             TagsBuilder tags = null;
             for (Iteration it : iterations) {
                 TagsBuilder tagsBuilder = new TagsBuilder();
@@ -88,9 +93,9 @@ public class Horizontal extends Check {
                 double aiMoveSpeed = player.getBukkitPlayer().getWalkSpeed() / 2;
 
                 float drag = 0.91f;
-                double lmotionX = player.getMovement().getLDeltaX(),
-                        lmotionY = player.getMovement().getLDeltaY(),
-                        lmotionZ = player.getMovement().getLDeltaZ();
+                double lmotionX = motionX.getX(),
+                        lmotionY = motionX.getY(),
+                        lmotionZ = motionX.getZ();
 
                 lmotionY-= 0.08;
                 lmotionY*= 0.98f;
@@ -229,7 +234,7 @@ public class Horizontal extends Check {
                     }
                 }
 
-                if(Math.abs(lmotionY) < (ProtocolVersion.getGameVersion().isBelow(ProtocolVersion.V1_9) ? 0.005 : 0.003)) {
+                if(Math.abs(lmotionY) < (player.getPlayerVersion().isBelow(ProtocolVersion.V1_9) ? 0.005 : 0.003)) {
                     lmotionY = 0;
                 }
 
@@ -240,10 +245,10 @@ public class Horizontal extends Check {
                     double d6;
 
                     // 1.9+ changes from 0.05 to 0.03
-                    double protocolOffset = 0.05D;
+                    double protocolOffset = player.getPlayerVersion().isBelow(ProtocolVersion.V1_9) ?  0.05D : 0.03D;
 
-                    for (d6 = protocolOffset; lmotionX != 0.0D && Helper.getCollisions
-                            (player.getBukkitPlayer().getWorld(), box.copy()
+                    for (d6 = protocolOffset; lmotionX != 0.0D && Helper.blockCollisions(
+                            player.getBlockInfo().blocks, box.copy()
                                     .offset(lmotionX, 0 ,0), Materials.SOLID).isEmpty(); originalX = lmotionX) {
                         if (lmotionX < d6 && lmotionX >= -d6) {
                             lmotionX = 0.0D;
@@ -254,8 +259,8 @@ public class Horizontal extends Check {
                         }
                     }
 
-                    for (; lmotionZ != 0.0D && Helper.getCollisions
-                            (player.getBukkitPlayer().getWorld(), box.copy()
+                    for (; lmotionZ != 0.0D && Helper.blockCollisions(
+                            player.getBlockInfo().blocks, box.copy()
                                     .offset(0, 0 ,lmotionZ), Materials.SOLID).isEmpty(); originalZ = lmotionZ) {
                         if (lmotionZ < d6 && lmotionZ >= -d6) {
                             lmotionZ = 0.0D;
@@ -266,8 +271,8 @@ public class Horizontal extends Check {
                         }
                     }
 
-                    for (; lmotionX != 0.0D && lmotionZ != 0.0D && Helper.getCollisions
-                            (player.getBukkitPlayer().getWorld(), box.copy()
+                    for (; lmotionX != 0.0D && lmotionZ != 0.0D && Helper.blockCollisions
+                            (player.getBlockInfo().blocks, box.copy()
                                     .offset(lmotionX, -1.0 ,lmotionZ), Materials.SOLID).isEmpty();
                          originalZ = lmotionZ) {
                         if (lmotionX < d6 && lmotionX >= -d6) {
@@ -291,14 +296,18 @@ public class Horizontal extends Check {
                     tagsBuilder.addTag("sneak-edge");
                 }
 
-                List<SimpleCollisionBox> collisionBoxes = Helper.getCollisions
-                        (player.getBukkitPlayer().getWorld(), box.copy()
+                List<SimpleCollisionBox> collisionBoxes = Helper.getCollisions(player.getBukkitPlayer().getWorld(),
+                        box.copy()
                                 .addCoord(lmotionX ,lmotionY, lmotionZ), Materials.SOLID);
 
+                double beforeY = lmotionY;
+                int yCount = 0;
                 for (SimpleCollisionBox blockBox : collisionBoxes) {
+                    yCount++;
                     lmotionY = blockBox.calculateYOffset(box, lmotionY);
                 }
 
+                double afterY = lmotionY;
                 box = box.offset(0, lmotionY, 0);
 
                 boolean stepped = onGround || (originalY != lmotionY && originalY < 0);
@@ -314,6 +323,7 @@ public class Horizontal extends Check {
 
                 box = box.offset(0, 0, lmotionZ);
 
+                boolean didStepCalc = false;
                 if(stepped && (lmotionX != originalX || lmotionZ != originalZ)) {
                     double d11 = lmotionX;
                     double d7 = lmotionY;
@@ -323,10 +333,10 @@ public class Horizontal extends Check {
                     box = player.getMovement().getFrom().getBox().copy();
 
                     lmotionY = 0.6; //Step height
-                    List<SimpleCollisionBox> list = Helper
-                            .getCollisions(player.getBukkitPlayer().getWorld(),
+                    List<SimpleCollisionBox> list = Helper.toCollisionsDowncasted(Helper
+                            .blockCollisions(player.getBlockInfo().blocks,
                                     box.copy().addCoord(originalX, lmotionY, originalZ),
-                                    Materials.SOLID);
+                                    Materials.SOLID));
                     SimpleCollisionBox axisalignedbb4 = box;
                     SimpleCollisionBox axisalignedbb5 = axisalignedbb4.copy().addCoord(originalX, 0.0D, originalZ);
                     double d9 = lmotionY;
@@ -415,45 +425,64 @@ public class Horizontal extends Check {
                 if(originalZ != lmotionZ) {
                     tagsBuilder.addTag("z-collision");
                 }
+                double x = ((box.minX + box.maxX) / 2.0D) - player.getMovement().getFrom().getX();
+                double y = box.minY - player.getMovement().getFrom().getY();
+                double z = ((box.minZ + box.maxZ) / 2.0D) - player.getMovement().getFrom().getZ();
 
-                lmotionX = ((box.minX + box.maxX) / 2.0D) - player.getMovement().getFrom().getX();
-                lmotionY = box.minY - player.getMovement().getFrom().getY();
-                lmotionZ = ((box.minZ + box.maxZ) / 2.0D) - player.getMovement().getFrom().getZ();
+                if (originalX != lmotionX) {
+                     lmotionX = 0.0D;
+                }
 
-                double diffX = player.getMovement().getDeltaX() - lmotionX,
-                        diffY = player.getMovement().getDeltaY() - lmotionY,
-                        diffZ = player.getMovement().getDeltaZ() - lmotionZ;
+                if (originalY != lmotionY) {
+                     lmotionY = 0.0D;
+                }
+
+                if (originalZ != lmotionZ) {
+                     lmotionZ = 0.0D;
+                }
+
+                double diffX = player.getMovement().getDeltaX() - x,
+                        diffY = player.getMovement().getDeltaY() - y,
+                        diffZ = player.getMovement().getDeltaZ() - z;
                 double delta = (diffX * diffX) + (diffZ * diffZ);
                 double deltaAll = delta + (diffY * diffY);
-                double deltaY = Math.abs(lmotionY - player.getMovement().getDeltaY());
+                double deltaY = Math.abs(diffY);
 
                 if (deltaAll < smallDelta) {
                     smallDelta = deltaAll;
                     smallestDeltaXZ = delta;
                     smallestDeltaY = deltaY;
-                    pmotionx = lmotionX;
-                    pmotionz = lmotionZ;
-                    pmotiony = lmotionY;
+                    pmotionx = x;
+                    pmotionz = y;
+                    pmotiony = z;
 
+                    tagsBuilder.addTag(String.format("X: %.6f, Y: %.6f, z: %.6f", originalX, originalY, originalZ));
                     tags = tagsBuilder;
 
-                    if (deltaAll < 1E-16) {
+                    if (deltaAll < precision) {
                         this.strafe = it.s * 0.98f;
                         this.forward = it.f * 0.98f;
+
+                        if(precision < 1E-11)
+                            motionX = new Vector(lmotionX, lmotionY, lmotionZ);
+                        else  motionX = new Vector(player.getMovement().getDeltaX(), player.getMovement().getDeltaY(), player.getMovement().getDeltaZ());
 
                         if (player.getInfo().getLastCancel().isPassed(2))
                             player.getInfo()
                                     .setLastKnownGoodPosition(player
                                             .getMovement().getFrom().getLoc()
                                             .clone());
+                        found = true;
                         break;
                     }
                 }
             }
             iterations.clear();
 
+            if(!found) {
+                motionX = new Vector(player.getMovement().getDeltaX(), player.getMovement().getDeltaY(), player.getMovement().getDeltaZ());
+            }
             double pmotion = Math.hypot(pmotionx, pmotionz);
-            final double precision = getPrecision();
 
             final String builtTags = tags == null ? "null" : tags.build();
 
@@ -561,7 +590,7 @@ public class Horizontal extends Check {
     }
 
     private static boolean[] getSneakingIteration(boolean sprinting) {
-        return new boolean[] {true, false};
+        return new boolean[] {false};
     }
 
     private static boolean[] getJumpingIteration(boolean onGround) {
