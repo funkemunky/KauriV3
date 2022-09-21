@@ -15,7 +15,6 @@ import lombok.AllArgsConstructor;
 import lombok.val;
 import org.bukkit.Material;
 import org.bukkit.potion.PotionEffectType;
-import org.bukkit.util.Vector;
 
 import java.util.ArrayList;
 import java.util.Deque;
@@ -23,12 +22,10 @@ import java.util.List;
 
 @CheckData(name = "Horizontal", checkId = "horizontala", type = CheckType.MOVEMENT)
 public class Horizontal extends Check {
-    private boolean lastLastClientGround, lOnGround;
+    private boolean lastLastClientGround;
     private float buffer, vbuffer;
-    private boolean maybeSetToZero;
-    private Vector velocity;
-    private int vTicks;
-    private double ldeltaX = 0, ldeltaY = 0, ldeltaZ = 0;
+    private boolean maybeSkippedPos;
+    private int lastFlying;
     
     private KLocation previousFrom;
     private static final boolean[] TRUE_FALSE = new boolean[]{true, false};
@@ -40,7 +37,6 @@ public class Horizontal extends Check {
     }
 
     WAction<WPacketPlayInFlying> flying = packet -> {
-        boolean overrideSet = false;
         check:
         {
 
@@ -58,13 +54,8 @@ public class Horizontal extends Check {
 
             double pmotionx = 0, pmotiony = 0, pmotionz = 0;
             boolean onGround = player.getMovement().getFrom().isOnGround();
-            boolean didBlockCollisionsInfluence = false;
 
             List<Iteration> iterations = getIteration();
-
-            double xOverride = player.getMovement().getDeltaX(),
-                    yOverride = player.getMovement().getDeltaY(),
-                    zOverride = player.getMovement().getDeltaZ();
 
             TagsBuilder tags = null;
             for (Iteration it : iterations) {
@@ -97,18 +88,12 @@ public class Horizontal extends Check {
                 double aiMoveSpeed = player.getBukkitPlayer().getWalkSpeed() / 2;
 
                 float drag = 0.91f;
-                double lmotionX = ldeltaX,
-                        lmotionY = ldeltaY,
-                        lmotionZ = ldeltaZ;
+                double lmotionX = player.getMovement().getLDeltaX(),
+                        lmotionY = player.getMovement().getLDeltaY(),
+                        lmotionZ = player.getMovement().getLDeltaZ();
 
                 lmotionY-= 0.08;
                 lmotionY*= 0.98f;
-
-                //Less than 0.05
-                if(((lmotionX * lmotionX) + (lmotionZ * lmotionZ) + (lmotionY * lmotionY)) < 0.0025) {
-                    debug("Less than 0.05");
-                    break check;
-                }
 
                 if(player.getBlockInfo().onSoulSand
                         && player.getBlockInfo().collisionMaterialCount.
@@ -316,7 +301,7 @@ public class Horizontal extends Check {
 
                 box = box.offset(0, lmotionY, 0);
 
-                boolean stepped = onGround && originalY != lmotionY && originalY < 0;
+                boolean stepped = onGround || (originalY != lmotionY && originalY < 0);
                 
                 for (SimpleCollisionBox blockBox : collisionBoxes) {
                     lmotionX = blockBox.calculateXOffset(box, lmotionX);
@@ -328,7 +313,7 @@ public class Horizontal extends Check {
                 }
 
                 box = box.offset(0, 0, lmotionZ);
-                
+
                 if(stepped && (lmotionX != originalX || lmotionZ != originalZ)) {
                     double d11 = lmotionX;
                     double d7 = lmotionY;
@@ -450,21 +435,11 @@ public class Horizontal extends Check {
                     pmotionz = lmotionZ;
                     pmotiony = lmotionY;
 
-                    if(stepped) {
-                        overrideSet = true;
-                        yOverride = 0;
-                        tagsBuilder.addTag("overriden");
-                        xOverride = player.getMovement().getDeltaX();
-                        zOverride = player.getMovement().getDeltaZ();
-                    } else overrideSet = false;
-
                     tags = tagsBuilder;
 
                     if (deltaAll < 1E-16) {
                         this.strafe = it.s * 0.98f;
                         this.forward = it.f * 0.98f;
-
-                        didBlockCollisionsInfluence = collisionBoxes.size() > 0;
 
                         if (player.getInfo().getLastCancel().isPassed(2))
                             player.getInfo()
@@ -474,12 +449,6 @@ public class Horizontal extends Check {
                         break;
                     }
                 }
-            }
-
-            if(overrideSet) {
-                ldeltaX = xOverride;
-                ldeltaY = yOverride;
-                ldeltaZ = zOverride;
             }
             iterations.clear();
 
@@ -499,7 +468,7 @@ public class Horizontal extends Check {
                 } else debug("bad movement");
             } else if (buffer > 0) buffer -= 0.05f;
 
-            if(smallestDeltaY > 1E-10) {
+            if(smallestDeltaY > 1E-10 && !maybeSkippedPos) {
                 double finalSmallestDeltaY = smallestDeltaY;
                 if(++vbuffer > 1) {
                     cancel();
@@ -507,17 +476,22 @@ public class Horizontal extends Check {
                             .ifPresent(vc -> vc.flag("dy=%.4f;sd=%s tags=[%s]",
                                     player.getMovement().getDeltaY(), finalSmallestDeltaY, builtTags));
                 }
-            } else if(vbuffer > 0) vbuffer--;
+            } else if(vbuffer > 0) vbuffer-= 0.05f;
 
-            debug("sx=%s sy=%s py=%.5f dy=%.5f posY=%.5f sp=%s pm=%.5f dxz=%.5f b=%.1f tags=[%s]", smallestDeltaXZ, smallestDeltaY,
-                    pmotiony, player.getMovement().getDeltaY(), player.getMovement().getTo().getY(),
+            debug("sx=%s sy=%s py=%.5f ldy=%.5f dy=%.5f posY=%.5f sp=%s pm=%.5f dxz=%.5f b=%.1f tags=[%s]", smallestDeltaXZ, smallestDeltaY,
+                    pmotiony, player.getMovement().getLDeltaY(), player.getMovement().getDeltaY(), player.getMovement().getTo().getY(),
                     player.getInfo().isSprinting(), pmotion,
                     player.getMovement().getDeltaXZ(), buffer, builtTags);
         }
-        if(!overrideSet) {
-            ldeltaX = player.getMovement().getDeltaX();
-            ldeltaY = player.getMovement().getDeltaY();
-            ldeltaZ = player.getMovement().getDeltaZ();
+
+        if(ProtocolVersion.getGameVersion().isBelow(ProtocolVersion.V1_9)) {
+            maybeSkippedPos = !packet.isMoved();
+        } else {
+            if(player.getPlayerTick() - lastFlying > 1) {
+                maybeSkippedPos = true;
+                debug("maybe skipped pos");
+            }
+            lastFlying = player.getPlayerTick();
         }
         lastLastClientGround = player.getMovement().getFrom().isOnGround();
         previousFrom = player.getMovement().getFrom().getLoc().clone();
@@ -526,6 +500,8 @@ public class Horizontal extends Check {
     private double getPrecision() {
         if(player.getBlockInfo().onSoulSand) {
             return 5E-4;
+        } else if(maybeSkippedPos) {
+            return 0.005;
         }
         return 5E-13;
     }
