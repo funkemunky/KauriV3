@@ -47,7 +47,7 @@ import java.util.stream.Collectors;
 import java.util.zip.CRC32;
 
 @Init
-@CommandAlias("anticheat|ac")
+@CommandAlias("kauri|anticheat|ac")
 @CommandPermission("anticheat.command")
 public class AnticheatCommand extends BaseCommand {
 

@@ -3,8 +3,13 @@ package dev.brighten.ac.listener;
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.handler.HandlerAbstract;
+import dev.brighten.ac.packet.wrapper.PacketType;
+import dev.brighten.ac.packet.wrapper.objects.WrappedWatchableObject;
+import dev.brighten.ac.packet.wrapper.out.WPacketPlayOutEntityMetadata;
+import dev.brighten.ac.packet.wrapper.out.WPacketPlayOutNamedEntitySpawn;
 import dev.brighten.ac.utils.RunUtils;
 import dev.brighten.ac.utils.annotation.Init;
+import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -28,6 +33,25 @@ public class JoinListener implements Listener {
                         .process(player, event.getType(), event.getPacket())) {
                     event.setCancelled(true);
                 }
+
+                if(event.getType().equals(PacketType.ENTITY_METADATA)) {
+                    WPacketPlayOutEntityMetadata packet = event.getPacket();
+
+                    for (WrappedWatchableObject watchedObject : packet.getWatchedObjects()) {
+                        if(watchedObject.getDataValueId() == 6 && watchedObject.getWatchedObject() instanceof Float) {
+                            watchedObject.setWatchedObject(1f);
+
+                            Bukkit.broadcastMessage("Set watched object and sending packet:"
+                                    + watchedObject.getWatchedObject());
+
+                            HandlerAbstract.getHandler().sendPacket(player, packet.getPacket());
+                            event.setCancelled(true);
+                            break;
+                        }
+                    }
+                } else if(event.getType().equals(PacketType.NAMED_ENTITY_SPAWN)) {
+                    WPacketPlayOutNamedEntitySpawn packet = event.getPacket();
+                }
             });
         });
 
@@ -42,7 +66,7 @@ public class JoinListener implements Listener {
 
             if(player.isSendingPackets()) return;
 
-            /*if(event.getType().equals(PacketType.CLIENT_TRANSACTION)) {
+            if(event.getType().equals(PacketType.CLIENT_TRANSACTION)) {
                 if(player.getPacketQueue().size() > 0) {
                     player.setSendingPackets(true);
                     Object packetToSend = null;
@@ -73,7 +97,7 @@ public class JoinListener implements Listener {
                         break;
                     }
                 }
-            }*/
+            }
         });
     }
 
