@@ -6,11 +6,13 @@ import dev.brighten.ac.packet.wrapper.WPacket;
 import dev.brighten.ac.packet.wrapper.objects.WrappedWatchableObject;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.Setter;
 
 import java.util.List;
 
 @Builder
 @Getter
+@Setter
 public class WPacketPlayOutEntityMetadata extends WPacket {
 
     private int entityId;

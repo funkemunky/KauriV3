@@ -296,18 +296,14 @@ public class Horizontal extends Check {
                     tagsBuilder.addTag("sneak-edge");
                 }
 
-                List<SimpleCollisionBox> collisionBoxes = Helper.getCollisions(player.getBukkitPlayer().getWorld(),
-                        box.copy()
-                                .addCoord(lmotionX ,lmotionY, lmotionZ), Materials.SOLID);
+                List<SimpleCollisionBox> collisionBoxes = Helper.toCollisionsDowncasted(Helper
+                        .blockCollisions(player.getBlockInfo().blocks, box.copy()
+                                .addCoord(lmotionX ,lmotionY, lmotionZ), Materials.SOLID));
 
-                double beforeY = lmotionY;
-                int yCount = 0;
                 for (SimpleCollisionBox blockBox : collisionBoxes) {
-                    yCount++;
                     lmotionY = blockBox.calculateYOffset(box, lmotionY);
                 }
 
-                double afterY = lmotionY;
                 box = box.offset(0, lmotionY, 0);
 
                 boolean stepped = onGround || (originalY != lmotionY && originalY < 0);
@@ -456,7 +452,6 @@ public class Horizontal extends Check {
                     pmotionz = y;
                     pmotiony = z;
 
-                    tagsBuilder.addTag(String.format("X: %.6f, Y: %.6f, z: %.6f", originalX, originalY, originalZ));
                     tags = tagsBuilder;
 
                     if (deltaAll < precision) {

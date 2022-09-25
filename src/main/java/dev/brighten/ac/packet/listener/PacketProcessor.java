@@ -159,6 +159,10 @@ public class PacketProcessor {
 
             for (ListenerEntry tuple : list) {
                 tuple.getListener().onEvent(asyncInfo);
+
+                if (asyncInfo.isCancelled()) {
+                    cancelled = true;
+                }
             }
         }
         return cancelled ? null : info.getPacket();

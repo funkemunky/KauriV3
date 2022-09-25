@@ -591,16 +591,11 @@ public class Processor_18 implements PacketConverter {
         PacketPlayOutNamedEntitySpawn packet = (PacketPlayOutNamedEntitySpawn) object;
         PacketDataSerializer serial = serialize(packet);
 
-
-        WPacketPlayOutNamedEntitySpawn nes = WPacketPlayOutNamedEntitySpawn.builder().entityId(serial.e()).uuid(serial.g())
+        return WPacketPlayOutNamedEntitySpawn.builder().entityId(serial.e()).uuid(serial.g())
                 .x(serial.readInt() / 32.).y(serial.readInt() / 32.).z(serial.readInt() / 32.)
                 .yaw(serial.readByte() * 360.F / 256.F).pitch(serial.readByte() * 360.F / 256.F)
                 .itemInHand(MiscUtils.getById(serial.readShort()))
                 .build();
-
-
-
-        return nes;
     }
 
     @Override
@@ -627,8 +622,8 @@ public class Processor_18 implements PacketConverter {
         return vanilla;
     }
 
-    private static WrappedClass classSpawnEntityLiving = new WrappedClass(PacketPlayOutSpawnEntityLiving.class);
-    private static WrappedField splDataWatcher = classSpawnEntityLiving.getFieldByType(DataWatcher.class, 0),
+    private static final WrappedClass classSpawnEntityLiving = new WrappedClass(PacketPlayOutSpawnEntityLiving.class);
+    private static final WrappedField splDataWatcher = classSpawnEntityLiving.getFieldByType(DataWatcher.class, 0),
             splWatchList = classSpawnEntityLiving.getFieldByType(List.class, 0);
 
     @SneakyThrows
@@ -652,8 +647,8 @@ public class Processor_18 implements PacketConverter {
         return builder.build();
     }
 
-    private static WrappedClass dataWatcherClass = new WrappedClass(DataWatcher.class);
-    private static WrappedField watchableMap = dataWatcherClass.getFieldByName("d");
+    private static final WrappedClass dataWatcherClass = new WrappedClass(DataWatcher.class);
+    private static final WrappedField watchableMap = dataWatcherClass.getFieldByName("d");
     @Override
     public Object processSpawnLiving(WPacketPlayOutSpawnEntityLiving packet) {
         PacketPlayOutSpawnEntityLiving vanilla = new PacketPlayOutSpawnEntityLiving();
@@ -674,10 +669,9 @@ public class Processor_18 implements PacketConverter {
         try {
             DataWatcher watcher = new DataWatcher(null);
 
-            packet.getWatchedObjects().forEach(w ->{
-                watcher.a(w.getDataValueId(), w.getWatchedObject());
-                System.out.println("Adding object: " + w.getDataValueId() + ";" + w.getWatchedObject());
-            });
+            for (WrappedWatchableObject w : packet.getWatchedObjects()) {
+                watcher.a(w.getDataValueId(), w.getWatchedObject());;
+            }
 
             watcher.a(serializer);
             splDataWatcher.set(vanilla, watcher);
@@ -751,7 +745,7 @@ public class Processor_18 implements PacketConverter {
         serialized.b(packet.getEntityId());
 
         List<DataWatcher.WatchableObject> watchedObjects = packet.getWatchedObjects().stream()
-                .map(w -> (DataWatcher.WatchableObject)w.getVanillaObject()).collect(Collectors.toList());
+                .map(w -> (DataWatcher.WatchableObject)w.toVanillaObject()).collect(Collectors.toList());
 
         try {
             DataWatcher.a(watchedObjects, serialized);
@@ -790,7 +784,6 @@ public class Processor_18 implements PacketConverter {
 
     private static void writePacketData(PacketDataSerializer serializer, List<WrappedWatchableObject> objects) {
         for (WrappedWatchableObject object : objects) {
-            System.out.println("Writing object:" + object.getDataValueId() + ";" + object.getWatchedObject());
             int i = (object.getObjectType() << 5 | object.getDataValueId() & 31) & 255;
             serializer.writeByte(i);
             switch (object.getObjectType()) {

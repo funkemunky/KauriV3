@@ -12,6 +12,7 @@ import dev.brighten.ac.utils.reflections.impl.CraftReflection;
 import dev.brighten.ac.utils.reflections.impl.MinecraftReflection;
 import dev.brighten.ac.utils.reflections.types.WrappedClass;
 import io.netty.channel.*;
+import lombok.SneakyThrows;
 import net.minecraft.server.v1_8_R3.PacketLoginInStart;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -152,8 +153,8 @@ public class ModernHandler extends HandlerAbstract {
     @Override
     public void sendPacket(Player player, Object packet) {
         if(packet instanceof WPacket) {
-            getChannel(player).pipeline().writeAndFlush(((WPacket) packet).getPacket());
-        } else getChannel(player).pipeline().writeAndFlush(packet);
+            getChannel(player).pipeline().writeAndFlush((new SilentObject(((WPacket) packet).getPacket())));
+        } else getChannel(player).pipeline().writeAndFlush(new SilentObject(packet));
     }
 
     @Override
@@ -192,7 +193,13 @@ public class ModernHandler extends HandlerAbstract {
         private Player player;
 
         @Override
-        public void channelRead(ChannelHandlerContext ctx, Object msg) {
+        public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+
+            if(msg instanceof SilentObject) {
+                super.channelRead(ctx, ((SilentObject)msg).packet);
+                return;
+            }
+
             String name = msg.getClass().getName();
             int index = name.lastIndexOf(".");
             String packetName = name.substring(index + 1);
@@ -229,16 +236,18 @@ public class ModernHandler extends HandlerAbstract {
                     }
                 }
             } else {
-                try {
-                    super.channelRead(ctx, msg);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+                super.channelRead(ctx, msg);
             }
         }
 
         @Override
         public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
+
+            if(msg instanceof SilentObject) {
+                super.write(ctx, ((SilentObject)msg).packet, promise);
+                return;
+            }
+
             String name = msg.getClass().getName();
             int index = name.lastIndexOf(".");
             String packetName = name.substring(index + 1);
