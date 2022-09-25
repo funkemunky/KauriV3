@@ -9,7 +9,6 @@ import dev.brighten.ac.packet.wrapper.out.WPacketPlayOutEntityMetadata;
 import dev.brighten.ac.packet.wrapper.out.WPacketPlayOutNamedEntitySpawn;
 import dev.brighten.ac.utils.RunUtils;
 import dev.brighten.ac.utils.annotation.Init;
-import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -40,9 +39,6 @@ public class JoinListener implements Listener {
                     for (WrappedWatchableObject watchedObject : packet.getWatchedObjects()) {
                         if(watchedObject.getDataValueId() == 6 && watchedObject.getWatchedObject() instanceof Float) {
                             watchedObject.setWatchedObject(1f);
-
-                            Bukkit.broadcastMessage("Set watched object and sending packet:"
-                                    + watchedObject.getWatchedObject());
 
                             HandlerAbstract.getHandler().sendPacket(player, packet.getPacket());
                             event.setCancelled(true);

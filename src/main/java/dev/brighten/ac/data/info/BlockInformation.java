@@ -27,6 +27,7 @@ public class BlockInformation {
     public final List<SimpleCollisionBox> aboveCollisions = Collections.synchronizedList(new ArrayList<>()),
             belowCollisions = Collections.synchronizedList(new ArrayList<>());
     public final List<Block> blocks = Collections.synchronizedList(new ArrayList<>());
+    public final List<CollisionBox> entityCollisionBoxes = new ArrayList<>();
     //Caching material
     private final Material cobweb = XMaterial.COBWEB.parseMaterial(),
             rosebush = XMaterial.ROSE_BUSH.parseMaterial(),
@@ -50,6 +51,7 @@ public class BlockInformation {
         double dh = player.getMovement().getDeltaXZ() * 2;
 
         blocks.clear();
+        entityCollisionBoxes.clear();
 
         player.getInfo().setServerGround(false);
         player.getInfo().setNearGround(false);
@@ -138,8 +140,9 @@ public class BlockInformation {
                         for (Material type : types) {
                             if (type != Material.AIR) {
 
+                                IntVector vec = new IntVector(x, y, z);
                                 CollisionBox blockBox = BlockData.getData(type)
-                                        .getBox(world, new IntVector(x, y, z), player.getPlayerVersion());
+                                        .getBox(world, vec, player.getPlayerVersion());
 
                                 // Checking of within boundsForCollision
                                 if(x >= min.getX() && x <= max.getX() && y >= min.getY() && y <= max.getY() && z >= min.getZ() && z <= max.getZ()) {
@@ -354,6 +357,10 @@ public class BlockInformation {
             if(entityBox.isCollided(normalBox)) {
                 collidedWithEntity = true;
                 player.getInfo().getLastEntityCollision().reset();
+            }
+
+            if(entityBox.isCollided(normalBox.copy().expand(0.25))) {
+                entityCollisionBoxes.add(entityBox);
             }
 
             if(entityBox.isCollided(normalBox.copy().expand(0.1, 0.1, 0.1))) {

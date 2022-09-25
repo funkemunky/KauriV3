@@ -686,7 +686,7 @@ public class Processor_18 implements PacketConverter {
     @Override
     public WPacketPlayOutRemoveEntityEffect processRemoveEffect(Object object) {
         PacketPlayOutRemoveEntityEffect packet = (PacketPlayOutRemoveEntityEffect) object;
-
+        
         PacketDataSerializer serializer = serialize(packet);
 
         WPacketPlayOutRemoveEntityEffect ree = WPacketPlayOutRemoveEntityEffect.builder()

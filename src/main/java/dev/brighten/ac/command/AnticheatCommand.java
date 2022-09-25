@@ -8,7 +8,7 @@ import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.data.APlayer;
-import dev.brighten.ac.handler.entity.FakeMob;
+import dev.brighten.ac.handler.BBRevealHandler;
 import dev.brighten.ac.messages.Messages;
 import dev.brighten.ac.packet.handler.HandlerAbstract;
 import dev.brighten.ac.utils.Color;
@@ -20,19 +20,17 @@ import dev.brighten.ac.utils.msg.ChatBuilder;
 import dev.brighten.ac.utils.reflections.Reflections;
 import dev.brighten.ac.utils.reflections.types.WrappedClass;
 import dev.brighten.ac.utils.reflections.types.WrappedMethod;
-import io.netty.buffer.Unpooled;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongList;
 import lombok.SneakyThrows;
 import lombok.val;
+import net.md_5.bungee.api.ChatColor;
+import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.TextComponent;
-import net.minecraft.server.v1_8_R3.PacketDataSerializer;
-import net.minecraft.server.v1_8_R3.PacketPlayOutCustomPayload;
 import net.minecraft.server.v1_8_R3.PacketPlayOutTitle;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.craftbukkit.v1_8_R3.util.CraftChatMessage;
-import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.InvalidDescriptionException;
 import org.bukkit.plugin.Plugin;
@@ -208,47 +206,13 @@ public class AnticheatCommand extends BaseCommand {
             pl.spigot().sendMessage(Messages.ALERTS_ON);
         }
     }
-
-    @Subcommand("spawnbot")
-    @CommandPermission("anticheat.command.spawnbot")
-    @Description("Spawn test bot")
-    public void onBot(APlayer player) {
-        FakeMob fakePlayer = new FakeMob(EntityType.ZOMBIE);
-
-        fakePlayer.spawn(true, player.getBukkitPlayer().getLocation(), player);
-
-        player.getBukkitPlayer().sendMessage(Color.Green + "Spawned entity with ID: " + fakePlayer.getEntityId());
-    }
-
-    @Subcommand("botinvis")
-    @Syntax("[id] [boolean]")
-    @CommandPermission("anticheat.command.botinvis")
-    @Description("Shit")
-    public void onInvis(CommandSender sender, int botId, boolean invis) {
-        FakeMob player = Anticheat.INSTANCE.getFakeTracker().getEntityById(botId);
-
-        if(player == null) {
-            sender.sendMessage(Color.Red + "Bot with ID " + botId + " does not exist!");
-            return;
-        }
-
-        player.setInvisible(invis);
-        sender.sendMessage(Color.Green + (invis ? "Made invis" : "Removed invis") + " on bot " + botId);
-    }
-
-    @Subcommand("despawnbot")
-    @CommandPermission("anticheat.command.despawnBot")
-    @Syntax("[botId]")
-    public void despawnBot(CommandSender sender, int botId) {
-        FakeMob player = Anticheat.INSTANCE.getFakeTracker().getEntityById(botId);
-
-        if(player == null) {
-            sender.sendMessage(Color.Red + "Bot with ID " + botId + " does not exist!");
-            return;
-        }
-
-        player.despawn();
-        sender.sendMessage(Color.Green + "Despawned bot!");
+    @Subcommand("wand")
+    @CommandPermission("anticheat.command.wand")
+    @Description("Receive a magic bounding box wand")
+    public void onWand(Player player) {
+        BBRevealHandler.INSTANCE.giveWand(player);
+        player.spigot().sendMessage(new ComponentBuilder(
+                "You've been given a very special wand. Handle it responsibly.").color(ChatColor.GREEN).create());
     }
 
     @Subcommand("logs")
@@ -338,25 +302,6 @@ public class AnticheatCommand extends BaseCommand {
             sender.sendMessage(Color.translate("&6&lVersion&8: &f" + player.getPlayerVersion().name()));
             sender.sendMessage(Color.translate("&6&lSensitivity&8: &f" + player.getMovement().getSensXPercent() + "%"));
             sender.sendMessage(MiscUtils.line(Color.Dark_Gray));
-        });
-    }
-
-    @Subcommand("runtest")
-    public void onCommand(Player player) {
-        long start = System.currentTimeMillis();
-        PacketDataSerializer serializer = new PacketDataSerializer(Unpooled.buffer());
-        serializer.writeLong(start);
-        PacketPlayOutCustomPayload payload = new PacketPlayOutCustomPayload("Time|Send", serializer);
-
-        HandlerAbstract.getHandler().sendPacket(player, payload);
-        Anticheat.INSTANCE.getPlayerRegistry().getPlayer(player.getUniqueId()).ifPresent(aplayer -> {
-            aplayer.runInstantAction(ka -> {
-                if(!ka.isEnd()) {
-                    long transDelta = System.currentTimeMillis() - start;
-
-                    player.sendMessage("Transaction delta: " + transDelta + "ms");
-                }
-            });
         });
     }
 

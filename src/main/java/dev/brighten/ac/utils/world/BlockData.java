@@ -48,7 +48,7 @@ public enum BlockData {
     _BREWINGSTAND(new ComplexCollisionBox(
             new SimpleCollisionBox(0, 0, 0, 1, 0.125, 1),                      //base
             new SimpleCollisionBox(0.4375, 0.0, 0.4375, 0.5625, 0.875, 0.5625) //top
-    ), XMaterial.BREWING_STAND.parseMaterial()),
+    ), Material.BREWING_STAND),
 
     _RAIL((protocol, b) -> ReflectionsUtil.getBlockBoundingBox(b).toCollisionBox(),Arrays.stream(Material.values())
             .filter(mat -> mat.name().toLowerCase().contains("rail"))

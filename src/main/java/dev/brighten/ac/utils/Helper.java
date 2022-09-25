@@ -1,15 +1,19 @@
 package dev.brighten.ac.utils;
 
+import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.packet.handler.HandlerAbstract;
 import dev.brighten.ac.packet.wrapper.objects.EnumParticle;
 import dev.brighten.ac.packet.wrapper.out.WPacketPlayOutWorldParticles;
+import dev.brighten.ac.utils.math.IntVector;
 import dev.brighten.ac.utils.world.BlockData;
 import dev.brighten.ac.utils.world.CollisionBox;
 import dev.brighten.ac.utils.world.types.RayCollision;
 import dev.brighten.ac.utils.world.types.SimpleCollisionBox;
+import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
 
@@ -227,6 +231,48 @@ public class Helper {
 								box.downCast(collisionBoxes);
 							}
 						}
+		return collisionBoxes;
+	}
+
+	public static List<SimpleCollisionBox> getCollisions(APlayer player, SimpleCollisionBox collisionBox) {
+		return getCollisions(player, collisionBox, Materials.SOLID);
+	}
+
+	public static SimpleCollisionBox getEntityCollision(Entity entity) {
+		return new SimpleCollisionBox(ReflectionsUtil.getBoundingBox(entity));
+	}
+
+	public static List<SimpleCollisionBox> getCollisions(APlayer player, SimpleCollisionBox collisionBox, int mask) {
+		int x1 = (int) Math.floor(collisionBox.minX);
+		int y1 = (int) Math.floor(collisionBox.minY);
+		int z1 = (int) Math.floor(collisionBox.minZ);
+		int x2 = (int) Math.floor(collisionBox.maxX + 1);
+		int y2 = (int) Math.floor(collisionBox.maxY + 1);
+		int z2 = (int) Math.floor(collisionBox.maxZ + 1);
+		List<SimpleCollisionBox> collisionBoxes = new ArrayList<>();
+		for (int x = x1; x < x2; ++x)
+			for (int y = y1 - 1; y < y2; ++y)
+				for (int z = z1; z < z2; ++z) {
+					IntVector vec = new IntVector(x, y, z);
+					Material type = player.getBlockUpdateHandler().getPossibleMaterials(vec).getLast();
+
+					if(type != Material.AIR && Materials.checkFlag(type, mask)) {
+						CollisionBox box = BlockData.getData(type)
+								.getBox(player.getBukkitPlayer().getWorld(), vec, ProtocolVersion.getGameVersion());
+
+						if(box.isIntersected(collisionBox)) {
+							box.downCast(collisionBoxes);
+						}
+					}
+				}
+
+		for (Entity entity : player.getInfo().getNearbyEntities()) {
+			SimpleCollisionBox entityCollisionBox = new SimpleCollisionBox(ReflectionsUtil.getBoundingBox(entity));
+
+			if(entityCollisionBox.isIntersected(collisionBox))
+				entityCollisionBox.downCast(collisionBoxes);
+		}
+
 		return collisionBoxes;
 	}
 
