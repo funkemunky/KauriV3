@@ -173,10 +173,6 @@ public class BlockInformation {
                                     }
                                 }
 
-                                if(Materials.checkFlag(type, Materials.FENCE) && player.getMovement().getDeltaY() == 0.5) {
-                                    System.out.println(blockBox);
-                                }
-
                                 if(normalBox.copy().expand(0.1, 0, 0.1)
                                         .expandMax(0, -0.4, 0).expandMin(0, -0.55, 0)
                                         .isCollided(blockBox)) {
