@@ -13,6 +13,7 @@ public class WPacketPlayOutBlockChange extends WPacket {
 
     private IntVector blockLocation;
     private Material material;
+    private byte blockData;
 
 
     @Override

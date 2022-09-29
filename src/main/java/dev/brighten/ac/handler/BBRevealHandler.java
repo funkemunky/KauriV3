@@ -3,12 +3,11 @@ package dev.brighten.ac.handler;
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.packet.wrapper.objects.EnumParticle;
-import dev.brighten.ac.utils.Helper;
 import dev.brighten.ac.utils.ItemBuilder;
+import dev.brighten.ac.utils.Materials;
 import dev.brighten.ac.utils.annotation.Init;
 import dev.brighten.ac.utils.world.BlockData;
 import dev.brighten.ac.utils.world.EntityData;
-import dev.brighten.ac.utils.world.types.SimpleCollisionBox;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import org.bukkit.Bukkit;
@@ -17,6 +16,7 @@ import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
@@ -43,24 +43,33 @@ public class BBRevealHandler implements Listener {
         runShowTask();
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGHEST)
     public void onInteract(PlayerInteractEvent event) {
         if(!event.getPlayer().getItemInHand().isSimilar(wand)) return;
 
         if(event.getAction() == Action.RIGHT_CLICK_BLOCK) {
-            if(blocksToShow.contains(event.getClickedBlock())) {
-                blocksToShow.remove(event.getClickedBlock());
-                event.getPlayer().spigot().sendMessage(new ComponentBuilder("No longer showing block.")
-                        .color(ChatColor.RED).create());
+            if(Materials.checkFlag(event.getClickedBlock().getType(), Materials.COLLIDABLE)) {
+                if(blocksToShow.contains(event.getClickedBlock())) {
+                    blocksToShow.remove(event.getClickedBlock());
+                    event.getPlayer().spigot().sendMessage(new ComponentBuilder("No longer showing block: ")
+                            .color(ChatColor.RED).append(event.getClickedBlock().getType().name()).color(ChatColor.WHITE)
+                            .create());
+                } else {
+                    blocksToShow.add(event.getClickedBlock());
+                    event.getPlayer().spigot().sendMessage(new ComponentBuilder("Now showing block: ")
+                            .color(ChatColor.GREEN).append(event.getClickedBlock().getType().name()).color(ChatColor.WHITE)
+                            .create());
+                }
             } else {
-                blocksToShow.add(event.getClickedBlock());
-                event.getPlayer().spigot().sendMessage(new ComponentBuilder("Now showing block.")
-                        .color(ChatColor.GREEN).create());
+                event.getPlayer().spigot().sendMessage(new ComponentBuilder("Block is not collidable!")
+                        .color(ChatColor.RED)
+                        .create());
             }
+            event.setCancelled(true);
         }
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGHEST)
     public void onInteract(PlayerInteractEntityEvent event) {
         if(!event.getPlayer().getItemInHand().isSimilar(wand)) return;
 
@@ -69,11 +78,13 @@ public class BBRevealHandler implements Listener {
             event.getPlayer().spigot().sendMessage(new ComponentBuilder("No longer showing entity "
                     + event.getRightClicked().getName() + ".")
                     .color(ChatColor.RED).create());
+            event.setCancelled(true);
         } else {
             entitiesToShow.add(event.getRightClicked());
             event.getPlayer().spigot().sendMessage(new ComponentBuilder("Now showing entity "
                     + event.getRightClicked().getName() + ".")
                     .color(ChatColor.GREEN).create());
+            event.setCancelled(true);
         }
     }
 
@@ -86,15 +97,10 @@ public class BBRevealHandler implements Listener {
             blocksToShow.forEach(b -> BlockData.getData(b.getType()).getBox(b, ProtocolVersion.getGameVersion())
                     .draw(EnumParticle.FLAME, Bukkit.getOnlinePlayers().toArray(new Player[0])));
             entitiesToShow.forEach(e -> {
-                SimpleCollisionBox box;
-                if((box =Helper.getEntityCollision(e)) != null) {
-                    box.draw(EnumParticle.FLAME, Bukkit.getOnlinePlayers().toArray(new Player[0]));
-                } else {
-                    EntityData.getEntityBox(e.getLocation(), e)
-                            .draw(EnumParticle.FLAME, Bukkit.getOnlinePlayers().toArray(new Player[0]));
-                }
+                EntityData.getEntityBox(e.getLocation(), e)
+                        .draw(EnumParticle.FLAME, Bukkit.getOnlinePlayers().toArray(new Player[0]));
             });
-        }, 3000, 500, TimeUnit.MILLISECONDS);
+        }, 3000, 250, TimeUnit.MILLISECONDS);
     }
 
 }

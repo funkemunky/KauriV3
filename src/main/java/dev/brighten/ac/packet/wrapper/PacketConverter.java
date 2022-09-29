@@ -6,6 +6,7 @@ import dev.brighten.ac.packet.wrapper.out.*;
 
 public interface PacketConverter {
     WPacketPlayInFlying processFlying(Object object);
+
     WPacketPlayInUseEntity processUseEntity(Object object);
 
     WPacketPlayInAbilities processAbilities(Object object);

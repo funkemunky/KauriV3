@@ -6,6 +6,7 @@ import dev.brighten.ac.packet.handler.HandlerAbstract;
 import dev.brighten.ac.packet.wrapper.objects.EnumParticle;
 import dev.brighten.ac.packet.wrapper.out.WPacketPlayOutWorldParticles;
 import dev.brighten.ac.utils.math.IntVector;
+import dev.brighten.ac.utils.reflections.impl.MinecraftReflection;
 import dev.brighten.ac.utils.world.BlockData;
 import dev.brighten.ac.utils.world.CollisionBox;
 import dev.brighten.ac.utils.world.types.RayCollision;
@@ -236,11 +237,11 @@ public class Helper {
 	}
 
 	public static List<SimpleCollisionBox> getCollisions(APlayer player, SimpleCollisionBox collisionBox) {
-		return getCollisions(player, collisionBox, Materials.SOLID);
+		return getCollisions(player, collisionBox, Materials.COLLIDABLE);
 	}
 
 	public static SimpleCollisionBox getEntityCollision(Entity entity) {
-		return new SimpleCollisionBox(ReflectionsUtil.getBoundingBox(entity));
+		return new SimpleCollisionBox((Object)MinecraftReflection.getEntityBoundingBox(entity));
 	}
 
 	public static List<SimpleCollisionBox> getCollisions(APlayer player, SimpleCollisionBox collisionBox, int mask) {
@@ -255,11 +256,11 @@ public class Helper {
 			for (int y = y1 - 1; y < y2; ++y)
 				for (int z = z1; z < z2; ++z) {
 					IntVector vec = new IntVector(x, y, z);
-					Material type = player.getBlockUpdateHandler().getPossibleMaterials(vec).getLast();
+					Material type = player.getBlockUpdateHandler().getBlock(vec).getType();
 
 					if(type != Material.AIR && Materials.checkFlag(type, mask)) {
 						CollisionBox box = BlockData.getData(type)
-								.getBox(player.getBukkitPlayer().getWorld(), vec, ProtocolVersion.getGameVersion());
+								.getBox(player, vec, ProtocolVersion.getGameVersion());
 
 						if(box.isIntersected(collisionBox)) {
 							box.downCast(collisionBoxes);

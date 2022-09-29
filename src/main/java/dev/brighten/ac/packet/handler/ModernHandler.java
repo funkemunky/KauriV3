@@ -12,7 +12,6 @@ import dev.brighten.ac.utils.reflections.impl.CraftReflection;
 import dev.brighten.ac.utils.reflections.impl.MinecraftReflection;
 import dev.brighten.ac.utils.reflections.types.WrappedClass;
 import io.netty.channel.*;
-import lombok.SneakyThrows;
 import net.minecraft.server.v1_8_R3.PacketLoginInStart;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -219,7 +218,7 @@ public class ModernHandler extends HandlerAbstract {
                 }
             }
 
-            if(player != null) {
+            if(player != null && Anticheat.INSTANCE.getPacketProcessor() != null) {
                 try {
                     Object returnedObject = Anticheat.INSTANCE.getPacketProcessor().call(player, msg,
                             type);

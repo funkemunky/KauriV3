@@ -56,9 +56,9 @@ public class Phase extends Check {
 
         SimpleCollisionBox
                 toUpdate = new SimpleCollisionBox(player.getMovement().getTo().getLoc(), 0.6,1.8)
-                .expand(-0.0825),
+                .expand(-0.0425),
                 playerBox = new SimpleCollisionBox(player.getBukkitPlayer().getLocation(), 0.6, 1.8)
-                        .expand(-0.0825);
+                        .expand(-0.0425);
 
         SimpleCollisionBox concatted = Helper.wrap(playerBox, toUpdate);
 
@@ -71,7 +71,7 @@ public class Phase extends Check {
             for (Block block : newb) {
                 if(!current.contains(block)) {
                     Material type = block.getType();
-                    if(Materials.checkFlag(type, Materials.SOLID)
+                    if(Materials.checkFlag(type, Materials.COLLIDABLE)
                             && !allowedMaterials.contains(type)
                             && !Materials.checkFlag(type, Materials.STAIRS)) {
                         tags.addTag("INTO_BLOCK");
@@ -99,7 +99,7 @@ public class Phase extends Check {
 
             for (Block block : blocks) {
                 Material type = block.getType();
-                if(!Materials.checkFlag(type, Materials.SOLID)
+                if(!Materials.checkFlag(type, Materials.COLLIDABLE)
                         || allowedMaterials.contains(type) || Materials.checkFlag(type, Materials.STAIRS))
                     continue;
 

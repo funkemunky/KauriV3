@@ -1,6 +1,7 @@
 package dev.brighten.ac.utils;
 
 import dev.brighten.ac.packet.ProtocolVersion;
+import dev.brighten.ac.utils.wrapper.Wrapper;
 import org.bukkit.Material;
 
 public class Materials {
@@ -16,6 +17,7 @@ public class Materials {
     public static final int LIQUID = 0b00000000000000000000010000000;
     public static final int ICE    = 0b00000000000000000000100000000;
     public static final int FENCE  = 0b00000000000000000001000000000;
+    public static final int COLLIDABLE = 0b00000000000000000010000000000;
 
     static {
         for (int i = 0; i < MATERIAL_FLAGS.length; i++) {
@@ -25,6 +27,11 @@ public class Materials {
             if (mat.isSolid() || mat.name().contains("COMPARATOR") || mat.name().contains("DIODE")) {
                 MATERIAL_FLAGS[i] |= SOLID;
             }
+
+            if(Wrapper.getInstance().isCollidable(mat)) {
+                MATERIAL_FLAGS[i] |= COLLIDABLE;
+            }
+
             if (mat.name().endsWith("_STAIRS")) {
                 MATERIAL_FLAGS[i] |= STAIRS;
             }
@@ -34,7 +41,7 @@ public class Materials {
             }
 
             if(mat.name().contains("SKULL"))
-                MATERIAL_FLAGS[i] = SOLID;
+                MATERIAL_FLAGS[i] |= SOLID;
 
             if(mat.name().contains("STATIONARY") || mat.name().contains("LAVA") || mat.name().contains("WATER")) {
                 if(mat.name().contains("LAVA")) {
@@ -46,24 +53,22 @@ public class Materials {
                 if(!mat.name().contains("GATE")) MATERIAL_FLAGS[mat.ordinal()] |= FENCE;
             }
             if(mat.name().contains("WALL")) MATERIAL_FLAGS[mat.ordinal()] |= WALL;
-            if(mat.name().contains("PLATE")) MATERIAL_FLAGS[mat.ordinal()] = 0;
             if(mat.name().contains("BED") && !mat.name().contains("ROCK")) MATERIAL_FLAGS[mat.ordinal()]  |= SLABS;
             if(mat.name().contains("ICE")) MATERIAL_FLAGS[mat.ordinal()] |= ICE;
-            if(mat.name().contains("CARPET")) MATERIAL_FLAGS[mat.ordinal()] = SOLID;
-            if(mat.name().contains("SIGN")) MATERIAL_FLAGS[mat.ordinal()] = 0;
+            if(mat.name().contains("CARPET")) MATERIAL_FLAGS[mat.ordinal()] |= SOLID;
         }
 
         // fix some types where isSolid() returns the wrong value
-        MATERIAL_FLAGS[XMaterial.REPEATER.parseMaterial().ordinal()] = SOLID;
-        MATERIAL_FLAGS[XMaterial.SNOW.parseMaterial().ordinal()] = SOLID;
-        MATERIAL_FLAGS[XMaterial.ANVIL.parseMaterial().ordinal()] = SOLID;
-        MATERIAL_FLAGS[XMaterial.LILY_PAD.parseMaterial().ordinal()] = SOLID;
+        MATERIAL_FLAGS[XMaterial.REPEATER.parseMaterial().ordinal()] |= SOLID;
+        MATERIAL_FLAGS[XMaterial.SNOW.parseMaterial().ordinal()] |= SOLID;
+        MATERIAL_FLAGS[XMaterial.ANVIL.parseMaterial().ordinal()] |= SOLID;
+        MATERIAL_FLAGS[XMaterial.LILY_PAD.parseMaterial().ordinal()] |= SOLID;
 
         if(ProtocolVersion.getGameVersion().isOrAbove(ProtocolVersion.V1_8)) {
-            MATERIAL_FLAGS[XMaterial.SLIME_BLOCK.parseMaterial().ordinal()] = SOLID;
+            MATERIAL_FLAGS[XMaterial.SLIME_BLOCK.parseMaterial().ordinal()] |= SOLID;
 
             if(ProtocolVersion.getGameVersion().isOrAbove(ProtocolVersion.V1_14)) {
-                MATERIAL_FLAGS[XMaterial.SCAFFOLDING.parseMaterial().ordinal()] = SOLID;
+                MATERIAL_FLAGS[XMaterial.SCAFFOLDING.parseMaterial().ordinal()] |= SOLID;
             }
         }
 

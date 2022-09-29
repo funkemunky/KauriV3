@@ -27,4 +27,6 @@ public abstract class Wrapper {
     public abstract float getFriction(Material material);
 
     public abstract Material getType(World world, double x, double y, double z);
+
+    public abstract boolean isCollidable(Material material);
 }

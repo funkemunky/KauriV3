@@ -1,9 +1,12 @@
 package dev.brighten.ac.utils.math;
 
+import dev.brighten.ac.utils.MathHelper;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.util.Vector;
 
 @AllArgsConstructor
@@ -12,6 +15,12 @@ public class IntVector {
     @Getter
     @Setter
     private int x, y, z;
+
+    public IntVector(Location location) {
+        this.x = MathHelper.floor_double(location.getX());
+        this.y = MathHelper.floor_double(location.getY());
+        this.z = MathHelper.floor_double(location.getZ());
+    }
 
     public IntVector clone() {
         return new IntVector(x, y, z);
@@ -24,6 +33,21 @@ public class IntVector {
     @Override
     public String toString() {
         return "IntVector[" + x + ", " +  y + ", " + z + "]";
+    }
+
+    public IntVector add(int x, int y, int z) {
+        this.x+= x;
+        this.y+= y;
+        this.z+= z;
+        return this;
+    }
+
+    public IntVector add(IntVector vec) {
+        return add(vec.getX(), vec.getY(), vec.getZ());
+    }
+
+    public Location toLocation(World world) {
+        return new Location(world, x, y, z);
     }
 
     @Override

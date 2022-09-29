@@ -1,6 +1,9 @@
 package dev.brighten.ac.utils;
 
+import dev.brighten.ac.data.APlayer;
+import dev.brighten.ac.handler.block.WrappedBlock;
 import dev.brighten.ac.packet.ProtocolVersion;
+import dev.brighten.ac.utils.math.IntVector;
 import dev.brighten.ac.utils.reflections.impl.MinecraftReflection;
 import dev.brighten.ac.utils.reflections.types.WrappedField;
 import org.bukkit.Bukkit;
@@ -72,6 +75,37 @@ public class BlockUtils {
         if(block == null) return Optional.empty();
 
         return getBlockAsync(block.getLocation().clone().add(modX, modY, modZ));
+    }
+
+    public static Optional<WrappedBlock> getWrappedBlock(APlayer player, Location location) {
+        if(player == null) {
+            return Optional.ofNullable(getBlockAsync(location.clone())
+                    .map(b -> new WrappedBlock(b.getLocation(), b.getType(), b.getData())).orElse(null));
+        }
+
+        return Optional.of(player.getBlockUpdateHandler()
+                .getBlock(new IntVector(location.getBlockX(), location.getBlockY(), location.getBlockZ())));
+    }
+
+    public static Optional<WrappedBlock> getRelative(APlayer player, Location location, int modX, int modY, int modZ) {
+        if(player == null) {
+            return Optional.ofNullable(getBlockAsync(location.clone().add(modX, modY, modZ))
+                    .map(b -> new WrappedBlock(b.getLocation(), b.getType(), b.getData())).orElse(null));
+        }
+
+        return Optional.of(player.getBlockUpdateHandler()
+                .getRelative(new IntVector(location.getBlockX(), location.getBlockY(), location.getBlockZ()),
+                        modX, modY, modZ));
+    }
+
+    public static Optional<WrappedBlock> getRelative(APlayer player, Location location, BlockFace face, int distance) {
+        return getRelative(player, location,
+                face.getModX() * distance, face.getModY() * distance, face.getModZ() * distance);
+    }
+
+    public static Optional<WrappedBlock> getRelative(APlayer player, Location location, BlockFace face) {
+        return getRelative(player, location,
+                face.getModX(), face.getModY(), face.getModZ());
     }
 
     public static float getFriction(XMaterial material) {
@@ -345,8 +379,12 @@ public class BlockUtils {
         return (block.getType().toString().contains("FENCE") && !block.getType().toString().contains("GATE")) | block.getType().toString().contains("WALL");
     }
 
+    public static boolean isDoor(Material type) {
+        return type.toString().contains("DOOR") && !type.toString().contains("TRAP");
+    }
+
     public static boolean isDoor(Block block) {
-        return block.getType().toString().contains("DOOR") && !block.getType().toString().contains("TRAP");
+        return isDoor(block.getType());
     }
 
     public static boolean isBed(Block block) {

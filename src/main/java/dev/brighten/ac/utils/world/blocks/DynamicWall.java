@@ -1,5 +1,7 @@
 package dev.brighten.ac.utils.world.blocks;
 
+import dev.brighten.ac.data.APlayer;
+import dev.brighten.ac.handler.block.WrappedBlock;
 import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.utils.BlockUtils;
 import dev.brighten.ac.utils.Materials;
@@ -7,7 +9,6 @@ import dev.brighten.ac.utils.world.CollisionBox;
 import dev.brighten.ac.utils.world.types.CollisionFactory;
 import dev.brighten.ac.utils.world.types.SimpleCollisionBox;
 import org.bukkit.Material;
-import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 
 import java.util.Optional;
@@ -20,11 +21,11 @@ public class DynamicWall implements CollisionFactory {
     private static final double max = .5 + width;
 
     @Override
-    public CollisionBox fetch(ProtocolVersion version, Block b) {
-        boolean var3 = wallConnects(version, b, BlockFace.NORTH);
-        boolean var4 = wallConnects(version, b, BlockFace.SOUTH);
-        boolean var5 = wallConnects(version, b, BlockFace.WEST);
-        boolean var6 = wallConnects(version, b, BlockFace.EAST);
+    public CollisionBox fetch(ProtocolVersion version, APlayer player, WrappedBlock b) {
+        boolean var3 = wallConnects(version, player, b, BlockFace.NORTH);
+        boolean var4 = wallConnects(version, player, b, BlockFace.SOUTH);
+        boolean var5 = wallConnects(version, player, b, BlockFace.WEST);
+        boolean var6 = wallConnects(version, player, b, BlockFace.EAST);
 
         double var7 = 0.25;
         double var8 = 0.75;
@@ -58,11 +59,11 @@ public class DynamicWall implements CollisionFactory {
         return new SimpleCollisionBox(var7, 0.0, var9, var8, 1.5, var10);
     }
 
+    private static boolean wallConnects(ProtocolVersion v, APlayer player, WrappedBlock fenceBlock, BlockFace direction) {
+        Optional<WrappedBlock> targetBlock = BlockUtils.getRelative(player, fenceBlock.getLocation(), direction, 1);
 
-    private static boolean wallConnects(ProtocolVersion v, Block fenceBlock, BlockFace direction) {
-        Optional<Block> targetBlock = BlockUtils.getRelativeAsync(fenceBlock, direction, 1);
+        if(targetBlock.isEmpty()) return false;
 
-        if(!targetBlock.isPresent()) return false;
         Material target = targetBlock.get().getType();
 
         if (!isWall(target)&&DynamicFence.isBlacklisted(target))

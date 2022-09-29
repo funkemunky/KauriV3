@@ -1,5 +1,7 @@
 package dev.brighten.ac.utils.world;
 
+import dev.brighten.ac.data.APlayer;
+import dev.brighten.ac.handler.block.WrappedBlock;
 import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.utils.BlockUtils;
 import dev.brighten.ac.utils.MiscUtils;
@@ -9,7 +11,6 @@ import dev.brighten.ac.utils.math.IntVector;
 import dev.brighten.ac.utils.world.blocks.*;
 import dev.brighten.ac.utils.world.types.*;
 import org.bukkit.Material;
-import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 
@@ -19,7 +20,7 @@ import java.util.stream.Stream;
 public enum BlockData {
     _DEFAULT(new SimpleCollisionBox(0, 0, 0, 1, 1, 1),
             XMaterial.STONE.parseMaterial()),
-    _VINE((v, block) -> {
+    _VINE((v, protocol, block) -> {
         byte data = block.getData();
 
         if((data & 4) == 4)
@@ -50,11 +51,12 @@ public enum BlockData {
             new SimpleCollisionBox(0.4375, 0.0, 0.4375, 0.5625, 0.875, 0.5625) //top
     ), Material.BREWING_STAND),
 
-    _RAIL((protocol, b) -> ReflectionsUtil.getBlockBoundingBox(b).toCollisionBox(),Arrays.stream(Material.values())
+    _RAIL((protocol, player, b) -> ReflectionsUtil.getBlockBoundingBox(BlockUtils.getBlock(b.getLocation()))
+            .toCollisionBox(),Arrays.stream(Material.values())
             .filter(mat -> mat.name().toLowerCase().contains("rail"))
             .toArray(Material[]::new)),
 
-    _ANVIL((protocol, b) -> {
+    _ANVIL((protocol, player, b) -> {
         int dir = b.getData() & 0b01;
         CollisionBox box;
         if (dir == 1) {
@@ -70,7 +72,7 @@ public enum BlockData {
             .map(BlockData::m)
             .toArray(Material[]::new)),
 
-    _SKULL((protocol, b) -> {
+    _SKULL((protocol, player, b) -> {
         int rotation = b.getData() & 7;
 
         CollisionBox box;
@@ -103,13 +105,13 @@ public enum BlockData {
             .toArray(Material[]::new)),
 
     _HOPPER(new HopperBounding(), XMaterial.HOPPER.parseMaterial()),
-    _CAKE((protocol, block) -> {
+    _CAKE((protocol, player, block) -> {
         double f1 = (1 + block.getData() * 2) / 16D;
 
         return new SimpleCollisionBox(f1, 0, 0.0625, 1 - 0.0625, 0.5, 1 - 0.0625);
     }, Arrays.stream(Material.values()).filter(m -> m.name().contains("CAKE")).toArray(Material[]::new)),
 
-    _LADDER((protocol, b) -> {
+    _LADDER((protocol, player, b) -> {
         CollisionBox box = NoCollisionBox.INSTANCE;
         float var3 = 0.125F;
 
@@ -126,7 +128,7 @@ public enum BlockData {
         return box;
     }, XMaterial.LADDER.parseMaterial()),
 
-    _FENCE_GATE((protocol, b) -> {
+    _FENCE_GATE((protocol, player, b) -> {
         byte var5 = b.getData();
 
         CollisionBox box = NoCollisionBox.INSTANCE;
@@ -150,13 +152,13 @@ public enum BlockData {
             MiscUtils.match("IRON_FENCE"), MiscUtils.match("IRON_BARS")),
 
 
-    _SNOW((protocol, b) -> {
+    _SNOW((protocol, player, b) -> {
         int height = (b.getData() & 0b1111);
         if (height == 0) return new SimpleCollisionBox(0, 0, 0, 1, 0, 1); // return NoCollisionBox.INSTANCE;
         return new SimpleCollisionBox(0, 0, 0, 1, height * 0.125, 1);
     }, XMaterial.SNOW.parseMaterial()),
 
-    _SLAB((protocol, b) -> {
+    _SLAB((protocol, player, b) -> {
         if ((b.getData() & 8) == 0)
             return new SimpleCollisionBox(0, 0, 0, 1, .5, 1);
         else return new SimpleCollisionBox(0, .5, 0, 1, 1, 1);
@@ -165,35 +167,25 @@ public enum BlockData {
             .filter(mat -> !mat.name().contains("DOUBLE"))
             .toArray(Material[]::new)),
 
-    _STAIR((protocol, b) -> {
-        boolean inverted = (b.getData() & 4) != 0;
-        int dir = (b.getData() & 0b11);
-        SimpleCollisionBox top;
-        SimpleCollisionBox bottom = new SimpleCollisionBox(0, 0, 0, 1, .5, 1);
-        if (dir == 0) top = new SimpleCollisionBox(.5, .5, 0, 1, 1, 1);
-        else if (dir == 1) top = new SimpleCollisionBox(0, .5, 0, .5, 1, 1);
-        else if (dir == 2) top = new SimpleCollisionBox(0, .5, .5, 1, 1, 1);
-        else top = new SimpleCollisionBox(0, .5, 0, 1, 1, .5);
-        if (inverted) {
-            top.offset(0, -.5, 0);
-            bottom.offset(0, .5, 0);
-        }
-        return new ComplexCollisionBox(top, bottom);
-    }, Arrays.stream(XMaterial.values()).filter(mat -> mat.name().contains("STAIRS"))
+    _STAIR(new DynamicStair(), Arrays.stream(XMaterial.values()).filter(mat -> mat.name().contains("STAIRS"))
             .map(BlockData::m)
             .toArray(Material[]::new)),
 
-    _CHEST((protocol, b) -> {
-        if (b.getRelative(BlockFace.NORTH).getType().name().contains("CHEST")) {
+    _CHEST((protocol, player, b) -> {
+        if (player.getBlockUpdateHandler().getRelative(new IntVector(b.getLocation()), BlockFace.NORTH)
+                .getType().name().contains("CHEST")) {
             return new SimpleCollisionBox(0.0625F, 0.0F, 0.0F,
                     0.9375F, 0.875F, 0.9375F);
-        } else if (b.getRelative(BlockFace.SOUTH).getType().name().contains("CHEST")) {
+        } else if (player.getBlockUpdateHandler().getRelative(new IntVector(b.getLocation()), BlockFace.SOUTH)
+                .getType().name().contains("CHEST")) {
             return new SimpleCollisionBox(0.0625F, 0.0F, 0.0625F,
                     0.9375F, 0.875F, 1.0F);
-        } else if (b.getRelative(BlockFace.WEST).getType().name().contains("CHEST")) {
+        } else if (player.getBlockUpdateHandler().getRelative(new IntVector(b.getLocation()), BlockFace.WEST)
+                .getType().name().contains("CHEST")) {
             return new SimpleCollisionBox(0.0F, 0.0F, 0.0625F,
                     0.9375F, 0.875F, 0.9375F);
-        } else if (b.getRelative(BlockFace.EAST).getType().name().contains("CHEST")) {
+        } else if (player.getBlockUpdateHandler().getRelative(new IntVector(b.getLocation()), BlockFace.EAST)
+                .getType().name().contains("CHEST")) {
             return new SimpleCollisionBox(0.0625F, 0.0F, 0.0625F,
                     1.0F, 0.875F, 0.9375F);
         } else {
@@ -215,7 +207,7 @@ public enum BlockData {
             Arrays.stream(Material.values()).filter(m -> m.name().contains("CARPET")).toArray(Material[]::new)),
     _Daylight(new SimpleCollisionBox(0.0F, 0.0F, 0.0F, 1.0F, 0.375, 1.0F),
             MiscUtils.match("DAYLIGHT_DETECTOR"), MiscUtils.match("DAYLIGHT_DETECTOR_INVERTED")),
-    _LILIPAD((v, b) -> {
+    _LILIPAD((v, player, b) -> {
         if (v.isBelow(ProtocolVersion.V1_9))
             return new SimpleCollisionBox(0.0f, 0.0F, 0.0f, 1.0f, 0.015625F, 1.0f);
         return new SimpleCollisionBox(0.0625, 0.0F, 0.0625, 0.9375, 0.015625F, 0.9375);
@@ -240,7 +232,7 @@ public enum BlockData {
             XMaterial.STRUCTURE_VOID.parseMaterial()),
     
     _END_ROD(new DynamicRod(), XMaterial.END_ROD.parseMaterial()),
-    _CAULDRON(new CouldronBounding(), XMaterial.CAULDRON.parseMaterial()),
+    _CAULDRON(new CouldronBounding(), Material.CAULDRON),
     _CACTUS(new SimpleCollisionBox(0.0625, 0, 0.0625, 
             1 - 0.0625, 1 - 0.0625, 1 - 0.0625), XMaterial.CACTUS.parseMaterial()),
     _PISTON_BASE(new PistonBaseCollision(), m(XMaterial.PISTON), m(XMaterial.STICKY_PISTON)),
@@ -249,10 +241,10 @@ public enum BlockData {
 
     _SOULSAND(new SimpleCollisionBox(0, 0, 0, 1, 0.875, 1),
             XMaterial.SOUL_SAND.parseMaterial()),
-    _CAMPFIRE((version, block) -> version.isOrAbove(ProtocolVersion.V1_14)
+    _CAMPFIRE((version, player, block) -> version.isOrAbove(ProtocolVersion.V1_14)
             ? new SimpleCollisionBox(0,0,0, 1, 0.4375, 1)
             : NoCollisionBox.INSTANCE, XMaterial.CAMPFIRE.parseMaterial()),
-    _LECTERN((version, block) -> {
+    _LECTERN((version, player, block) -> {
         if(ProtocolVersion.getGameVersion().isOrAbove(ProtocolVersion.V1_14)) {
             return new ComplexCollisionBox(
                     new SimpleCollisionBox(0, 0.9375, 0, 1, 0.9375, 1),
@@ -261,9 +253,9 @@ public enum BlockData {
         } else return NoCollisionBox.INSTANCE;
     }, XMaterial.LECTERN.parseMaterial()),
     _POT(new SimpleCollisionBox(0.3125, 0.0, 0.3125, 0.6875, 0.375, 0.6875),
-            XMaterial.FLOWER_POT.parseMaterial()),
+            Material.FLOWER_POT),
 
-    _WALL_SIGN((version, block) -> {
+    _WALL_SIGN((version, player, block) -> {
 
         byte data = block.getData();
         double var4 = 0.28125;
@@ -311,7 +303,7 @@ public enum BlockData {
     _SIGN(new SimpleCollisionBox(0.25, 0.0, 0.25, 0.75, 1.0, 0.75),
             Arrays.stream(Material.values()).filter(m -> m.name().endsWith("_SIGN") || m.name().startsWith("SIGN"))
                     .toArray(Material[]::new)),
-    _BUTTON((version, block) -> {
+    _BUTTON((version, player, block) -> {
         BlockFace face;
         switch(block.getData() & 7) {
             case 0:
@@ -356,7 +348,7 @@ public enum BlockData {
         return NoCollisionBox.INSTANCE;
     }, Arrays.stream(Material.values()).filter(mat -> mat.name().contains("BUTTON")).toArray(Material[]::new)),
     
-    _LEVER((version, block) -> {
+    _LEVER((version, player, block) -> {
         byte data = (byte)(block.getData() & 7);
         BlockFace face;
         switch(data) {
@@ -440,14 +432,14 @@ public enum BlockData {
     public CollisionBox getBox(Block block, ProtocolVersion version) {
         if (this.box != null)
             return this.box.copy().offset(block.getX(), block.getY(), block.getZ());
-        return new DynamicCollisionBox(dynamic, block, version).offset(block.getX(), block.getY(), block.getZ());
+        return new DynamicCollisionBox(dynamic, null, new WrappedBlock(block.getLocation(),
+                block.getType(), block.getData()), version).offset(block.getX(), block.getY(), block.getZ());
     }
 
-    public CollisionBox getBox(World world, IntVector block, ProtocolVersion version) {
+    public CollisionBox getBox(APlayer player, IntVector block, ProtocolVersion version) {
         if (this.box != null)
             return this.box.copy().offset(block.getX(), block.getY(), block.getZ());
-        return new DynamicCollisionBox(dynamic,
-                BlockUtils.getBlockAsync(block.toBukkitVector().toLocation(world)).orElse(null), version)
+        return new DynamicCollisionBox(dynamic, null, player.getBlockUpdateHandler().getBlock(block), version)
                 .offset(block.getX(), block.getY(), block.getZ());
     }
 

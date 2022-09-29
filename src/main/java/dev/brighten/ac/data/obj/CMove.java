@@ -11,7 +11,7 @@ import org.bukkit.World;
 public class CMove {
     private KLocation loc = new KLocation(0,0,0,0,0);
     private World world;
-    private SimpleCollisionBox box;
+    private SimpleCollisionBox box = new SimpleCollisionBox(new KLocation(0,0,0,0,0), 0.6f, 1.8f);
     private boolean onGround;
     public void setLoc(CMove move) {
         this.loc = move.getLoc().clone();

@@ -20,7 +20,6 @@ import org.bukkit.potion.PotionEffectType;
 import org.bukkit.util.Vector;
 
 import java.util.ArrayList;
-import java.util.Deque;
 import java.util.List;
 
 @CheckData(name = "Horizontal", checkId = "horizontala", type = CheckType.MOVEMENT)
@@ -51,6 +50,8 @@ public class Horizontal extends Check {
                     || player.getInfo().getVelocity().isNotPassed(2)
                     || player.getInfo().isGeneralCancel()
                     || player.getBlockInfo().onClimbable
+                    || player.getMovement().getTo().getLoc().toVector()
+                    .distanceSquared(player.getMovement().getFrom().getLoc().toVector()) > 2500
                     || player.getInfo().lastLiquid.isNotPassed(2)) {
                 motionX = new Vector(player.getMovement().getDeltaX(), player.getMovement().getDeltaY(),
                         player.getMovement().getDeltaZ());
@@ -67,6 +68,7 @@ public class Horizontal extends Check {
             boolean found = false;
             double precision = getPrecision();
             TagsBuilder tags = null;
+
             for (Iteration it : iterations) {
                 TagsBuilder tagsBuilder = new TagsBuilder();
                 float forward = it.f, strafe = it.s;
@@ -242,9 +244,10 @@ public class Horizontal extends Check {
                     lmotionY = 0;
                 }
 
+                double originalX = lmotionX, originalY = lmotionY, originalZ = lmotionZ;
+
                 SimpleCollisionBox box = player.getMovement().getFrom().getBox().copy();
 
-                double originalX = lmotionX, originalY = lmotionY, originalZ = lmotionZ;
                 if(it.sneaking && onGround) {
                     double d6;
 
@@ -407,32 +410,23 @@ public class Horizontal extends Check {
                     tagsBuilder.addTag("stepped");
                 }
 
-                if(originalX != lmotionX) {
-                    tagsBuilder.addTag("x-collision");
-                }
-
-                if(originalY != lmotionY) {
-                    tagsBuilder.addTag("y-collision");
-                }
-
-                if(originalZ != lmotionZ) {
-                    tagsBuilder.addTag("z-collision");
-                }
-
                 double x = ((box.minX + box.maxX) / 2.0D) - player.getMovement().getFrom().getX();
                 double y = box.minY - player.getMovement().getFrom().getY();
                 double z = ((box.minZ + box.maxZ) / 2.0D) - player.getMovement().getFrom().getZ();
 
                 if (originalX != lmotionX) {
                      lmotionX = 0.0D;
+                    tagsBuilder.addTag("x-collision");
                 }
 
                 if (originalY != lmotionY) {
                      lmotionY = 0.0D;
+                    tagsBuilder.addTag("y-collision");
                 }
 
                 if (originalZ != lmotionZ) {
                      lmotionZ = 0.0D;
+                    tagsBuilder.addTag("z-collision");
                 }
 
                 double diffX = player.getMovement().getDeltaX() - x,
@@ -442,13 +436,13 @@ public class Horizontal extends Check {
                 double deltaAll = delta + (diffY * diffY);
                 double deltaY = Math.abs(diffY);
 
-                if (delta < smallDelta) {
+                if (deltaAll < smallDelta) {
                     smallDelta = deltaAll;
                     smallestDeltaXZ = delta;
                     smallestDeltaY = deltaY;
                     pmotionx = x;
-                    pmotionz = y;
-                    pmotiony = z;
+                    pmotiony = y;
+                    pmotionz = z;
 
                     tags = tagsBuilder;
 
@@ -465,8 +459,6 @@ public class Horizontal extends Check {
                                     .setLastKnownGoodPosition(player
                                             .getMovement().getFrom().getLoc()
                                             .clone());
-                        found = true;
-                        break;
                     }
                 }
             }
@@ -479,8 +471,7 @@ public class Horizontal extends Check {
 
             final String builtTags = tags == null ? "null" : tags.build();
 
-            if (player.getMovement().getDeltaXZ() > pmotion
-                    && smallestDeltaXZ > (precision)
+            if (smallestDeltaXZ > (precision)
                     && player.getMovement().getDeltaXZ() > 0.1) {
                 if ((buffer += smallestDeltaXZ > 58E-5 ? 1 : 0.5) > 1) {
                     buffer = Math.min(3.5f, buffer); //Ensuring we don't have a run-away buffer
@@ -488,9 +479,10 @@ public class Horizontal extends Check {
                             player.getMovement().getTo().getLoc(), player.getMovement().getDeltaXZ(), builtTags);
                     cancel();
                 } else debug("bad movement");
+
             } else if (buffer > 0) buffer -= 0.05f;
 
-            if(smallestDeltaY > 1E-10 && !maybeSkippedPos
+            if(smallestDeltaY > precision
                     && !player.getBlockInfo().onStairs && !player.getBlockInfo().nearSteppableEntity) {
                 double finalSmallestDeltaY = smallestDeltaY;
                 if(++vbuffer > 1) {
@@ -501,10 +493,9 @@ public class Horizontal extends Check {
                 }
             } else if(vbuffer > 0) vbuffer-= 0.05f;
 
-            debug("sx=%s sy=%s py=%.5f ldy=%.5f dy=%.5f posY=%.5f sp=%s pm=%.5f dxz=%.5f b=%.1f tags=[%s]", smallestDeltaXZ, smallestDeltaY,
-                    pmotiony, player.getMovement().getLDeltaY(), player.getMovement().getDeltaY(), player.getMovement().getTo().getY(),
-                    player.getInfo().isSprinting(), pmotion,
-                    player.getMovement().getDeltaXZ(), buffer, builtTags);
+            debug("(%s): py=%.5f dy=%.5f pm=%.5f dxz=%.5f skip=%s b=%.1f vb=%.1f tags=[%s]",
+                   precision, pmotiony, player.getMovement().getDeltaY(), pmotion,
+                    player.getMovement().getDeltaXZ(), maybeSkippedPos, buffer, vbuffer, builtTags);
         }
 
         if(ProtocolVersion.getGameVersion().isBelow(ProtocolVersion.V1_9)) {
@@ -528,7 +519,7 @@ public class Horizontal extends Check {
         if(player.getBlockInfo().onSoulSand) {
             return 5E-4;
         } else if(lastSkipPos.isNotPassed(2)) {
-            return 0.005;
+            return 0.03;
         }
         return 5E-13;
     }
@@ -538,27 +529,23 @@ public class Horizontal extends Check {
         val underBlockLoc = previousFrom != null ? player.getMovement().getFrom().getLoc() : player.getMovement().getTo().getLoc();
         val lastUnderBlockLoc = previousFrom != null ? previousFrom : player.getMovement().getFrom().getLoc();
 
-        Deque<Material> frictionList = player.getBlockUpdateHandler()
-                .getPossibleMaterials(new IntVector(MathHelper.floor_double(underBlockLoc.x),
-                        MathHelper.floor_double(underBlockLoc.y - 1), MathHelper.floor_double(underBlockLoc.z))),
-                lfrictionList = player.getBlockUpdateHandler()
-                        .getPossibleMaterials(new IntVector(MathHelper.floor_double(lastUnderBlockLoc.x),
+        Material underMaterial = player.getBlockUpdateHandler()
+                .getBlock(new IntVector(MathHelper.floor_double(underBlockLoc.x),
+                        MathHelper.floor_double(underBlockLoc.y - 1), MathHelper.floor_double(underBlockLoc.z))).getType(),
+                lastUnderMaterial = player.getBlockUpdateHandler()
+                        .getBlock(new IntVector(MathHelper.floor_double(lastUnderBlockLoc.x),
                                 MathHelper.floor_double(lastUnderBlockLoc.y - 1),
-                                MathHelper.floor_double(lastUnderBlockLoc.z)));
+                                MathHelper.floor_double(lastUnderBlockLoc.z))).getType();
         for (int f = -1; f < 2; f++) {
-            for (Material underMaterial : frictionList) {
-                for (Material lastUnderMaterial : lfrictionList) {
-                    for (int s = -1; s < 2; s++) {
-                        for (boolean sprinting : getSprintIteration(f)) {
-                            for (int fastMath = 0; fastMath <= 2; fastMath++) {
-                                for (boolean attack : TRUE_FALSE) {
-                                    for (boolean using : TRUE_FALSE) {
-                                        for (boolean sneaking : getSneakingIteration(sprinting)) {
-                                            for (boolean jumped : getJumpingIteration(player.getMovement().getFrom().isOnGround())) {
-                                                iterations.add(new Iteration(underMaterial, lastUnderMaterial, f, s,
-                                                        fastMath, sprinting, attack, using, sneaking, jumped));
-                                            }
-                                        }
+            for (int s = -1; s < 2; s++) {
+                for (boolean sprinting : getSprintIteration(f)) {
+                    for (int fastMath = 0; fastMath <= 2; fastMath++) {
+                        for (boolean attack : TRUE_FALSE) {
+                            for (boolean using : TRUE_FALSE) {
+                                for (boolean sneaking : getSneakingIteration(sprinting)) {
+                                    for (boolean jumped : getJumpingIteration(player.getMovement().getFrom().isOnGround())) {
+                                        iterations.add(new Iteration(underMaterial, lastUnderMaterial, f, s,
+                                                fastMath, sprinting, attack, using, sneaking, jumped));
                                     }
                                 }
                             }

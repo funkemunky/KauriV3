@@ -162,7 +162,7 @@ public class RayCollision implements CollisionBox {
 
             final Material type = block.getType();
 
-            if (!Materials.checkFlag(type, Materials.SOLID)) continue;
+            if (!Materials.checkFlag(type, Materials.COLLIDABLE)) continue;
 
             CollisionBox box = BlockData.getData(type).getBox(block, version);
 

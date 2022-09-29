@@ -1,46 +1,36 @@
 package dev.brighten.ac.utils.world.blocks;
 
+import dev.brighten.ac.data.APlayer;
+import dev.brighten.ac.handler.block.WrappedBlock;
 import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.utils.BlockUtils;
 import dev.brighten.ac.utils.world.CollisionBox;
 import dev.brighten.ac.utils.world.types.CollisionFactory;
 import dev.brighten.ac.utils.world.types.NoCollisionBox;
 import dev.brighten.ac.utils.world.types.SimpleCollisionBox;
-import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.material.Door;
-import org.bukkit.material.MaterialData;
 
 import java.util.Optional;
 
 public class DoorHandler implements CollisionFactory {
     @Override
-    public CollisionBox fetch(ProtocolVersion version, Block b) {
+    public CollisionBox fetch(ProtocolVersion version, APlayer player, WrappedBlock b) {
         if(ProtocolVersion.getGameVersion().isBelow(ProtocolVersion.V1_13)) {
-            Door state = (Door) b.getState().getData();
+            Door state = new Door(b.getType(), b.getData());
             byte data = state.getData();
             if (( data & 0b01000 ) != 0) {
-                Optional<Block> rel = BlockUtils.getRelativeAsync(b, BlockFace.DOWN);
+                Optional<WrappedBlock> rel = BlockUtils.getRelative(player, b.getLocation(), BlockFace.DOWN);
 
-                if(!rel.isPresent()) return NoCollisionBox.INSTANCE;
-                MaterialData state2 = rel.get().getState().getData();
-                if (state2 instanceof Door) {
-                    data = state2.getData();
-                }
-                else {
-                    return NoCollisionBox.INSTANCE;
-                }
+                if(rel.isPresent() && BlockUtils.isDoor(rel.get().getType())) {
+                    data = rel.get().getData();
+                } else return NoCollisionBox.INSTANCE;
             } else {
-                Optional<Block> rel = BlockUtils.getRelativeAsync(b, BlockFace.UP);
+                Optional<WrappedBlock> rel = BlockUtils.getRelative(player, b.getLocation(), BlockFace.UP);
 
-                if(!rel.isPresent()) return NoCollisionBox.INSTANCE;
-                MaterialData state2 = rel.get().getState().getData();
-                if (state2 instanceof Door) {
-                    state = (Door) state2;
-                }
-                else {
-                    return NoCollisionBox.INSTANCE;
-                }
+                if(rel.isPresent() && BlockUtils.isDoor(rel.get().getType())) {
+                    state = new Door(rel.get().getType(), rel.get().getData());
+                } else return NoCollisionBox.INSTANCE;
             }
 
             SimpleCollisionBox box;
@@ -95,23 +85,20 @@ public class DoorHandler implements CollisionFactory {
 //            box.offset(0,1,0);
             return box;
         } else {
-            Block blockTwo;
+            WrappedBlock blockTwo;
             Door door = (Door) b.getType().getNewData(b.getData());
             if (door.isTopHalf()) {
-                Optional<Block> rel = BlockUtils.getRelativeAsync(b, BlockFace.DOWN);
+                Optional<WrappedBlock> rel = BlockUtils.getRelative(player, b.getLocation(), BlockFace.DOWN);
 
-                if (!rel.isPresent()) return NoCollisionBox.INSTANCE;
-
-                if (BlockUtils.isDoor(rel.get())) {
+                if (rel.isPresent() && BlockUtils.isDoor(rel.get().getType())) {
                     blockTwo = rel.get();
                 } else {
                     return NoCollisionBox.INSTANCE;
                 }
             } else if (ProtocolVersion.getGameVersion().isBelow(ProtocolVersion.V1_13)) {
-                Optional<Block> rel = BlockUtils.getRelativeAsync(b, BlockFace.UP);
+                Optional<WrappedBlock> rel = BlockUtils.getRelative(player, b.getLocation(), BlockFace.UP);
 
-                if (!rel.isPresent()) return NoCollisionBox.INSTANCE;
-                if (BlockUtils.isDoor(rel.get())) {
+                if (rel.isPresent() && BlockUtils.isDoor(rel.get().getType())) {
                     blockTwo = rel.get();
                 } else {
                     return NoCollisionBox.INSTANCE;

@@ -1,5 +1,7 @@
 package dev.brighten.ac.utils.world.blocks;
 
+import dev.brighten.ac.data.APlayer;
+import dev.brighten.ac.handler.block.WrappedBlock;
 import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.utils.BlockUtils;
 import dev.brighten.ac.utils.Materials;
@@ -9,9 +11,7 @@ import dev.brighten.ac.utils.world.types.CollisionFactory;
 import dev.brighten.ac.utils.world.types.ComplexCollisionBox;
 import dev.brighten.ac.utils.world.types.SimpleCollisionBox;
 import org.bukkit.Material;
-import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
-import org.bukkit.block.BlockState;
 
 import java.util.Optional;
 
@@ -22,12 +22,12 @@ public class DynamicFence implements CollisionFactory {
     private static final double max = .5 + width;
 
     @Override
-    public CollisionBox fetch(ProtocolVersion version, Block b) {
+    public CollisionBox fetch(ProtocolVersion version, APlayer player, WrappedBlock b) {
         ComplexCollisionBox box = new ComplexCollisionBox(new SimpleCollisionBox(min, 0, min, max, 1.5, max));
-        boolean east =  fenceConnects(version, b, BlockFace.EAST );
-        boolean north = fenceConnects(version, b, BlockFace.NORTH);
-        boolean south = fenceConnects(version, b, BlockFace.SOUTH);
-        boolean west =  fenceConnects(version, b, BlockFace.WEST );
+        boolean east =  fenceConnects(version, player, b, BlockFace.EAST);
+        boolean north = fenceConnects(version, player, b, BlockFace.NORTH);
+        boolean south = fenceConnects(version, player, b, BlockFace.SOUTH);
+        boolean west =  fenceConnects(version, player, b, BlockFace.WEST);
         if (east) box.add(new SimpleCollisionBox(max, 0, min, 1, 1.5, max));
         if (west) box.add(new SimpleCollisionBox(0, 0, min, max, 1.5, max));
         if (north) box.add(new SimpleCollisionBox(min, 0, 0, max, 1.5, min));
@@ -52,14 +52,13 @@ public class DynamicFence implements CollisionFactory {
         }
     }
 
-    private static boolean fenceConnects(ProtocolVersion v,Block fenceBlock, BlockFace direction) {
-        BlockUtils.getRelativeAsync(fenceBlock, direction, 1);
-        Optional<Block> targetBlock = BlockUtils.getRelativeAsync(fenceBlock, direction, 1);
+    private static boolean fenceConnects(ProtocolVersion v, APlayer player, WrappedBlock fenceBlock, BlockFace direction) {
+        Optional<WrappedBlock> targetBlock = BlockUtils.getRelative(player, fenceBlock.getLocation(), direction, 1);
 
-        if(!targetBlock.isPresent()) return false;
-        BlockState sFence = fenceBlock.getState();
+        if(targetBlock.isEmpty()) return false;
+
         Material target = targetBlock.get().getType();
-        Material fence = sFence.getType();
+        Material fence = fenceBlock.getType();
 
         if (!isFence(target)&&isBlacklisted(target))
             return false;

@@ -1,6 +1,7 @@
 package dev.brighten.ac.utils.wrapper.impl;
 
 import dev.brighten.ac.utils.wrapper.Wrapper;
+import net.minecraft.server.v1_8_R3.Block;
 import net.minecraft.server.v1_8_R3.BlockPosition;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -15,7 +16,13 @@ public class Wrapper_18R3 extends Wrapper {
 
     @Override
     public Material getType(World world, double x, double y, double z) {
-        BlockPosition blockPos = new BlockPosition(x, y, z);
+        final BlockPosition blockPos = new BlockPosition(x, y, z);
         return CraftMagicNumbers.getMaterial(((CraftWorld)world).getHandle().getType(blockPos).getBlock());
+    }
+
+    @Override
+    public boolean isCollidable(Material material) {
+        final Block block = CraftMagicNumbers.getBlock(material);
+        return block.a(block.getBlockData(), false);
     }
 }

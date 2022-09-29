@@ -31,6 +31,7 @@ public class WPacketPlayOutMultiBlockChange extends WPacket {
     public static class BlockChange {
         private IntVector location;
         private Material material;
+        private byte data;
 
         @Override
         public String toString() {

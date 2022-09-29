@@ -26,4 +26,9 @@ public class Wrapper_Reflection extends Wrapper {
     public Material getType(World world, double x, double y, double z) {
         return BlockUtils.getBlockAsync(new Location(world, x, y, z)).map(Block::getType).orElse(Material.AIR);
     }
+
+    @Override
+    public boolean isCollidable(Material material) {
+        return false;
+    }
 }
