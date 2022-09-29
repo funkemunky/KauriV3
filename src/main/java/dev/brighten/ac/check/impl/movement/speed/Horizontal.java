@@ -418,6 +418,7 @@ public class Horizontal extends Check {
                 if(originalZ != lmotionZ) {
                     tagsBuilder.addTag("z-collision");
                 }
+
                 double x = ((box.minX + box.maxX) / 2.0D) - player.getMovement().getFrom().getX();
                 double y = box.minY - player.getMovement().getFrom().getY();
                 double z = ((box.minZ + box.maxZ) / 2.0D) - player.getMovement().getFrom().getZ();
@@ -441,7 +442,7 @@ public class Horizontal extends Check {
                 double deltaAll = delta + (diffY * diffY);
                 double deltaY = Math.abs(diffY);
 
-                if (deltaAll < smallDelta) {
+                if (delta < smallDelta) {
                     smallDelta = deltaAll;
                     smallestDeltaXZ = delta;
                     smallestDeltaY = deltaY;
