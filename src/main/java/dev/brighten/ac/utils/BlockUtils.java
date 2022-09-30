@@ -12,6 +12,8 @@ import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.Vehicle;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.EnumMap;
@@ -138,6 +140,14 @@ public class BlockUtils {
             default:
                 return false;
         }
+    }
+
+    public static boolean isEntityCollidable(Entity entity) {
+        if(entity instanceof Vehicle) {
+            return true;
+        }
+
+        return false;
     }
 
     public static boolean isSolid(Block block) {

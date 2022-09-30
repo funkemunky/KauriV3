@@ -15,7 +15,6 @@ import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
-import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
 
@@ -269,7 +268,7 @@ public class Helper {
 				}
 
 		for (Entity entity : player.getInfo().getNearbyEntities()) {
-			if(entity instanceof LivingEntity) continue;
+			if(!BlockUtils.isEntityCollidable(entity)) continue;
 
 			SimpleCollisionBox entityCollisionBox = new SimpleCollisionBox(ReflectionsUtil.getBoundingBox(entity));
 

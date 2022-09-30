@@ -129,7 +129,8 @@ public class BlockUpdateHandler {
                     block = new WrappedBlock(intVec.toLocation(player.getBukkitPlayer().getWorld()),
                             bukkitBlock.get().getType(), bukkitBlock.get().getData());
                     blockInformation.put(hashCode, block);
-                }
+                } else
+                    block = new WrappedBlock(loc.toLocation(player.getBukkitPlayer().getWorld()), Material.AIR, (byte)0);
             }
 
             return block;

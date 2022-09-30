@@ -6,7 +6,6 @@ import dev.brighten.ac.packet.handler.HandlerAbstract;
 import dev.brighten.ac.packet.wrapper.PacketType;
 import dev.brighten.ac.packet.wrapper.objects.WrappedWatchableObject;
 import dev.brighten.ac.packet.wrapper.out.WPacketPlayOutEntityMetadata;
-import dev.brighten.ac.packet.wrapper.out.WPacketPlayOutNamedEntitySpawn;
 import dev.brighten.ac.utils.RunUtils;
 import dev.brighten.ac.utils.annotation.Init;
 import org.bukkit.event.EventHandler;
@@ -36,8 +35,10 @@ public class JoinListener implements Listener {
                 if(event.getType().equals(PacketType.ENTITY_METADATA)) {
                     WPacketPlayOutEntityMetadata packet = event.getPacket();
 
+                    if(packet.getEntityId() == player.getBukkitPlayer().getEntityId()) return;
+
                     for (WrappedWatchableObject watchedObject : packet.getWatchedObjects()) {
-                        if(watchedObject.getDataValueId() == 6 && watchedObject.getWatchedObject() instanceof Float) {
+                        if (watchedObject.getDataValueId() == 6 && watchedObject.getWatchedObject() instanceof Float) {
                             watchedObject.setWatchedObject(1f);
 
                             HandlerAbstract.getHandler().sendPacket(player, packet.getPacket());
@@ -45,8 +46,6 @@ public class JoinListener implements Listener {
                             break;
                         }
                     }
-                } else if(event.getType().equals(PacketType.NAMED_ENTITY_SPAWN)) {
-                    WPacketPlayOutNamedEntitySpawn packet = event.getPacket();
                 }
             });
         });
