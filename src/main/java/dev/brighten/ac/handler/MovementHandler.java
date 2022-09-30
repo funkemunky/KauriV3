@@ -39,6 +39,7 @@ public class MovementHandler {
     private float deltaYaw, deltaPitch, lDeltaYaw, lDeltaPitch, pitchGCD, lastPitchGCD, yawGCD, lastYawGCD;
     @Getter
     private int moveTicks;
+    @Getter
     private final List<KLocation> posLocs = new ArrayList<>();
     @Getter
     private final List<CollisionBox> lookingAtBoxes = new ArrayList<>();

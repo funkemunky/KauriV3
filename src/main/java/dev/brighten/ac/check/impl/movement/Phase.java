@@ -3,14 +3,11 @@ package dev.brighten.ac.check.impl.movement;
 import dev.brighten.ac.api.check.CheckType;
 import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
-import dev.brighten.ac.check.WTimedAction;
+import dev.brighten.ac.check.WCancellable;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
-import dev.brighten.ac.utils.Helper;
-import dev.brighten.ac.utils.KLocation;
-import dev.brighten.ac.utils.Materials;
-import dev.brighten.ac.utils.XMaterial;
+import dev.brighten.ac.utils.*;
 import dev.brighten.ac.utils.timer.Timer;
 import dev.brighten.ac.utils.timer.impl.TickTimer;
 import dev.brighten.ac.utils.world.types.SimpleCollisionBox;
@@ -46,13 +43,39 @@ public class Phase extends Check {
     private final Timer lastFlag = new TickTimer(5);
     private KLocation fromWhereShitAintBad = null;
 
+    private int ticks;
 
-    WTimedAction<WPacketPlayInFlying> packet = (packet, now) -> {
+    private KLocation toSetback = null;
+
+
+    WCancellable<WPacketPlayInFlying> packet = (packet) -> {
+        if(packet.isMoved() && ticks < 3) {
+            ticks++;
+            return false;
+        }
+
+        if(toSetback != null && packet.isMoved()) {
+            if(player.getMovement().getTo().getLoc().toVector().distanceSquared(toSetback.toVector()) < 0.0001) {
+                toSetback = null;
+                debug("Reached loc");
+            } else {
+                RunUtils.task(() -> player.getBukkitPlayer().teleport(toSetback
+                        .toLocation(player.getBukkitPlayer().getWorld())));
+                debug("Hasnt reached location");
+                return true;
+            }
+        }
         if(!packet.isMoved() || player.getCreation().isNotPassed(800L)
-                || ((player.getInfo().lastRespawn.isNotPassed(500L)
-                || player.getMovement().getMoveTicks() == 0) && lastFlag.isPassed(12))
+                || player.getInfo().lastRespawn.isNotPassed(10)
+                || (player.getMovement().getMoveTicks() == 0
+                && player.getMovement().getPosLocs().stream()
+                .anyMatch(kloc -> kloc.toVector()
+                        .distanceSquared(player.getMovement().getTo().getLoc().toVector()) < 0.01))
                 || player.getInfo().isCreative() || player.getInfo().isCanFly()) {
-            return;
+            debug("Returned: " + player.getMovement().getMoveTicks() + "," + player.getMovement().getPosLocs().stream()
+                    .anyMatch(kloc -> kloc.toVector()
+                            .distanceSquared(player.getMovement().getTo().getLoc().toVector()) < 0.01));
+            return false;
         }
 
         SimpleCollisionBox fromBox = player.getMovement().getFrom().getBox().copy(), toBox = fromBox.copy();
@@ -81,8 +104,23 @@ public class Phase extends Check {
 
         toBox.offset(0, 0, deltaZ);
 
-        debug("(%s): new=[%.3f, %.3f, %.3f] old=[%.3f, %.3f, %.3f]", deltaX, deltaY, deltaZ,
+        KLocation calculatedTo = player.getMovement().getFrom().getLoc().clone().add(deltaX, deltaY, deltaZ);
+
+        double dx = Math.abs(deltaX - player.getMovement().getDeltaX()),
+                dy = Math.abs(deltaY - player.getMovement().getDeltaY()),
+                dz = Math.abs(deltaZ - player.getMovement().getDeltaZ());
+
+        double totalDelta = dx + dy + dz;
+
+        if(totalDelta > 0.001) {
+            RunUtils.task(() -> player.getBukkitPlayer().teleport(calculatedTo
+                    .toLocation(player.getBukkitPlayer().getWorld())));
+            flag("x=%.4f, y=%.4f, z=%.4f", dx, dy, dz);
+        }
+
+        debug("(%s) [%.5f]: new=[%.3f, %.3f, %.3f] old=[%.3f, %.3f, %.3f]", collisions.size(), totalDelta, deltaX, deltaY, deltaZ,
                 player.getMovement().getDeltaX(), player.getMovement().getDeltaY(),
                 player.getMovement().getDeltaZ());
+        return false;
     };
 }

@@ -58,6 +58,13 @@ public class KLocation {
         return new KLocation(x, y, z, yaw, pitch, timeStamp);
     }
 
+    public KLocation add(double x, double y, double z) {
+        this.x+= x;
+        this.y+= y;
+        this.z+= z;
+        return this;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

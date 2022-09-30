@@ -48,7 +48,7 @@ public class DynamicPane implements CollisionFactory {
     private static boolean fenceConnects(ProtocolVersion v, APlayer player, WrappedBlock fenceBlock, BlockFace direction) {
         Optional<WrappedBlock> targetBlock = BlockUtils.getRelative(player, fenceBlock.getLocation(), direction, 1);
 
-        if(targetBlock.isEmpty()) return false;
+        if(!targetBlock.isPresent()) return false;
         Material target = targetBlock.get().getType();
 
         if (!isPane(target)&&DynamicFence.isBlacklisted(target))
