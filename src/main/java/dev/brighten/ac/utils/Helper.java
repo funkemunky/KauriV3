@@ -279,6 +279,34 @@ public class Helper {
 		return collisionBoxes;
 	}
 
+	public static List<SimpleCollisionBox> getCollisionsNoEntities(APlayer player,
+																   SimpleCollisionBox collisionBox, int mask) {
+		int x1 = (int) Math.floor(collisionBox.minX);
+		int y1 = (int) Math.floor(collisionBox.minY);
+		int z1 = (int) Math.floor(collisionBox.minZ);
+		int x2 = (int) Math.floor(collisionBox.maxX + 1);
+		int y2 = (int) Math.floor(collisionBox.maxY + 1);
+		int z2 = (int) Math.floor(collisionBox.maxZ + 1);
+		List<SimpleCollisionBox> collisionBoxes = new ArrayList<>();
+		for (int x = x1; x < x2; ++x)
+			for (int y = y1 - 1; y < y2; ++y)
+				for (int z = z1; z < z2; ++z) {
+					IntVector vec = new IntVector(x, y, z);
+					Material type = player.getBlockUpdateHandler().getBlock(vec).getType();
+
+					if(type != Material.AIR && Materials.checkFlag(type, mask)) {
+						CollisionBox box = BlockData.getData(type)
+								.getBox(player, vec, ProtocolVersion.getGameVersion());
+
+						if(box.isIntersected(collisionBox)) {
+							box.downCast(collisionBoxes);
+						}
+					}
+				}
+
+		return collisionBoxes;
+	}
+
 	public static List<Block> getBlocksNearby2(World world, SimpleCollisionBox collisionBox, int mask) {
 		int x1 = (int) Math.floor(collisionBox.minX);
 		int y1 = (int) Math.floor(collisionBox.minY);

@@ -6,7 +6,7 @@ import org.bukkit.util.Vector;
 
 import java.util.Objects;
 
-public class KLocation {
+public class KLocation implements Cloneable {
     public double x, y, z;
     public float yaw, pitch;
     public long timeStamp;
@@ -54,14 +54,36 @@ public class KLocation {
         return new Location(world, x, y, z, yaw, pitch);
     }
 
+    @SuppressWarnings("MethodDoesntCallSuperMethod")
+    @Override
     public KLocation clone() {
         return new KLocation(x, y, z, yaw, pitch, timeStamp);
+    }
+
+    public double distanceSquared(KLocation other) {
+        double dx = (x - other.x), dy = (y - other.y), dz = (z - other.z);
+        return dx * dx + dy * dy + dz * dz;
+    }
+
+    public double distance(KLocation other) {
+        return Math.sqrt(distanceSquared(other));
     }
 
     public KLocation add(double x, double y, double z) {
         this.x+= x;
         this.y+= y;
         this.z+= z;
+        return this;
+    }
+
+    public KLocation setLocation(KLocation loc) {
+        this.x = loc.x;
+        this.y = loc.y;
+        this.z = loc.z;
+        this.yaw = loc.yaw;
+        this.pitch = loc.pitch;
+        this.timeStamp = loc.timeStamp;
+
         return this;
     }
 

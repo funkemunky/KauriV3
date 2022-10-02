@@ -373,7 +373,6 @@ public class BlockInformation {
     }
 
     public SimpleCollisionBox getBox() {
-        return new SimpleCollisionBox(player.getMovement().getTo().getLoc().toVector(), player.getMovement().getTo().getLoc().toVector())
-                .expand(0.3, 0,0.3).expandMax(0, 1.8, 0);
+        return new SimpleCollisionBox(player.getMovement().getTo().getLoc(), 0.6, 1.8);
     }
 }

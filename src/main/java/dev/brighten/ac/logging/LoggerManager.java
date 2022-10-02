@@ -10,7 +10,11 @@ import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.utils.json.JSONObject;
 
 import java.io.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Queue;
+import java.util.UUID;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
@@ -18,7 +22,7 @@ import java.util.function.Consumer;
 
 public class LoggerManager {
 
-    private final Deque<Log> logList = new LinkedList<>();
+    private final Queue<Log> logList = new LinkedBlockingQueue<>();
     private String license;
 
     /*
@@ -49,11 +53,7 @@ public class LoggerManager {
 
                         if(log != null) {
                             oos.writeUTF(log.toJson());
-                        }
-                    }
-
-                    if(i == 0) {
-                        logList.clear();
+                        } else break;
                     }
 
                     System.out.println("Wrote " + i + " logs;" + logList.size());

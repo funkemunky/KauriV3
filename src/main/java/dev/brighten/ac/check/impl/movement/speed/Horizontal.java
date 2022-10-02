@@ -24,10 +24,10 @@ import java.util.List;
 
 @CheckData(name = "Horizontal", checkId = "horizontala", type = CheckType.MOVEMENT)
 public class Horizontal extends Check {
-    private boolean lastLastClientGround, stepped;
-    private float buffer, vbuffer;
+    private boolean lastLastClientGround;
+    private float buffer;
     private boolean maybeSkippedPos;
-    private Timer lastSkipPos = new TickTimer();
+    private final Timer lastSkipPos = new TickTimer();
     private int lastFlying;
     
     private KLocation previousFrom;
@@ -50,17 +50,17 @@ public class Horizontal extends Check {
                     || player.getInfo().getVelocity().isNotPassed(2)
                     || player.getInfo().isGeneralCancel()
                     || player.getBlockInfo().onClimbable
-                    || player.getMovement().getTo().getLoc().toVector()
-                    .distanceSquared(player.getMovement().getFrom().getLoc().toVector()) > 2500
+                    || player.getMovement().getTo().getLoc()
+                    .distanceSquared(player.getMovement().getFrom().getLoc()) > 2500
                     || player.getInfo().lastLiquid.isNotPassed(2)) {
                 motionX = new Vector(player.getMovement().getDeltaX(), player.getMovement().getDeltaY(),
                         player.getMovement().getDeltaZ());
                 break check;
             }
 
-            double smallDelta = Double.MAX_VALUE, smallestDeltaXZ = Double.MAX_VALUE, smallestDeltaY = Double.MAX_VALUE;
+            double smallDelta = Double.MAX_VALUE, smallestDeltaXZ = Double.MAX_VALUE;
 
-            double pmotionx = 0, pmotiony = 0, pmotionz = 0;
+            double predictedMotionX = 0, predictedMotionY = 0, predictedMotionZ = 0;
             boolean onGround = player.getMovement().getFrom().isOnGround();
 
             List<Iteration> iterations = getIteration();
@@ -170,15 +170,15 @@ public class Horizontal extends Check {
 
                 if (player.getPotionHandler().hasPotionEffect(PotionEffectType.SPEED)) {
                     aiMoveSpeed += (player.getPotionHandler().getEffectByType(PotionEffectType.SPEED)
-                            .get()
-                            .getAmplifier() + 1) * (double) 0.20000000298023224D * aiMoveSpeed;
+                            .map(pe -> pe.getAmplifier() + 1)).orElse(0)
+                            * 0.20000000298023224D * aiMoveSpeed;
 
                     tagsBuilder.addTag("speedPotion");
                 }
                 if (player.getPotionHandler().hasPotionEffect(PotionEffectType.SLOW)) {
                     aiMoveSpeed += (player.getPotionHandler().getEffectByType(PotionEffectType.SLOW)
-                            .get()
-                            .getAmplifier() + 1) * (double) -0.15000000596046448D * aiMoveSpeed;
+                            .map(pe -> pe.getAmplifier() + 1)).orElse(0)
+                            * -0.15000000596046448D * aiMoveSpeed;
                     tagsBuilder.addTag("slowPotion");
                 }
 
@@ -434,15 +434,13 @@ public class Horizontal extends Check {
                         diffZ = player.getMovement().getDeltaZ() - z;
                 double delta = (diffX * diffX) + (diffZ * diffZ);
                 double deltaAll = delta + (diffY * diffY);
-                double deltaY = Math.abs(diffY);
 
                 if (deltaAll < smallDelta) {
                     smallDelta = deltaAll;
                     smallestDeltaXZ = delta;
-                    smallestDeltaY = deltaY;
-                    pmotionx = x;
-                    pmotiony = y;
-                    pmotionz = z;
+                    predictedMotionX = x;
+                    predictedMotionY = y;
+                    predictedMotionZ = z;
 
                     tags = tagsBuilder;
 
@@ -467,7 +465,7 @@ public class Horizontal extends Check {
             if(!found) {
                 motionX = new Vector(player.getMovement().getDeltaX(), player.getMovement().getDeltaY(), player.getMovement().getDeltaZ());
             }
-            double pmotion = Math.hypot(pmotionx, pmotionz);
+            double pmotion = Math.hypot(predictedMotionX, predictedMotionZ);
 
             final String builtTags = tags == null ? "null" : tags.build();
 
@@ -482,20 +480,9 @@ public class Horizontal extends Check {
 
             } else if (buffer > 0) buffer -= 0.05f;
 
-            if(smallestDeltaY > precision
-                    && !player.getBlockInfo().onStairs && !player.getBlockInfo().nearSteppableEntity) {
-                double finalSmallestDeltaY = smallestDeltaY;
-                if(++vbuffer > 1) {
-                    cancel();
-                    find(Vertical.class)
-                            .ifPresent(vc -> vc.flag("dy=%.4f;sd=%s tags=[%s]",
-                                    player.getMovement().getDeltaY(), finalSmallestDeltaY, builtTags));
-                }
-            } else if(vbuffer > 0) vbuffer-= 0.05f;
-
-            debug("(%s): py=%.5f dy=%.5f pm=%.5f dxz=%.5f skip=%s b=%.1f vb=%.1f tags=[%s]",
-                   precision, pmotiony, player.getMovement().getDeltaY(), pmotion,
-                    player.getMovement().getDeltaXZ(), maybeSkippedPos, buffer, vbuffer, builtTags);
+            debug("(%s): py=%.5f dy=%.5f pm=%.5f dxz=%.5f skip=%s b=%.1f tags=[%s]",
+                   precision, predictedMotionY, player.getMovement().getDeltaY(), pmotion,
+                    player.getMovement().getDeltaXZ(), maybeSkippedPos, buffer, builtTags);
         }
 
         if(ProtocolVersion.getGameVersion().isBelow(ProtocolVersion.V1_9)) {
@@ -542,7 +529,7 @@ public class Horizontal extends Check {
                     for (int fastMath = 0; fastMath <= 2; fastMath++) {
                         for (boolean attack : TRUE_FALSE) {
                             for (boolean using : TRUE_FALSE) {
-                                for (boolean sneaking : getSneakingIteration(sprinting)) {
+                                for (boolean sneaking : getSneakingIteration()) {
                                     for (boolean jumped : getJumpingIteration(player.getMovement().getFrom().isOnGround())) {
                                         iterations.add(new Iteration(underMaterial, lastUnderMaterial, f, s,
                                                 fastMath, sprinting, attack, using, sneaking, jumped));
@@ -574,7 +561,7 @@ public class Horizontal extends Check {
         return new boolean[] {false};
     }
 
-    private static boolean[] getSneakingIteration(boolean sprinting) {
+    private static boolean[] getSneakingIteration() {
         return new boolean[] {true, false};
     }
 
@@ -588,7 +575,6 @@ public class Horizontal extends Check {
 
     public static float sin(int type, float value) {
         switch (type) {
-            case 0:
             default: {
                 return SIN_TABLE[(int) (value * 10430.378F) & 65535];
             }
@@ -603,7 +589,6 @@ public class Horizontal extends Check {
 
     public static float cos(int type, float value) {
         switch (type) {
-            case 0:
             default:
                 return SIN_TABLE[(int) (value * 10430.378F + 16384.0F) & 65535];
             case 1:

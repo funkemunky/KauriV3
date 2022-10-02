@@ -129,7 +129,7 @@ public class PacketHandler {
                     player.getMovement().setExcuseNextFlying(true);
                 }
 
-                player.getMovement().process(packet, timestamp);
+                player.getMovement().process(packet);
                 break;
             }
             case BLOCK_CHANGE: {

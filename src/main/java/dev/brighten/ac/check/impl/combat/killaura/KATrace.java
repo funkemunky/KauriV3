@@ -43,17 +43,19 @@ public class KATrace extends Check {
 
         if(targetBox == null) return;
 
-        KLocation origin = player.getMovement().getTo().getLoc().clone();
+        final KLocation origin = player.getMovement().getTo().getLoc().clone();
 
         origin.y+= player.getInfo().isSneaking() ? sneakY : 1.62f;
 
-        RayCollision collision = new RayCollision(origin.toVector(), MathUtils.getDirection(origin));
+        final Vector originVec = origin.toVector();
+
+        RayCollision collision = new RayCollision(originVec, MathUtils.getDirection(origin));
 
         Vector targetPoint = collision.collisionPoint(targetBox);
         //If the ray isn't collided, we might as well not run this check. Just a simple boxes on array check
         if(targetPoint == null) return;
 
-        double dist = origin.toVector().distanceSquared(targetPoint);
+        double dist = originVec.distanceSquared(targetPoint);
 
         boolean rayCollidedOnBlock = false;
 
@@ -67,7 +69,7 @@ public class KATrace extends Check {
 
                     Vector point = collision.collisionPoint(box.copy().shrink(0.005f, 0.005f, 0.005f));
 
-                    if (point != null && origin.toVector().distanceSquared(point) < dist - 0.2) {
+                    if (point != null && originVec.distanceSquared(point) < dist - 0.2) {
                         rayCollidedOnBlock = true;
                         break;
                     }

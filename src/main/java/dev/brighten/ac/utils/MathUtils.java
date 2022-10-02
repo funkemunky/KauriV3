@@ -439,6 +439,7 @@ public class MathUtils {
         return vector;
     }
 
+
     public static boolean approxEquals(double accuracy, double equalTo, double... equals) {
         return Arrays.stream(equals).allMatch(equal -> MathUtils.getDelta(equalTo, equal) < accuracy);
     }

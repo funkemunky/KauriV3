@@ -14,19 +14,20 @@ import dev.brighten.ac.utils.world.CollisionBox;
 import dev.brighten.ac.utils.world.types.RayCollision;
 import dev.brighten.ac.utils.world.types.SimpleCollisionBox;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.val;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
+import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffectType;
 
 import java.util.*;
 
-@RequiredArgsConstructor
 public class MovementHandler {
 
     private final APlayer player;
+    
+    
 
     @Getter
     private final CMove to = new CMove(), from = new CMove();
@@ -64,14 +65,32 @@ public class MovementHandler {
     private int sensXPercent, sensYPercent, airTicks, groundTicks;
     private int ticks;
     private double lastX, lastY, lastLastY, lastYawAcelleration, lastPitchAcelleration;
-    private boolean inTick;
     @Getter
-    private TickTimer lastCinematic = new TickTimer(2);
-    private Timer lastReset = new TickTimer(2), generalProcess = new TickTimer(3);
+    private final Timer lastCinematic = new TickTimer(2);
+    private final Timer lastReset = new TickTimer(2);
     private final EvictingList<Integer> sensitivitySamples = new EvictingList<>(50);
 
+    public MovementHandler(APlayer player) {
+        this.player = player;
 
-    public void process(WPacketPlayInFlying packet, long currentTime) {
+        Player bplayer = player.getBukkitPlayer();
+
+        // Initializing player location
+        to.setWorld(bplayer.getWorld());
+        to.getLoc().x = bplayer.getLocation().getX();
+        to.getLoc().y = bplayer.getLocation().getY();
+        to.getLoc().z = bplayer.getLocation().getZ();
+        to.getLoc().yaw = bplayer.getLocation().getYaw();
+        to.getLoc().pitch = bplayer.getLocation().getPitch();
+        to.setBox(new SimpleCollisionBox(to.getLoc(), 0.6, 1.8));
+        to.setOnGround(bplayer.isOnGround());
+
+        // Setting from as same location as to
+        from.setLoc(to);
+    }
+
+
+    public void process(WPacketPlayInFlying packet) {
 
         player.getPotionHandler().onFlying(packet);
 
@@ -324,6 +343,7 @@ it
     private static float getDeltaY(float pitchDelta, float gcd) {
         return MathHelper.ceiling_float_int(pitchDelta / gcd);
     }
+
     public void process() {
 
         float yawAcelleration = Math.abs(getDeltaYaw());
@@ -342,7 +362,6 @@ it
 
         // Pitch delta change
         double pitchChangeAcelleration = Math.abs(this.lastLastY - deltaY);
-        this.inTick = false;
 
         // we have to check something different for pitch due to it being a little harder to check for being smooth
         if (x < .04 || y < .04
@@ -555,7 +574,7 @@ it
 
     /**
      * If from location is null, update to loc after to is set, otherwise, update to before from.
-     * Updates the location of player and its general delta movement.
+     * Updates the location of player and its general delta 
      *
      * @param packet WPacketPlayInFlying
      */
