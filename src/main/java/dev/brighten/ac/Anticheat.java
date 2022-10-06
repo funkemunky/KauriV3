@@ -245,7 +245,7 @@ public class Anticheat extends LoaderPlugin {
         lastTickLag = new TickTimer();
         AtomicInteger ticks = new AtomicInteger();
         AtomicLong lastTimeStamp = new AtomicLong(0);
-        RunUtils.taskTimer(() -> {
+        RunUtils.taskTimer(task -> {
             ticks.getAndIncrement();
             currentTick++;
             long currentTime = System.currentTimeMillis();

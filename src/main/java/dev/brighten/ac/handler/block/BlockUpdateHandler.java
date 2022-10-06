@@ -32,7 +32,7 @@ public class BlockUpdateHandler {
     /**
      * Keep track of block placements since the Bukkit API will be a bit behind
      *
-     * @param place
+     * @param place wrapped PacketPlayInBlockPlace
      */
     public void onPlace(WPacketPlayInBlockPlace place) {
         player.getInfo().lastBlockUpdate.reset();
@@ -70,7 +70,7 @@ public class BlockUpdateHandler {
     /**
      * Keep track of block breaking since the Bukkit API will be a bit behind.
      *
-     * @param dig
+     * @param dig Wrapped PacketPlayInBlockDig
      */
     public void onDig(WPacketPlayInBlockDig dig) {
         player.getInfo().lastBlockUpdate.reset();

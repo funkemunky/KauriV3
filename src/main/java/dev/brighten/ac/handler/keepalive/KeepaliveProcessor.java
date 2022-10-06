@@ -5,6 +5,7 @@ import com.google.common.cache.CacheBuilder;
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.handler.HandlerAbstract;
+import dev.brighten.ac.utils.BukkitRunnable;
 import dev.brighten.ac.utils.RunUtils;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
@@ -15,7 +16,7 @@ import org.bukkit.scheduler.BukkitTask;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
-public class KeepaliveProcessor implements Runnable {
+public class KeepaliveProcessor implements BukkitRunnable {
 
     private BukkitTask task;
 
@@ -32,7 +33,7 @@ public class KeepaliveProcessor implements Runnable {
     }
 
     @Override
-    public void run() {
+    public void run(BukkitTask task) {
         tick++;
         synchronized (keepAlives) {
             short id = (short) (tick > Short.MAX_VALUE ? tick % Short.MAX_VALUE : tick);

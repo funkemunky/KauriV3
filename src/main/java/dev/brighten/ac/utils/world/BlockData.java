@@ -172,20 +172,24 @@ public enum BlockData {
             .toArray(Material[]::new)),
 
     _CHEST((protocol, player, b) -> {
-        if (player.getBlockUpdateHandler().getRelative(new IntVector(b.getLocation()), BlockFace.NORTH)
-                .getType().name().contains("CHEST")) {
+        if(BlockUtils.getRelative(player, b.getLocation(), BlockFace.NORTH)
+                .map(block -> block.getType().name().contains("CHEST"))
+                .orElse(false)) {
             return new SimpleCollisionBox(0.0625F, 0.0F, 0.0F,
                     0.9375F, 0.875F, 0.9375F);
-        } else if (player.getBlockUpdateHandler().getRelative(new IntVector(b.getLocation()), BlockFace.SOUTH)
-                .getType().name().contains("CHEST")) {
+        } else if(BlockUtils.getRelative(player, b.getLocation(), BlockFace.SOUTH)
+                .map(block -> block.getType().name().contains("CHEST"))
+                .orElse(false)) {
             return new SimpleCollisionBox(0.0625F, 0.0F, 0.0625F,
                     0.9375F, 0.875F, 1.0F);
-        } else if (player.getBlockUpdateHandler().getRelative(new IntVector(b.getLocation()), BlockFace.WEST)
-                .getType().name().contains("CHEST")) {
+        } else if(BlockUtils.getRelative(player, b.getLocation(), BlockFace.WEST)
+                .map(block -> block.getType().name().contains("CHEST"))
+                .orElse(false)) {
             return new SimpleCollisionBox(0.0F, 0.0F, 0.0625F,
                     0.9375F, 0.875F, 0.9375F);
-        } else if (player.getBlockUpdateHandler().getRelative(new IntVector(b.getLocation()), BlockFace.EAST)
-                .getType().name().contains("CHEST")) {
+        } else if(BlockUtils.getRelative(player, b.getLocation(), BlockFace.EAST)
+                .map(block -> block.getType().name().contains("CHEST"))
+                .orElse(false)) {
             return new SimpleCollisionBox(0.0625F, 0.0F, 0.0625F,
                     1.0F, 0.875F, 0.9375F);
         } else {

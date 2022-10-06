@@ -7,6 +7,7 @@ import org.bukkit.scheduler.BukkitTask;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 /*
@@ -15,12 +16,22 @@ import java.util.function.Consumer;
  */
 public class RunUtils {
 
-    public static BukkitTask taskTimer(Runnable runnable, long delay, long interval) {
-        return Bukkit.getScheduler().runTaskTimer(Anticheat.INSTANCE.getPluginInstance(), runnable, delay, interval);
+    public static BukkitTask taskTimer(BukkitRunnable runnable, long delay, long interval) {
+        AtomicReference<BukkitTask> task = new AtomicReference<>(null);
+
+        task.set(Bukkit.getScheduler().runTaskTimer(Anticheat.INSTANCE.getPluginInstance(),
+                () -> runnable.run(task.get()), delay, interval));
+
+        return task.get();
     }
 
-    public static BukkitTask taskTimerAsync(Runnable runnable, long delay, long interval) {
-        return Bukkit.getScheduler().runTaskTimerAsynchronously(Anticheat.INSTANCE.getPluginInstance(), runnable, delay, interval);
+    public static BukkitTask taskTimerAsync(BukkitRunnable runnable, long delay, long interval) {
+        AtomicReference<BukkitTask> task = new AtomicReference<>(null);
+
+        task.set(Bukkit.getScheduler().runTaskTimerAsynchronously(Anticheat.INSTANCE.getPluginInstance(),
+                () -> runnable.run(task.get()), delay, interval));
+
+        return task.get();
     }
 
     public static BukkitTask task(Runnable runnable) {

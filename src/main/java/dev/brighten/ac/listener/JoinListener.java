@@ -100,10 +100,17 @@ public class JoinListener implements Listener {
     public void onJoin(PlayerJoinEvent event) {
         APlayer player = Anticheat.INSTANCE.getPlayerRegistry().generate(event.getPlayer());
 
-        RunUtils.taskLater(() -> {
-            if(event.getPlayer() != null && event.getPlayer().isOnline())
-                HandlerAbstract.getHandler().add(event.getPlayer());
-        }, 6);
+        RunUtils.taskTimer(task -> {
+            if(Anticheat.INSTANCE.getPlayerRegistry().aplayerMap.containsKey(event.getPlayer().getUniqueId().hashCode())) {
+                if(task != null
+                        && Anticheat.INSTANCE.getPlayerRegistry().aplayerMap
+                        .containsKey(event.getPlayer().getUniqueId().hashCode())
+                        && event.getPlayer() != null && event.getPlayer().isOnline()) {
+                    HandlerAbstract.getHandler().add(event.getPlayer());
+                    task.cancel();
+                }
+            }
+        }, 6, 1);
 
         player.getCheckHandler().callEvent(event);
     }

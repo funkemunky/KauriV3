@@ -525,11 +525,11 @@ public class Horizontal extends Check {
                                 MathHelper.floor_double(lastUnderBlockLoc.z))).getType();
         for (int f = -1; f < 2; f++) {
             for (int s = -1; s < 2; s++) {
-                for (boolean sprinting : getSprintIteration(f)) {
+                for (boolean sneaking : getSneakingIteration()) {
+                for (boolean sprinting : getSprintIteration(f, sneaking)) {
                     for (int fastMath = 0; fastMath <= 2; fastMath++) {
                         for (boolean attack : TRUE_FALSE) {
                             for (boolean using : TRUE_FALSE) {
-                                for (boolean sneaking : getSneakingIteration()) {
                                     for (boolean jumped : getJumpingIteration(player.getMovement().getFrom().isOnGround())) {
                                         iterations.add(new Iteration(underMaterial, lastUnderMaterial, f, s,
                                                 fastMath, sprinting, attack, using, sneaking, jumped));
@@ -553,8 +553,8 @@ public class Horizontal extends Check {
        public boolean sprinting, attack, using, sneaking, jumped;
     }
 
-    private static boolean[] getSprintIteration(int f) {
-        if(f > 0) {
+    private static boolean[] getSprintIteration(int f, boolean sneaking) {
+        if(f > 0 && !sneaking) {
             return new boolean[] {true, false};
         }
 

@@ -37,7 +37,7 @@ public class UpdatingButton extends Button {
     public void startUpdate() {
         if(updateTask != null) return;
 
-        updateTask = RunUtils.taskTimer(() -> {
+        updateTask = RunUtils.taskTimer(task -> {
             if(menu == null) {
                 updateTask.cancel();
                 updateTask = null;

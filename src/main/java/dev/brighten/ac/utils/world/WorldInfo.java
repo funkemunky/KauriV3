@@ -27,7 +27,7 @@ public class WorldInfo {
 
     public WorldInfo(World world) {
         this.worldId = world.getUID();
-        task = RunUtils.taskTimer(() -> {
+        task = RunUtils.taskTimer(task -> {
             synchronized (entityMap) {
                 entityMap.clear();
                 for (Entity entity : world.getEntities()) {

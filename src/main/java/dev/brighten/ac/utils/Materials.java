@@ -56,6 +56,8 @@ public class Materials {
             if(mat.name().contains("BED") && !mat.name().contains("ROCK")) MATERIAL_FLAGS[mat.ordinal()]  |= SLABS;
             if(mat.name().contains("ICE")) MATERIAL_FLAGS[mat.ordinal()] |= ICE;
             if(mat.name().contains("CARPET")) MATERIAL_FLAGS[mat.ordinal()] |= SOLID;
+            //Signs get set as collidable when they shouldn't
+            if(mat.name().contains("SIGN")) MATERIAL_FLAGS[mat.ordinal()] = 0;
         }
 
         // fix some types where isSolid() returns the wrong value

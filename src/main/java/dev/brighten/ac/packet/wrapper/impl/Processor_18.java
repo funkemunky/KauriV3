@@ -403,7 +403,8 @@ public class Processor_18 implements PacketConverter {
         for (int i = 0; i < blockChanges.length; i++) {
             short encodedloc = serial.readShort();
 
-            IntVector loc = new IntVector(encodedloc >> 12 & 15, encodedloc & 255, encodedloc >> 8 & 15);
+            IntVector loc = new IntVector((chunkLoc[0] << 4) + (encodedloc >> 12 & 15),
+                    encodedloc & 255, (chunkLoc[1] << 4) + (encodedloc >> 8 & 15));
             IBlockData blockData = Block.d.a(serial.e());
             Material blockType = CraftMagicNumbers.getMaterial(blockData.getBlock());
 
