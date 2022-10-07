@@ -186,6 +186,14 @@ public class Processor_18 implements PacketConverter {
     }
 
     @Override
+    public Object processServerPosition(WPacketPlayOutPosition packet) {
+        return new PacketPlayOutPosition(packet.getX(), packet.getY(), packet.getZ(), packet.getYaw(), packet.getPitch(),
+                packet.getFlags().stream()
+                        .map(f -> PacketPlayOutPosition.EnumPlayerTeleportFlags.valueOf(f.name()))
+                        .collect(Collectors.toSet()));
+    }
+
+    @Override
     public WPacketPlayOutAttachEntity processAttach(Object object) {
         PacketDataSerializer serial = new PacketDataSerializer(Unpooled.buffer());
         PacketPlayOutAttachEntity packet = (PacketPlayOutAttachEntity) object;
@@ -702,6 +710,37 @@ public class Processor_18 implements PacketConverter {
         }
 
         return WPacketPlayOutEntityDestroy.builder().entityIds(entityIds).build();
+    }
+
+    @Override
+    public WPacketPlayInTransaction processClientTransaction(Object object) {
+        PacketPlayInTransaction packet = (PacketPlayInTransaction) object;
+        PacketDataSerializer serialized = serialize(packet);
+
+        int id = serialized.readByte();
+        short action = serialized.readShort();
+        boolean accept = serialized.readByte() != 0;
+
+        return WPacketPlayInTransaction.builder().id(id).action(action)
+                .accept(accept).build();
+    }
+
+    @Override
+    public WPacketPlayOutTransaction processServerTransaction(Object object) {
+        PacketPlayOutTransaction packet = (PacketPlayOutTransaction) object;
+        PacketDataSerializer serialized = serialize(packet);
+
+        int id = serialized.readUnsignedByte();
+        short action = serialized.readShort();
+        boolean accept = serialized.readBoolean();
+
+        return WPacketPlayOutTransaction.builder().id(id).action(action).accept(accept)
+                .build();
+    }
+
+    @Override
+    public Object processServerTransaction(WPacketPlayOutTransaction packet) {
+        return new PacketPlayOutTransaction(packet.getId(), packet.getAction(), packet.isAccept());
     }
 
     private PacketDataSerializer serialize(Packet<?> packet) {

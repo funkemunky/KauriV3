@@ -2,6 +2,7 @@ package dev.brighten.ac.packet.handler;
 
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.ProtocolVersion;
+import dev.brighten.ac.packet.wrapper.PacketType;
 import dev.brighten.ac.utils.reflections.Reflections;
 import dev.brighten.ac.utils.reflections.types.WrappedClass;
 import dev.brighten.ac.utils.reflections.types.WrappedField;
@@ -32,9 +33,22 @@ public abstract class HandlerAbstract{
 
     public abstract void remove(Player player);
 
+    public abstract void sendPacketSilently(Player player, Object packet);
+
+    public abstract void sendPacketSilently(APlayer player, Object packet);
+
     public abstract void sendPacket(Player player, Object packet);
 
     public abstract void sendPacket(APlayer player, Object packet);
+
+    public static PacketType getPacketType(Object object) {
+        String name = object.getClass().getName();
+        int index = name.lastIndexOf(".");
+        String packetName = name.substring(index + 1);
+
+        return PacketType
+                .getByPacketId(packetName).orElse(PacketType.UNKNOWN);
+    }
 
     public void shutdown() {
         handler.shutdown();

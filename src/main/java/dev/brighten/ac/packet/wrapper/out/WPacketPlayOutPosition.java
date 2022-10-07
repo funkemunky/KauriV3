@@ -1,5 +1,6 @@
 package dev.brighten.ac.packet.wrapper.out;
 
+import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.packet.wrapper.PacketType;
 import dev.brighten.ac.packet.wrapper.WPacket;
 import lombok.Builder;
@@ -26,7 +27,7 @@ public class WPacketPlayOutPosition extends WPacket {
 
     @Override
     public Object getPacket() {
-        return null;
+        return Anticheat.INSTANCE.getPacketProcessor().getPacketConverter().processServerPosition(this);
     }
 
     public enum EnumPlayerTeleportFlags {

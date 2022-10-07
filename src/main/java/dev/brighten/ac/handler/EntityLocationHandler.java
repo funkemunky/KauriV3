@@ -95,7 +95,8 @@ public class EntityLocationHandler {
      * @param packet WrappedOutRelativePosition
      */
     void onRelPosition(WPacketPlayOutEntity packet) {
-        Optional<Entity> op = Anticheat.INSTANCE.getWorldInfo(data.getBukkitPlayer().getWorld()).getEntity(packet.getId());
+        Optional<Entity> op = Anticheat.INSTANCE.getWorldInfo(data.getBukkitPlayer().getWorld())
+                .getEntity(packet.getId());
 
         if(!op.isPresent()) return;
 
@@ -134,7 +135,8 @@ public class EntityLocationHandler {
      * @param packet WrappedOutEntityTeleportPacket
      */
     void onTeleportSent(WPacketPlayOutEntityTeleport packet) {
-        Optional<Entity> op = Anticheat.INSTANCE.getWorldInfo(data.getBukkitPlayer().getWorld()).getEntity(packet.getEntityId());
+        Optional<Entity> op = Anticheat.INSTANCE.getWorldInfo(data.getBukkitPlayer().getWorld())
+                .getEntity(packet.getEntityId());
 
         if(!op.isPresent()) return;
 

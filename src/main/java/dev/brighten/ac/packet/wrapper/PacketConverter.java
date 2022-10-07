@@ -27,6 +27,8 @@ public interface PacketConverter {
 
     WPacketPlayOutPosition processServerPosition(Object object);
 
+    Object processServerPosition(WPacketPlayOutPosition packet);
+
     WPacketPlayOutAttachEntity processAttach(Object object);
 
     WPacketPlayOutEntity processOutEntity(Object object);
@@ -78,4 +80,10 @@ public interface PacketConverter {
     Object processEntityMetadata(WPacketPlayOutEntityMetadata packet);
 
     WPacketPlayOutEntityDestroy processEntityDestroy(Object object);
+
+    WPacketPlayInTransaction processClientTransaction(Object object);
+
+    WPacketPlayOutTransaction processServerTransaction(Object object);
+
+    Object processServerTransaction(WPacketPlayOutTransaction packet);
 }

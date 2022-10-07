@@ -17,25 +17,27 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.logging.Level;
 
 public class ModernHandler extends HandlerAbstract {
 
     private final Map<String, Channel> channelCache = new HashMap<>();
-    private Map<Channel, Integer> protocolLookup = new MapMaker().weakKeys().makeMap();
-    private final Set<Channel> uninjectedChannels = Collections.newSetFromMap(new MapMaker().weakKeys().makeMap());
+    private final Map<Channel, Integer> protocolLookup = new MapMaker().weakKeys().makeMap();
 
-    private ChannelInboundHandlerAdapter serverChannelHandler;
-    private ChannelInitializer<Channel> beginInitProtocol;
-    private ChannelInitializer<Channel> endInitProtocol;
-    private List<Channel> serverChannels = Lists.newArrayList();
+    private final ChannelInboundHandlerAdapter serverChannelHandler;
+    private final ChannelInitializer<Channel> beginInitProtocol;
+    private final ChannelInitializer<Channel> endInitProtocol;
+    private final List<Channel> serverChannels = Lists.newArrayList();
 
     public ModernHandler() {
         endInitProtocol = new ChannelInitializer<Channel>() {
 
             @Override
-            protected void initChannel(Channel channel) throws Exception {
+            protected void initChannel(Channel channel) {
                 try {
                     // Stop injecting channels
                     if (Anticheat.INSTANCE.isEnabled()) {
@@ -52,7 +54,7 @@ public class ModernHandler extends HandlerAbstract {
         beginInitProtocol = new ChannelInitializer<Channel>() {
 
             @Override
-            protected void initChannel(Channel channel) throws Exception {
+            protected void initChannel(Channel channel) {
                 channel.pipeline().addLast(endInitProtocol);
             }
 
@@ -61,7 +63,7 @@ public class ModernHandler extends HandlerAbstract {
         serverChannelHandler = new ChannelInboundHandlerAdapter() {
 
             @Override
-            public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+            public void channelRead(ChannelHandlerContext ctx, Object msg) {
                 Channel channel = (Channel) msg;
                 channel.pipeline().addFirst(beginInitProtocol);
                 ctx.fireChannelRead(msg);
@@ -150,13 +152,6 @@ public class ModernHandler extends HandlerAbstract {
     }
 
     @Override
-    public void sendPacket(Player player, Object packet) {
-        if(packet instanceof WPacket) {
-            getChannel(player).pipeline().writeAndFlush((new SilentObject(((WPacket) packet).getPacket())));
-        } else getChannel(player).pipeline().writeAndFlush(new SilentObject(packet));
-    }
-
-    @Override
     public void shutdown() {
         Bukkit.getOnlinePlayers().forEach(this::remove);
         for (Channel serverChannel : serverChannels) {
@@ -173,8 +168,27 @@ public class ModernHandler extends HandlerAbstract {
     }
 
     @Override
+    public void sendPacketSilently(Player player, Object packet) {
+        if(packet instanceof WPacket) {
+            getChannel(player).pipeline().writeAndFlush((new SilentObject(((WPacket) packet).getPacket())));
+        } else getChannel(player).pipeline().writeAndFlush(new SilentObject(packet));
+    }
+
+    @Override
+    public void sendPacketSilently(APlayer player, Object packet) {
+        this.sendPacketSilently(player.getBukkitPlayer(), packet);
+    }
+
+    @Override
+    public void sendPacket(Player player, Object packet) {
+        if(packet instanceof WPacket) {
+            getChannel(player).pipeline().writeAndFlush(((WPacket) packet).getPacket());
+        } else getChannel(player).pipeline().writeAndFlush(packet);
+    }
+
+    @Override
     public void sendPacket(APlayer player, Object packet) {
-        this.sendPacket(player.getBukkitPlayer(), packet);
+        sendPacket(player.getBukkitPlayer(), packet);
     }
 
     @Override
@@ -199,12 +213,7 @@ public class ModernHandler extends HandlerAbstract {
                 return;
             }
 
-            String name = msg.getClass().getName();
-            int index = name.lastIndexOf(".");
-            String packetName = name.substring(index + 1);
-
-            PacketType type = PacketType
-                    .getByPacketId(packetName).orElse(PacketType.UNKNOWN);
+            PacketType type = HandlerAbstract.getPacketType(msg);
 
             if(type == PacketType.LOGIN_START) {
                 PacketLoginInStart packet = (PacketLoginInStart) msg;
@@ -247,14 +256,10 @@ public class ModernHandler extends HandlerAbstract {
                 return;
             }
 
-            String name = msg.getClass().getName();
-            int index = name.lastIndexOf(".");
-            String packetName = name.substring(index + 1);
-
             if(player != null) {
                 try {
-                    Object returnedObject = Anticheat.INSTANCE.getPacketProcessor().call(player, msg, PacketType
-                            .getByPacketId(packetName).orElse(PacketType.UNKNOWN));
+                    Object returnedObject = Anticheat.INSTANCE.getPacketProcessor().call(player, msg,
+                            HandlerAbstract.getPacketType(msg));
 
                     if (returnedObject != null) {
                         super.write(ctx, returnedObject, promise);

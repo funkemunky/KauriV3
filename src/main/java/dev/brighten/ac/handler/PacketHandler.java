@@ -16,7 +16,6 @@ import lombok.val;
 import net.minecraft.server.v1_8_R3.PacketDataSerializer;
 import net.minecraft.server.v1_8_R3.PacketPlayInCustomPayload;
 import net.minecraft.server.v1_8_R3.PacketPlayInSteerVehicle;
-import net.minecraft.server.v1_8_R3.PacketPlayInTransaction;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.inventory.ItemStack;
@@ -30,11 +29,11 @@ public class PacketHandler {
         long timestamp = System.currentTimeMillis();
         switch (type) {
             case CLIENT_TRANSACTION: {
-                PacketPlayInTransaction packet = (PacketPlayInTransaction) packetObject;
+                WPacketPlayInTransaction packet = (WPacketPlayInTransaction) packetObject;
 
-                if(packet.a() == 0) {
-                    if(Anticheat.INSTANCE.getKeepaliveProcessor().keepAlives.getIfPresent(packet.b()) != null) {
-                        Anticheat.INSTANCE.getKeepaliveProcessor().addResponse(player, packet.b());
+                if(packet.getId() == 0) {
+                    if(Anticheat.INSTANCE.getKeepaliveProcessor().keepAlives.getIfPresent(packet.getAction()) != null) {
+                        Anticheat.INSTANCE.getKeepaliveProcessor().addResponse(player, packet.getAction());
 
                         val optional = Anticheat.INSTANCE.getKeepaliveProcessor().getResponse(player);
 
@@ -45,6 +44,11 @@ public class PacketHandler {
 
                             player.getLagInfo().setLastTransPing(player.getLagInfo().getTransPing());
                             player.getLagInfo().setTransPing(current - ka.start);
+
+                            if(player.getPlayerVersion().isOrAbove(ProtocolVersion.V1_9)
+                                    && player.getMovement().getLastFlying().isPassed(1)) {
+                                player.getMovement().runPositionHackFix();
+                            }
 
                             if(player.instantTransaction.size() > 0) {
                                 synchronized (player.instantTransaction) {
@@ -87,7 +91,7 @@ public class PacketHandler {
                         });
                         player.getLagInfo().getLastClientTransaction().reset();
                     }
-                    Optional.ofNullable(player.instantTransaction.remove(packet.b()))
+                    Optional.ofNullable(player.instantTransaction.remove(packet.getAction()))
                             .ifPresent(t -> t.two.accept(t.one));
                 }
                 break;
@@ -330,7 +334,7 @@ public class PacketHandler {
             }
         }
 
-        if(player.sniffing) {
+        if(player.sniffing && type != PacketType.UNKNOWN) {
             player.sniffedPackets.add("[" +  Anticheat.INSTANCE.getKeepaliveProcessor().tick + "] " +
                     "" + type.name() + ": " + packetObject.toString());
         }

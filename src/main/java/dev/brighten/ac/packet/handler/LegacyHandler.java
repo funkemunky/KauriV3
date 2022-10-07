@@ -22,12 +22,14 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+//TODO Make this feature-parody with ModernHandler
 public class LegacyHandler extends HandlerAbstract {
 
     private final Map<String, Channel> channelCache = new HashMap<>();
-    private Set<Channel> uninjectedChannels = Collections.newSetFromMap(new MapMaker().weakKeys().makeMap());
+    private final Set<Channel> uninjectedChannels = Collections.newSetFromMap(new MapMaker().weakKeys().makeMap());
 
-    private static WrappedField fieldChannel = new WrappedClass(NetworkManager.class).getFieldByType(Channel.class, 0);
+    private final static WrappedField fieldChannel = new WrappedClass(NetworkManager.class)
+            .getFieldByType(Channel.class, 0);
 
     @Override
     public void add(Player player) {
@@ -61,6 +63,18 @@ public class LegacyHandler extends HandlerAbstract {
     }
 
     @Override
+    public void sendPacketSilently(Player player, Object packet) {
+        if(packet instanceof WPacket) {
+            getChannel(player).pipeline().writeAndFlush(((WPacket) packet).getPacket());
+        } else getChannel(player).pipeline().writeAndFlush(packet);
+    }
+
+    @Override
+    public void sendPacketSilently(APlayer player, Object packet) {
+        this.sendPacketSilently(player.getBukkitPlayer(), packet);
+    }
+
+    @Override
     public void sendPacket(Player player, Object packet) {
         if(packet instanceof WPacket) {
             getChannel(player).pipeline().writeAndFlush(((WPacket) packet).getPacket());
@@ -69,7 +83,7 @@ public class LegacyHandler extends HandlerAbstract {
 
     @Override
     public void sendPacket(APlayer player, Object packet) {
-        this.sendPacket(player.getBukkitPlayer(), packet);
+        sendPacket(player.getBukkitPlayer(), packet);
     }
 
     @Override

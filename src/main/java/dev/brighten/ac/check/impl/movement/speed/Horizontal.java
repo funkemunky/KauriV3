@@ -29,9 +29,9 @@ public class Horizontal extends Check {
     private boolean maybeSkippedPos;
     private final Timer lastSkipPos = new TickTimer();
     private int lastFlying;
-    
+
     private KLocation previousFrom;
-    private Vector motionX = new Vector(0,0,0);
+    private Vector motionX = new Vector(0, 0, 0);
     private static final boolean[] TRUE_FALSE = new boolean[]{true, false};
 
     public double strafe, forward;
@@ -70,12 +70,12 @@ public class Horizontal extends Check {
             TagsBuilder tags = null;
 
             for (Iteration it : iterations) {
+
                 TagsBuilder tagsBuilder = new TagsBuilder();
                 float forward = it.f, strafe = it.s;
 
-                if (it.sprinting && forward <= 0) {
-                    continue;
-                }
+                tagsBuilder.addTag("forward:" + it.f);
+                tagsBuilder.addTag("strafe:" + it.s);
 
                 if (it.sneaking) {
                     tagsBuilder.addTag("sneak");
@@ -103,33 +103,8 @@ public class Horizontal extends Check {
                         lmotionY = motionX.getY(),
                         lmotionZ = motionX.getZ();
 
-                lmotionY-= 0.08;
-                lmotionY*= 0.98f;
-
-                if(player.getBlockInfo().onSoulSand
-                        && player.getBlockInfo().collisionMaterialCount.
-                        containsKey(Material.SOUL_SAND)) {
-
-                    int i;
-                    for(i = 0
-                        ; i < player.getBlockInfo()
-                            .collisionMaterialCount
-                            .get(Material.SOUL_SAND)
-                            ; i++) {
-                        lmotionX*= 0.4;
-                        lmotionZ*= 0.4;
-                    }
-
-                    if(i > 0) {
-                        tagsBuilder.addTag("soulSand:" + i);
-                    }
-                }
-
-                if(player.getBlockInfo().inWeb) {
-                    lmotionX*= 0.25;
-                    lmotionZ*= 0.25;
-                    tagsBuilder.addTag("web");
-                }
+                lmotionY -= 0.08;
+                lmotionY *= 0.98f;
 
                 //The "1" will effectively remove lastFriction from the equation
                 lmotionX *= (lastLastClientGround ? lfriction : 1) * 0.9100000262260437D;
@@ -145,6 +120,10 @@ public class Horizontal extends Check {
                         lmotionZ = 0;
                         tagsBuilder.addTag("motionZZero");
                     }
+                    if (Math.abs(lmotionY) < 0.003) {
+                        lmotionY = 0;
+                        tagsBuilder.addTag("motionYZero");
+                    }
                 } else {
                     if (Math.abs(lmotionX) < 0.005) {
                         lmotionX = 0;
@@ -153,6 +132,10 @@ public class Horizontal extends Check {
                     if (Math.abs(lmotionZ) < 0.005) {
                         lmotionZ = 0;
                         tagsBuilder.addTag("motionZZero");
+                    }
+                    if (Math.abs(lmotionY) < 0.005) {
+                        lmotionY = 0;
+                        tagsBuilder.addTag("motionYZero");
                     }
                 }
 
@@ -190,7 +173,7 @@ public class Horizontal extends Check {
                     f5 = (float) (aiMoveSpeed * (0.16277136F / (drag * drag * drag)));
 
                     if (it.jumped) {
-                        if(it.sprinting) {
+                        if (it.sprinting) {
                             float rot = player.getMovement().getTo().getLoc().yaw * 0.017453292F;
                             lmotionX -= sin(it.fastMath, rot) * 0.2F;
                             lmotionZ += cos(it.fastMath, rot) * 0.2F;
@@ -205,6 +188,8 @@ public class Horizontal extends Check {
                     tagsBuilder.addTag("air");
                     f5 = it.sprinting ? 0.025999999F : 0.02f;
                 }
+
+                tagsBuilder.addTag("mathit:" + it.fastMath);
 
                 if (player.getPlayerVersion().isOrAbove(ProtocolVersion.V1_9)) {
                     double keyedMotion = forward * forward + strafe * strafe;
@@ -240,22 +225,43 @@ public class Horizontal extends Check {
                     }
                 }
 
-                if(Math.abs(lmotionY) < (player.getPlayerVersion().isBelow(ProtocolVersion.V1_9) ? 0.005 : 0.003)) {
-                    lmotionY = 0;
+                if (player.getBlockInfo().onSoulSand
+                        && player.getBlockInfo().collisionMaterialCount.
+                        containsKey(Material.SOUL_SAND)) {
+
+                    int i;
+                    for (i = 0
+                         ; i < player.getBlockInfo()
+                            .collisionMaterialCount
+                            .get(Material.SOUL_SAND)
+                            ; i++) {
+                        lmotionX *= 0.4;
+                        lmotionZ *= 0.4;
+                    }
+
+                    if (i > 0) {
+                        tagsBuilder.addTag("soulSand:" + i);
+                    }
+                }
+
+                if (player.getBlockInfo().inWeb) {
+                    lmotionX *= 0.25;
+                    lmotionZ *= 0.25;
+                    tagsBuilder.addTag("web");
                 }
 
                 double originalX = lmotionX, originalY = lmotionY, originalZ = lmotionZ;
 
                 SimpleCollisionBox box = player.getMovement().getFrom().getBox().copy();
 
-                if(it.sneaking && onGround) {
+                if (it.edge && it.sneaking && onGround) {
                     double d6;
 
                     // 1.9+ changes from 0.05 to 0.03
-                    double protocolOffset = player.getPlayerVersion().isBelow(ProtocolVersion.V1_9) ?  0.05D : 0.03D;
+                    double protocolOffset = player.getPlayerVersion().isBelow(ProtocolVersion.V1_9) ? 0.05D : 0.03D;
 
                     for (d6 = protocolOffset; lmotionX != 0.0D && Helper.getCollisions(player, box.copy()
-                            .offset(lmotionX, 0 ,0)).isEmpty(); originalX = lmotionX) {
+                            .offset(lmotionX, 0, 0)).isEmpty(); originalX = lmotionX) {
                         if (lmotionX < d6 && lmotionX >= -d6) {
                             lmotionX = 0.0D;
                         } else if (lmotionX > 0.0D) {
@@ -266,7 +272,7 @@ public class Horizontal extends Check {
                     }
 
                     for (; lmotionZ != 0.0D && Helper.getCollisions(player, box.copy()
-                            .offset(0, 0 ,lmotionZ)).isEmpty(); originalZ = lmotionZ) {
+                            .offset(0, 0, lmotionZ)).isEmpty(); originalZ = lmotionZ) {
                         if (lmotionZ < d6 && lmotionZ >= -d6) {
                             lmotionZ = 0.0D;
                         } else if (lmotionZ > 0.0D) {
@@ -277,7 +283,7 @@ public class Horizontal extends Check {
                     }
 
                     for (; lmotionX != 0.0D && lmotionZ != 0.0D && Helper.getCollisions(player, box.copy()
-                            .offset(lmotionX, -1.0 ,lmotionZ)).isEmpty();
+                            .offset(lmotionX, -1.0, lmotionZ)).isEmpty();
                          originalZ = lmotionZ) {
                         if (lmotionX < d6 && lmotionX >= -d6) {
                             lmotionX = 0.0D;
@@ -301,7 +307,7 @@ public class Horizontal extends Check {
                 }
 
                 List<SimpleCollisionBox> collisionBoxes = Helper.getCollisions(player, box.copy()
-                        .addCoord(lmotionX ,lmotionY, lmotionZ));
+                        .addCoord(lmotionX, lmotionY, lmotionZ));
 
                 for (SimpleCollisionBox blockBox : collisionBoxes) {
                     lmotionY = blockBox.calculateYOffset(box, lmotionY);
@@ -310,19 +316,19 @@ public class Horizontal extends Check {
                 box = box.offset(0, lmotionY, 0);
 
                 boolean stepped = onGround || (originalY != lmotionY && originalY < 0);
-                
+
                 for (SimpleCollisionBox blockBox : collisionBoxes) {
                     lmotionX = blockBox.calculateXOffset(box, lmotionX);
                 }
 
-                box = box.offset(lmotionX,0,0);
+                box = box.offset(lmotionX, 0, 0);
                 for (SimpleCollisionBox blockBox : collisionBoxes) {
                     lmotionZ = blockBox.calculateZOffset(box, lmotionZ);
                 }
 
                 box = box.offset(0, 0, lmotionZ);
 
-                if(stepped && (lmotionX != originalX || lmotionZ != originalZ)) {
+                if (stepped && (lmotionX != originalX || lmotionZ != originalZ)) {
                     double d11 = lmotionX;
                     double d7 = lmotionY;
                     double d8 = lmotionZ;
@@ -410,37 +416,34 @@ public class Horizontal extends Check {
                     tagsBuilder.addTag("stepped");
                 }
 
-                double x = ((box.minX + box.maxX) / 2.0D) - player.getMovement().getFrom().getX();
-                double y = box.minY - player.getMovement().getFrom().getY();
-                double z = ((box.minZ + box.maxZ) / 2.0D) - player.getMovement().getFrom().getZ();
-
                 if (originalX != lmotionX) {
-                     lmotionX = 0.0D;
+                    lmotionX = 0.0D;
                     tagsBuilder.addTag("x-collision");
                 }
 
                 if (originalY != lmotionY) {
-                     lmotionY = 0.0D;
+                    lmotionY = 0.0D;
                     tagsBuilder.addTag("y-collision");
                 }
 
                 if (originalZ != lmotionZ) {
-                     lmotionZ = 0.0D;
+                    lmotionZ = 0.0D;
                     tagsBuilder.addTag("z-collision");
                 }
 
-                double diffX = player.getMovement().getDeltaX() - x,
-                        diffY = player.getMovement().getDeltaY() - y,
-                        diffZ = player.getMovement().getDeltaZ() - z;
+
+                double diffX = player.getMovement().getDeltaX() - lmotionX,
+                        diffY = player.getMovement().getDeltaY() - lmotionY,
+                        diffZ = player.getMovement().getDeltaZ() - lmotionZ;
                 double delta = (diffX * diffX) + (diffZ * diffZ);
                 double deltaAll = delta + (diffY * diffY);
 
                 if (deltaAll < smallDelta) {
                     smallDelta = deltaAll;
                     smallestDeltaXZ = delta;
-                    predictedMotionX = x;
-                    predictedMotionY = y;
-                    predictedMotionZ = z;
+                    predictedMotionX = lmotionX;
+                    predictedMotionY = lmotionY;
+                    predictedMotionZ = lmotionZ;
 
                     tags = tagsBuilder;
 
@@ -448,28 +451,34 @@ public class Horizontal extends Check {
                         this.strafe = it.s * 0.98f;
                         this.forward = it.f * 0.98f;
 
-                        if(precision < 1E-11)
+                        if (precision < 1E-11)
                             motionX = new Vector(lmotionX, lmotionY, lmotionZ);
-                        else  motionX = new Vector(player.getMovement().getDeltaX(), player.getMovement().getDeltaY(), player.getMovement().getDeltaZ());
+                        else
+                            motionX = new Vector(player.getMovement().getDeltaX(), player.getMovement().getDeltaY(), player.getMovement().getDeltaZ());
 
                         if (player.getInfo().getLastCancel().isPassed(2))
                             player.getInfo()
                                     .setLastKnownGoodPosition(player
                                             .getMovement().getFrom().getLoc()
                                             .clone());
+
+                        if(deltaAll < 1E-18) {
+                            found = true;
+                            break;
+                        }
                     }
                 }
             }
             iterations.clear();
 
-            if(!found) {
+            if (!found) {
                 motionX = new Vector(player.getMovement().getDeltaX(), player.getMovement().getDeltaY(), player.getMovement().getDeltaZ());
             }
-            double pmotion = Math.hypot(predictedMotionX, predictedMotionZ);
 
             final String builtTags = tags == null ? "null" : tags.build();
 
             if (smallestDeltaXZ > (precision)
+                    && !player.getBlockInfo().collidesHorizontally
                     && player.getMovement().getDeltaXZ() > 0.1) {
                 if ((buffer += smallestDeltaXZ > 58E-5 ? 1 : 0.5) > 1) {
                     buffer = Math.min(3.5f, buffer); //Ensuring we don't have a run-away buffer
@@ -480,22 +489,23 @@ public class Horizontal extends Check {
 
             } else if (buffer > 0) buffer -= 0.05f;
 
-            debug("(%s): py=%.5f dy=%.5f pm=%.5f dxz=%.5f skip=%s b=%.1f tags=[%s]",
-                   precision, predictedMotionY, player.getMovement().getDeltaY(), pmotion,
-                    player.getMovement().getDeltaXZ(), maybeSkippedPos, buffer, builtTags);
+            /*debug("(%s): py=%.5f dy=%.5f pm=%.5f dxz=%.5f skip=%s b=%.1f tags=[%s]",
+                    precision, predictedMotionY, player.getMovement().getDeltaY(), pmotion,
+                    player.getMovement().getDeltaXZ(), maybeSkippedPos, buffer, builtTags);*/
+            debug("x=%s z=%s tags=[%s]", predictedMotionX, predictedMotionZ, builtTags);
         }
 
-        if(ProtocolVersion.getGameVersion().isBelow(ProtocolVersion.V1_9)) {
+        if (ProtocolVersion.getGameVersion().isBelow(ProtocolVersion.V1_9)) {
             maybeSkippedPos = !packet.isMoved();
         } else {
-            if(player.getPlayerTick() - lastFlying > 1) {
+            if (player.getPlayerTick() - lastFlying > 1) {
                 maybeSkippedPos = true;
                 debug("maybe skipped pos");
             }
             lastFlying = player.getPlayerTick();
         }
 
-        if(maybeSkippedPos) {
+        if (maybeSkippedPos) {
             lastSkipPos.reset();
         }
         lastLastClientGround = player.getMovement().getFrom().isOnGround();
@@ -503,9 +513,9 @@ public class Horizontal extends Check {
     };
 
     private double getPrecision() {
-        if(player.getBlockInfo().onSoulSand) {
+        if (player.getBlockInfo().onSoulSand) {
             return 5E-4;
-        } else if(lastSkipPos.isNotPassed(2)) {
+        } else if (lastSkipPos.isNotPassed(2)) {
             return 0.03;
         }
         return 5E-13;
@@ -525,17 +535,20 @@ public class Horizontal extends Check {
                                 MathHelper.floor_double(lastUnderBlockLoc.z))).getType();
         for (int f = -1; f < 2; f++) {
             for (int s = -1; s < 2; s++) {
-                for (boolean sneaking : getSneakingIteration()) {
-                for (boolean sprinting : getSprintIteration(f, sneaking)) {
-                    for (int fastMath = 0; fastMath <= 2; fastMath++) {
-                        for (boolean attack : TRUE_FALSE) {
-                            for (boolean using : TRUE_FALSE) {
-                                    for (boolean jumped : getJumpingIteration(player.getMovement().getFrom().isOnGround())) {
-                                        iterations.add(new Iteration(underMaterial, lastUnderMaterial, f, s,
-                                                fastMath, sprinting, attack, using, sneaking, jumped));
+                for (boolean sneaking : getSneakingIteration(f, s)) {
+                    for (boolean sprinting : getSprintIteration(f, sneaking)) {
+                        for(boolean edge : getEdgeIteration(sneaking)) {
+                            for (int fastMath = 0; fastMath <= 2; fastMath++) {
+                                for (boolean attack : TRUE_FALSE) {
+                                    for (boolean using : TRUE_FALSE) {
+                                        for (boolean jumped :
+                                                getJumpingIteration(player.getMovement().getFrom().isOnGround())) {
+                                            iterations.add(new Iteration(underMaterial, lastUnderMaterial, f, s,
+                                                    fastMath, sprinting, sneaking, edge, attack, using, jumped));
+                                        }
                                     }
                                 }
-                            }
+                           }
                         }
                     }
                 }
@@ -548,25 +561,25 @@ public class Horizontal extends Check {
 
     @AllArgsConstructor
     private static class Iteration {
-       public Material underMaterial, lastUnderMaterial;
-       public int f, s, fastMath;
-       public boolean sprinting, attack, using, sneaking, jumped;
+        public Material underMaterial, lastUnderMaterial;
+        public int f, s, fastMath;
+        public boolean sprinting, sneaking, edge, attack, using, jumped;
     }
 
     private static boolean[] getSprintIteration(int f, boolean sneaking) {
-        if(f > 0 && !sneaking) {
-            return new boolean[] {true, false};
-        }
-
-        return new boolean[] {false};
+        return f > 0 ? new boolean[]{true, false} : new boolean[] {false};
     }
 
-    private static boolean[] getSneakingIteration() {
-        return new boolean[] {true, false};
+    private static boolean[] getSneakingIteration(int f, int s) {
+        return f != 0 || s != 0 ? new boolean[]{true, false} : new boolean[] {false};
+    }
+
+    private static boolean[] getEdgeIteration(boolean sneaking) {
+        return sneaking ? new boolean[] {true, false} : new boolean[] {false};
     }
 
     private static boolean[] getJumpingIteration(boolean onGround) {
-        return onGround ? new boolean[] {true, false} : new boolean[] {false};
+        return onGround ? new boolean[]{true, false} : new boolean[]{false};
     }
 
     private static final float[] SIN_TABLE_FAST = new float[4096], SIN_TABLE_FAST_NEW = new float[4096];
@@ -575,6 +588,7 @@ public class Horizontal extends Check {
 
     public static float sin(int type, float value) {
         switch (type) {
+            case 0:
             default: {
                 return SIN_TABLE[(int) (value * 10430.378F) & 65535];
             }
@@ -589,6 +603,7 @@ public class Horizontal extends Check {
 
     public static float cos(int type, float value) {
         switch (type) {
+            case 0:
             default:
                 return SIN_TABLE[(int) (value * 10430.378F + 16384.0F) & 65535];
             case 1:

@@ -144,6 +144,10 @@ public enum PacketType {
                 return convert.processEntityMetadata(object);
             case ENTITY_DESTROY:
                 return convert.processEntityDestroy(object);
+            case CLIENT_TRANSACTION:
+                return convert.processClientTransaction(object);
+            case SERVER_TRANSACTION:
+                return convert.processServerTransaction(object);
             default:
                 return object;
         }

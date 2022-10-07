@@ -59,7 +59,7 @@ public class Helper {
 					.longD(true)
 					.data(new int[0])
 					.build();
-			players.forEach(p -> HandlerAbstract.getHandler().sendPacket(p, packet));
+			players.forEach(p -> HandlerAbstract.getHandler().sendPacketSilently(p, packet));
 		}
 	}
 
@@ -119,7 +119,7 @@ public class Helper {
 
 					while(var14.hasNext()) {
 						Player p = var14.next();
-						HandlerAbstract.getHandler().sendPacket(p, packet);
+						HandlerAbstract.getHandler().sendPacketSilently(p, packet);
 					}
 				}
 			}
@@ -144,7 +144,7 @@ public class Helper {
 
 		while(var4.hasNext()) {
 			Player p = var4.next();
-			HandlerAbstract.getHandler().sendPacket(p, packet);
+			HandlerAbstract.getHandler().sendPacketSilently(p, packet);
 		}
 
 	}

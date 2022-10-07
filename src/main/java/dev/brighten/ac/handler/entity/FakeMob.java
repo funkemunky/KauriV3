@@ -69,7 +69,7 @@ public class FakeMob {
                     .watchedObjects(objects)
                     .build();
 
-            player.sendPacket(packet);
+            player.sendPacketSilently(packet);
             watching.add(player);
         }
 
@@ -90,14 +90,14 @@ public class FakeMob {
                 .watchedObjects(objects)
                 .build();
 
-        watching.forEach(player -> player.sendPacket(packet));
+        watching.forEach(player -> player.sendPacketSilently(packet));
     }
 
     public void despawn() {
         for (APlayer aPlayer : watching) {
             PacketPlayOutEntityDestroy destroyEntity = new PacketPlayOutEntityDestroy(entityId);
 
-            aPlayer.sendPacket(destroyEntity);
+            aPlayer.sendPacketSilently(destroyEntity);
         }
         watching = Collections.emptyList();
 
@@ -108,7 +108,7 @@ public class FakeMob {
         WPacketPlayOutEntity packet = WPacketPlayOutEntity.builder().id(entityId).x(dx).y(dy).z(dz).moved(true).build();
 
         for (APlayer player : watching) {
-            player.sendPacket(packet);
+            player.sendPacketSilently(packet);
         }
     }
 
@@ -117,7 +117,7 @@ public class FakeMob {
                 .pitch(dpitch).moved(true).looked(true).build();
 
         for (APlayer player : watching) {
-            player.sendPacket(packet);
+            player.sendPacketSilently(packet);
         }
     }
 
@@ -126,7 +126,7 @@ public class FakeMob {
                 .looked(true).build();
 
         for (APlayer player : watching) {
-            player.sendPacket(packet);
+            player.sendPacketSilently(packet);
         }
     }
 
@@ -137,7 +137,7 @@ public class FakeMob {
                 .build();
 
         for (APlayer player : watching) {
-            player.sendPacket(packet);
+            player.sendPacketSilently(packet);
         }
     }
 }

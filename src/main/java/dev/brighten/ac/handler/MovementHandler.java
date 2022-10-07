@@ -1,5 +1,6 @@
 package dev.brighten.ac.handler;
 
+import com.google.common.collect.Sets;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.data.obj.CMove;
 import dev.brighten.ac.handler.compat.CompatHandler;
@@ -50,8 +51,11 @@ public class MovementHandler {
     @Setter
     private boolean excuseNextFlying;
 
+    private boolean sentPositionUpdate;
+
     @Getter
-    private final Timer lastTeleport = new TickTimer(), lastHighRate = new TickTimer();
+    private final Timer lastTeleport = new TickTimer(), lastHighRate = new TickTimer(),
+            lastFlying = new TickTimer();
 
     @Getter
     private int teleportsToConfirm;
@@ -294,6 +298,8 @@ public class MovementHandler {
                 || player.getInfo().isRiptiding()
                 || hasLevitation);
 
+        lastFlying.reset();
+
         /*
         ata.playerInfo.generalCancel = data.getPlayer().getAllowFlight()
                 || this.creativelastLastY
@@ -386,6 +392,22 @@ it
         this.cinematic = this.ticks > 5;
 
         if(cinematic) lastCinematic.reset();
+        sentPositionUpdate = false;
+    }
+
+    private static final Set<WPacketPlayOutPosition.EnumPlayerTeleportFlags>
+            relFlags = Sets.newHashSet(WPacketPlayOutPosition.EnumPlayerTeleportFlags.X,
+            WPacketPlayOutPosition.EnumPlayerTeleportFlags.Y,
+            WPacketPlayOutPosition.EnumPlayerTeleportFlags.Z,
+            WPacketPlayOutPosition.EnumPlayerTeleportFlags.X_ROT,
+            WPacketPlayOutPosition.EnumPlayerTeleportFlags.Y_ROT);
+
+    public void runPositionHackFix() {
+        if(sentPositionUpdate) return;
+
+        player.sendPacket(WPacketPlayOutPosition.builder().x(0).y(0).z(0).yaw(0).pitch(0).flags(relFlags)
+                .build());
+        sentPositionUpdate = true;
     }
 
     boolean isInvalidGCD() {

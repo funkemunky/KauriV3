@@ -41,7 +41,7 @@ public class JoinListener implements Listener {
                         if (watchedObject.getDataValueId() == 6 && watchedObject.getWatchedObject() instanceof Float) {
                             watchedObject.setWatchedObject(1f);
 
-                            HandlerAbstract.getHandler().sendPacket(player, packet.getPacket());
+                            HandlerAbstract.getHandler().sendPacketSilently(player, packet.getPacket());
                             event.setCancelled(true);
                             break;
                         }
@@ -67,7 +67,7 @@ public class JoinListener implements Listener {
                     Object packetToSend = null;
                     synchronized (player.getPacketQueue()) {
                         while((packetToSend = player.getPacketQueue().pollFirst()) != null) {
-                            HandlerAbstract.getHandler().sendPacket(player, packetToSend);
+                            HandlerAbstract.getHandler().sendPacketSilently(player, packetToSend);
                         }
                     }
                     player.setSendingPackets(false);

@@ -10,9 +10,9 @@ import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInBlockPlace;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
+import dev.brighten.ac.packet.wrapper.in.WPacketPlayInTransaction;
 import dev.brighten.ac.packet.wrapper.out.WPacketPlayOutPosition;
 import dev.brighten.ac.utils.timer.impl.TickTimer;
-import net.minecraft.server.v1_8_R3.PacketPlayInTransaction;
 
 @CheckData(name = "Timer", checkId = "timer", type = CheckType.ORDER)
 public class Timer extends Check {
@@ -38,10 +38,10 @@ public class Timer extends Check {
     /**
      * Fixing bug with 1.9 since flying packets are not always sent
      */
-    WTimedAction<PacketPlayInTransaction> transaction = (packet, timestamp) -> {
+    WTimedAction<WPacketPlayInTransaction> transaction = (packet, timestamp) -> {
         if(player.getPlayerVersion().isBelow(ProtocolVersion.V1_9)) return;
 
-        Anticheat.INSTANCE.getKeepaliveProcessor().getKeepById(packet.b()).ifPresent(ka -> {
+        Anticheat.INSTANCE.getKeepaliveProcessor().getKeepById(packet.getAction()).ifPresent(ka -> {
             long delta = timestamp - ka.startStamp;
 
             if(delta < 1095L && totalTimer - (timestamp + 100) > 3000L) {

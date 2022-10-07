@@ -280,7 +280,7 @@ public class AnticheatCommand extends BaseCommand {
     public void onTitle(CommandSender sender, OnlinePlayer target, String title) {
         PacketPlayOutTitle packetSubtitle = new PacketPlayOutTitle(PacketPlayOutTitle.EnumTitleAction.TITLE,
                 CraftChatMessage.fromString(Color.translate(title))[0]);
-        HandlerAbstract.getHandler().sendPacket(target.getPlayer(), packetSubtitle);
+        HandlerAbstract.getHandler().sendPacketSilently(target.getPlayer(), packetSubtitle);
         sender.sendMessage(Color.Green + "Sent title!");
     }
 

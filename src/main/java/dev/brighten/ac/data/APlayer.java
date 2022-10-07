@@ -18,6 +18,7 @@ import dev.brighten.ac.handler.protocolsupport.ProtocolAPI;
 import dev.brighten.ac.messages.Messages;
 import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.packet.handler.HandlerAbstract;
+import dev.brighten.ac.packet.wrapper.WPacket;
 import dev.brighten.ac.utils.KLocation;
 import dev.brighten.ac.utils.RunUtils;
 import dev.brighten.ac.utils.Tuple;
@@ -176,7 +177,7 @@ public class APlayer {
             instantTransaction.put(startId, new Tuple<>(startAction, runnable));
         }
 
-        HandlerAbstract.getHandler().sendPacket(this, new PacketPlayOutTransaction(0, startId, false));
+        HandlerAbstract.getHandler().sendPacketSilently(this, new PacketPlayOutTransaction(0, startId, false));
 
         short finalEndId = endId, finalStartId = startId;
         Anticheat.INSTANCE.onTickEnd(() -> {
@@ -186,12 +187,21 @@ public class APlayer {
             }
 
             HandlerAbstract.getHandler()
-                    .sendPacket(this, new PacketPlayOutTransaction(0, finalEndId, false));
+                    .sendPacketSilently(this, new PacketPlayOutTransaction(0, finalEndId, false));
         });
     }
 
     public void addPlayerTick() {
         playerTick++;
+    }
+
+    public void sendPacketSilently(Object packet) {
+        if(sniffing) {
+            sniffedPackets.add("(Silent) [" +  Anticheat.INSTANCE.getKeepaliveProcessor().tick + "] " +
+                    "" + (packet instanceof WPacket ? ((WPacket)packet).getPacketType()
+                    : HandlerAbstract.getPacketType(packet)) + ": " + packet);
+        }
+        HandlerAbstract.getHandler().sendPacketSilently(this, packet);
     }
 
     public void sendPacket(Object packet) {
