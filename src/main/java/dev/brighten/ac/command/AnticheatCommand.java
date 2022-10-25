@@ -1,13 +1,14 @@
 package dev.brighten.ac.command;
 
 import co.aikar.commands.*;
-import co.aikar.commands.annotation.Optional;
 import co.aikar.commands.annotation.*;
+import co.aikar.commands.annotation.Optional;
 import co.aikar.commands.bukkit.contexts.OnlinePlayer;
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.data.APlayer;
+import dev.brighten.ac.gui.Logs;
 import dev.brighten.ac.handler.BBRevealHandler;
 import dev.brighten.ac.messages.Messages;
 import dev.brighten.ac.packet.handler.HandlerAbstract;
@@ -226,52 +227,64 @@ public class AnticheatCommand extends BaseCommand {
 
         sender.sendMessage(Color.Red + "Getting logs for " + playername + "...");
 
-        List<String> logs = new ArrayList<>();
+        if(sender instanceof Player) {
+            if(check.equals("none")) {
+                Logs logs = new Logs(uuid);
 
-        if(check.equals("none")) {
-            Anticheat.INSTANCE.getLogManager().getLogs(uuid, logsList -> {
-                logsList.forEach(log -> {
-                    logs.add("[" + new Timestamp(log.getTime()).toLocalDateTime()
-                            .format(DateTimeFormatter.ISO_DATE_TIME) + "] funkemunky failed "
-                            + Anticheat.INSTANCE.getCheckManager().getIdToName().get(log.getCheckId()) + "(VL: "
-                            + log.getVl() + ") {" + log.getData() + "}");
-                });
-                if(logs.size() == 0) {
-                    sender.sendMessage(Color.Gray + "There are no logs for player \"" + playername + "\"");
-                } else {
-                    String url = null;
-                    try {
-                        url = Pastebin.makePaste(String.join("\n", logs), playername + "'s Logs",
-                                Pastebin.Privacy.UNLISTED);
+                logs.showMenu((Player) sender);
+            } else {
+                Logs logs = new Logs(uuid, check);
 
-                        sender.sendMessage(Color.Green + "Logs for " + playername + ": " + Color.White + url);
-                    } catch (UnsupportedEncodingException e) {
-                        throw new RuntimeException(e);
-                    }
-                }
-            });
+                logs.showMenu((Player) sender);
+            }
         } else {
-            Anticheat.INSTANCE.getLogManager().getLogs(uuid, check, logsList -> {
-                logsList.forEach(log -> {
-                    logs.add("[" + new Timestamp(log.getTime()).toLocalDateTime()
-                            .format(DateTimeFormatter.ISO_DATE_TIME) + "] funkemunky failed "
-                            + Anticheat.INSTANCE.getCheckManager().getIdToName().get(log.getCheckId())
-                            + "(VL: " + log.getVl() + ") {" + log.getData() + "}");
-                });
-                if(logs.size() == 0) {
-                    sender.sendMessage(Color.Gray + " does not have any violations for check \"" + check + "\"");
-                } else {
-                    String url = null;
-                    try {
-                        url = Pastebin.makePaste(String.join("\n", logs), playername + "'s Logs",
-                                Pastebin.Privacy.UNLISTED);
+            List<String> logs = new ArrayList<>();
 
-                        sender.sendMessage(Color.Green + "Logs for " + playername + ": " + Color.White + url);
-                    } catch (UnsupportedEncodingException e) {
-                        throw new RuntimeException(e);
+            if(check.equals("none")) {
+                Anticheat.INSTANCE.getLogManager().getLogs(uuid, logsList -> {
+                    logsList.forEach(log -> {
+                        logs.add("[" + new Timestamp(log.getTime()).toLocalDateTime()
+                                .format(DateTimeFormatter.ISO_DATE_TIME) + "] funkemunky failed "
+                                + Anticheat.INSTANCE.getCheckManager().getIdToName().get(log.getCheckId()) + "(VL: "
+                                + log.getVl() + ") {" + log.getData() + "}");
+                    });
+                    if(logs.size() == 0) {
+                        sender.sendMessage(Color.Gray + "There are no logs for player \"" + playername + "\"");
+                    } else {
+                        String url = null;
+                        try {
+                            url = Pastebin.makePaste(String.join("\n", logs), playername + "'s Logs",
+                                    Pastebin.Privacy.UNLISTED);
+
+                            sender.sendMessage(Color.Green + "Logs for " + playername + ": " + Color.White + url);
+                        } catch (UnsupportedEncodingException e) {
+                            throw new RuntimeException(e);
+                        }
                     }
-                }
-            });
+                });
+            } else {
+                Anticheat.INSTANCE.getLogManager().getLogs(uuid, check, logsList -> {
+                    logsList.forEach(log -> {
+                        logs.add("[" + new Timestamp(log.getTime()).toLocalDateTime()
+                                .format(DateTimeFormatter.ISO_DATE_TIME) + "] funkemunky failed "
+                                + Anticheat.INSTANCE.getCheckManager().getIdToName().get(log.getCheckId())
+                                + "(VL: " + log.getVl() + ") {" + log.getData() + "}");
+                    });
+                    if(logs.size() == 0) {
+                        sender.sendMessage(Color.Gray + " does not have any violations for check \"" + check + "\"");
+                    } else {
+                        String url = null;
+                        try {
+                            url = Pastebin.makePaste(String.join("\n", logs), playername + "'s Logs",
+                                    Pastebin.Privacy.UNLISTED);
+
+                            sender.sendMessage(Color.Green + "Logs for " + playername + ": " + Color.White + url);
+                        } catch (UnsupportedEncodingException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+                });
+            }
         }
     }
 

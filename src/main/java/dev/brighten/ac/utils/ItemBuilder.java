@@ -117,6 +117,8 @@ public class ItemBuilder {
      */
     public ItemBuilder lore(List<String> lore) {
         ItemMeta meta = is.getItemMeta();
+        lore = lore.stream().map(s -> ChatColor.translateAlternateColorCodes('&', s))
+                .collect(Collectors.toList());
         meta.setLore(lore);
         is.setItemMeta(meta);
         return this;

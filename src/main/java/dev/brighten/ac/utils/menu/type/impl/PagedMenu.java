@@ -14,11 +14,9 @@ import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import java.util.stream.IntStream;
 
 public class PagedMenu implements Menu {
@@ -33,8 +31,11 @@ public class PagedMenu implements Menu {
     private int currentPage = 1;
     @Getter
     BukkitInventoryHolder holder;
-    public List<Button> contents;
+    public Map<Button> contents;
+    private List<Button> buttons = new ArrayList<>();
     private CloseHandler closeHandler;
+    private List<Consumer<Integer>> onPageChange = new ArrayList<>();
+
     public PagedMenu(@NonNull String title, int size) {
         this.title = title.length() > 32 ? title.substring(0, 32) : title;
         if (size <= 0 || size > 6) {
@@ -51,12 +52,12 @@ public class PagedMenu implements Menu {
 
     @Override
     public void addItem(Button button) {
-        contents.add(button);
+        buttons.add(button);
     }
 
     @Override
     public void setItem(int index, Button button) {
-        contents.set(index, button);
+        buttons.set(index, button);
     }
 
     @Override
@@ -67,19 +68,23 @@ public class PagedMenu implements Menu {
     @Override
     public void fillRange(int startingIndex, int endingIndex, Button button) {
         IntStream.range(startingIndex, endingIndex)
-                .filter(i -> contents.get(i) == null || BlockUtils.getXMaterial(contents.get(i).getStack().getType())
+                .filter(i -> buttons.get(i) == null || BlockUtils.getXMaterial(buttons.get(i).getStack().getType())
                         .equals(XMaterial.AIR))
                 .forEach(i -> setItem(i, button));
     }
 
     @Override
     public int getFirstEmptySlot() {
-        return contents.size();
+        return buttons.size();
     }
 
     @Override
     public void checkBounds(int index) {
 
+    }
+
+    public void onPageChange(Consumer<Integer> consumer) {
+        onPageChange.add(consumer);
     }
 
     @Override
@@ -96,33 +101,38 @@ public class PagedMenu implements Menu {
             holder.setInventory(Bukkit.createInventory(holder, dimension.getSize(), title));
         }
         holder.getInventory().clear();
-        int size = (dimension.getRows() - 1) * dimension.getColumns();
+
+        contents.clear();
+
+        val previous = new ItemBuilder(Material.BOOK).amount(currentPage - 1).name("&ePrevious Page").build();
         if(currentPage > 1) {
-            val previous = new ItemBuilder(Material.BOOK).amount(currentPage - 1).name("&ePrevious Page").build();
-            setItem(dimension.getSize() * currentPage - 6, new Button(false, previous,
+            contents.set(dimension.getSize() - 6, new Button(false, previous,
                     (player, info) -> {
                         currentPage--;
+                        onPageChange.forEach(consumer -> consumer.accept(currentPage));
                         buildInventory(false);
                     }));
             holder.getInventory().setItem(dimension.getSize() - 6, previous);
         }
         val next = new ItemBuilder(Material.BOOK).amount(currentPage + 1).name("&eNext Page").build();
-        setItem(dimension.getSize() * currentPage - 4,  new Button(false, next, (player, info) -> {
+        contents.set(dimension.getSize() - 4,  new Button(false, next, (player, info) -> {
             currentPage++;
+            onPageChange.forEach(consumer -> consumer.accept(currentPage));
             buildInventory(false);
         }));
         holder.getInventory().setItem(dimension.getSize() - 4, next);
+
+        int size = (dimension.getRows() - 1) * dimension.getColumns();
         AtomicInteger index = new AtomicInteger(0);
-        IntStream.range(Math.min(contents.size(), size * (currentPage - 1)),
-                Math.min(contents.size(), size * currentPage))
+        IntStream.range(Math.min(buttons.size(), size * (currentPage - 1)),
+                        Math.min(buttons.size(), size * currentPage))
                 .forEach(i -> {
-                    Button button = contents.get(i);
+                    Button button = buttons.get(i);
+                    contents.add(button);
                     if (button != null) {
                         holder.getInventory().setItem(index.getAndIncrement(), button.getStack());
                     }
                 });
-
-
     }
 
     @Override
