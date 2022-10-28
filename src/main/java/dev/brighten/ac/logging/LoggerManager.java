@@ -86,7 +86,7 @@ public class LoggerManager {
 
 
     public void getLogs(UUID uuid, Consumer<List<Log>> logConsumer) {
-        getLogs(uuid, 500, 0, logConsumer);
+        getLogs(uuid, 2000, 0, logConsumer);
     }
     public void getLogs(UUID uuid, int limit, int skip, Consumer<List<Log>> logsConsumer) {
         Anticheat.INSTANCE.getScheduler().execute(() -> {

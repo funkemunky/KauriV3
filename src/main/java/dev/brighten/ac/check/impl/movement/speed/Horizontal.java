@@ -50,6 +50,7 @@ public class Horizontal extends Check {
                     || player.getInfo().getVelocity().isNotPassed(2)
                     || player.getInfo().isGeneralCancel()
                     || player.getBlockInfo().onClimbable
+                    || player.getBlockInfo().collidesHorizontally
                     || player.getMovement().getTo().getLoc()
                     .distanceSquared(player.getMovement().getFrom().getLoc()) > 2500
                     || player.getInfo().lastLiquid.isNotPassed(2)) {
@@ -438,7 +439,13 @@ public class Horizontal extends Check {
                 double delta = (diffX * diffX) + (diffZ * diffZ);
                 double deltaAll = delta + (diffY * diffY);
 
-                if (deltaAll < smallDelta) {
+                if(forward > 0 && strafe == 0 && !it.attack && !it.sneaking && !it.using && it.sprinting
+                        && !it.edge && !it.jumped) {
+                    debug("Shit: tags=[%s] diffX=%.6f diffZ=%.6f oy=%.3f ly=%.3f", tagsBuilder.build(), diffX, diffZ,
+                            originalY, lmotionY);
+                }
+
+                if (delta < smallestDeltaXZ) {
                     smallDelta = deltaAll;
                     smallestDeltaXZ = delta;
                     predictedMotionX = lmotionX;
