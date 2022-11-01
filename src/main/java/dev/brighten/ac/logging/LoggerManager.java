@@ -14,7 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
 import java.util.UUID;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
@@ -22,7 +22,7 @@ import java.util.function.Consumer;
 
 public class LoggerManager {
 
-    private final Queue<Log> logList = new LinkedBlockingQueue<>();
+    private final Queue<Log> logList = new ConcurrentLinkedQueue<>();
     private String license;
 
     /*
@@ -53,7 +53,9 @@ public class LoggerManager {
 
                         if(log != null) {
                             oos.writeUTF(log.toJson());
-                        } else break;
+                        } else if(logList.size() == 0) {
+                            break;
+                        }
                     }
 
                     System.out.println("Wrote " + i + " logs;" + logList.size());

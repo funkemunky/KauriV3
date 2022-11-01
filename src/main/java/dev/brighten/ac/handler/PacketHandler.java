@@ -148,6 +148,12 @@ public class PacketHandler {
                 player.getBlockUpdateHandler().runUpdate(packet);
                 break;
             }
+            case MAP_CHUNK: {
+                WPacketPlayOutMapChunk packet = (WPacketPlayOutMapChunk) packetObject;
+
+                player.getBlockUpdateHandler().runUpdate(packet);
+                break;
+            }
             case ENTITY_EFFECT: {
                 WPacketPlayOutEntityEffect packet = (WPacketPlayOutEntityEffect) packetObject;
 
@@ -334,9 +340,14 @@ public class PacketHandler {
             }
         }
 
-        if(player.sniffing && type != PacketType.UNKNOWN) {
-            player.sniffedPackets.add("[" +  Anticheat.INSTANCE.getKeepaliveProcessor().tick + "] " +
-                    "" + type.name() + ": " + packetObject.toString());
+        if(player.sniffing) {
+            if(type != PacketType.UNKNOWN) {
+                player.sniffedPackets.add("[" + Anticheat.INSTANCE.getKeepaliveProcessor().tick + "] " +
+                        "" + type.name() + ": " + packetObject.toString());
+            } else {
+                player.sniffedPackets.add("[" + Anticheat.INSTANCE.getKeepaliveProcessor().tick + "] (UNKNOWN) " +
+                        "" + packetObject.getClass().getSimpleName() + ": " + packetObject);
+            }
         }
 
         boolean cancelled = player.getCheckHandler().callSyncPacket(packetObject, timestamp);

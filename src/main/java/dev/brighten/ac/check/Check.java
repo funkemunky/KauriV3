@@ -5,6 +5,7 @@ import dev.brighten.ac.api.AnticheatAPI;
 import dev.brighten.ac.api.check.CheckType;
 import dev.brighten.ac.api.check.ECheck;
 import dev.brighten.ac.api.event.AnticheatEvent;
+import dev.brighten.ac.api.event.result.CancelResult;
 import dev.brighten.ac.api.event.result.FlagResult;
 import dev.brighten.ac.api.event.result.PunishResult;
 import dev.brighten.ac.data.APlayer;
@@ -17,6 +18,7 @@ import lombok.val;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.*;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -29,7 +31,6 @@ public class Check implements ECheck {
     private final CheckData checkData;
     @Getter
     public float vl;
-    private long lastFlagRun;
     @Getter
     @Setter
     private boolean enabled, punishable, cancellable;
@@ -65,14 +66,6 @@ public class Check implements ECheck {
                 .replace("%info%", info));
     }
 
-    public void onEnable() {
-
-    }
-
-    public void onDisable() {
-
-    }
-
     private String addPlaceHolders(String string) {
         return string.replace("%player%", player.getBukkitPlayer().getName())
                 .replace("%check%", checkData.name())
@@ -83,7 +76,6 @@ public class Check implements ECheck {
     }
 
     public void cancel() {
-        /*
         CancelResult result = CancelResult.builder().cancelled(false).build();
 
         for (AnticheatEvent event : AnticheatAPI.INSTANCE.getAllEvents()) {
@@ -104,15 +96,15 @@ public class Check implements ECheck {
                     .toLocation(player.getBukkitPlayer().getWorld()), 10);
 
             player.getBukkitPlayer().teleport(ground);
-        }*/
+        }
     }
 
     public void debug(String information, Object... variables) {
         if(!Anticheat.allowDebug) return;
 
-        if(debugInstances.containsKey(checkData.name())) {
-            val list = debugInstances.get(checkData.name());
+        val list = debugInstances.get(checkData.name());
 
+        if(list != null) {
             for (Tuple<UUID, UUID> tuple : list) {
                 UUID toDebug = tuple.one;
 
@@ -130,8 +122,14 @@ public class Check implements ECheck {
         }
     }
 
-    public <T> Optional<T> find(Class<T> checkClass) {
-        return Optional.ofNullable((T) player.getCheckHandler().findCheck((Class<? extends Check>) checkClass));
+    public <T extends Check> Optional<T> find(Class<T> checkClass) {
+        Check check = player.getCheckHandler().findCheck(checkClass);
+
+        if(check != null) {
+            return Optional.of(checkClass.cast(check));
+        }
+
+        return Optional.empty();
     }
 
     static List<TextComponent> devComponents = new ArrayList<>(), components = new ArrayList<>();
@@ -160,8 +158,6 @@ public class Check implements ECheck {
 
     public void flag(boolean punish, String information, Object... variables) {
         vl++;
-        if(System.currentTimeMillis() - lastFlagRun < 50L) return;
-        lastFlagRun = System.currentTimeMillis();
 
        Anticheat.INSTANCE.getScheduler().execute(() -> {
            if(Anticheat.INSTANCE.getTps() < 18)
@@ -186,9 +182,7 @@ public class Check implements ECheck {
                alertCountReset.reset();
            }
 
-           if(alertCount.incrementAndGet() < 40) {
-               boolean dev = Anticheat.INSTANCE.getTps() < 18;
-
+           if(alertCount.incrementAndGet() < 80) {
                //Sending Discord webhook alert
 
                List<BaseComponent> toSend = new ArrayList<>();
@@ -244,12 +238,5 @@ public class Check implements ECheck {
                 }
             });
         }
-    }
-
-    private TextComponent createTxt(String txt) {
-        return createTxt(txt, "");
-    }
-    private TextComponent createTxt(String txt, String info) {
-        return new TextComponent(TextComponent.fromLegacyText(Color.translate(formatAlert(txt, info))));
     }
 }

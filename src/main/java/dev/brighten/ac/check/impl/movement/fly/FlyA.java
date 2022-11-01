@@ -7,22 +7,26 @@ import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
+import dev.brighten.ac.utils.Helper;
 import dev.brighten.ac.utils.MathUtils;
 import dev.brighten.ac.utils.MovementUtils;
 import dev.brighten.ac.utils.annotation.Async;
 import dev.brighten.ac.utils.timer.Timer;
 import dev.brighten.ac.utils.timer.impl.MillisTimer;
+import dev.brighten.ac.utils.world.types.SimpleCollisionBox;
 
-@CheckData(name = "Fly (A)", checkId = "flya", type = CheckType.MOVEMENT)
+import java.util.List;
+
+@CheckData(name = "Fly (A)", checkId = "flya", type = CheckType.MOVEMENT, experimental = true, punishVl = 7)
 public class FlyA extends Check {
 
     public FlyA(APlayer player) {
         super(player);
     }
 
-    private Timer lastPos = new MillisTimer();
+    private final Timer lastPos = new MillisTimer();
     private float buffer;
-    private static double mult = 0.98f, previousPrediction;
+    private static final double mult = 0.98f;
     private boolean didNextPrediction = false;
 
     @Async
@@ -51,7 +55,6 @@ public class FlyA extends Check {
 
             if(Math.abs(player.getMovement().getDeltaY() - toCheck)
                     < Math.abs(player.getMovement().getDeltaY() - predicted)) {
-                previousPrediction = predicted;
                 predicted = toCheck;
                 didNextPrediction = true;
             }
@@ -65,11 +68,30 @@ public class FlyA extends Check {
             debug("Setting y to 0");
         }
 
+        if(player.getBlockInfo().blocksBelow || player.getInfo().isNearGround()) {
+            List<SimpleCollisionBox> list = Helper.getCollisions(player,
+                    player.getMovement().getFrom().getBox().copy().addCoord(player.getMovement().getDeltaX(), predicted,
+                            player.getMovement().getDeltaZ()));
+            SimpleCollisionBox axisalignedbb4 = player.getMovement().getFrom().getBox();
+            SimpleCollisionBox axisalignedbb5 = axisalignedbb4.copy().addCoord(player.getMovement().getDeltaX(),
+                    0.0D, player.getMovement().getDeltaZ());
+            double d9 = predicted;
+
+            for (SimpleCollisionBox axisalignedbb6 : list) {
+                d9 = axisalignedbb6.calculateYOffset(axisalignedbb5, d9);
+            }
+
+            if(predicted != d9) {
+                debug("Collided!");
+            }
+
+            predicted = d9;
+        }
+
         double deltaPredict = MathUtils.getDelta(player.getMovement().getDeltaY(), predicted);
 
         if(!player.getInfo().isGeneralCancel()
                 && player.getMovement().getTeleportsToConfirm() == 0
-                && player.getInfo().getBlockAbove().isPassed(1)
                 && !player.getInfo().isOnLadder()
                 && player.getInfo().climbTimer.isPassed(2)
                 && !player.getBlockInfo().inWeb
@@ -77,15 +99,13 @@ public class FlyA extends Check {
                 && !player.getBlockInfo().inScaffolding
                 && player.getInfo().getLastLiquid().isPassed(2)
                 && !player.getBlockInfo().fenceBelow
-                && !packet.isOnGround()
                 && player.getInfo().worldLoaded
-                && !player.getInfo().isServerGround()
                 && !player.getBlockInfo().onHalfBlock
                 && player.getInfo().getVelocity().isPassed(1)
                 && !player.getBlockInfo().onSlime
                 && deltaPredict > (player.getInfo().getClientAirTicks() < 3 ? 0.017 : 0.001)) {
-            if(++buffer > 3) {
-                buffer = 3;
+            if(++buffer > 1) {
+                buffer = 1;
                 flag("dY=%.3f p=%.3f dx=%.3f", player.getMovement().getDeltaY(), predicted,
                         player.getMovement().getDeltaXZ());
                 cancel();

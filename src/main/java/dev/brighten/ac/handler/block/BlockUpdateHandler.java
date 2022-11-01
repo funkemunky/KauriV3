@@ -4,13 +4,14 @@ import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInBlockDig;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInBlockPlace;
 import dev.brighten.ac.packet.wrapper.out.WPacketPlayOutBlockChange;
+import dev.brighten.ac.packet.wrapper.out.WPacketPlayOutMapChunk;
 import dev.brighten.ac.packet.wrapper.out.WPacketPlayOutMultiBlockChange;
 import dev.brighten.ac.utils.BlockUtils;
 import dev.brighten.ac.utils.Materials;
 import dev.brighten.ac.utils.XMaterial;
 import dev.brighten.ac.utils.math.IntVector;
 import dev.brighten.ac.utils.world.types.RayCollision;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -21,7 +22,7 @@ import java.util.Optional;
 
 @RequiredArgsConstructor
 public class BlockUpdateHandler {
-    private final Int2ObjectOpenHashMap<WrappedBlock> blockInformation = new Int2ObjectOpenHashMap<>();
+    private final Object2ObjectOpenHashMap<IntVector, WrappedBlock> blockInformation = new Object2ObjectOpenHashMap<>();
 
     private final APlayer player;
 
@@ -62,7 +63,7 @@ public class BlockUpdateHandler {
         player.getInfo().getLastPlace().reset();
 
         synchronized (blockInformation) {
-            blockInformation.put(pos.hashCode(), new WrappedBlock(pos.toLocation(player.getBukkitPlayer().getWorld()),
+            blockInformation.put(pos, new WrappedBlock(pos.toLocation(player.getBukkitPlayer().getWorld()),
                     place.getItemStack().getType(), (byte) 0));
         }
     }
@@ -76,7 +77,7 @@ public class BlockUpdateHandler {
         player.getInfo().lastBlockUpdate.reset();
         if (dig.getDigType() == WPacketPlayInBlockDig.EnumPlayerDigType.STOP_DESTROY_BLOCK) {
             synchronized (blockInformation) {
-                blockInformation.put(dig.getBlockPos().hashCode(),
+                blockInformation.put(dig.getBlockPos(),
                         new WrappedBlock(dig.getBlockPos().toLocation(player.getBukkitPlayer().getWorld()),
                         Material.AIR, (byte) 0));
             }
@@ -90,7 +91,7 @@ public class BlockUpdateHandler {
             // Updating block information
             player.runInstantAction(k -> {
                 if (k.isEnd()) {
-                    blockInformation.put(packet.getBlockLocation().hashCode(),
+                    blockInformation.put(packet.getBlockLocation(),
                             new WrappedBlock(packet.getBlockLocation().toLocation(player.getBukkitPlayer().getWorld()),
                                     packet.getMaterial(), packet.getBlockData()));
                 }
@@ -104,7 +105,10 @@ public class BlockUpdateHandler {
             if (k.isEnd()) {
                 synchronized (blockInformation) {
                     for (WPacketPlayOutMultiBlockChange.BlockChange info : packet.getChanges()) {
-                        blockInformation.put(info.getLocation().hashCode(),
+                        WrappedBlock block = new WrappedBlock(info.getLocation()
+                                .toLocation(player.getBukkitPlayer().getWorld()),
+                                info.getMaterial(), info.getData());
+                        blockInformation.put(info.getLocation(),
                                 new WrappedBlock(info.getLocation().toLocation(player.getBukkitPlayer().getWorld()),
                                         info.getMaterial(), info.getData()));
                     }
@@ -113,11 +117,23 @@ public class BlockUpdateHandler {
         });
     }
 
+    public void runUpdate(WPacketPlayOutMapChunk chunkUpdate) {
+        player.runInstantAction(k -> {
+            if(!k.isEnd()) {
+                synchronized (blockInformation) {
+                    chunkUpdate.getBlocks().forEach((vec, mblock) -> {
+                        WrappedBlock block = new WrappedBlock(vec.toLocation(player.getBukkitPlayer().getWorld()),
+                                mblock.material, mblock.data);
+                        blockInformation.put(vec, block);
+                    });
+                }
+            }
+        });
+    }
+
     public WrappedBlock getBlock(IntVector loc) {
         synchronized (blockInformation) {
-
-            final int hashCode = loc.hashCode();
-            WrappedBlock block = blockInformation.get(hashCode);
+            WrappedBlock block = blockInformation.get(loc);
 
             if (block == null) {
                 Optional<Block> bukkitBlock = BlockUtils.getBlockAsync(
@@ -128,7 +144,7 @@ public class BlockUpdateHandler {
                     IntVector intVec = new IntVector(bloc.getBlockX(), bloc.getBlockY(), bloc.getBlockZ());
                     block = new WrappedBlock(intVec.toLocation(player.getBukkitPlayer().getWorld()),
                             bukkitBlock.get().getType(), bukkitBlock.get().getData());
-                    blockInformation.put(hashCode, block);
+                    blockInformation.put(loc, block);
                 } else
                     block = new WrappedBlock(loc.toLocation(player.getBukkitPlayer().getWorld()), Material.AIR, (byte)0);
             }

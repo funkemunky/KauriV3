@@ -25,7 +25,10 @@ import org.bukkit.potion.PotionEffectType;
 import org.bukkit.util.Vector;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class Processor_18 implements PacketConverter {
@@ -741,6 +744,199 @@ public class Processor_18 implements PacketConverter {
     @Override
     public Object processServerTransaction(WPacketPlayOutTransaction packet) {
         return new PacketPlayOutTransaction(packet.getId(), packet.getAction(), packet.isAccept());
+    }
+
+    @Override
+    public WPacketPlayOutMapChunk processMapChunk(Object object) {
+        PacketPlayOutMapChunk packet = (PacketPlayOutMapChunk) object;
+
+        PacketDataSerializer serialized = serialize(packet);
+
+        int chunkX = serialized.readInt();
+        int chunkZ = serialized.readInt();
+        boolean groundUp = serialized.readBoolean();
+        int size = serialized.readShort();
+        byte[] locs = serialized.a();
+
+        ChunkSection[] sections = new ChunkSection[16];
+
+        //fillChunk(chunk, locs, size, groundUp);
+        int i = 0;
+        for (int index = 0; index < sections.length; ++index) {
+            if ((size & 1 << index) != 0) {
+                if (sections[index] == null) {
+                    sections[index] = new ChunkSection(index << 4, true);
+                }
+
+                char[] achar = sections[index].getIdArray();
+
+                for (int k = 0; k < achar.length; ++k) {
+                    achar[k] = (char) ((locs[i + 1] & 255) << 8 | locs[i] & 255);
+                    i += 2;
+                }
+            } else if (groundUp && sections[index] != null) {
+                sections[index] = null;
+            }
+        }
+
+
+        Map<IntVector, WPacketPlayOutMapChunk.MinBlock> blocks = new HashMap<>();
+
+        int sectionIndex = 0;
+        for (ChunkSection section : sections) {
+            if(section == null) {
+                sectionIndex++;
+                continue;
+            }
+            for (int idIndex = 0; idIndex < section.getIdArray().length; idIndex++) {
+                //int i, int j, int k
+                // x, y, z
+                //j << 8 | k << 4 | i
+                int y = (section.getYPosition() + (idIndex >> 8));
+                int z = (chunkZ * 16 + (idIndex >> 4 & 0xF));
+                int x = (chunkX * 16 + (idIndex & 0xF));
+
+                char id = section.getIdArray()[idIndex];
+
+                IBlockData iblockdata = Block.d.a(id);
+
+                Material material = CraftMagicNumbers.getMaterial(iblockdata.getBlock());
+
+                WPacketPlayOutMapChunk.MinBlock block = new WPacketPlayOutMapChunk
+                        .MinBlock(material, (byte)iblockdata.getBlock().toLegacyData(iblockdata));
+
+                blocks.put(new IntVector(x, y, z), block);
+            }
+            sectionIndex++;
+        }
+
+        return WPacketPlayOutMapChunk.builder().blocks(blocks).build();
+    }
+
+    public void fillChunk(Chunk chunk, byte[] p_177439_1_, int p_177439_2_, boolean p_177439_3_) {
+        int i = 0;
+        boolean flag = !chunk.getWorld().worldProvider.o();
+
+        for (int j = 0; j < chunk.getSections().length; ++j) {
+            if ((p_177439_2_ & 1 << j) != 0) {
+                if (chunk.getSections()[j] == null) {
+                    chunk.getSections()[j] = new ChunkSection(j << 4, flag);
+                }
+
+                char[] achar = chunk.getSections()[j].getIdArray();
+
+                for (int k = 0; k < achar.length; ++k) {
+                    achar[k] = (char) ((p_177439_1_[i + 1] & 255) << 8 | p_177439_1_[i] & 255);
+                    i += 2;
+                }
+            } else if (p_177439_3_ && chunk.getSections()[j] != null) {
+                chunk.getSections()[j] = null;
+            }
+        }
+
+        if (p_177439_3_) {
+            System.arraycopy(p_177439_1_, i, chunk.getBiomeIndex(), 0, chunk.getBiomeIndex().length);
+            int k1 = i + chunk.getBiomeIndex().length;
+        }
+
+        for (int j1 = 0; j1 < chunk.getSections().length; ++j1) {
+            if (chunk.getSections()[j1] != null && (p_177439_2_ & 1 << j1) != 0) {
+                chunk.getSections()[j1].recalcBlockCounts();
+            }
+        }
+
+        /*for (TileEntity tileentity : chunk.chunkTileEntityMap.values()) {
+            tileentity.updateContainingBlockInfo();
+        }*/
+    }
+
+    /*
+    public void handleChunkData(S21PacketChunkData packetIn) {
+        PacketThreadUtil.checkThreadAndEnqueue(packetIn, this, this.gameController);
+
+        if (packetIn.func_149274_i()) {
+            if (packetIn.getExtractedSize() == 0) {
+                this.clientWorldController.doPreChunk(packetIn.getChunkX(), packetIn.getChunkZ(), false);
+                return;
+            }
+
+            this.clientWorldController.doPreChunk(packetIn.getChunkX(), packetIn.getChunkZ(), true);
+        }
+
+        this.clientWorldController.invalidateBlockReceiveRegion(packetIn.getChunkX() << 4, 0, packetIn.getChunkZ() << 4, (packetIn.getChunkX() << 4) + 15, 256, (packetIn.getChunkZ() << 4) + 15);
+        Chunk chunk = this.clientWorldController.getChunkFromChunkCoords(packetIn.getChunkX(), packetIn.getChunkZ());
+        chunk.fillChunk(packetIn.func_149272_d(), packetIn.getExtractedSize(), packetIn.func_149274_i());
+        this.clientWorldController.markBlockRangeForRenderUpdate(packetIn.getChunkX() << 4, 0, packetIn.getChunkZ() << 4, (packetIn.getChunkX() << 4) + 15, 256, (packetIn.getChunkZ() << 4) + 15);
+
+        if (!packetIn.func_149274_i() || !(this.clientWorldController.provider instanceof WorldProviderSurface)) {
+            chunk.resetRelightChecks();
+        }
+    }
+     */
+    /*
+    public void fillChunk(byte[] p_177439_1_, int p_177439_2_, boolean p_177439_3_) {
+        int i = 0;
+        boolean flag = !this.worldObj.provider.getHasNoSky();
+
+        for (int j = 0; j < this.storageArrays.length; ++j) {
+            if ((p_177439_2_ & 1 << j) != 0) {
+                if (this.storageArrays[j] == null) {
+                    this.storageArrays[j] = new ExtendedBlockStorage(j << 4, flag);
+                }
+
+                char[] achar = this.storageArrays[j].getData();
+
+                for (int k = 0; k < achar.length; ++k) {
+                    achar[k] = (char) ((p_177439_1_[i + 1] & 255) << 8 | p_177439_1_[i] & 255);
+                    i += 2;
+                }
+            } else if (p_177439_3_ && this.storageArrays[j] != null) {
+                this.storageArrays[j] = null;
+            }
+        }
+
+        for (int l = 0; l < this.storageArrays.length; ++l) {
+            if ((p_177439_2_ & 1 << l) != 0 && this.storageArrays[l] != null) {
+                NibbleArray nibblearray = this.storageArrays[l].getBlocklightArray();
+                System.arraycopy(p_177439_1_, i, nibblearray.getData(), 0, nibblearray.getData().length);
+                i += nibblearray.getData().length;
+            }
+        }
+
+        if (flag) {
+            for (int i1 = 0; i1 < this.storageArrays.length; ++i1) {
+                if ((p_177439_2_ & 1 << i1) != 0 && this.storageArrays[i1] != null) {
+                    NibbleArray nibblearray1 = this.storageArrays[i1].getSkylightArray();
+                    System.arraycopy(p_177439_1_, i, nibblearray1.getData(), 0, nibblearray1.getData().length);
+                    i += nibblearray1.getData().length;
+                }
+            }
+        }
+
+        if (p_177439_3_) {
+            System.arraycopy(p_177439_1_, i, this.blockBiomeArray, 0, this.blockBiomeArray.length);
+            int k1 = i + this.blockBiomeArray.length;
+        }
+
+        for (int j1 = 0; j1 < this.storageArrays.length; ++j1) {
+            if (this.storageArrays[j1] != null && (p_177439_2_ & 1 << j1) != 0) {
+                this.storageArrays[j1].removeInvalidBlocks();
+            }
+        }
+
+        this.isLightPopulated = true;
+        this.isTerrainPopulated = true;
+        this.generateHeightMap();
+
+        for (TileEntity tileentity : this.chunkTileEntityMap.values()) {
+            tileentity.updateContainingBlockInfo();
+        }
+    }
+     */
+
+    private static int a(byte[] abyte, byte[] abyte1, int i) {
+        System.arraycopy(abyte, 0, abyte1, i, abyte.length);
+        return i + abyte.length;
     }
 
     private PacketDataSerializer serialize(Packet<?> packet) {

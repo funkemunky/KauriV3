@@ -148,6 +148,8 @@ public enum PacketType {
                 return convert.processClientTransaction(object);
             case SERVER_TRANSACTION:
                 return convert.processServerTransaction(object);
+            case MAP_CHUNK:
+                return convert.processMapChunk(object);
             default:
                 return object;
         }

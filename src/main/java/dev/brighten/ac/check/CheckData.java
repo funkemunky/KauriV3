@@ -15,6 +15,7 @@ public @interface CheckData {
     boolean enabled() default true;
     boolean punishable() default true;
     boolean cancellable() default true;
+    boolean experimental() default false;
     int punishVl() default 10;
 
     ProtocolVersion minVersion() default ProtocolVersion.V1_7;

@@ -1735,7 +1735,6 @@ public enum XMaterial {
      * @since 2.0.0
      */
     @Nonnull
-    @SuppressWarnings("deprecation")
     public static XMaterial matchXMaterial(@Nonnull ItemStack item) {
         Objects.requireNonNull(item, "Cannot match null ItemStack");
         String material = item.getType().name();
@@ -2011,7 +2010,6 @@ public enum XMaterial {
      * @since 3.0.0
      */
     @Nonnull
-    @SuppressWarnings("deprecation")
     public ItemStack setType(@Nonnull ItemStack item) {
         Objects.requireNonNull(item, "Cannot set material for null ItemStack");
         Material material = this.parseMaterial();
@@ -2090,7 +2088,6 @@ public enum XMaterial {
      * @return data of this material, or 0 if none.
      * @since 1.0.0
      */
-    @SuppressWarnings("deprecation")
     public byte getData() {
         return data;
     }

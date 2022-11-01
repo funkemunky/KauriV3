@@ -22,7 +22,7 @@ import org.bukkit.util.Vector;
 import java.util.ArrayList;
 import java.util.List;
 
-@CheckData(name = "Horizontal", checkId = "horizontala", type = CheckType.MOVEMENT)
+@CheckData(name = "Horizontal", checkId = "horizontala", type = CheckType.MOVEMENT, experimental = true)
 public class Horizontal extends Check {
     private boolean lastLastClientGround;
     private float buffer;

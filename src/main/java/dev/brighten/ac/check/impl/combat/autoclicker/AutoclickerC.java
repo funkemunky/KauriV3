@@ -15,26 +15,71 @@ public class AutoclickerC extends Check {
         super(player);
     }
 
-    private int clicks;
-    private long lastArm, totalTime;
+    private long totalClickTime, lastClickTime;
+    private int clicks, oscillationTime, oscillationLevel, lowest, highest;
 
     @Async
-    WTimedAction<WPacketPlayInArmAnimation> action = (packet, now) -> {
+    WTimedAction<WPacketPlayInArmAnimation> action = (packet, timeStamp) -> {
         if(player.getInfo().isBreakingBlock()) return;
 
-        long delta = now - lastArm;
         clicks++;
+        long diff = timeStamp - lastClickTime;
 
-        totalTime+= delta;
+        if ((totalClickTime += diff) > 990) {
 
-        if(totalTime > 990) {
-            if(clicks >= 3 && delta <= 200) {
+            if (clicks >= 3 && diff <= 200.0f) {
+                int time = oscillationTime + 1;
+                int lowest = this.lowest;
+                int highest = this.highest;
+
+                if (lowest == -1) {
+                    lowest = clicks;
+                } else if (clicks < lowest) {
+                    lowest = clicks;
+                }
+                if (highest == -1) {
+                    highest = clicks;
+                } else if (clicks > highest) {
+                    highest = clicks;
+                }
+
+                int oscillation = highest - lowest;
+                int oscLevel = oscillationLevel;
+                if (time >= 9) {
+                    if (highest >= 8) {
+                        if (highest >= 9 && oscillation <= 5) {
+                            oscLevel += 2;
+                        }
+                        if (oscillation > 3 && oscLevel > 0) {
+                            --oscLevel;
+                        }
+                    } else if (oscLevel > 0) {
+                        --oscLevel;
+                    }
+                    time = 0;
+                    highest = -1;
+                    lowest = -1;
+                }
+                if (oscillation > 2) {
+                    time = 0;
+                    oscLevel = 0;
+                    highest = -1;
+                    lowest = -1;
+                }
+                if (oscLevel >= 10) {
+                    vl++;
+                    flag("osc=" + oscLevel);
+                }
+                debug("osc=%s level=%s high=%s low=%s", oscillation, oscLevel, highest, lowest);
+                this.lowest = lowest;
+                this.highest = highest;
+                this.oscillationTime = time;
+                this.oscillationLevel = oscLevel;
 
             }
+            totalClickTime = 0;
             clicks = 1;
-            totalTime = 0;
         }
-
-        lastArm = now;
+        lastClickTime = timeStamp;
     };
 }

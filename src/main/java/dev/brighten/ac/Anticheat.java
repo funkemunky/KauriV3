@@ -46,7 +46,7 @@ import java.util.concurrent.atomic.AtomicLong;
 @Init
 //@MavenLibrary(groupId = "co.aikar", artifactId = "acf-bukkit", version = "0.5.1", repo = @Repository(url = "https://nexus.funkemunky.cc/content/repositories/releases/"))
 @MavenLibrary(groupId = "com.google.guava", artifactId = "guava", version = "21.0", repo = @Repository(url = "https://repo1.maven.org/maven2"))
-@MavenLibrary(groupId = "it.unimi.dsi", artifactId = "fastutil", version = "8.5.6", repo = @Repository(url = "https://repo1.maven.org/maven2"))
+//@MavenLibrary(groupId = "it.unimi.dsi", artifactId = "fastutil", version = "8.5.6", repo = @Repository(url = "https://repo1.maven.org/maven2"))
 @MavenLibrary(groupId = "org.ow2.asm", artifactId = "asm", version = "9.2", repo = @Repository(url = "https://repo1.maven.org/maven2"))
 @MavenLibrary(groupId = "org.ow2.asm", artifactId = "asm-tree", version = "9.2", repo = @Repository(url = "https://repo1.maven.org/maven2"))
 public class Anticheat extends LoaderPlugin {
