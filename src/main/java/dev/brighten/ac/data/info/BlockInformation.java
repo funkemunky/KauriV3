@@ -195,6 +195,7 @@ public class BlockInformation {
                                 XMaterial blockMaterial = BlockUtils.getXMaterial(type);
 
                                 if(newBox(1.4, 0).expandMin(0, -1, 0)
+                                        .expand(0.3,0,0.3)
                                         .isIntersected(blockBox))
                                     blocksBelow = true;
 

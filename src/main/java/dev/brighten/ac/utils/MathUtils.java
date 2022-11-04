@@ -15,6 +15,8 @@ import java.util.stream.Collectors;
 
 public class MathUtils {
 
+    public static double GROUND_DIVISOR = 0.015625;
+
     public static double offset(Vector from, Vector to) {
         from.setY(0);
         to.setY(0);

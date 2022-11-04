@@ -141,7 +141,7 @@ public class MovementUtils {
             if(!block.isPresent()) break; //No point in continuing since the one below will still be not present.
 
             if(Materials.checkFlag(block.get().getType(), Materials.SOLID)
-                    && Materials.checkFlag(block.get().getType(), Materials.LIQUID)) {
+                    || Materials.checkFlag(block.get().getType(), Materials.LIQUID)) {
                 CollisionBox box = BlockData.getData(block.get().getType())
                         .getBox(block.get(), ProtocolVersion.getGameVersion());
 
@@ -155,7 +155,7 @@ public class MovementUtils {
                     box.downCast(sboxes);
 
                     double maxY = sboxes.stream().max(Comparator.comparing(sbox -> sbox.maxY)).map(s -> s.maxY)
-                            .orElse(y + 1.);
+                            .orElse(y + 0.01);
 
                     return new Location(block.get().getWorld(), x, maxY, z);
                 }

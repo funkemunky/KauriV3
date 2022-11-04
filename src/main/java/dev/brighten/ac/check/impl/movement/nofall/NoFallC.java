@@ -34,14 +34,14 @@ public class NoFallC extends Check {
                 fallDistance = 0;
             } else fallDistance+= player.getMovement().getDeltaY();
 
-            if(player.getInfo().isServerGround()) {
+            if(player.getBlockInfo().blocksBelow && packet.getY() % MathUtils.GROUND_DIVISOR == 0) {
                 trueFallDistance = 0;
                 fallDistance = 0;
             } else trueFallDistance+= player.getMovement().getDeltaY();
 
             double delta = MathUtils.getDelta(trueFallDistance, fallDistance);
 
-            if(delta > 0.1) {
+            if(delta > 0.1 && !player.getInfo().isNearGround()) {
                 flag("delta=%.4f;fd=%.4f;tf=%.4f", delta, fallDistance, trueFallDistance);
                 fallDistance = trueFallDistance = 0;
                 cancel();

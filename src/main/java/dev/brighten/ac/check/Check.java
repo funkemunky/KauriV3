@@ -89,13 +89,13 @@ public class Check implements ECheck {
         } else {
             player.getInfo().getLastCancel().reset();
 
-            Location ground = player.getInfo().isServerGround() && player.getMovement().getLastTeleport().isPassed(1)
+            final Location ground = player.getInfo().isServerGround()
                     ? player.getMovement().getFrom().getLoc()
                     .toLocation(player.getBukkitPlayer().getWorld())
                     : MovementUtils.findGroundLocation(player.getMovement().getFrom().getLoc()
                     .toLocation(player.getBukkitPlayer().getWorld()), 10);
 
-            player.getBukkitPlayer().teleport(ground);
+            RunUtils.task(() -> player.getBukkitPlayer().teleport(ground));
         }
     }
 

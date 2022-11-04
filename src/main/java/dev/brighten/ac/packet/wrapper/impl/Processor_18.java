@@ -756,7 +756,8 @@ public class Processor_18 implements PacketConverter {
         int chunkZ = serialized.readInt();
         boolean groundUp = serialized.readBoolean();
         int size = serialized.readShort();
-        byte[] locs = serialized.a();
+        byte[] locs = new byte[serialized.e()];
+        serialized.readBytes(locs);
 
         Map<IntVector, WPacketPlayOutMapChunk.MinBlock> blocks = new HashMap<>();
 
