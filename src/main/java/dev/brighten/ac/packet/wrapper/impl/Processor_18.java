@@ -762,92 +762,42 @@ public class Processor_18 implements PacketConverter {
 
         //fillChunk(chunk, locs, size, groundUp);
         int i = 0;
+        Map<IntVector, WPacketPlayOutMapChunk.MinBlock> blocks = new HashMap<>();
         for (int index = 0; index < sections.length; ++index) {
             if ((size & 1 << index) != 0) {
                 if (sections[index] == null) {
                     sections[index] = new ChunkSection(index << 4, true);
                 }
 
-                char[] achar = sections[index].getIdArray();
+                ChunkSection section = sections[index];
 
-                for (int k = 0; k < achar.length; ++k) {
-                    achar[k] = (char) ((locs[i + 1] & 255) << 8 | locs[i] & 255);
+                char[] idArray = sections[index].getIdArray();
+
+                for (int idIndex = 0; idIndex < idArray.length; ++idIndex) {
+                    idArray[idIndex] = (char) ((locs[i + 1] & 255) << 8 | locs[i] & 255);
                     i += 2;
+
+                    int y = (section.getYPosition() + (idIndex >> 8));
+                    int z = (chunkZ * 16 + (idIndex >> 4 & 0xF));
+                    int x = (chunkX * 16 + (idIndex & 0xF));
+
+                    char id = section.getIdArray()[idIndex];
+
+                    IBlockData iblockdata = Block.d.a(id);
+
+                    Material material = CraftMagicNumbers.getMaterial(iblockdata.getBlock());
+
+                    WPacketPlayOutMapChunk.MinBlock block = new WPacketPlayOutMapChunk
+                            .MinBlock(material, (byte)iblockdata.getBlock().toLegacyData(iblockdata));
+
+                    blocks.put(new IntVector(x, y, z), block);
                 }
             } else if (groundUp && sections[index] != null) {
                 sections[index] = null;
             }
         }
 
-
-        Map<IntVector, WPacketPlayOutMapChunk.MinBlock> blocks = new HashMap<>();
-
-        int sectionIndex = 0;
-        for (ChunkSection section : sections) {
-            if(section == null) {
-                sectionIndex++;
-                continue;
-            }
-            for (int idIndex = 0; idIndex < section.getIdArray().length; idIndex++) {
-                //int i, int j, int k
-                // x, y, z
-                //j << 8 | k << 4 | i
-                int y = (section.getYPosition() + (idIndex >> 8));
-                int z = (chunkZ * 16 + (idIndex >> 4 & 0xF));
-                int x = (chunkX * 16 + (idIndex & 0xF));
-
-                char id = section.getIdArray()[idIndex];
-
-                IBlockData iblockdata = Block.d.a(id);
-
-                Material material = CraftMagicNumbers.getMaterial(iblockdata.getBlock());
-
-                WPacketPlayOutMapChunk.MinBlock block = new WPacketPlayOutMapChunk
-                        .MinBlock(material, (byte)iblockdata.getBlock().toLegacyData(iblockdata));
-
-                blocks.put(new IntVector(x, y, z), block);
-            }
-            sectionIndex++;
-        }
-
         return WPacketPlayOutMapChunk.builder().blocks(blocks).build();
-    }
-
-    public void fillChunk(Chunk chunk, byte[] p_177439_1_, int p_177439_2_, boolean p_177439_3_) {
-        int i = 0;
-        boolean flag = !chunk.getWorld().worldProvider.o();
-
-        for (int j = 0; j < chunk.getSections().length; ++j) {
-            if ((p_177439_2_ & 1 << j) != 0) {
-                if (chunk.getSections()[j] == null) {
-                    chunk.getSections()[j] = new ChunkSection(j << 4, flag);
-                }
-
-                char[] achar = chunk.getSections()[j].getIdArray();
-
-                for (int k = 0; k < achar.length; ++k) {
-                    achar[k] = (char) ((p_177439_1_[i + 1] & 255) << 8 | p_177439_1_[i] & 255);
-                    i += 2;
-                }
-            } else if (p_177439_3_ && chunk.getSections()[j] != null) {
-                chunk.getSections()[j] = null;
-            }
-        }
-
-        if (p_177439_3_) {
-            System.arraycopy(p_177439_1_, i, chunk.getBiomeIndex(), 0, chunk.getBiomeIndex().length);
-            int k1 = i + chunk.getBiomeIndex().length;
-        }
-
-        for (int j1 = 0; j1 < chunk.getSections().length; ++j1) {
-            if (chunk.getSections()[j1] != null && (p_177439_2_ & 1 << j1) != 0) {
-                chunk.getSections()[j1].recalcBlockCounts();
-            }
-        }
-
-        /*for (TileEntity tileentity : chunk.chunkTileEntityMap.values()) {
-            tileentity.updateContainingBlockInfo();
-        }*/
     }
 
     /*
