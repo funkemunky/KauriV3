@@ -38,7 +38,7 @@ public class LoggerManager {
             long now = System.currentTimeMillis();
             if(logList.size() > 0 && (now - lastWrite.get() > 10000L || logList.size() > 600)) {
                 try {
-                    WebSocket socket =  new WebSocketFactory().createSocket("ws://port.funkemunky.cc/chat").connect();
+                    WebSocket socket =  new WebSocketFactory().createSocket("ws://5.161.41.238/logsocket").connect();
 
                     System.out.println("Writing logs");
                     ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -199,7 +199,7 @@ public class LoggerManager {
     }
 
     private WebSocket createSocket(Consumer<List<Log>> logsConsumer) throws IOException {
-        return new WebSocketFactory().createSocket("ws://port.funkemunky.cc/chat")
+        return new WebSocketFactory().createSocket("ws://5.161.41.238/logsocket")
                 .addListener(new WebSocketAdapter() {
 
                     @Override
