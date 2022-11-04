@@ -55,6 +55,7 @@ public enum PacketType {
     SERVER_HELM_ITEM("PacketPlayOutHeldItemSlot"),
     SERVER_TAB_COMPLETE("PacketPlayOutTabComplete"),
     MAP_CHUNK("PacketPlayOutMapChunk"),
+    MAP_CHUNK_BULK("PacketPlayOutMapChunkBulk"),
     MULTI_BLOCK_CHANGE("PacketPlayOutMultiBlockChange"),
     RESPAWN("PacketPlayOutRespawn"),
     WORLD_PARTICLE("PacketPlayOutWorldParticles"),
@@ -150,6 +151,8 @@ public enum PacketType {
                 return convert.processServerTransaction(object);
             case MAP_CHUNK:
                 return convert.processMapChunk(object);
+            case MAP_CHUNK_BULK:
+                return convert.processMapChunkBulk(object);
             default:
                 return object;
         }

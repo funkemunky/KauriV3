@@ -88,4 +88,6 @@ public interface PacketConverter {
     Object processServerTransaction(WPacketPlayOutTransaction packet);
 
     WPacketPlayOutMapChunk processMapChunk(Object object);
+
+    WPacketPlayOutMapChunkBulk processMapChunkBulk(Object packet);
 }

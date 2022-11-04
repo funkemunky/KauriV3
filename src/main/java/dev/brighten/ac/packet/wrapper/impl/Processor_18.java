@@ -758,11 +758,46 @@ public class Processor_18 implements PacketConverter {
         int size = serialized.readShort();
         byte[] locs = serialized.a();
 
+        Map<IntVector, WPacketPlayOutMapChunk.MinBlock> blocks = new HashMap<>();
+
+        processChunk(locs, size, chunkX, chunkZ, groundUp, blocks);
+
+        return new WPacketPlayOutMapChunk(new WPacketPlayOutMapChunk.WrappedChunk(blocks));
+    }
+
+    @Override
+    public WPacketPlayOutMapChunkBulk processMapChunkBulk(Object packet) {
+        PacketPlayOutMapChunkBulk packetPlayOutMapChunkBulk = (PacketPlayOutMapChunkBulk) packet;
+        PacketDataSerializer serialized = serialize(packetPlayOutMapChunkBulk);
+
+        boolean groundUp = serialized.readBoolean();
+        int size = serialized.e();
+
+        final List<WPacketPlayOutMapChunk.WrappedChunk> chunks = new ArrayList<>();
+
+        for (int i = 0; i < size; ++i) {
+            int chunkX = serialized.readInt();
+            int chunkZ = serialized.readInt();
+            PacketPlayOutMapChunk.ChunkMap chunkMap = new PacketPlayOutMapChunk.ChunkMap();
+            chunkMap.b = serialized.readShort() & '\uffff';
+            chunkMap.a = new byte[a(Integer.bitCount(chunkMap.b), groundUp, true)];
+
+            Map<IntVector, WPacketPlayOutMapChunk.MinBlock> blocks = new HashMap<>();
+
+            processChunk(chunkMap.a, chunkMap.b, chunkX, chunkZ, groundUp, blocks);
+
+            chunks.add(new WPacketPlayOutMapChunk.WrappedChunk(blocks));
+        }
+
+        return new WPacketPlayOutMapChunkBulk(chunks);
+    }
+
+    private static void processChunk(byte[] locs, int size, int chunkX, int chunkZ, boolean groundUp,
+                                Map<IntVector, WPacketPlayOutMapChunk.MinBlock> blocks) {
         ChunkSection[] sections = new ChunkSection[16];
 
-        //fillChunk(chunk, locs, size, groundUp);
         int i = 0;
-        Map<IntVector, WPacketPlayOutMapChunk.MinBlock> blocks = new HashMap<>();
+
         for (int index = 0; index < sections.length; ++index) {
             if ((size & 1 << index) != 0) {
                 if (sections[index] == null) {
@@ -796,93 +831,15 @@ public class Processor_18 implements PacketConverter {
                 sections[index] = null;
             }
         }
-
-        return WPacketPlayOutMapChunk.builder().blocks(blocks).build();
     }
 
-    /*
-    public void handleChunkData(S21PacketChunkData packetIn) {
-        PacketThreadUtil.checkThreadAndEnqueue(packetIn, this, this.gameController);
-
-        if (packetIn.func_149274_i()) {
-            if (packetIn.getExtractedSize() == 0) {
-                this.clientWorldController.doPreChunk(packetIn.getChunkX(), packetIn.getChunkZ(), false);
-                return;
-            }
-
-            this.clientWorldController.doPreChunk(packetIn.getChunkX(), packetIn.getChunkZ(), true);
-        }
-
-        this.clientWorldController.invalidateBlockReceiveRegion(packetIn.getChunkX() << 4, 0, packetIn.getChunkZ() << 4, (packetIn.getChunkX() << 4) + 15, 256, (packetIn.getChunkZ() << 4) + 15);
-        Chunk chunk = this.clientWorldController.getChunkFromChunkCoords(packetIn.getChunkX(), packetIn.getChunkZ());
-        chunk.fillChunk(packetIn.func_149272_d(), packetIn.getExtractedSize(), packetIn.func_149274_i());
-        this.clientWorldController.markBlockRangeForRenderUpdate(packetIn.getChunkX() << 4, 0, packetIn.getChunkZ() << 4, (packetIn.getChunkX() << 4) + 15, 256, (packetIn.getChunkZ() << 4) + 15);
-
-        if (!packetIn.func_149274_i() || !(this.clientWorldController.provider instanceof WorldProviderSurface)) {
-            chunk.resetRelightChecks();
-        }
+    private static int a(int i, boolean flag, boolean flag1) {
+        int j = i * 2 * 16 * 16 * 16;
+        int k = i * 16 * 16 * 16 / 2;
+        int l = flag ? i * 16 * 16 * 16 / 2 : 0;
+        int i1 = flag1 ? 256 : 0;
+        return j + k + l + i1;
     }
-     */
-    /*
-    public void fillChunk(byte[] p_177439_1_, int p_177439_2_, boolean p_177439_3_) {
-        int i = 0;
-        boolean flag = !this.worldObj.provider.getHasNoSky();
-
-        for (int j = 0; j < this.storageArrays.length; ++j) {
-            if ((p_177439_2_ & 1 << j) != 0) {
-                if (this.storageArrays[j] == null) {
-                    this.storageArrays[j] = new ExtendedBlockStorage(j << 4, flag);
-                }
-
-                char[] achar = this.storageArrays[j].getData();
-
-                for (int k = 0; k < achar.length; ++k) {
-                    achar[k] = (char) ((p_177439_1_[i + 1] & 255) << 8 | p_177439_1_[i] & 255);
-                    i += 2;
-                }
-            } else if (p_177439_3_ && this.storageArrays[j] != null) {
-                this.storageArrays[j] = null;
-            }
-        }
-
-        for (int l = 0; l < this.storageArrays.length; ++l) {
-            if ((p_177439_2_ & 1 << l) != 0 && this.storageArrays[l] != null) {
-                NibbleArray nibblearray = this.storageArrays[l].getBlocklightArray();
-                System.arraycopy(p_177439_1_, i, nibblearray.getData(), 0, nibblearray.getData().length);
-                i += nibblearray.getData().length;
-            }
-        }
-
-        if (flag) {
-            for (int i1 = 0; i1 < this.storageArrays.length; ++i1) {
-                if ((p_177439_2_ & 1 << i1) != 0 && this.storageArrays[i1] != null) {
-                    NibbleArray nibblearray1 = this.storageArrays[i1].getSkylightArray();
-                    System.arraycopy(p_177439_1_, i, nibblearray1.getData(), 0, nibblearray1.getData().length);
-                    i += nibblearray1.getData().length;
-                }
-            }
-        }
-
-        if (p_177439_3_) {
-            System.arraycopy(p_177439_1_, i, this.blockBiomeArray, 0, this.blockBiomeArray.length);
-            int k1 = i + this.blockBiomeArray.length;
-        }
-
-        for (int j1 = 0; j1 < this.storageArrays.length; ++j1) {
-            if (this.storageArrays[j1] != null && (p_177439_2_ & 1 << j1) != 0) {
-                this.storageArrays[j1].removeInvalidBlocks();
-            }
-        }
-
-        this.isLightPopulated = true;
-        this.isTerrainPopulated = true;
-        this.generateHeightMap();
-
-        for (TileEntity tileentity : this.chunkTileEntityMap.values()) {
-            tileentity.updateContainingBlockInfo();
-        }
-    }
-     */
 
     private static int a(byte[] abyte, byte[] abyte1, int i) {
         System.arraycopy(abyte, 0, abyte1, i, abyte.length);

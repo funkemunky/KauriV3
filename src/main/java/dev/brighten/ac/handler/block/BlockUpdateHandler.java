@@ -121,7 +121,7 @@ public class BlockUpdateHandler {
         player.runInstantAction(k -> {
             if(!k.isEnd()) {
                 synchronized (blockInformation) {
-                    chunkUpdate.getBlocks().forEach((vec, mblock) -> {
+                    chunkUpdate.getChunk().getBlocks().forEach((vec, mblock) -> {
                         WrappedBlock block = new WrappedBlock(vec.toLocation(player.getBukkitPlayer().getWorld()),
                                 mblock.material, mblock.data);
                         blockInformation.put(vec, block);

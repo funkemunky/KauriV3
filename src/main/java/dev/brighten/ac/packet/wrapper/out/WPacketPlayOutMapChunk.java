@@ -4,17 +4,16 @@ import dev.brighten.ac.packet.wrapper.PacketType;
 import dev.brighten.ac.packet.wrapper.WPacket;
 import dev.brighten.ac.utils.math.IntVector;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 import org.bukkit.Material;
 
 import java.util.Map;
 
-@Builder
+@AllArgsConstructor
 @Getter
 public class WPacketPlayOutMapChunk extends WPacket {
 
-    private Map<IntVector, MinBlock> blocks;
+    private WrappedChunk chunk;
 
     @Override
     public PacketType getPacketType() {
@@ -30,5 +29,11 @@ public class WPacketPlayOutMapChunk extends WPacket {
     public static class MinBlock {
         public Material material;
         public byte data;
+    }
+
+    @AllArgsConstructor
+    @Getter
+    public static class WrappedChunk {
+        private Map<IntVector, MinBlock> blocks;
     }
 }
