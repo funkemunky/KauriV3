@@ -87,6 +87,10 @@ public class KLocation implements Cloneable {
         return this;
     }
 
+    public Vector getDirection() {
+        return MathUtils.getDirection(this);
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

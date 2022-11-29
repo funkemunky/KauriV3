@@ -265,8 +265,10 @@ public class EntityLocationHandler {
         for (double offset : offsets) {
             FakeMob mob = new FakeMob(EntityType.MAGMA_CUBE);
 
+            // Setting Magma cube size to size 10
             mob.spawn(true, location.clone().add(offset, offset, offset),
-                    new ArrayList<>(Arrays.asList(new WrappedWatchableObject(0, 16, (byte)10))), data);
+                    new ArrayList<>(Collections.singletonList(
+                            new WrappedWatchableObject(0, 16, (byte) 10))), data);
 
             fakeMobToEntityId.put(mob.getEntityId(), entityId);
 

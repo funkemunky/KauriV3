@@ -11,6 +11,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -132,6 +133,11 @@ public class SimpleCollisionBox implements CollisionBox {
     @Override
     public void downCast(List<SimpleCollisionBox> list) {
         list.add(this);
+    }
+
+    @Override
+    public List<SimpleCollisionBox> downCast() {
+        return Collections.singletonList(this);
     }
 
     @Override

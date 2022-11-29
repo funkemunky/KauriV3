@@ -90,4 +90,8 @@ public interface PacketConverter {
     WPacketPlayOutMapChunk processMapChunk(Object object);
 
     WPacketPlayOutMapChunkBulk processMapChunkBulk(Object packet);
+
+    WPacketPlayInClientCommand processInClientCommand(Object packet);
+
+    WPacketPlayInWindowClick processInWindowClick(Object packet);
 }

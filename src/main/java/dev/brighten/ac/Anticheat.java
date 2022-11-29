@@ -114,15 +114,17 @@ public class Anticheat extends LoaderPlugin {
             getAnticheatConfig().set("database.password", UUID.randomUUID().toString());
         }
 
+
         this.keepaliveProcessor = new KeepaliveProcessor();
+        this.fakeTracker = new FakeEntityTracker();
         this.checkManager = new CheckManager();
         this.playerRegistry = new PlayerRegistry();
+        HandlerAbstract.init();
+        Bukkit.getOnlinePlayers().forEach(playerRegistry::generate);
         this.packetHandler = new PacketHandler();
         logManager = new LoggerManager();
 
         keepaliveProcessor.start();
-
-        HandlerAbstract.init();
 
         logManager.init();
 
@@ -136,19 +138,12 @@ public class Anticheat extends LoaderPlugin {
             e.printStackTrace();
         }
 
-        fakeTracker = new FakeEntityTracker();
-
         Bukkit.getOnlinePlayers().forEach(HandlerAbstract.getHandler()::add);
     }
     public void onDisable() {
         scheduler.shutdown();
         commandManager.unregisterCommands();
 
-        // Unregistering packet listeners for players
-        HandlerAbstract.getHandler().shutdown();
-        HandlerList.unregisterAll(getPluginInstance());
-        packetProcessor.shutdown();
-        packetProcessor = null;
         checkManager.getCheckClasses().clear();
         Check.alertsEnabled.clear();
         Check.debugInstances.clear();
@@ -157,9 +152,6 @@ public class Anticheat extends LoaderPlugin {
         keepaliveProcessor = null;
         ProtocolAPI.INSTANCE = null;
         tps = null;
-
-        fakeTracker.despawnAll();
-        fakeTracker = null;
 
         logManager.shutDown();
 
@@ -175,6 +167,15 @@ public class Anticheat extends LoaderPlugin {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+
+        fakeTracker.despawnAll();
+        fakeTracker = null;
+
+        // Unregistering packet listeners for players
+        HandlerAbstract.getHandler().shutdown();
+        HandlerList.unregisterAll(getPluginInstance());
+        packetProcessor.shutdown();
+        packetProcessor = null;
 
         AnticheatAPI.INSTANCE = null;
 

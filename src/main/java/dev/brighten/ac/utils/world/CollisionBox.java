@@ -15,5 +15,7 @@ public interface CollisionBox {
     CollisionBox expand(double x, double y, double z);
     void draw(EnumParticle particle, Player... players);
     void downCast(List<SimpleCollisionBox> list);
+    List<SimpleCollisionBox> downCast();
+
     boolean isNull();
 }

@@ -4,6 +4,7 @@ import dev.brighten.ac.api.check.CheckType;
 import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.WAction;
+import dev.brighten.ac.check.impl.misc.inventory.InventoryA;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
@@ -21,6 +22,7 @@ import org.bukkit.util.Vector;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @CheckData(name = "Horizontal", checkId = "horizontala", type = CheckType.MOVEMENT, experimental = true)
 public class Horizontal extends Check {
@@ -31,7 +33,7 @@ public class Horizontal extends Check {
     private int lastFlying;
 
     private KLocation previousFrom;
-    private Vector motionX = new Vector(0, 0, 0);
+    private Vector motion = new Vector(0, 0, 0);
     private static final boolean[] TRUE_FALSE = new boolean[]{true, false};
 
     public double strafe, forward;
@@ -44,6 +46,12 @@ public class Horizontal extends Check {
         check:
         {
 
+            if(!packet.isMoved() || (player.getMovement().getDeltaXZ() == 0)) {
+                forward = strafe = 0;
+            }
+
+            Optional<InventoryA> inventoryA = find(InventoryA.class);
+
             if (!packet.isMoved()
                     || player.getMovement().getMoveTicks() == 0
                     || player.getMovement().getLastTeleport().isNotPassed(1)
@@ -54,8 +62,12 @@ public class Horizontal extends Check {
                     || player.getMovement().getTo().getLoc()
                     .distanceSquared(player.getMovement().getFrom().getLoc()) > 2500
                     || player.getInfo().lastLiquid.isNotPassed(2)) {
-                motionX = new Vector(player.getMovement().getDeltaX(), player.getMovement().getDeltaY(),
+                motion = new Vector(player.getMovement().getDeltaX(), player.getMovement().getDeltaY(),
                         player.getMovement().getDeltaZ());
+                inventoryA.ifPresent(check -> {
+                    if(check.buffer > 0)
+                        check.buffer--;
+                });
                 break check;
             }
 
@@ -69,6 +81,9 @@ public class Horizontal extends Check {
             boolean found = false;
             double precision = getPrecision();
             TagsBuilder tags = null;
+
+            val speed = player.getPotionHandler().getEffectByType(PotionEffectType.SPEED);
+            val slow = player.getPotionHandler().getEffectByType(PotionEffectType.SLOW);
 
             for (Iteration it : iterations) {
 
@@ -100,9 +115,17 @@ public class Horizontal extends Check {
                 double aiMoveSpeed = player.getBukkitPlayer().getWalkSpeed() / 2;
 
                 float drag = 0.91f;
-                double lmotionX = motionX.getX(),
-                        lmotionY = motionX.getY(),
-                        lmotionZ = motionX.getZ();
+                double lmotionX = motion.getX(),
+                        lmotionY = motion.getY(),
+                        lmotionZ = motion.getZ();
+
+                double totalMotion = Math.abs(lmotionX) + Math.abs(lmotionY) + Math.abs(lmotionZ);
+
+                if(totalMotion > 30) {
+                    motion = new Vector(player.getMovement().getDeltaX(), player.getMovement().getDeltaY(),
+                            player.getMovement().getDeltaZ());
+                    return;
+                }
 
                 lmotionY -= 0.08;
                 lmotionY *= 0.98f;
@@ -152,17 +175,12 @@ public class Horizontal extends Check {
                     tagsBuilder.addTag("sprinting");
                 }
 
-                if (player.getPotionHandler().hasPotionEffect(PotionEffectType.SPEED)) {
-                    aiMoveSpeed += (player.getPotionHandler().getEffectByType(PotionEffectType.SPEED)
-                            .map(pe -> pe.getAmplifier() + 1)).orElse(0)
-                            * 0.20000000298023224D * aiMoveSpeed;
-
+                if (speed.isPresent()) {
+                    aiMoveSpeed += (speed.get().getAmplifier() + 1) * (double) 0.20000000298023224D * aiMoveSpeed;
                     tagsBuilder.addTag("speedPotion");
                 }
-                if (player.getPotionHandler().hasPotionEffect(PotionEffectType.SLOW)) {
-                    aiMoveSpeed += (player.getPotionHandler().getEffectByType(PotionEffectType.SLOW)
-                            .map(pe -> pe.getAmplifier() + 1)).orElse(0)
-                            * -0.15000000596046448D * aiMoveSpeed;
+                if (slow.isPresent()) {
+                    aiMoveSpeed += (slow.get().getAmplifier() + 1) * (double) -0.15000000596046448D * aiMoveSpeed;
                     tagsBuilder.addTag("slowPotion");
                 }
 
@@ -439,17 +457,11 @@ public class Horizontal extends Check {
                 double delta = (diffX * diffX) + (diffZ * diffZ);
                 double deltaAll = delta + (diffY * diffY);
 
-                if(forward > 0 && strafe == 0 && !it.attack && !it.sneaking && !it.using && it.sprinting
-                        && !it.edge && !it.jumped) {
-                    debug("Shit: tags=[%s] diffX=%.6f diffZ=%.6f oy=%.3f ly=%.3f", tagsBuilder.build(), diffX, diffZ,
-                            originalY, lmotionY);
-                }
-
                 if (delta < smallestDeltaXZ) {
-                    smallDelta = deltaAll;
+                    //smallDelta = deltaAll;
                     smallestDeltaXZ = delta;
                     predictedMotionX = lmotionX;
-                    predictedMotionY = lmotionY;
+                    //predictedMotionY = lmotionY;
                     predictedMotionZ = lmotionZ;
 
                     tags = tagsBuilder;
@@ -459,9 +471,9 @@ public class Horizontal extends Check {
                         this.forward = it.f * 0.98f;
 
                         if (precision < 1E-11)
-                            motionX = new Vector(lmotionX, lmotionY, lmotionZ);
+                            motion = new Vector(lmotionX, lmotionY, lmotionZ);
                         else
-                            motionX = new Vector(player.getMovement().getDeltaX(), player.getMovement().getDeltaY(), player.getMovement().getDeltaZ());
+                            motion = new Vector(player.getMovement().getDeltaX(), player.getMovement().getDeltaY(), player.getMovement().getDeltaZ());
 
                         if (player.getInfo().getLastCancel().isPassed(2))
                             player.getInfo()
@@ -476,10 +488,24 @@ public class Horizontal extends Check {
                     }
                 }
             }
+
+            // Inventory (A) check
+            inventoryA.ifPresent(check -> {
+
+                if((strafe != 0 || forward != 0) && player.getInfo().isInventoryOpen()) {
+                    if(check.buffer++ > 6) {
+                        check.buffer = Math.min(8, check.buffer);
+                        check.flag("s=%.2f f=%.2f", strafe, forward);
+                    }
+                } else if(check.buffer > 0) check.buffer--;
+
+                check.debug("buffer=%d inv=%s s=%.2f f=%.2f", check.buffer,
+                        player.getInfo().isInventoryOpen(), strafe, forward);
+            });
             iterations.clear();
 
             if (!found) {
-                motionX = new Vector(player.getMovement().getDeltaX(), player.getMovement().getDeltaY(), player.getMovement().getDeltaZ());
+                motion = new Vector(player.getMovement().getDeltaX(), player.getMovement().getDeltaY(), player.getMovement().getDeltaZ());
             }
 
             final String builtTags = tags == null ? "null" : tags.build();
@@ -489,17 +515,15 @@ public class Horizontal extends Check {
                     && player.getMovement().getDeltaXZ() > 0.1) {
                 if ((buffer += smallestDeltaXZ > 58E-5 ? 1 : 0.5) > 1) {
                     buffer = Math.min(3.5f, buffer); //Ensuring we don't have a run-away buffer
-                    flag("smallest=%s b=%.1f to=%s dxz=%.2f tags=[%s]", smallestDeltaXZ, buffer,
-                            player.getMovement().getTo().getLoc(), player.getMovement().getDeltaXZ(), builtTags);
+                    flag("smallest=%.7f b=%.1f dxz=%.2f tags=[%s]", smallestDeltaXZ, buffer,
+                            player.getMovement().getDeltaXZ(), builtTags);
                     cancel();
                 } else debug("bad movement");
 
             } else if (buffer > 0) buffer -= 0.05f;
 
-            /*debug("(%s): py=%.5f dy=%.5f pm=%.5f dxz=%.5f skip=%s b=%.1f tags=[%s]",
-                    precision, predictedMotionY, player.getMovement().getDeltaY(), pmotion,
-                    player.getMovement().getDeltaXZ(), maybeSkippedPos, buffer, builtTags);*/
-            debug("x=%s z=%s tags=[%s]", predictedMotionX, predictedMotionZ, builtTags);
+            debug("[%.1f] smallest=%.7f dxz=%.2f tags=[%s]", buffer, smallestDeltaXZ,
+                    player.getMovement().getDeltaXZ(), builtTags);
         }
 
         if (ProtocolVersion.getGameVersion().isBelow(ProtocolVersion.V1_9)) {
@@ -586,7 +610,7 @@ public class Horizontal extends Check {
     }
 
     private static boolean[] getJumpingIteration(boolean onGround) {
-        return onGround ? new boolean[]{true, false} : new boolean[]{false};
+        return new boolean[]{true, false};
     }
 
     private static final float[] SIN_TABLE_FAST = new float[4096], SIN_TABLE_FAST_NEW = new float[4096];

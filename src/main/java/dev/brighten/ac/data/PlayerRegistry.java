@@ -10,7 +10,6 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongList;
 import lombok.SneakyThrows;
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.InvalidDescriptionException;
 import org.bukkit.plugin.Plugin;
@@ -26,7 +25,6 @@ import java.util.zip.CRC32;
 public class PlayerRegistry {
 
     public PlayerRegistry() {
-        Bukkit.getOnlinePlayers().forEach(this::generate);
         checkIntegrity();
     }
     public final Int2ObjectMap<APlayer> aplayerMap = Int2ObjectMaps.synchronize(new Int2ObjectOpenHashMap<>());

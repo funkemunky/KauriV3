@@ -13,12 +13,14 @@ import dev.brighten.ac.handler.MovementHandler;
 import dev.brighten.ac.handler.PotionHandler;
 import dev.brighten.ac.handler.VelocityHandler;
 import dev.brighten.ac.handler.block.BlockUpdateHandler;
+import dev.brighten.ac.handler.entity.FakeMob;
 import dev.brighten.ac.handler.keepalive.KeepAlive;
 import dev.brighten.ac.handler.protocolsupport.ProtocolAPI;
 import dev.brighten.ac.messages.Messages;
 import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.packet.handler.HandlerAbstract;
 import dev.brighten.ac.packet.wrapper.WPacket;
+import dev.brighten.ac.packet.wrapper.objects.WrappedWatchableObject;
 import dev.brighten.ac.utils.KLocation;
 import dev.brighten.ac.utils.RunUtils;
 import dev.brighten.ac.utils.Tuple;
@@ -26,10 +28,14 @@ import dev.brighten.ac.utils.objects.evicting.EvictingList;
 import dev.brighten.ac.utils.reflections.impl.MinecraftReflection;
 import dev.brighten.ac.utils.timer.Timer;
 import dev.brighten.ac.utils.timer.impl.MillisTimer;
+import dev.brighten.ac.utils.world.types.RayCollision;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.val;
 import net.minecraft.server.v1_8_R3.PacketPlayOutTransaction;
+import org.bukkit.Achievement;
+import org.bukkit.Location;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
 
@@ -89,6 +95,8 @@ public class APlayer {
     @Getter
     private final List<Consumer<Vector>> onVelocityTasks = new ArrayList<>();
     public final EvictingList<Tuple<KLocation, Double>> pastLocations = new EvictingList<>(20);
+    @Getter
+    private FakeMob mob;
 
     @Setter
     @Getter
@@ -124,18 +132,38 @@ public class APlayer {
             });
         });
 
+        // Removing inventory achievement
+        getBukkitPlayer().removeAchievement(Achievement.OPEN_INVENTORY);
+
         // Enabling alerts for players on join if they have the permissions to
         if(getBukkitPlayer().hasPermission("anticheat.command.alerts")
                 || getBukkitPlayer().hasPermission("anticheat.alerts")) {
             Check.alertsEnabled.add(getUuid());
             getBukkitPlayer().spigot().sendMessage(Messages.ALERTS_ON);
         }
+
+        generateEntities();
+    }
+
+    private void generateEntities() {
+        mob = new FakeMob(EntityType.MAGMA_CUBE);
+
+        KLocation origin = getMovement().getTo().getLoc().clone().add(0, 1.7, 0);
+
+        RayCollision coll = new RayCollision(origin.toVector(), origin.getDirection().multiply(-1));
+
+        Location loc1 = coll.collisionPoint(2).toLocation(getBukkitPlayer().getWorld());
+
+        mob.spawn(true, loc1,
+                new ArrayList<>(Collections.singletonList(
+                        new WrappedWatchableObject(0, 16, (byte) 1))), this);
     }
 
     protected void unload() {
         this.info = null;
         this.lagInfo = null;
         this.movement = null;
+        mob.despawn();
     }
 
 

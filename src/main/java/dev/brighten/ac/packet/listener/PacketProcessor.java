@@ -133,6 +133,7 @@ public class PacketProcessor {
 
     public Object call(Player player, Object packet, PacketType type) {
         if(packet == null) return false;
+
         PacketInfo info = new PacketInfo(player, packet, type, System.currentTimeMillis()),
                 asyncInfo;
         boolean cancelled = false;

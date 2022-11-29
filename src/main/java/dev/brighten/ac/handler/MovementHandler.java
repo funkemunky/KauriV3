@@ -300,6 +300,8 @@ public class MovementHandler {
 
         lastFlying.reset();
 
+        processBotMove(packet);
+
         /*
         ata.playerInfo.generalCancel = data.getPlayer().getAllowFlight()
                 || this.creativelastLastY
@@ -339,6 +341,22 @@ it
                     break;
                 }
             }
+        }
+    }
+
+    private void processBotMove(WPacketPlayInFlying packet) {
+        if(packet.isMoved() || packet.isLooked()) {
+            KLocation origin = to.getLoc().clone().add(0, 1.7, 0);
+
+            RayCollision coll = new RayCollision(origin.toVector(), origin.getDirection().multiply(-1));
+
+            Location loc1 = coll.collisionPoint(2.2).toLocation(player.getBukkitPlayer().getWorld());
+
+            if(player.getInfo().botAttack.isNotPassed(7)) {
+                loc1.setY(Math.max(origin.y + 1.2, loc1.getY()));
+            } else loc1.setY(Math.max(origin.y + 0.3, loc1.getY()));
+
+            player.getMob().teleport(loc1.getX(), loc1.getY(), loc1.getZ(), loc1.getYaw(), loc1.getPitch());
         }
     }
 

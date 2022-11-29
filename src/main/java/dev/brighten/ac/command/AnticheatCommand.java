@@ -2,20 +2,15 @@ package dev.brighten.ac.command;
 
 import co.aikar.commands.*;
 import co.aikar.commands.annotation.*;
-import co.aikar.commands.annotation.Optional;
 import co.aikar.commands.bukkit.contexts.OnlinePlayer;
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.data.APlayer;
-import dev.brighten.ac.gui.Logs;
 import dev.brighten.ac.handler.BBRevealHandler;
 import dev.brighten.ac.messages.Messages;
 import dev.brighten.ac.packet.handler.HandlerAbstract;
-import dev.brighten.ac.utils.Color;
-import dev.brighten.ac.utils.MiscUtils;
-import dev.brighten.ac.utils.Pastebin;
-import dev.brighten.ac.utils.Tuple;
+import dev.brighten.ac.utils.*;
 import dev.brighten.ac.utils.annotation.Init;
 import dev.brighten.ac.utils.msg.ChatBuilder;
 import dev.brighten.ac.utils.reflections.Reflections;
@@ -39,13 +34,13 @@ import org.bukkit.plugin.PluginDescriptionFile;
 
 import java.io.*;
 import java.nio.ByteBuffer;
-import java.sql.Timestamp;
-import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.stream.Collectors;
 import java.util.zip.CRC32;
 
-@Init
+@Init(priority = Priority.LOW)
 @CommandAlias("kauri|anticheat|ac")
 @CommandPermission("anticheat.command")
 public class AnticheatCommand extends BaseCommand {
@@ -214,78 +209,6 @@ public class AnticheatCommand extends BaseCommand {
         BBRevealHandler.INSTANCE.giveWand(player);
         player.spigot().sendMessage(new ComponentBuilder(
                 "You've been given a very special wand. Handle it responsibly.").color(ChatColor.GREEN).create());
-    }
-
-    @Subcommand("logs")
-    @Syntax("[player] [check]")
-    @CommandCompletion("@players @checkIds")
-    @CommandPermission("anticheat.command.logs")
-    @Description("Get player logs")
-    public void onLogs(CommandSender sender, @Single String playername,
-                       @Single @Optional @Default("none") String check) {
-        UUID uuid = Bukkit.getOfflinePlayer(playername).getUniqueId();
-
-        sender.sendMessage(Color.Red + "Getting logs for " + playername + "...");
-
-        if(sender instanceof Player) {
-            if(check.equals("none")) {
-                Logs logs = new Logs(uuid);
-
-                logs.showMenu((Player) sender);
-            } else {
-                Logs logs = new Logs(uuid, check);
-
-                logs.showMenu((Player) sender);
-            }
-        } else {
-            List<String> logs = new ArrayList<>();
-
-            if(check.equals("none")) {
-                Anticheat.INSTANCE.getLogManager().getLogs(uuid, logsList -> {
-                    logsList.forEach(log -> {
-                        logs.add("[" + new Timestamp(log.getTime()).toLocalDateTime()
-                                .format(DateTimeFormatter.ISO_DATE_TIME) + "] funkemunky failed "
-                                + Anticheat.INSTANCE.getCheckManager().getIdToName().get(log.getCheckId()) + "(VL: "
-                                + log.getVl() + ") {" + log.getData() + "}");
-                    });
-                    if(logs.size() == 0) {
-                        sender.sendMessage(Color.Gray + "There are no logs for player \"" + playername + "\"");
-                    } else {
-                        String url = null;
-                        try {
-                            url = Pastebin.makePaste(String.join("\n", logs), playername + "'s Logs",
-                                    Pastebin.Privacy.UNLISTED);
-
-                            sender.sendMessage(Color.Green + "Logs for " + playername + ": " + Color.White + url);
-                        } catch (UnsupportedEncodingException e) {
-                            throw new RuntimeException(e);
-                        }
-                    }
-                });
-            } else {
-                Anticheat.INSTANCE.getLogManager().getLogs(uuid, check, logsList -> {
-                    logsList.forEach(log -> {
-                        logs.add("[" + new Timestamp(log.getTime()).toLocalDateTime()
-                                .format(DateTimeFormatter.ISO_DATE_TIME) + "] funkemunky failed "
-                                + Anticheat.INSTANCE.getCheckManager().getIdToName().get(log.getCheckId())
-                                + "(VL: " + log.getVl() + ") {" + log.getData() + "}");
-                    });
-                    if(logs.size() == 0) {
-                        sender.sendMessage(Color.Gray + " does not have any violations for check \"" + check + "\"");
-                    } else {
-                        String url = null;
-                        try {
-                            url = Pastebin.makePaste(String.join("\n", logs), playername + "'s Logs",
-                                    Pastebin.Privacy.UNLISTED);
-
-                            sender.sendMessage(Color.Green + "Logs for " + playername + ": " + Color.White + url);
-                        } catch (UnsupportedEncodingException e) {
-                            throw new RuntimeException(e);
-                        }
-                    }
-                });
-            }
-        }
     }
 
     @Subcommand("title")

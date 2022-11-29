@@ -25,7 +25,7 @@ public enum PacketType {
     BLOCK_DIG("PacketPlayInBlockDig"),
     BLOCK_PLACE("PacketPlayInBlockPlace"),
     CHAT("PacketPlayInChat"),
-    CLIENT_COMMAND("PacketPlayInCommand"),
+    CLIENT_COMMAND("PacketPlayInClientCommand"),
     CLIENT_CLOSE_WINDOW("PacketPlayInCloseWindow"),
     ENTITY_ACTION("PacketPlayInEntityAction"),
     ENTITY_EFFECT("PacketPlayOutEntityEffect"),
@@ -153,6 +153,10 @@ public enum PacketType {
                 return convert.processMapChunk(object);
             case MAP_CHUNK_BULK:
                 return convert.processMapChunkBulk(object);
+            case CLIENT_COMMAND:
+                return convert.processInClientCommand(object);
+            case WINDOW_CLICK:
+                return convert.processInWindowClick(object);
             default:
                 return object;
         }

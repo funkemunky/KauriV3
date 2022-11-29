@@ -5,6 +5,7 @@ import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.data.APlayer;
+import dev.brighten.ac.packet.wrapper.in.WPacketPlayInArmAnimation;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInUseEntity;
 import lombok.val;
 
@@ -16,6 +17,12 @@ public class KABot extends Check {
     }
 
     private int buffer = 0;
+    private float buffer2;
+
+    WAction<WPacketPlayInArmAnimation> arm =  packet -> {
+        // We want to go ahead and lower the buffer every time they miss the bot to help prevent false positives
+        if(buffer2 > 0) buffer2-= 0.25f;
+    };
 
     WAction<WPacketPlayInUseEntity> packet = packet -> {
         val optional = player.getEntityLocationHandler().getFakeMob(packet.getEntityId());
@@ -25,5 +32,12 @@ public class KABot extends Check {
                 flag("Attacked player without attacking bot!");
             }
         } else buffer = 0;
+
+        if(player.getMob().getEntityId() == packet.getEntityId()) {
+            if(++buffer2 > 3) {
+                buffer = 2;
+                flag("Player attacked bot");
+            }
+        } else buffer2 = 0;
     };
 }

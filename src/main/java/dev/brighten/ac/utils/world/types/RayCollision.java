@@ -20,6 +20,7 @@ import org.bukkit.util.Vector;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class RayCollision implements CollisionBox {
@@ -210,6 +211,11 @@ public class RayCollision implements CollisionBox {
 
     @Override
     public void downCast(List<SimpleCollisionBox> list) {/*Do Nothing, Ray cannot be down-casted*/}
+
+    @Override
+    public List<SimpleCollisionBox> downCast() {
+        return Collections.emptyList();
+    }
 
     @Override
     public boolean isNull() {

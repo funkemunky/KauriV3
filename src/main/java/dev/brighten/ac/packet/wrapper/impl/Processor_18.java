@@ -793,6 +793,26 @@ public class Processor_18 implements PacketConverter {
         return new WPacketPlayOutMapChunkBulk(chunks);
     }
 
+    @Override
+    public WPacketPlayInClientCommand processInClientCommand(Object packet) {
+        PacketPlayInClientCommand clientCommand = (PacketPlayInClientCommand) packet;
+
+        return new WPacketPlayInClientCommand(WPacketPlayInClientCommand
+                .WrappedEnumClientCommand.valueOf(clientCommand.a().name()));
+    }
+
+    @Override
+    public WPacketPlayInWindowClick processInWindowClick(Object packet) {
+        PacketPlayInWindowClick windowClick = (PacketPlayInWindowClick) packet;
+
+
+        return WPacketPlayInWindowClick.builder().windowId(windowClick.a())
+                .slot(windowClick.b()).button(windowClick.c())
+                .action(windowClick.d()).mode(windowClick.f())
+                .clickedItem(windowClick.e() == null ? null : CraftItemStack.asBukkitCopy(windowClick.e()))
+                .build();
+    }
+
     private static void processChunk(byte[] locs, int size, int chunkX, int chunkZ, boolean groundUp,
                                 Map<IntVector, WPacketPlayOutMapChunk.MinBlock> blocks) {
         ChunkSection[] sections = new ChunkSection[16];

@@ -24,6 +24,12 @@ public class MathUtils {
         return to.subtract(from).length();
     }
 
+    public static int angularDistance(double alpha, double beta) {
+        while (alpha < 0) alpha += 360;
+        while (beta < 0) beta += 360;
+        double phi = Math.abs(beta - alpha) % 360;
+        return (int) (phi > 180 ? 360 - phi : phi);
+    }
     public static boolean playerMoved(Location from, Location to) {
         return playerMoved(from.toVector(), to.toVector());
     }

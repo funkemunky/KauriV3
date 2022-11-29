@@ -12,10 +12,14 @@ import dev.brighten.ac.utils.MathHelper;
 import dev.brighten.ac.utils.math.IntVector;
 import dev.brighten.ac.utils.timer.Timer;
 import dev.brighten.ac.utils.timer.impl.TickTimer;
+import lombok.AllArgsConstructor;
 import lombok.val;
 import org.bukkit.Material;
 import org.bukkit.craftbukkit.v1_8_R3.util.CraftMagicNumbers;
 import org.bukkit.potion.PotionEffectType;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @CheckData(name = "Velocity (Horizontal)", checkId = "velocityb", type = CheckType.MOVEMENT)
 public class VelocityB extends Check {
@@ -37,7 +41,6 @@ public class VelocityB extends Check {
     }
 
     private double pvX, pvZ;
-    private boolean useEntity, sprint;
     private int ticks;
     private double buffer;
     private float friction;
@@ -74,155 +77,128 @@ public class VelocityB extends Check {
             double pmotionx = 0, pmotionz = 0;
             boolean onGround = player.getMovement().getFrom().isOnGround();
 
-            loop:
-            {
-                for (int f = -1; f < 2; f++) {
-                    for (int s = -1; s < 2; s++) {
-                        for (boolean sprinting : TRUE_FALSE) {
-                            for (int fastMath = 0; fastMath <= 2; fastMath++) {
-                                for (boolean attack : TRUE_FALSE) {
-                                    for (boolean using : TRUE_FALSE) {
-                                        for (boolean sneaking : TRUE_FALSE) {
-                                            for (boolean jumped : TRUE_FALSE) {
+            val speed = player.getPotionHandler().getEffectByType(PotionEffectType.SPEED);
+            val slow = player.getPotionHandler().getEffectByType(PotionEffectType.SLOW);
 
-                                                float forward = f, strafe = s;
+            for (Iteration iteration : iterations) {
+                float forward = iteration.f, strafe = iteration.s;
 
-                                                if (sprinting && forward <= 0) {
-                                                    continue;
-                                                }
+                if (iteration.sneaking) {
+                    forward *= 0.3;
+                    strafe *= 0.3;
+                }
 
-                                                if (sneaking) {
-                                                    forward *= 0.3;
-                                                    strafe *= 0.3;
-                                                }
+                float friction = CraftMagicNumbers.getBlock(underMaterial).frictionFactor;
 
-                                                float friction = CraftMagicNumbers.getBlock(underMaterial).frictionFactor;
+                if (iteration.using) {
+                    forward *= 0.2;
+                    strafe *= 0.2;
+                }
 
-                                                if (using) {
-                                                    forward *= 0.2;
-                                                    strafe *= 0.2;
-                                                }
+                //Multiplying by 0.98 like in client
+                forward *= 0.9800000190734863F;
+                strafe *= 0.9800000190734863F;
 
-                                                //Multiplying by 0.98 like in client
-                                                forward *= 0.9800000190734863F;
-                                                strafe *= 0.9800000190734863F;
+                double aiMoveSpeed = player.getBukkitPlayer().getWalkSpeed() / 2;
 
-                                                double aiMoveSpeed = player.getBukkitPlayer().getWalkSpeed() / 2;
+                float drag = 0.91f;
+                double lmotionX = pvX,
+                        lmotionZ = pvZ;
 
-                                                float drag = 0.91f;
-                                                double lmotionX = pvX,
-                                                        lmotionZ = pvZ;
+                //Running multiplication done after previous prediction
+                if (player.getPlayerVersion().isOrAbove(ProtocolVersion.V1_9)) {
+                    if (Math.abs(lmotionX) < 0.003)
+                        lmotionX = 0;
+                    if (Math.abs(lmotionZ) < 0.003)
+                        lmotionZ = 0;
+                } else {
+                    if (Math.abs(lmotionX) < 0.005)
+                        lmotionX = 0;
+                    if (Math.abs(lmotionZ) < 0.005)
+                        lmotionZ = 0;
+                }
 
-                                                //lmotionX *= (lastLastClientGround ? lfriction : 1) * 0.9100000262260437D;
-                                                //lmotionZ *= (lastLastClientGround ? lfriction : 1) * 0.9100000262260437D;
+                //Less than 0.05
+                if (((lmotionX * lmotionX) + (lmotionZ * lmotionZ)) < 0.0025 && player.getMovement().getDeltaXZ() < 0.2) {
+                    break check;
+                }
+                // Attack slowdown
+                if (iteration.attack) {
+                    lmotionX *= 0.6;
+                    lmotionZ *= 0.6;
+                }
 
-                                                //Running multiplication done after previous prediction
-                                                if (player.getPlayerVersion().isOrAbove(ProtocolVersion.V1_9)) {
-                                                    if (Math.abs(lmotionX) < 0.003)
-                                                        lmotionX = 0;
-                                                    if (Math.abs(lmotionZ) < 0.003)
-                                                        lmotionZ = 0;
-                                                } else {
-                                                    if (Math.abs(lmotionX) < 0.005)
-                                                        lmotionX = 0;
-                                                    if (Math.abs(lmotionZ) < 0.005)
-                                                        lmotionZ = 0;
-                                                }
+                if (iteration.sprinting)
+                    aiMoveSpeed += aiMoveSpeed * 0.30000001192092896D;
 
-                                                //Less than 0.05
-                                                if (((lmotionX * lmotionX) + (lmotionZ * lmotionZ)) < 0.0025 && player.getMovement().getDeltaXZ() < 0.2) {
-                                                    break check;
-                                                }
-                                                // Attack slowdown
-                                                if (attack) {
-                                                    lmotionX *= 0.6;
-                                                    lmotionZ *= 0.6;
-                                                }
+                if (speed.isPresent())
+                    aiMoveSpeed += (speed.get().getAmplifier() + 1) * (double) 0.20000000298023224D * aiMoveSpeed;
+                if (slow.isPresent())
+                    aiMoveSpeed += (slow.get().getAmplifier() + 1) * (double) -0.15000000596046448D * aiMoveSpeed;
 
-                                                if (sprinting)
-                                                    aiMoveSpeed += aiMoveSpeed * 0.30000001192092896D;
+                float f5;
+                if (onGround) {
+                    drag *= friction;
 
-                                                if (player.getPotionHandler().hasPotionEffect(PotionEffectType.SPEED))
-                                                    aiMoveSpeed += (player.getPotionHandler().getEffectByType(PotionEffectType.SPEED)
-                                                            .get()
-                                                            .getAmplifier() + 1) * (double) 0.20000000298023224D * aiMoveSpeed;
-                                                if (player.getPotionHandler().hasPotionEffect(PotionEffectType.SLOW))
-                                                    aiMoveSpeed += (player.getPotionHandler().getEffectByType(PotionEffectType.SLOW)
-                                                            .get()
-                                                            .getAmplifier() + 1) * (double) -0.15000000596046448D * aiMoveSpeed;
+                    f5 = (float) (aiMoveSpeed * (0.16277136F / (drag * drag * drag)));
 
-                                                float f5;
-                                                if (onGround) {
-                                                    drag *= friction;
-
-                                                    f5 = (float) (aiMoveSpeed * (0.16277136F / (drag * drag * drag)));
-
-                                                    if (sprinting && jumped) {
-                                                        float rot = player.getMovement().getTo().getLoc().yaw * 0.017453292F;
-                                                        lmotionX -= sin(fastMath, rot) * 0.2F;
-                                                        lmotionZ += cos(fastMath, rot) * 0.2F;
-                                                    }
-
-                                                } else f5 = sprinting ? 0.025999999F : 0.02f;
-
-                                                if (player.getPlayerVersion().isOrAbove(ProtocolVersion.V1_9)) {
-                                                    double keyedMotion = forward * forward + strafe * strafe;
-
-                                                    if (keyedMotion >= 1.0E-4F) {
-                                                        keyedMotion = f5 / Math.max(1.0, Math.sqrt(keyedMotion));
-                                                        forward *= keyedMotion;
-                                                        strafe *= keyedMotion;
-
-                                                        final float yawSin = sin(fastMath,
-                                                                player.getMovement().getTo().getLoc().yaw * (float) Math.PI / 180.F),
-                                                                yawCos = cos(fastMath,
-                                                                        player.getMovement().getTo().getLoc().yaw * (float) Math.PI / 180.F);
-
-                                                        lmotionX += (strafe * yawCos - forward * yawSin);
-                                                        lmotionZ += (forward * yawCos + strafe * yawSin);
-                                                    }
-                                                } else {
-                                                    float keyedMotion = forward * forward + strafe * strafe;
-
-                                                    if (keyedMotion >= 1.0E-4F) {
-                                                        keyedMotion = f5 / Math.max(1.0f, MathHelper.sqrt_float(keyedMotion));
-                                                        forward *= keyedMotion;
-                                                        strafe *= keyedMotion;
-
-                                                        final float yawSin = sin(fastMath,
-                                                                player.getMovement().getTo().getLoc().yaw * (float) Math.PI / 180.F),
-                                                                yawCos = cos(fastMath,
-                                                                        player.getMovement().getTo().getLoc().yaw * (float) Math.PI / 180.F);
-
-                                                        lmotionX += (strafe * yawCos - forward * yawSin);
-                                                        lmotionZ += (forward * yawCos + strafe * yawSin);
-                                                    }
-                                                }
-                                                double diffX = player.getMovement().getDeltaX() - lmotionX,
-                                                        diffZ = player.getMovement().getDeltaZ() - lmotionZ;
-                                                double delta = (diffX * diffX) + (diffZ * diffZ);
-
-                                                if (delta < smallestDelta) {
-                                                    smallestDelta = delta;
-                                                    pmotionx = lmotionX;
-                                                    pmotionz = lmotionZ;
-                                                    this.friction = friction;
-
-                                                    if (delta < 4E-17) {
-                                                        this.strafe = s * 0.98f;
-                                                        this.forward = f * 0.98f;
-
-                                                        break loop;
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
+                    if (iteration.sprinting && iteration.jumped) {
+                        float rot = player.getMovement().getTo().getLoc().yaw * 0.017453292F;
+                        lmotionX -= sin(iteration.fastMath, rot) * 0.2F;
+                        lmotionZ += cos(iteration.fastMath, rot) * 0.2F;
                     }
 
+                } else f5 = iteration.sprinting ? 0.025999999F : 0.02f;
+
+                if (player.getPlayerVersion().isOrAbove(ProtocolVersion.V1_9)) {
+                    double keyedMotion = forward * forward + strafe * strafe;
+
+                    if (keyedMotion >= 1.0E-4F) {
+                        keyedMotion = f5 / Math.max(1.0, Math.sqrt(keyedMotion));
+                        forward *= keyedMotion;
+                        strafe *= keyedMotion;
+
+                        final float yawSin = sin(iteration.fastMath,
+                                player.getMovement().getTo().getLoc().yaw * (float) Math.PI / 180.F),
+                                yawCos = cos(iteration.fastMath,
+                                        player.getMovement().getTo().getLoc().yaw * (float) Math.PI / 180.F);
+
+                        lmotionX += (strafe * yawCos - forward * yawSin);
+                        lmotionZ += (forward * yawCos + strafe * yawSin);
+                    }
+                } else {
+                    float keyedMotion = forward * forward + strafe * strafe;
+
+                    if (keyedMotion >= 1.0E-4F) {
+                        keyedMotion = f5 / Math.max(1.0f, MathHelper.sqrt_float(keyedMotion));
+                        forward *= keyedMotion;
+                        strafe *= keyedMotion;
+
+                        final float yawSin = sin(iteration.fastMath,
+                                player.getMovement().getTo().getLoc().yaw * (float) Math.PI / 180.F),
+                                yawCos = cos(iteration.fastMath,
+                                        player.getMovement().getTo().getLoc().yaw * (float) Math.PI / 180.F);
+
+                        lmotionX += (strafe * yawCos - forward * yawSin);
+                        lmotionZ += (forward * yawCos + strafe * yawSin);
+                    }
+                }
+                double diffX = player.getMovement().getDeltaX() - lmotionX,
+                        diffZ = player.getMovement().getDeltaZ() - lmotionZ;
+                double delta = (diffX * diffX) + (diffZ * diffZ);
+
+                if (delta < smallestDelta) {
+                    smallestDelta = delta;
+                    pmotionx = lmotionX;
+                    pmotionz = lmotionZ;
+                    this.friction = friction;
+
+                    if (delta < 4E-17) {
+                        this.strafe = iteration.s * 0.98f;
+                        this.forward = iteration.f * 0.98f;
+
+                        break;
+                    }
                 }
             }
 
@@ -249,6 +225,48 @@ public class VelocityB extends Check {
         }
         previousFrom = player.getMovement().getFrom().getLoc().clone();
     };
+
+    /*
+     for (int f = -1; f < 2; f++) {
+                    for (int s = -1; s < 2; s++) {
+                        for (boolean sprinting : TRUE_FALSE) {
+                            for (int fastMath = 0; fastMath <= 2; fastMath++) {
+                                for (boolean attack : TRUE_FALSE) {
+                                    for (boolean using : TRUE_FALSE) {
+                                        for (boolean sneaking : TRUE_FALSE) {
+                                            for (boolean jumped : TRUE_FALSE) {
+     */
+
+    @AllArgsConstructor
+    private static class Iteration {
+        final int f, s, fastMath;
+        final boolean sprinting, attack, using, sneaking, jumped;
+    }
+
+    private static final List<Iteration> iterations = new ArrayList<>();
+
+    static {
+        for (int f = -1; f < 2; f++) {
+            for (int s = -1; s < 2; s++) {
+                for (boolean sprinting : TRUE_FALSE) {
+                    for (int fastMath = 0; fastMath <= 2; fastMath++) {
+                        for (boolean attack : TRUE_FALSE) {
+                            for (boolean using : TRUE_FALSE) {
+                                for (boolean sneaking : TRUE_FALSE) {
+                                    for (boolean jumped : TRUE_FALSE) {
+                                        if(sprinting && f <= 0) continue;
+                                        if(jumped && !sprinting) continue;
+                                        iterations.add(new Iteration(f, s, fastMath, sprinting,
+                                                attack, using, sneaking, jumped));
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     private static final float[] SIN_TABLE_FAST = new float[4096], SIN_TABLE_FAST_NEW = new float[4096];
     private static final float[] SIN_TABLE = new float[65536];

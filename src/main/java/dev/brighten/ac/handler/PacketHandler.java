@@ -294,6 +294,9 @@ public class PacketHandler {
                                 player.getEntityLocationHandler().removeFakeMob(targetId);
                                 player.getInfo().lastFakeBotHit.reset();
                             });
+                    if(player.getMob().getEntityId() == packet.getEntityId()) {
+                        player.getInfo().botAttack.reset();
+                    }
                 } else {
                     Entity target = packet.getEntity(player.getBukkitPlayer().getWorld());
 
@@ -336,6 +339,32 @@ public class PacketHandler {
 
                 player.getInfo().getLastBlockDig().reset();
                 player.getBlockUpdateHandler().onDig(packet);
+                break;
+            }
+            case CLIENT_COMMAND: {
+                WPacketPlayInClientCommand packet = (WPacketPlayInClientCommand) packetObject;
+
+                if(packet.getCommand() == WPacketPlayInClientCommand.WrappedEnumClientCommand
+                        .OPEN_INVENTORY_ACHIEVEMENT) {
+                    player.getInfo().setInventoryOpen(true);
+                    player.getInfo().lastInventoryOpen.reset();
+                    return true;
+                }
+                break;
+            }
+            case CLIENT_CLOSE_WINDOW: {
+                player.getInfo().setInventoryOpen(false);
+                break;
+            }
+            case SERVER_CLOSE_WINDOW: {
+                player.runKeepaliveAction(ka -> player.getInfo().setInventoryOpen(false));
+                break;
+            }
+            case SERVER_OPEN_WINDOW: {
+                player.runKeepaliveAction(ka -> {
+                    player.getInfo().setInventoryOpen(true);
+                    player.getInfo().lastInventoryOpen.reset();
+                });
                 break;
             }
         }

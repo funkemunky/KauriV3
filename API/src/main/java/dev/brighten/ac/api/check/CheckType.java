@@ -9,6 +9,7 @@ public enum CheckType {
     CHAT,
     CRASH,
     EXPLOIT,
+    INVENTORY,
     INTERACT,
     ORDER,
     BADPACKETS

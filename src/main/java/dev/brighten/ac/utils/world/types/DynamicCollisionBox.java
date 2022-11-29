@@ -8,6 +8,7 @@ import dev.brighten.ac.utils.world.CollisionBox;
 import lombok.Setter;
 import org.bukkit.entity.Player;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class DynamicCollisionBox implements CollisionBox {
@@ -68,6 +69,15 @@ public class DynamicCollisionBox implements CollisionBox {
     @Override
     public void downCast(List<SimpleCollisionBox> list) {
         box.fetch(version, player, block).offset(x,y,z).downCast(list);
+    }
+
+    @Override
+    public List<SimpleCollisionBox> downCast() {
+        List<SimpleCollisionBox> boxes = new ArrayList<>();
+
+        box.fetch(version, player, block).offset(x,y,z).downCast(boxes);
+
+        return boxes;
     }
 
     @Override

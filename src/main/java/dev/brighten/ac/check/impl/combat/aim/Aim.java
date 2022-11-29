@@ -49,8 +49,6 @@ public class Aim extends Check {
             return;
         }
 
-        boolean increasing = deltaYaw > deltaX || deltaPitch > deltaY;
-
         boolean flagged = false;
         if(player.getMovement().getPitchGCD() < 0.007 && lastGrid.isPassed()
                 && !player.getMovement().isCinematic()
@@ -69,7 +67,7 @@ public class Aim extends Check {
     /*
      * This is an attempt to reverse the logistics of cinematic camera without having to run a full on prediction using
      * mouse filters. Otherwise, we would need to run more heavy calculations which is not really production friendly.
-     * It may be more accurate but it is not really worth it if in the end of the day we're eating server performance.
+     * It may be more accurate, but it is not really worth it if in the end of the day we're eating server performance.
      */
     protected static double getGrid(final List<Float> entry) {
         /*

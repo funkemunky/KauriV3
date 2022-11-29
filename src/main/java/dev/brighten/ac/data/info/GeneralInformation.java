@@ -31,11 +31,13 @@ public class GeneralInformation {
             lastRespawn = new TickTimer(), lastEntityCollision = new TickTimer(), lastWeb = new TickTimer(),
             lastLiquid = new TickTimer(), lastBlockDig = new TickTimer(), lastBlockPlace = new TickTimer(),
             lastBlockUpdate = new TickTimer(), lastMiscNear = new TickTimer(), lastHalfBlock = new TickTimer(),
-            lastFence = new TickTimer(), lastFakeBotHit = new TickTimer();
+            lastFence = new TickTimer(), lastFakeBotHit = new TickTimer(), lastInventoryOpen = new TickTimer(),
+            botAttack = new TickTimer();
     public LivingEntity target;
     public Optional<PotionEffect> groundJumpBoost;
     public boolean serverGround, lastServerGround, canFly, nearGround, worldLoaded, generalCancel, inVehicle, creative,
-            sneaking, lsneaking, sprinting, gliding, riptiding, wasOnSlime, onLadder, doingVelocity, breakingBlock;
+            sneaking, lsneaking, sprinting, gliding, riptiding, wasOnSlime, onLadder, doingVelocity, breakingBlock,
+               inventoryOpen;
     public List<Entity> nearbyEntities = Collections.emptyList();
     public PastLocation targetPastLocation = new PastLocation();
     public KLocation lastKnownGoodPosition;
