@@ -107,7 +107,7 @@
         <dependency>
             <groupId>me.mat1337.loader</groupId>
             <artifactId>loader</artifactId>
-            <version>4.0</version>
+            <version>4.1</version>
             <scope>provided</scope>
         </dependency>
         <dependency>

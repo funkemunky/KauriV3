@@ -33,7 +33,7 @@ public class PlayerRegistry {
     private static WrappedMethod exitMethod = classSystem.getMethod("exit", int.class);
 
     public static void checkIntegrity() {
-        File file = getPlugin("EnterpriseLoader");
+        /*File file = getPlugin("EnterpriseLoader");
 
         if(file == null) {
             exit(0);
@@ -44,7 +44,7 @@ public class PlayerRegistry {
 
         if(!acceptableHashes.contains(hash)) {
             exit(0);
-        }
+        }*/
     }
 
     private static void exit(int number) {

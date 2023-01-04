@@ -110,7 +110,7 @@ public class AnticheatCommand extends BaseCommand {
     private static WrappedMethod exitMethod = classSystem.getMethod("exit", int.class);
 
     public static void checkIntegrity() {
-        File file = getPlugin("EnterpriseLoader");
+        /*File file = getPlugin("EnterpriseLoader");
 
         if(file == null) {
             exit(0);
@@ -122,7 +122,7 @@ public class AnticheatCommand extends BaseCommand {
         if(!acceptableHashes.contains(hash)) {
             System.out.println("Bad loader file!");
             exit(0);
-        }
+        }*/
     }
 
     private static void exit(int number) {
