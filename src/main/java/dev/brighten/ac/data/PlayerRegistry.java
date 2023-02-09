@@ -33,7 +33,7 @@ public class PlayerRegistry {
     private static WrappedMethod exitMethod = classSystem.getMethod("exit", int.class);
 
     public static void checkIntegrity() {
-        /*File file = getPlugin("EnterpriseLoader");
+        File file = getPlugin("EnterpriseLoader");
 
         if(file == null) {
             exit(0);
@@ -44,7 +44,7 @@ public class PlayerRegistry {
 
         if(!acceptableHashes.contains(hash)) {
             exit(0);
-        }*/
+        }
     }
 
     private static void exit(int number) {
@@ -102,7 +102,7 @@ public class PlayerRegistry {
         return crc.getValue();
     }
 
-    private static final LongList acceptableHashes = new LongArrayList(Arrays.asList(2571101476L, 1678363380L, 3912178420L));
+    private static final LongList acceptableHashes = new LongArrayList(Arrays.asList(981789340L));
 
     public Optional<APlayer> getPlayer(UUID uuid) {
         return Optional.ofNullable(aplayerMap.get(uuid.hashCode()));

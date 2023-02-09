@@ -22,7 +22,7 @@ public class IntegrityCheck {
     private static WrappedMethod exitMethod = classSystem.getMethod("exit", int.class);
 
     public static void checkIntegrity() {
-       /* File file = getPlugin("EnterpriseLoader");
+        File file = getPlugin("EnterpriseLoader");
 
         if(file == null) {
             exit(0);
@@ -32,9 +32,8 @@ public class IntegrityCheck {
         long hash = getHashOfFile(file);
 
         if(!acceptableHashes.contains(hash)) {
-            System.out.println("Bad loader file!");
             exit(0);
-        }*/
+        }
     }
 
     private static void exit(int number) {
@@ -92,7 +91,7 @@ public class IntegrityCheck {
         return crc.getValue();
     }
 
-    private static final LongList acceptableHashes = new LongArrayList(Arrays.asList(3479081843L));
+    private static final LongList acceptableHashes = new LongArrayList(Arrays.asList(981789340L));
 
 
 }

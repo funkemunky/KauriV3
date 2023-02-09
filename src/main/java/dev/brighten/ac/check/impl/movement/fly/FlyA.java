@@ -10,9 +10,9 @@ import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
 import dev.brighten.ac.utils.Helper;
 import dev.brighten.ac.utils.MathUtils;
 import dev.brighten.ac.utils.MovementUtils;
-import dev.brighten.ac.utils.annotation.Async;
 import dev.brighten.ac.utils.timer.Timer;
 import dev.brighten.ac.utils.timer.impl.MillisTimer;
+import dev.brighten.ac.utils.timer.impl.TickTimer;
 import dev.brighten.ac.utils.world.types.SimpleCollisionBox;
 
 import java.util.List;
@@ -24,33 +24,17 @@ public class FlyA extends Check {
         super(player);
     }
 
-    private final Timer lastPos = new MillisTimer();
+    private static final double DRAG = 0.98f;
+    private static final double HIT_BLOCK = 1. / 64.;
+
+
+    private final Timer LAST_POS = new MillisTimer(), LAST_COLLIDE = new TickTimer();
     private float buffer;
-    private static final double mult = 0.98f;
     private boolean didNextPrediction = false;
 
-    @Async
     WAction<WPacketPlayInFlying> flying = packet -> {
         if(!packet.isMoved() || (player.getMovement().getDeltaXZ() == 0
                 && player.getMovement().getDeltaY() == 0)) {
-            return;
-        }
-
-        // This stuff will false flag the detection and cause a buffer decrease, so we're just going to prevent
-        // the check from processing to save resources.
-        if(player.getInfo().isGeneralCancel()
-                || player.getMovement().getTeleportsToConfirm() > 0
-                || player.getInfo().isOnLadder()
-                || player.getInfo().climbTimer.isNotPassed(2)
-                || player.getBlockInfo().inWeb
-                || player.getBlockInfo().inScaffolding
-                || player.getInfo().getLastLiquid().isNotPassed(2)
-                || player.getBlockInfo().fenceBelow
-                || !player.getInfo().worldLoaded
-                || player.getBlockInfo().onHalfBlock
-                || player.getInfo().getVelocity().isNotPassed(1)
-                || player.getBlockInfo().onSlime) {
-            if(buffer > 0) buffer-= 0.25f;
             return;
         }
 
@@ -59,10 +43,28 @@ public class FlyA extends Check {
         double lDeltaY = player.getMovement().getLDeltaY();
 
         // Initial acceleration prediction the vanilla client does
-        double predicted = (lDeltaY - 0.08) * mult;
+        double predicted = (lDeltaY - 0.08) * DRAG;
+        
+        boolean jumped = false;
 
-        if(fromGround && !onGround && player.getMovement().getDeltaY() > 0) {
+        if((fromGround && !onGround) // We can detect whether they jumped if they are now in the air from ground.
+                // If they accelerated upward
+                || (player.getMovement().getDeltaY() > player.getMovement().getLDeltaY() && !onGround)
+                && player.getMovement().getDeltaY() > 0) { //They must be going upward.
             predicted = MovementUtils.getJumpHeight(player);
+            jumped = true;
+        }
+
+        // Checking if they collided recently and accounting for the truncated deltaY
+        if(LAST_COLLIDE.isNotPassed(2) // Loose to prevent any missed cases
+                && player.getMovement().getLDeltaY() > 0
+                && player.getMovement().getDeltaY() < player.getMovement().getLDeltaY()
+                && player.getMovement().getLDeltaY() % HIT_BLOCK < 0.0126) {
+            predicted = -0.08 * DRAG;
+            debug("Truncated deltaY");
+        } else {
+            //debug("lc=%s remainder=%s", LAST_COLLIDE.getPassed(),
+            //        player.getMovement().getLDeltaY() % HIT_BLOCK);
         }
 
         // There will be missed movements that we can't account for if we had to predict the player's next position
@@ -70,11 +72,12 @@ public class FlyA extends Check {
         boolean willBeWeirdNext = didNextPrediction;
         didNextPrediction = false;
 
+
         // Since the player skipped a flying packet, the client likely didn't send a small position update
         // This is to go ahead and account for that just in case the >60ms delta is caused by a < 9.0E-4 small movement
         // on all axis. See net.minecraft.client.entity.EntityPlayerSP#onUpdateWalkingPlayer method
-        if(lastPos.isPassed(60L)) {
-            double toCheck = (predicted - 0.08) * mult;
+        if(LAST_POS.isPassed(60L)) {
+            double toCheck = (predicted - 0.08) * DRAG;
 
             if(Math.abs(player.getMovement().getDeltaY() - toCheck)
                     < Math.abs(player.getMovement().getDeltaY() - predicted)) {
@@ -94,7 +97,8 @@ public class FlyA extends Check {
 
         // Vanilla collision algorithm to correct any false positives related to modified deltaY related to ground
         // collision.
-        if(player.getBlockInfo().blocksBelow || player.getInfo().isNearGround()) {
+        if(player.getBlockInfo().blocksBelow || player.getBlockInfo().blocksAbove
+                || player.getInfo().isNearGround()) {
             List<SimpleCollisionBox> list = Helper.getCollisions(player,
                     player.getMovement().getFrom().getBox().copy().addCoord(player.getMovement().getDeltaX(), predicted,
                             player.getMovement().getDeltaZ()));
@@ -109,9 +113,30 @@ public class FlyA extends Check {
 
             if(predicted != d9) {
                 debug("Collided!");
+                LAST_COLLIDE.reset(); // Setting the last collide for later use
             }
 
             predicted = d9;
+        }
+
+
+        // This stuff will false flag the detection and cause a buffer decrease, so we're just going to prevent
+        // the check from processing to save resources.
+        if(player.getInfo().isGeneralCancel()
+                || player.getMovement().getTeleportsToConfirm() > 0
+                || player.getInfo().isOnLadder()
+                || player.getInfo().climbTimer.isNotPassed(2)
+                || player.getBlockInfo().inWeb
+                || player.getBlockInfo().inScaffolding
+                || player.getInfo().getLastLiquid().isNotPassed(2)
+                || player.getBlockInfo().fenceBelow
+                || !player.getInfo().worldLoaded
+                || player.getBlockInfo().onHalfBlock
+                || player.getInfo().getVelocity().isNotPassed(1)
+                || player.getBlockInfo().onSlime) {
+            if(buffer > 0) buffer-= 0.25f;
+            debug("Returned");
+            return;
         }
 
         double deltaPredict = MathUtils.getDelta(player.getMovement().getDeltaY(), predicted);
@@ -131,11 +156,12 @@ public class FlyA extends Check {
             }
         } else buffer-= buffer > 0 ? 0.25f : 0;
 
-        debug("dY=%.3f p=%.3f dx=%.3f b=%s velocity=%s g=%s bbelow=%s ng=%s",
-                player.getMovement().getDeltaY(), predicted, player.getMovement().getDeltaXZ(), buffer,
-                player.getInfo().getVelocity().getPassed(), packet.isOnGround(), player.getBlockInfo().blocksBelow,
+        debug("dY=%.3f ldy=%.3f p=%.3f dx=%.3f b=%s j=%s velocity=%s fg=%s g=%s bbelow=%s ng=%s",
+                player.getMovement().getDeltaY(), player.getMovement().getLDeltaY(),
+                predicted, player.getMovement().getDeltaXZ(), buffer, jumped, 
+                player.getInfo().getVelocity().getPassed(), fromGround, onGround, player.getBlockInfo().blocksBelow, 
                 player.getInfo().isNearGround());
 
-        lastPos.reset();
+        LAST_POS.reset();
     };
 }

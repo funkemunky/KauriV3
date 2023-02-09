@@ -33,7 +33,7 @@ public class Horizontal extends Check {
     private int lastFlying;
 
     private KLocation previousFrom;
-    private Vector motion = new Vector(0, 0, 0);
+    private Vector motion = new Vector(0, 0, 0), lmotion = new Vector(0,0,0);
     private static final boolean[] TRUE_FALSE = new boolean[]{true, false};
 
     public double strafe, forward;
@@ -52,6 +52,7 @@ public class Horizontal extends Check {
 
             Optional<InventoryA> inventoryA = find(InventoryA.class);
 
+            lmotion = motion;
             if (!packet.isMoved()
                     || player.getMovement().getMoveTicks() == 0
                     || player.getMovement().getLastTeleport().isNotPassed(1)
@@ -470,10 +471,7 @@ public class Horizontal extends Check {
                         this.strafe = it.s * 0.98f;
                         this.forward = it.f * 0.98f;
 
-                        if (precision < 1E-11)
-                            motion = new Vector(lmotionX, lmotionY, lmotionZ);
-                        else
-                            motion = new Vector(player.getMovement().getDeltaX(), player.getMovement().getDeltaY(), player.getMovement().getDeltaZ());
+                        motion = new Vector(lmotionX, lmotionY, lmotionZ);
 
                         if (player.getInfo().getLastCancel().isPassed(2))
                             player.getInfo()
@@ -481,9 +479,8 @@ public class Horizontal extends Check {
                                             .getMovement().getFrom().getLoc()
                                             .clone());
 
-                        if(deltaAll < 1E-18) {
+                        if(deltaAll < 1E-6) {
                             found = true;
-                            break;
                         }
                     }
                 }
@@ -512,6 +509,7 @@ public class Horizontal extends Check {
 
             if (smallestDeltaXZ > (precision)
                     && !player.getBlockInfo().collidesHorizontally
+                    && !player.getBlockInfo().blocksAbove
                     && player.getMovement().getDeltaXZ() > 0.1) {
                 if ((buffer += smallestDeltaXZ > 58E-5 ? 1 : 0.5) > 1) {
                     buffer = Math.min(3.5f, buffer); //Ensuring we don't have a run-away buffer
@@ -522,8 +520,9 @@ public class Horizontal extends Check {
 
             } else if (buffer > 0) buffer -= 0.05f;
 
-            debug("[%.1f] smallest=%.7f dxz=%.2f tags=[%s]", buffer, smallestDeltaXZ,
-                    player.getMovement().getDeltaXZ(), builtTags);
+            debug("[%.1f] f=%s smallest=%.7f dxz=%.2f dy=%.3f ldy=%.3f tags=[%s]", buffer, found, smallestDeltaXZ,
+                    player.getMovement().getDeltaXZ(), motion.getY(),
+                    lmotion.getY(), builtTags);
         }
 
         if (ProtocolVersion.getGameVersion().isBelow(ProtocolVersion.V1_9)) {
