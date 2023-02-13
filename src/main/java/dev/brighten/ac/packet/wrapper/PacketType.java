@@ -70,6 +70,7 @@ public enum PacketType {
     STATUS_START("PacketStatusInStart"),
     LOGIN_START("PacketLoginInStart"),
     REMOVE_EFFECT("PacketPlayOutRemoveEntityEffect"),
+    GAME_STATE_CHANGE("PacketPlayOutGameStateChange"),
     UNKNOWN();
 
     PacketType(String... packetIds) {
@@ -157,6 +158,8 @@ public enum PacketType {
                 return convert.processInClientCommand(object);
             case WINDOW_CLICK:
                 return convert.processInWindowClick(object);
+            case GAME_STATE_CHANGE:
+                return convert.processOutGameStateChange(object);
             default:
                 return object;
         }

@@ -40,8 +40,8 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.8.1</version>
                 <configuration>
-                    <source>8</source>
-                    <target>8</target>
+                    <source>17</source>
+                    <target>17</target>
                     <optimize>true</optimize>
                     <compilerArgument>-XDignore.symbol.file</compilerArgument>
                     <annotationProcessorPaths>
@@ -97,6 +97,12 @@
             <artifactId>lombok</artifactId>
             <version>1.18.24</version>
             <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>me.hydro</groupId>
+            <artifactId>emulator</artifactId>
+            <version>1.1-neo</version>
+            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.github.spigot</groupId>

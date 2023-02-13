@@ -17,6 +17,9 @@ import dev.brighten.ac.utils.world.types.SimpleCollisionBox;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.val;
+import me.hydro.emulator.object.input.IterationInput;
+import me.hydro.emulator.object.result.IterationResult;
+import me.hydro.emulator.util.Vector;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
@@ -91,6 +94,80 @@ public class MovementHandler {
 
         // Setting from as same location as to
         from.setLoc(to);
+    }
+
+    /**
+     *  // Here we'll build the iteration input object we'll feed into the emulator
+     *         final IterationInput input = IterationInput.builder()
+     *                 .to(new Vector(1, 2, 3)) // location from the flying packet
+     *                 .yaw(5F) // current yaw
+     *                 .ground(false)
+     *                 .jumping(false) // you'll want to bruteforce this
+     *                 .forward(0) // you'll want to bruteforce this
+     *                 .strafing(0) // you'll want to bruteforce this
+     *                 .sprinting(false) // you'll want to bruteforce this
+     *                 .usingItem(false) // you'll want to bruteforce this
+     *                 .hitSlowdown(false) // you'll want to bruteforce this
+     *                 .sneaking(false)
+     *                 .lastReportedBoundingBox(new AxisAlignedBB(0, 0, 0, 0, 0, 0)) // from location, as a bounding box
+     *                 .build();
+     *
+     *         // Run the emulation and get the result
+     *         final IterationResult result = emulator.runIteration(input);
+     *
+     *         // Once we've found our best candidate (in the case of a bruteforce),
+     *         // confirm it to run post actions.
+     *         emulator.confirm(result.getIteration());
+     */
+
+    private static final boolean[] IS_OR_NOT = new boolean[] {true, false};
+    private static final int[] FULL_RANGE = new int[] {-1, 0, -1};
+
+    private static final IterationInput.IterationInputBuilder[] INPUT_BUILDERS = new IterationInput.IterationInputBuilder[288];
+
+    static {
+        int i = 0;
+        for(boolean jumping : IS_OR_NOT) { // 2
+            for(boolean sneaking : IS_OR_NOT) { // 4
+                for(boolean usingItem : IS_OR_NOT) { // 8
+                    for(boolean sprinting : IS_OR_NOT) { // 16
+                        for(boolean hitSlow : IS_OR_NOT) { // 32
+                            for(int forward : FULL_RANGE) { //96
+                                for(int strafe : FULL_RANGE) { // 288
+                                    INPUT_BUILDERS[i] = IterationInput.builder()
+                                            .jumping(jumping)
+                                            .forward(forward)
+                                            .strafing(strafe)
+                                            .sprinting(sprinting)
+                                            .usingItem(usingItem)
+                                            .hitSlowdown(hitSlow)
+                                            .sneaking(sneaking);
+                                    i++;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    public void runEmulation(WPacketPlayInFlying packet) {
+        IterationResult minimum = null;
+        for (IterationInput.IterationInputBuilder inputBuilder : INPUT_BUILDERS) {
+            IterationInput input = inputBuilder.ground(packet.isOnGround())
+                    .to(new Vector(to.getX(), to.getY(), to.getZ()))
+                    .yaw(to.getYaw())
+                    .lastReportedBoundingBox(from.getBox().toNeo())
+                    .build();
+
+           IterationResult result = player.EMULATOR.runIteration(input);
+
+           if(minimum == null || minimum.getOffset() > result.getOffset()) {
+               minimum = result;
+           }
+        }
+        player.EMULATOR.confirm(minimum.getIteration());
     }
 
 
@@ -284,6 +361,8 @@ public class MovementHandler {
                 jumped = false;
             }
         } else jumped = inAir = false;
+
+        runEmulation(packet);
 
         player.getInfo().setGeneralCancel(player.getBukkitPlayer().getAllowFlight()
                 || moveTicks == 0

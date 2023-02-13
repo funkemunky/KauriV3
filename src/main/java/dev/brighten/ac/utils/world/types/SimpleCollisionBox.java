@@ -6,6 +6,7 @@ import dev.brighten.ac.utils.Helper;
 import dev.brighten.ac.utils.KLocation;
 import dev.brighten.ac.utils.reflections.impl.MinecraftReflection;
 import dev.brighten.ac.utils.world.CollisionBox;
+import me.hydro.emulator.util.mcp.AxisAlignedBB;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
@@ -343,6 +344,10 @@ public class SimpleCollisionBox implements CollisionBox {
 
     public <T> T toAxisAlignedBB() {
         return MinecraftReflection.toAABB(this);
+    }
+
+    public AxisAlignedBB toNeo() {
+        return new AxisAlignedBB(minX, minY, minZ, maxX, maxY, maxZ);
     }
 
     public double distance(SimpleCollisionBox box) {

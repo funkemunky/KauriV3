@@ -94,4 +94,8 @@ public interface PacketConverter {
     WPacketPlayInClientCommand processInClientCommand(Object packet);
 
     WPacketPlayInWindowClick processInWindowClick(Object packet);
+
+    WPacketPlayOutGameStateChange processOutGameStateChange(Object packet);
+
+    Object processOutGameStateChange(WPacketPlayOutGameStateChange packet);
 }

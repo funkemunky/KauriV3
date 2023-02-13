@@ -1,10 +1,10 @@
 package dev.brighten.ac.utils;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 public class TagsBuilder {
-    private final List<String> tags = new ArrayList<>();
+    private final Set<String> tags = new HashSet<>();
 
     public TagsBuilder addTag(String string) {
         tags.add(string);
@@ -18,5 +18,9 @@ public class TagsBuilder {
 
     public int getSize() {
         return tags.size();
+    }
+
+    public boolean containsTag(String tag) {
+        return tags.contains(tag);
     }
 }

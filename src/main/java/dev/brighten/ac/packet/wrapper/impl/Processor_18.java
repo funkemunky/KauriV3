@@ -813,6 +813,37 @@ public class Processor_18 implements PacketConverter {
                 .build();
     }
 
+    @SneakyThrows
+    @Override
+    public WPacketPlayOutGameStateChange processOutGameStateChange(Object packet) {
+        PacketPlayOutGameStateChange gameStateChange = (PacketPlayOutGameStateChange) packet;
+        PacketDataSerializer serialized = serialize(gameStateChange);
+        gameStateChange.b(serialized);
+
+        final short reason = serialized.readUnsignedByte();
+        final float value = serialized.readFloat();
+
+
+        return WPacketPlayOutGameStateChange.builder()
+                .reason(reason)
+                .value(value)
+                .build();
+    }
+
+    @SneakyThrows
+    @Override
+    public Object processOutGameStateChange(WPacketPlayOutGameStateChange packet) {
+        PacketPlayOutGameStateChange gameStateChange = new PacketPlayOutGameStateChange();
+        PacketDataSerializer serialized = new PacketDataSerializer(Unpooled.buffer());
+
+        serialized.writeByte(packet.getReason());
+        serialized.writeFloat(packet.getValue());
+
+        gameStateChange.a(serialized);
+
+        return gameStateChange;
+    }
+
     private static void processChunk(byte[] locs, int size, int chunkX, int chunkZ, boolean groundUp,
                                 Map<IntVector, WPacketPlayOutMapChunk.MinBlock> blocks) {
         ChunkSection[] sections = new ChunkSection[16];

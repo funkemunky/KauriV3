@@ -21,17 +21,24 @@ import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.packet.handler.HandlerAbstract;
 import dev.brighten.ac.packet.wrapper.WPacket;
 import dev.brighten.ac.packet.wrapper.objects.WrappedWatchableObject;
-import dev.brighten.ac.utils.KLocation;
-import dev.brighten.ac.utils.RunUtils;
-import dev.brighten.ac.utils.Tuple;
+import dev.brighten.ac.utils.*;
 import dev.brighten.ac.utils.objects.evicting.EvictingList;
 import dev.brighten.ac.utils.reflections.impl.MinecraftReflection;
 import dev.brighten.ac.utils.timer.Timer;
 import dev.brighten.ac.utils.timer.impl.MillisTimer;
 import dev.brighten.ac.utils.world.types.RayCollision;
+import dev.brighten.ac.utils.world.types.SimpleCollisionBox;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.val;
+import me.hydro.emulator.Emulator;
+import me.hydro.emulator.collision.Block;
+import me.hydro.emulator.collision.impl.BlockSlime;
+import me.hydro.emulator.collision.impl.BlockSoulSand;
+import me.hydro.emulator.collision.impl.BlockWeb;
+import me.hydro.emulator.object.input.DataSupplier;
+import me.hydro.emulator.util.mcp.AxisAlignedBB;
+import me.hydro.emulator.util.mcp.BlockPos;
 import net.minecraft.server.v1_8_R3.PacketPlayOutTransaction;
 import org.bukkit.Achievement;
 import org.bukkit.Location;
@@ -43,6 +50,7 @@ import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 
 public class APlayer {
@@ -82,6 +90,41 @@ public class APlayer {
     private ProtocolVersion playerVersion = ProtocolVersion.UNKNOWN;
     @Getter
     private Object playerConnection;
+
+    public final Emulator EMULATOR = new Emulator(new DataSupplier() {
+        @Override
+        public List<AxisAlignedBB> getCollidingBoxes(AxisAlignedBB bb) {
+            return Helper.getCollisions(APlayer.this,
+                            new SimpleCollisionBox(bb.minX, bb.minY, bb.minZ, bb.maxX, bb.maxY, bb.maxZ),
+                            Materials.COLLIDABLE).stream().map(bb2 ->
+                            new AxisAlignedBB(bb2.minX, bb2.minY, bb2.minZ, bb2.maxX, bb2.maxY, bb2.maxZ))
+                    .collect(Collectors.toList());
+        }
+
+        @Override
+        public Block getBlockAt(BlockPos blockPos) {
+            //Optional<org.bukkit.block.Block>
+            val block = BlockUtils.getBlockAsync(
+                    new Location(getBukkitPlayer().getWorld(), blockPos.getX(), blockPos.getY(), blockPos.getZ()));
+
+            if(block.isPresent()) {
+                XMaterial xmaterial = XMaterial.matchXMaterial(block.get().getType());
+
+                switch (xmaterial) {
+                    case SLIME_BLOCK -> {
+                        return new BlockSlime();
+                    }
+                    case SOUL_SAND -> {
+                        return new BlockSoulSand();
+                    }
+                    case COBWEB -> {
+                        return new BlockWeb();
+                    }
+                }
+            }
+            return new Block();
+        }
+    });
 
     public int hitsToCancel;
 
