@@ -111,13 +111,13 @@ public class APlayer {
                 XMaterial xmaterial = XMaterial.matchXMaterial(block.get().getType());
 
                 switch (xmaterial) {
-                    case SLIME_BLOCK -> {
+                    case SLIME_BLOCK: {
                         return new BlockSlime();
                     }
-                    case SOUL_SAND -> {
+                    case SOUL_SAND : {
                         return new BlockSoulSand();
                     }
-                    case COBWEB -> {
+                    case COBWEB: {
                         return new BlockWeb();
                     }
                 }
