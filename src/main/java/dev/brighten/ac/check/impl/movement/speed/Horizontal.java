@@ -19,9 +19,19 @@ public class Horizontal extends Check {
     }
 
     WAction<WPacketPlayInFlying> flying = packet -> {
+        if(!packet.isMoved()) return;
+
         double offset = player.EMULATOR.getOffset();
 
-        debug("offset=%s", offset);
+        if(offset > 1E-6) {
+            if(++buffer > 1) {
+                flag("o=%s", offset);
+            }
+        } else if(buffer > 0) buffer-= 0.1f;
+
+        debug("dx=%s dz=%s offset=%s f=%s s=%s tags[%s]", player.getMovement().getDeltaX(),
+                player.getMovement().getDeltaZ(), player.EMULATOR.getOffset(), player.EMULATOR.getInput().getForward(),
+                player.EMULATOR.getInput().getStrafing(), String.join(", ", player.EMULATOR.getTags()));
 
         // Running inventory check
         Optional<InventoryA> inventoryA = find(InventoryA.class);

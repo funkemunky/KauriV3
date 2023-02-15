@@ -11,12 +11,12 @@ import org.bukkit.World;
 public class CMove {
     private KLocation loc = new KLocation(0,0,0,0,0);
     private World world;
-    private SimpleCollisionBox box = new SimpleCollisionBox(new KLocation(0,0,0,0,0), 0.6f, 1.8f);
+    private SimpleCollisionBox box = new SimpleCollisionBox(new KLocation(0,0,0,0,0), 0, 0);
     private boolean onGround;
     public void setLoc(CMove move) {
         this.loc = move.getLoc().clone();
         this.world = move.getWorld();
-        this.box = move.getBox();
+        this.box = move.getBox().copy();
         this.onGround = move.isOnGround();
     }
 

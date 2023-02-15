@@ -32,7 +32,7 @@ public class GeneralInformation {
             lastLiquid = new TickTimer(), lastBlockDig = new TickTimer(), lastBlockPlace = new TickTimer(),
             lastBlockUpdate = new TickTimer(), lastMiscNear = new TickTimer(), lastHalfBlock = new TickTimer(),
             lastFence = new TickTimer(), lastFakeBotHit = new TickTimer(), lastInventoryOpen = new TickTimer(),
-            botAttack = new TickTimer();
+            botAttack = new TickTimer(), lastAttack = new TickTimer();
     public LivingEntity target;
     public Optional<PotionEffect> groundJumpBoost;
     public boolean serverGround, lastServerGround, canFly, nearGround, worldLoaded, generalCancel, inVehicle, creative,

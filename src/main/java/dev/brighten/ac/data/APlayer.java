@@ -33,9 +33,7 @@ import lombok.Setter;
 import lombok.val;
 import me.hydro.emulator.Emulator;
 import me.hydro.emulator.collision.Block;
-import me.hydro.emulator.collision.impl.BlockSlime;
-import me.hydro.emulator.collision.impl.BlockSoulSand;
-import me.hydro.emulator.collision.impl.BlockWeb;
+import me.hydro.emulator.collision.impl.*;
 import me.hydro.emulator.object.input.DataSupplier;
 import me.hydro.emulator.util.mcp.AxisAlignedBB;
 import me.hydro.emulator.util.mcp.BlockPos;
@@ -119,6 +117,14 @@ public class APlayer {
                     }
                     case COBWEB: {
                         return new BlockWeb();
+                    }
+                    case ICE:
+                    case PACKED_ICE:
+                    case FROSTED_ICE: {
+                        return new BlockIce();
+                    }
+                    case BLUE_ICE: {
+                        return new BlockBlueIce();
                     }
                 }
             }
