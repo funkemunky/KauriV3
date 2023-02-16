@@ -156,7 +156,7 @@ public class MovementHandler {
         IterationResult minimum = null;
         for (int forward : FULL_RANGE) {
             for (int strafe : FULL_RANGE) {
-                for (boolean jumping : IS_OR_NOT) {
+                for (boolean jumping : getJumpingIterations()) {
                     for (boolean usingItem : getUsingItemIterations(forward, strafe)) {
                         for (boolean sprinting : getSprintingIterations(forward)) {
                             for (boolean hitSlow : (player.getInfo().lastAttack.isNotPassed(1)
@@ -197,6 +197,9 @@ public class MovementHandler {
         if(minimum != null) {
             if (minimum.getOffset() > 1E-12) {
                 minimum.getTags().add("bad_offset");
+                minimum.getIteration().getMotion().setMotionX(deltaX);
+                minimum.getIteration().getMotion().setMotionY(deltaY);
+                minimum.getIteration().getMotion().setMotionZ(deltaZ);
             }
             player.EMULATOR.confirm(minimum.getIteration());
         }
@@ -221,6 +224,14 @@ public class MovementHandler {
 
     private boolean[] getUsingItemIterations(int forward, int strafe) {
         return forward == 0 && strafe == 0 ? ALWAYS_FALSE : IS_OR_NOT;
+    }
+
+    private int[] getStrafeAndForwardIterations() {
+        return deltaXZ == 0 ? new int[]{0} : FULL_RANGE;
+    }
+
+    private boolean[] getJumpingIterations() {
+        return deltaY <= lDeltaY ? ALWAYS_FALSE : IS_OR_NOT;
     }
 
 
