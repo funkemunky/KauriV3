@@ -7,6 +7,7 @@ import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
+import dev.brighten.ac.utils.Color;
 import dev.brighten.ac.utils.Helper;
 import dev.brighten.ac.utils.MathUtils;
 import dev.brighten.ac.utils.MovementUtils;
@@ -112,7 +113,6 @@ public class FlyA extends Check {
             }
 
             if(predicted != d9) {
-                debug("Collided!");
                 LAST_COLLIDE.reset(); // Setting the last collide for later use
             }
 
@@ -141,9 +141,12 @@ public class FlyA extends Check {
 
         double deltaPredict = MathUtils.getDelta(player.getMovement().getDeltaY(), predicted);
 
+        boolean flagged = false;
+
         // We want it to be at 0.005 since that is the maximum variance from loss of precision
         // We also don't really want to flag if there was a skip in flying related to < 9.0E-4 movement.
         if(!willBeWeirdNext
+                && LAST_COLLIDE.isPassed(2)
                 && deltaPredict > 0.005) {
             // This slight buffer is to account for anything this check may have not accounted for
             // It is not a permanent fix. However, Java Edition is quite a fickle game to work with; it's quite
@@ -154,13 +157,15 @@ public class FlyA extends Check {
                         player.getMovement().getDeltaXZ());
                 cancel();
             }
+            flagged = true;
         } else buffer-= buffer > 0 ? 0.25f : 0;
 
-        debug("dY=%.3f ldy=%.3f p=%.3f dx=%.3f b=%s j=%s velocity=%s fg=%s g=%s bbelow=%s ng=%s",
-                player.getMovement().getDeltaY(), player.getMovement().getLDeltaY(),
-                predicted, player.getMovement().getDeltaXZ(), buffer, jumped, 
-                player.getInfo().getVelocity().getPassed(), fromGround, onGround, player.getBlockInfo().blocksBelow, 
-                player.getInfo().isNearGround());
+        debug((flagged ? Color.Green : "")
+                        + "[%s] dY=%.3f ldy=%.3f p=%.3f dx=%.3f j=%s velocity=%s fg=%s g=%s lc=%s bbelow=%s ng=%s",
+                buffer, player.getMovement().getDeltaY(), player.getMovement().getLDeltaY(),
+                predicted, player.getMovement().getDeltaXZ(), jumped,
+                player.getInfo().getVelocity().getPassed(), fromGround, onGround, LAST_COLLIDE.getPassed(),
+                player.getBlockInfo().blocksBelow, player.getInfo().isNearGround());
 
         LAST_POS.reset();
     };
