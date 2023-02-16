@@ -313,6 +313,10 @@ public class AxisAlignedBB {
         return vec3d != null && (vec3d.x >= this.minX && vec3d.x <= this.maxX && vec3d.y >= this.minY && vec3d.y <= this.maxY);
     }
 
+    public me.hydro.emulator.util.mcp.AxisAlignedBB toNeo() {
+        return new me.hydro.emulator.util.mcp.AxisAlignedBB(minX, minY, minZ, maxX, maxY, maxZ);
+    }
+
     public String toString() {
         return "box[" + this.minX + ", " + this.minY + ", " + this.minZ + " -> " + this.maxX + ", " + this.maxY + ", " + this.maxZ + "]";
     }

@@ -17,6 +17,10 @@ import dev.brighten.ac.utils.world.types.SimpleCollisionBox;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.val;
+import me.hydro.emulator.object.input.IterationInput;
+import me.hydro.emulator.object.result.IterationResult;
+import me.hydro.emulator.util.PotionEffect;
+import me.hydro.emulator.util.Vector;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
@@ -93,6 +97,110 @@ public class MovementHandler {
         from.setLoc(to);
     }
 
+    /**
+     *  // Here we'll build the iteration input object we'll feed into the emulator
+     *         final IterationInput input = IterationInput.builder()
+     *                 .to(new Vector(1, 2, 3)) // location from the flying packet
+     *                 .yaw(5F) // current yaw
+     *                 .ground(false)
+     *                 .jumping(false) // you'll want to bruteforce this
+     *                 .forward(0) // you'll want to bruteforce this
+     *                 .strafing(0) // you'll want to bruteforce this
+     *                 .sprinting(false) // you'll want to bruteforce this
+     *                 .usingItem(false) // you'll want to bruteforce this
+     *                 .hitSlowdown(false) // you'll want to bruteforce this
+     *                 .sneaking(false)
+     *                 .lastReportedBoundingBox(new AxisAlignedBB(0, 0, 0, 0, 0, 0)) // from location, as a bounding box
+     *                 .build();
+     *
+     *         // Run the emulation and get the result
+     *         final IterationResult result = emulator.runIteration(input);
+     *
+     *         // Once we've found our best candidate (in the case of a bruteforce),
+     *         // confirm it to run post actions.
+     *         emulator.confirm(result.getIteration());
+     */
+
+    private static final boolean[] IS_OR_NOT = new boolean[] {true, false};
+    private static final boolean[] ALWAYS_FALSE = new boolean[1];
+    private static final int[] FULL_RANGE = new int[] {-1, 0, 1};
+
+    public void runEmulation(WPacketPlayInFlying packet) {
+        /*
+         * (org.bukkit.potion.PotionEffectType
+         * Element 0: SPEED
+         * Element 1: SLOW
+         * Element 2: JUMP
+         */
+        final PotionEffect[] EFFECTS = new PotionEffect[3];
+
+        for (org.bukkit.potion.PotionEffect potionEffect : player.getPotionHandler().potionEffects) {
+            if(potionEffect.getType().equals(PotionEffectType.SPEED)) {
+                EFFECTS[0] = PotionEffect.builder()
+                        .amplifier(potionEffect.getAmplifier())
+                        .type(me.hydro.emulator.util.PotionEffectType.SPEED)
+                        .build();
+            } else if(potionEffect.getType().equals(PotionEffectType.SLOW)) {
+                EFFECTS[1] = PotionEffect.builder()
+                        .amplifier(potionEffect.getAmplifier())
+                        .type(me.hydro.emulator.util.PotionEffectType.SLOW)
+                        .build();
+            } else if(potionEffect.getType().equals(PotionEffectType.JUMP)) {
+                EFFECTS[2] = PotionEffect.builder()
+                        .amplifier(potionEffect.getAmplifier())
+                        .type(me.hydro.emulator.util.PotionEffectType.JUMP)
+                        .build();
+            }
+        }
+
+        IterationResult minimum = null;
+        for(boolean jumping : IS_OR_NOT) {
+            for(boolean usingItem : IS_OR_NOT) {
+                for(boolean sprinting : IS_OR_NOT) {
+                    for(boolean hitSlow : (player.getInfo().lastAttack.isNotPassed(1)
+                            ? IS_OR_NOT : ALWAYS_FALSE)) {
+                        for(int forward : FULL_RANGE) {
+                            for(int strafe : FULL_RANGE) { // 96 or 288 iterations
+                                for(boolean fastMath : IS_OR_NOT) {
+                                    IterationInput input = IterationInput.builder()
+                                            .jumping(jumping)
+                                            .forward(forward)
+                                            .strafing(strafe)
+                                            .sprinting(sprinting)
+                                            .usingItem(usingItem)
+                                            .hitSlowdown(hitSlow)
+                                            .aiMoveSpeed(player.getBukkitPlayer().getWalkSpeed() / 2)
+                                            .fastMath(fastMath)
+                                            .sneaking(player.getInfo().isSneaking())
+                                            .ground(from.isOnGround())
+                                            .to(new Vector(to.getX(), to.getY(), to.getZ()))
+                                            .yaw(to.getYaw())
+                                            .lastReportedBoundingBox(from.getBox().toNeo())
+                                            .effectSpeed(EFFECTS[0])
+                                            .effectSlow(EFFECTS[1])
+                                            .effectJump(EFFECTS[2])
+                                            .build();
+
+                                    IterationResult result = player.EMULATOR.runIteration(input);
+
+                                    if (minimum == null || minimum.getOffset() > result.getOffset()) {
+                                        minimum = result;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if(minimum.getOffset() > 1E-12) {
+            minimum.getTags().add("bad_offset");
+        }
+        player.EMULATOR.confirm(minimum.getIteration());
+        double tpx = deltaX * (0.6f * 0.91f), tpz = deltaZ * (0.6f * 0.91f);
+    }
+
 
     public void process(WPacketPlayInFlying packet) {
 
@@ -110,6 +218,9 @@ public class MovementHandler {
         if(packet.isMoved()) {
             player.getBlockInfo().runCollisionCheck();
         }
+
+        runEmulation(packet);
+
         if (moveTicks > 0) {
 
             // Updating block locations
@@ -143,7 +254,7 @@ public class MovementHandler {
         processVelocity();
 
         if (player.getBlockInfo().onSlime) player.getInfo().slimeTimer.reset();
-        if(player.getBlockInfo().onClimbable) player.getInfo().climbTimer.reset();
+        if (player.getBlockInfo().onClimbable) player.getInfo().climbTimer.reset();
 
         checkForTeleports(packet);
 
@@ -619,8 +730,13 @@ it
      * @param packet WPacketPlayInFlying
      */
     private void updateLocations(WPacketPlayInFlying packet) {
-        from.setLoc(to);
-        setTo(packet);
+        if(to.getBox().max().lengthSquared() == 0) { //Needs initializing
+            setTo(packet);
+            from.setLoc(to);
+        } else {
+            from.setLoc(to);
+            setTo(packet);
+        }
 
         lDeltaX = deltaX;
         lDeltaY = deltaY;

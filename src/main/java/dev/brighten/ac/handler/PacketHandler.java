@@ -288,24 +288,27 @@ public class PacketHandler {
 
                 FakeMob mob = Anticheat.INSTANCE.getFakeTracker().getEntityById(packet.getEntityId());
 
-                if(mob != null) {
-                    player.getEntityLocationHandler().getTargetOfFakeMob(mob.getEntityId())
-                            .ifPresent(targetId -> {
-                                player.getEntityLocationHandler().removeFakeMob(targetId);
-                                player.getInfo().lastFakeBotHit.reset();
-                            });
-                    if(player.getMob().getEntityId() == packet.getEntityId()) {
-                        player.getInfo().botAttack.reset();
-                    }
-                } else {
-                    Entity target = packet.getEntity(player.getBukkitPlayer().getWorld());
-
-                    if(target instanceof LivingEntity) {
-                        if(player.getInfo().lastFakeBotHit.isPassed(400) && Math.random() > 0.9) {
-                            player.getEntityLocationHandler().canCreateMob.add(target.getEntityId());
+                if(packet.getAction() == WPacketPlayInUseEntity.EnumEntityUseAction.ATTACK) {
+                    if(mob != null) {
+                        player.getEntityLocationHandler().getTargetOfFakeMob(mob.getEntityId())
+                                .ifPresent(targetId -> {
+                                    player.getEntityLocationHandler().removeFakeMob(targetId);
+                                    player.getInfo().lastFakeBotHit.reset();
+                                });
+                        if(player.getMob().getEntityId() == packet.getEntityId()) {
+                            player.getInfo().botAttack.reset();
                         }
-                        player.getInfo().setTarget((LivingEntity) target);
+                    } else {
+                        Entity target = packet.getEntity(player.getBukkitPlayer().getWorld());
+
+                        if(target instanceof LivingEntity) {
+                            if(player.getInfo().lastFakeBotHit.isPassed(400) && Math.random() > 0.9) {
+                                player.getEntityLocationHandler().canCreateMob.add(target.getEntityId());
+                            }
+                            player.getInfo().setTarget((LivingEntity) target);
+                        }
                     }
+                    player.getInfo().lastAttack.reset();
                 }
                 break;
             }

@@ -99,6 +99,22 @@ public class Check implements ECheck {
         }
     }
 
+    public void correctMovement(KLocation toLoc) {
+        CancelResult result = CancelResult.builder().cancelled(false).build();
+
+        for (AnticheatEvent event : AnticheatAPI.INSTANCE.getAllEvents()) {
+            result = event.onCancel(player.getBukkitPlayer(), this, result.isCancelled());
+        }
+
+        if(result.isCancelled()) return;
+
+        player.getInfo().getLastCancel().reset();
+
+        final Location CORRECTED = toLoc.toLocation(player.getBukkitPlayer().getWorld());
+
+        RunUtils.task(() -> player.getBukkitPlayer().teleport(CORRECTED));
+    }
+
     public void debug(String information, Object... variables) {
         if(!Anticheat.allowDebug) return;
 

@@ -47,8 +47,8 @@ import java.util.concurrent.atomic.AtomicLong;
 //@MavenLibrary(groupId = "co.aikar", artifactId = "acf-bukkit", version = "0.5.1", repo = @Repository(url = "https://nexus.funkemunky.cc/content/repositories/releases/"))
 @MavenLibrary(groupId = "com.google.guava", artifactId = "guava", version = "21.0", repo = @Repository(url = "https://repo1.maven.org/maven2"))
 //@MavenLibrary(groupId = "it.unimi.dsi", artifactId = "fastutil", version = "8.5.6", repo = @Repository(url = "https://repo1.maven.org/maven2"))
-@MavenLibrary(groupId = "org.ow2.asm", artifactId = "asm", version = "9.2", repo = @Repository(url = "https://repo1.maven.org/maven2"))
-@MavenLibrary(groupId = "org.ow2.asm", artifactId = "asm-tree", version = "9.2", repo = @Repository(url = "https://repo1.maven.org/maven2"))
+@MavenLibrary(groupId = "org.ow2.asm", artifactId = "asm", version = "9.4", repo = @Repository(url = "https://repo1.maven.org/maven2"))
+@MavenLibrary(groupId = "org.ow2.asm", artifactId = "asm-tree", version = "9.4", repo = @Repository(url = "https://repo1.maven.org/maven2"))
 public class Anticheat extends LoaderPlugin {
 
     public static Anticheat INSTANCE;
@@ -72,6 +72,45 @@ public class Anticheat extends LoaderPlugin {
     @PackagePrivate
     private RollingAverageDouble tps = new RollingAverageDouble(4, 20);
     private final Map<UUID, WorldInfo> worldInfoMap = new HashMap<>();
+
+    /**
+     * private final Emulator emulator = new Emulator(new DataSupplier() {
+     *
+     *         @Override
+     *         public List<AxisAlignedBB> getCollidingBoxes(AxisAlignedBB bb) {
+     *             return Collections.emptyList();
+     *         }
+     *
+     *         @Override
+     *         public Block getBlockAt(BlockPos blockPos) {
+     *             return null;
+     *         }
+     *     });
+     *
+     *     public void runEmulation() {
+     *         // Here we'll build the iteration input object we'll feed into the emulator
+     *         final IterationInput input = IterationInput.builder()
+     *                 .to(new Vector(1, 2, 3)) // location from the flying packet
+     *                 .yaw(5F) // current yaw
+     *                 .ground(false)
+     *                 .jumping(false) // you'll want to bruteforce this
+     *                 .forward(0) // you'll want to bruteforce this
+     *                 .strafing(0) // you'll want to bruteforce this
+     *                 .sprinting(false) // you'll want to bruteforce this
+     *                 .usingItem(false) // you'll want to bruteforce this
+     *                 .hitSlowdown(false) // you'll want to bruteforce this
+     *                 .sneaking(false)
+     *                 .lastReportedBoundingBox(new AxisAlignedBB(0, 0, 0, 0, 0, 0)) // from location, as a bounding box
+     *                 .build();
+     *
+     *         // Run the emulation and get the result
+     *         final IterationResult result = emulator.runIteration(input);
+     *
+     *         // Once we've found our best candidate (in the case of a bruteforce),
+     *         // confirm it to run post actions.
+     *         emulator.confirm(result.getIteration());
+     *     }
+     */
 
     public static boolean allowDebug = true;
 
