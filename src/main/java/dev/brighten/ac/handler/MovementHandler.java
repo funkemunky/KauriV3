@@ -195,7 +195,7 @@ public class MovementHandler {
         }
 
         if(minimum != null) {
-            if (minimum.getOffset() > 1E-12) {
+            if (minimum.getOffset() > 1E-10) {
                 minimum.getTags().add("bad_offset");
                 minimum.getIteration().getMotion().setMotionX(deltaX);
                 minimum.getIteration().getMotion().setMotionY(deltaY);
