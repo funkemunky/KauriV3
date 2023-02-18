@@ -4,7 +4,6 @@ import dev.brighten.ac.api.check.CheckType;
 import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.WAction;
-import dev.brighten.ac.check.impl.misc.inventory.InventoryA;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
@@ -14,16 +13,15 @@ import dev.brighten.ac.utils.timer.Timer;
 import dev.brighten.ac.utils.timer.impl.TickTimer;
 import me.hydro.emulator.object.iteration.Motion;
 
-import java.util.Optional;
-
-@CheckData(name = "Horizontal", checkId = "horizontala", type = CheckType.MOVEMENT, experimental = true)
-public class Horizontal extends Check {
+@CheckData(name = "Prediction", checkId = "predictiona", type = CheckType.MOVEMENT,
+        maxVersion = ProtocolVersion.V1_8_9, experimental = true)
+public class Prediction extends Check {
     private float buffer;
     private boolean maybeSkippedPos;
     private int lastFlying;
     private final Timer lastSkipPos = new TickTimer();
 
-    public Horizontal(APlayer player) {
+    public Prediction(APlayer player) {
         super(player);
     }
 
@@ -66,26 +64,6 @@ public class Horizontal extends Check {
             debug((badOffset ? Color.Red : "") + "offset=%s f=%s s=%s py=%.3f tags=[%s]",
                     offset, forward, strafe, predicted.getMotionY(), tags);
         }
-
-        // Running inventory check
-        Optional<InventoryA> inventoryA = find(InventoryA.class);
-
-        inventoryA.ifPresent(check -> {
-
-            final int STRAFING = player.EMULATOR.getInput().getStrafing();
-            final int FORWARD = player.EMULATOR.getInput().getForward();
-
-            if((STRAFING != 0 || FORWARD != 0)
-                    && player.getInfo().isInventoryOpen()) {
-                if(check.buffer++ > 6) {
-                    check.buffer = Math.min(8, check.buffer);
-                    check.flag("s=%s f=%s", STRAFING, FORWARD);
-                }
-            } else if(check.buffer > 0) check.buffer--;
-
-            check.debug("buffer=%d inv=%s s=%.2f f=%.2f", check.buffer,
-                    player.getInfo().isInventoryOpen(), STRAFING, FORWARD);
-        });
 
         if (ProtocolVersion.getGameVersion().isBelow(ProtocolVersion.V1_9)) {
             maybeSkippedPos = !packet.isMoved();

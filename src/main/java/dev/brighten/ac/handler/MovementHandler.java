@@ -222,12 +222,22 @@ public class MovementHandler {
 
         player.getPotionHandler().onFlying(packet);
 
+        excuseNextFlying = packet.isMoved() && packet.isLooked()
+                && packet.getX() == to.getX()
+                && packet.getY() == to.getY()
+                && packet.getZ() == to.getZ()
+                && player.getPlayerVersion().isOrAbove(ProtocolVersion.V1_17);
+
         checkMovement = MovementUtils.checkMovement(player.getPlayerConnection());
 
         if (checkMovement) {
             moveTicks++;
             if (!packet.isMoved()) moveTicks = 1;
         } else moveTicks = 0;
+
+        if(excuseNextFlying) {
+            return;
+        }
 
         updateLocations(packet);
 

@@ -12,6 +12,7 @@ import dev.brighten.ac.depends.Repository;
 import dev.brighten.ac.handler.PacketHandler;
 import dev.brighten.ac.handler.entity.FakeEntityTracker;
 import dev.brighten.ac.handler.keepalive.KeepaliveProcessor;
+import dev.brighten.ac.handler.keepalive.actions.ActionManager;
 import dev.brighten.ac.handler.protocolsupport.ProtocolAPI;
 import dev.brighten.ac.logging.LoggerManager;
 import dev.brighten.ac.packet.handler.HandlerAbstract;
@@ -56,6 +57,7 @@ public class Anticheat extends LoaderPlugin {
     private ScheduledExecutorService scheduler;
     private PacketProcessor packetProcessor;
     private BukkitCommandManager commandManager;
+    private ActionManager actionManager;
     private CheckManager checkManager;
     private PlayerRegistry playerRegistry;
     private KeepaliveProcessor keepaliveProcessor;
@@ -162,6 +164,7 @@ public class Anticheat extends LoaderPlugin {
         Bukkit.getOnlinePlayers().forEach(playerRegistry::generate);
         this.packetHandler = new PacketHandler();
         logManager = new LoggerManager();
+        this.actionManager = new ActionManager();
 
         keepaliveProcessor.start();
 

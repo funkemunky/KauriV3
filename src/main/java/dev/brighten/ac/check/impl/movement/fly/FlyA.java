@@ -15,6 +15,7 @@ import dev.brighten.ac.utils.timer.Timer;
 import dev.brighten.ac.utils.timer.impl.MillisTimer;
 import dev.brighten.ac.utils.timer.impl.TickTimer;
 import dev.brighten.ac.utils.world.types.SimpleCollisionBox;
+import org.bukkit.util.Vector;
 
 import java.util.List;
 
@@ -56,6 +57,8 @@ public class FlyA extends Check {
             jumped = true;
         }
 
+        double threshold = 0.000005;
+
         // Checking if they collided recently and accounting for the truncated deltaY
         if(LAST_COLLIDE.isNotPassed(2) // Loose to prevent any missed cases
                 && player.getMovement().getLDeltaY() > 0
@@ -63,9 +66,7 @@ public class FlyA extends Check {
                 && player.getMovement().getLDeltaY() % HIT_BLOCK < 0.0126) {
             predicted = -0.08 * DRAG;
             debug("Truncated deltaY");
-        } else {
-            //debug("lc=%s remainder=%s", LAST_COLLIDE.getPassed(),
-            //        player.getMovement().getLDeltaY() % HIT_BLOCK);
+            threshold = 0.1;
         }
 
         // There will be missed movements that we can't account for if we had to predict the player's next position
@@ -85,6 +86,7 @@ public class FlyA extends Check {
                 predicted = toCheck;
                 didNextPrediction = true;
             }
+            threshold = 0.2;
         }
 
         // Vanilla wrapping the deltaY to 0 if it's less than a certain amount.
@@ -131,8 +133,6 @@ public class FlyA extends Check {
                 || player.getInfo().getLastLiquid().isNotPassed(2)
                 || player.getBlockInfo().fenceBelow
                 || !player.getInfo().worldLoaded
-                || player.getBlockInfo().onHalfBlock
-                || player.getInfo().getVelocity().isNotPassed(1)
                 || player.getBlockInfo().onSlime) {
             if(buffer > 0) buffer-= 0.25f;
             debug("Returned");
@@ -142,12 +142,16 @@ public class FlyA extends Check {
         double deltaPredict = MathUtils.getDelta(player.getMovement().getDeltaY(), predicted);
 
         boolean flagged = false;
+        for (Vector possibleVector : player.getVelocityHandler().getPossibleVectors()) {
+            threshold+= (possibleVector.getY() + 0.4);
+        }
 
         // We want it to be at 0.005 since that is the maximum variance from loss of precision
         // We also don't really want to flag if there was a skip in flying related to < 9.0E-4 movement.
         if(!willBeWeirdNext
-                && LAST_COLLIDE.isPassed(2)
-                && deltaPredict > 0.005) {
+                && LAST_COLLIDE.isPassed(1)
+                && !player.getInfo().nearGround
+                && deltaPredict > threshold) {
             // This slight buffer is to account for anything this check may have not accounted for
             // It is not a permanent fix. However, Java Edition is quite a fickle game to work with; it's quite
             // difficult to reliably check that vanilla behavior is vanilla behavior without weird outliers.
