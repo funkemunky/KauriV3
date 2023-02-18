@@ -18,6 +18,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.val;
 import me.hydro.emulator.object.input.IterationInput;
+import me.hydro.emulator.object.iteration.Motion;
 import me.hydro.emulator.object.result.IterationResult;
 import me.hydro.emulator.util.mcp.MathHelper.FastMathType;
 import me.hydro.emulator.util.PotionEffect;
@@ -39,6 +40,9 @@ public class MovementHandler {
     @Getter
     private double deltaX, deltaY, deltaZ, deltaXZ,
             lDeltaX, lDeltaY, lDeltaZ, lDeltaXZ;
+
+    @Getter
+    private Motion predicted;
     @Getter
     private float lookX, lookY, lastLookX, lastLookY;
     @Getter
@@ -97,30 +101,6 @@ public class MovementHandler {
         from.setLoc(to);
     }
 
-    /**
-     * // Here we'll build the iteration input object we'll feed into the emulator
-     * final IterationInput input = IterationInput.builder()
-     * .to(new Vector(1, 2, 3)) // location from the flying packet
-     * .yaw(5F) // current yaw
-     * .ground(false)
-     * .jumping(false) // you'll want to bruteforce this
-     * .forward(0) // you'll want to bruteforce this
-     * .strafing(0) // you'll want to bruteforce this
-     * .sprinting(false) // you'll want to bruteforce this
-     * .usingItem(false) // you'll want to bruteforce this
-     * .hitSlowdown(false) // you'll want to bruteforce this
-     * .sneaking(false)
-     * .lastReportedBoundingBox(new AxisAlignedBB(0, 0, 0, 0, 0, 0)) // from location, as a bounding box
-     * .build();
-     * <p>
-     * // Run the emulation and get the result
-     * final IterationResult result = emulator.runIteration(input);
-     * <p>
-     * // Once we've found our best candidate (in the case of a bruteforce),
-     * // confirm it to run post actions.
-     * emulator.confirm(result.getIteration());
-     */
-
     private static final boolean[] IS_OR_NOT = new boolean[]{true, false};
     private static final boolean[] ALWAYS_FALSE = new boolean[1];
     private static final int[] FULL_RANGE = new int[]{-1, 0, 1};
@@ -154,37 +134,43 @@ public class MovementHandler {
         }
 
         IterationResult minimum = null;
-        for (int forward : FULL_RANGE) {
-            for (int strafe : FULL_RANGE) {
-                for (boolean jumping : getJumpingIterations()) {
-                    for (boolean usingItem : getUsingItemIterations(forward, strafe)) {
-                        for (boolean sprinting : getSprintingIterations(forward)) {
-                            for (boolean hitSlow : (player.getInfo().lastAttack.isNotPassed(1)
-                                    ? IS_OR_NOT : ALWAYS_FALSE)) {
-                                for (FastMathType fastMath : getFastMathIterations()) {
-                                    IterationInput input = IterationInput.builder()
-                                            .jumping(jumping)
-                                            .forward(forward)
-                                            .strafing(strafe)
-                                            .sprinting(sprinting)
-                                            .usingItem(usingItem)
-                                            .hitSlowdown(hitSlow)
-                                            .aiMoveSpeed(player.getBukkitPlayer().getWalkSpeed() / 2)
-                                            .fastMathType(fastMath)
-                                            .sneaking(player.getInfo().isSneaking())
-                                            .ground(from.isOnGround())
-                                            .to(new Vector(to.getX(), to.getY(), to.getZ()))
-                                            .yaw(to.getYaw())
-                                            .lastReportedBoundingBox(from.getBox().toNeo())
-                                            .effectSpeed(EFFECTS[0])
-                                            .effectSlow(EFFECTS[1])
-                                            .effectJump(EFFECTS[2])
-                                            .build();
+        iteration: {
+            for (int forward : FULL_RANGE) {
+                for (int strafe : FULL_RANGE) {
+                    for (boolean jumping : getJumpingIterations()) {
+                        for (boolean usingItem : getUsingItemIterations(forward, strafe)) {
+                            for (boolean sprinting : getSprintingIterations(forward)) {
+                                for (boolean hitSlow : (player.getInfo().lastAttack.isNotPassed(1)
+                                        ? IS_OR_NOT : ALWAYS_FALSE)) {
+                                    for (FastMathType fastMath : getFastMathIterations()) {
+                                        IterationInput input = IterationInput.builder()
+                                                .jumping(jumping)
+                                                .forward(forward)
+                                                .strafing(strafe)
+                                                .sprinting(sprinting)
+                                                .usingItem(usingItem)
+                                                .hitSlowdown(hitSlow)
+                                                .aiMoveSpeed(player.getBukkitPlayer().getWalkSpeed() / 2)
+                                                .fastMathType(fastMath)
+                                                .sneaking(player.getInfo().isSneaking())
+                                                .ground(from.isOnGround())
+                                                .to(new Vector(to.getX(), to.getY(), to.getZ()))
+                                                .yaw(to.getYaw())
+                                                .lastReportedBoundingBox(from.getBox().toNeo())
+                                                .effectSpeed(EFFECTS[0])
+                                                .effectSlow(EFFECTS[1])
+                                                .effectJump(EFFECTS[2])
+                                                .build();
 
-                                    IterationResult result = player.EMULATOR.runIteration(input);
+                                        IterationResult result = player.EMULATOR.runIteration(input);
 
-                                    if (minimum == null || minimum.getOffset() > result.getOffset()) {
-                                        minimum = result;
+                                        if (minimum == null || minimum.getOffset() > result.getOffset()) {
+                                            minimum = result;
+
+                                            if(minimum.getOffset() < 1E-26) {
+                                                break iteration;
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -195,11 +181,12 @@ public class MovementHandler {
         }
 
         if(minimum != null) {
-            if (minimum.getOffset() > 1E-10) {
+            predicted = minimum.getMotion().clone();
+            if (minimum.getOffset() > 1E-8) {
                 minimum.getTags().add("bad_offset");
-                minimum.getIteration().getMotion().setMotionX(deltaX);
-                minimum.getIteration().getMotion().setMotionY(deltaY);
-                minimum.getIteration().getMotion().setMotionZ(deltaZ);
+                minimum.getMotion().setMotionX(deltaX);
+                minimum.getMotion().setMotionY(deltaY);
+                minimum.getMotion().setMotionZ(deltaZ);
             }
             player.EMULATOR.confirm(minimum.getIteration());
         }
@@ -216,7 +203,7 @@ public class MovementHandler {
     }
 
     private boolean[] getSprintingIterations(int forward) {
-        if (player.getInfo().isSneaking() || forward <= 0)
+        if (player.getInfo().isSneaking())
             return ALWAYS_FALSE;
 
         return IS_OR_NOT;
@@ -226,12 +213,8 @@ public class MovementHandler {
         return forward == 0 && strafe == 0 ? ALWAYS_FALSE : IS_OR_NOT;
     }
 
-    private int[] getStrafeAndForwardIterations() {
-        return deltaXZ == 0 ? new int[]{0} : FULL_RANGE;
-    }
-
     private boolean[] getJumpingIterations() {
-        return deltaY <= lDeltaY ? ALWAYS_FALSE : IS_OR_NOT;
+        return IS_OR_NOT;
     }
 
 
