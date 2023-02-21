@@ -23,7 +23,7 @@ import java.util.List;
 
 @CheckData(name = "Velocity (Horizontal)", checkId = "velocityb", type = CheckType.MOVEMENT)
 public class VelocityB extends Check {
-    private Timer lastVelocity = new TickTimer();
+    private final Timer lastVelocity = new TickTimer();
 
     public VelocityB(APlayer player) {
         super(player);
