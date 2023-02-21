@@ -7,15 +7,17 @@ import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
+import dev.brighten.ac.utils.BlockUtils;
 import dev.brighten.ac.utils.PlayerUtils;
 import dev.brighten.ac.utils.TagsBuilder;
+import dev.brighten.ac.utils.XMaterial;
 import org.bukkit.potion.PotionEffectType;
 
 @CheckData(name = "Speed", checkId = "speeda", type = CheckType.MOVEMENT)
 public class Speed extends Check {
 
     private double ldxz = .12f;
-    private float friction = 0.91f;
+    private float friction = 0.6f;
     private float buffer;
 
     WAction<WPacketPlayInFlying> flying = packet -> {
@@ -28,9 +30,9 @@ public class Speed extends Check {
             float drag = friction;
 
             TagsBuilder tags = new TagsBuilder();
-            double moveFactor = player.getBukkitPlayer().getWalkSpeed() / 2f;
+            float moveFactor = player.getBukkitPlayer().getWalkSpeed() / 2f;
 
-            moveFactor+= moveFactor * 0.3f;
+            moveFactor+= moveFactor * 0.30000001192092896D;
 
             if(player.getPotionHandler().hasPotionEffect(PotionEffectType.SPEED))
                 moveFactor += (PlayerUtils.getPotionEffectLevel(player.getBukkitPlayer(), PotionEffectType.SPEED)
@@ -47,7 +49,7 @@ public class Speed extends Check {
 
                 if (player.getMovement().isJumped()) {
                     tags.addTag("jumped");
-                    moveFactor += 0.2;
+                    moveFactor += 0.2f;
                 }
             } else {
                 tags.addTag("air");
@@ -59,7 +61,7 @@ public class Speed extends Check {
                 tags.addTag("water");
 
                 drag = player.getPlayerVersion().isOrAbove(ProtocolVersion.V1_13) ? 0.9f : 0.8f;
-                moveFactor = 0.034;
+                moveFactor = 0.034f;
 
                 if(player.getInfo().lastLiquid.getResetStreak() < 3) {
                     tags.addTag("water-enter");
@@ -118,6 +120,7 @@ public class Speed extends Check {
                             player.getMovement().getGroundTicks(),
                             player.EMULATOR.getInput().getAiMoveSpeed(), tags.build());
                     buffer = Math.min(5, buffer); //Preventing runaway flagging
+                    cancel();
                 } else if(ratio > 250) {
                     cancel();
                     debug("Cancelled user movement: %.1f", ratio);
@@ -128,7 +131,13 @@ public class Speed extends Check {
 
             ldxz = player.getMovement().getDeltaXZ() * drag;
         }
-        friction = player.EMULATOR.getFriction();
+        friction = BlockUtils
+                .getFriction(
+                        BlockUtils.getBlockAsync(player.getMovement()
+                                .getTo().getLoc().clone().subtract(0, 1, 0).toLocation(
+                                        player.getBukkitPlayer().getWorld()))
+                                .map(b -> XMaterial.matchXMaterial(b.getType()))
+                                .orElse(XMaterial.STONE));
     };
 
     public Speed(APlayer player) {

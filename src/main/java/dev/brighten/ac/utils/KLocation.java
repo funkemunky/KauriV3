@@ -76,6 +76,13 @@ public class KLocation implements Cloneable {
         return this;
     }
 
+    public KLocation subtract(double x, double y, double z) {
+        this.x-= x;
+        this.y-= y;
+        this.z-= z;
+        return this;
+    }
+
     public KLocation setLocation(KLocation loc) {
         this.x = loc.x;
         this.y = loc.y;
