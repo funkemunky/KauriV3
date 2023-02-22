@@ -8,7 +8,7 @@ import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
 import dev.brighten.ac.utils.annotation.Async;
 
-@CheckData(name = "Fly (D)", checkId = "flyd", type = CheckType.MOVEMENT)
+@CheckData(name = "Fly (D)", checkId = "flyd", type = CheckType.MOVEMENT, experimental = true)
 public class FlyD extends Check {
     public FlyD(APlayer player) {
         super(player);

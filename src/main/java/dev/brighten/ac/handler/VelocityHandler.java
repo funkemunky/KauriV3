@@ -16,10 +16,10 @@ import java.util.function.Consumer;
 @RequiredArgsConstructor
 public class VelocityHandler {
 
-    private final APlayer player;
+    private final APlayer PLAYER;
 
-    private Map<Vector, Boolean> velocities = new HashMap<>();
-    private Set<Consumer<Vector>> accurateVelocityTasks = new HashSet<>();
+    private final Map<Vector, Boolean> VELOCITY_MAP = new HashMap<>();
+    private final Set<Consumer<Vector>> VELOCITY_TASKS = new HashSet<>();
 
     
 
@@ -29,34 +29,34 @@ public class VelocityHandler {
      */
 
     public void onPre(WPacketPlayOutEntityVelocity packet) {
-        if(packet.getEntityId() != player.getBukkitPlayer().getEntityId()) return;
+        if(packet.getEntityId() != PLAYER.getBukkitPlayer().getEntityId()) return;
 
-        velocities.put(new Vector(packet.getDeltaX(), packet.getDeltaY(), packet.getDeltaZ()), false);
+        VELOCITY_MAP.put(new Vector(packet.getDeltaX(), packet.getDeltaY(), packet.getDeltaZ()), false);
     }
 
     public void onPost(WPacketPlayOutEntityVelocity packet) {
-        if(packet.getEntityId() != player.getBukkitPlayer().getEntityId()) return;
+        if(packet.getEntityId() != PLAYER.getBukkitPlayer().getEntityId()) return;
 
-        velocities.computeIfPresent(new Vector(packet.getDeltaX(), packet.getDeltaY(), packet.getDeltaZ()),
+        VELOCITY_MAP.computeIfPresent(new Vector(packet.getDeltaX(), packet.getDeltaY(), packet.getDeltaZ()),
                 (velocity, queuedToRemove) -> true);
     }
 
     public Set<Vector> getPossibleVectors() {
-        return velocities.keySet();
+        return VELOCITY_MAP.keySet();
     }
 
     public void onAccurateVelocity(Consumer<Vector> task) {
-        accurateVelocityTasks.add(task);
+        VELOCITY_TASKS.add(task);
     }
 
     public void onFlyingPost(WPacketPlayInFlying packet) {
-        val iterator = velocities.entrySet().iterator();
+        val iterator = VELOCITY_MAP.entrySet().iterator();
         while(iterator.hasNext()) {
             val value = iterator.next();
 
             // Velocity definitely occurred, run task.
             if(Math.abs(value.getKey().getY() - packet.getY()) < 1E-6) {
-                accurateVelocityTasks.forEach(vel -> vel.accept(value.getKey()));
+                VELOCITY_TASKS.forEach(vel -> vel.accept(value.getKey()));
             }
 
             if(value.getValue())

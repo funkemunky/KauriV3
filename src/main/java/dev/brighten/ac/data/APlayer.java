@@ -89,48 +89,7 @@ public class APlayer {
     @Getter
     private Object playerConnection;
 
-    public final Emulator EMULATOR = new Emulator(new DataSupplier() {
-        @Override
-        public List<AxisAlignedBB> getCollidingBoxes(AxisAlignedBB bb) {
-            return Helper.getCollisions(APlayer.this,
-                            new SimpleCollisionBox(bb.minX, bb.minY, bb.minZ, bb.maxX, bb.maxY, bb.maxZ),
-                            Materials.COLLIDABLE).stream().map(bb2 ->
-                            new AxisAlignedBB(bb2.minX, bb2.minY, bb2.minZ, bb2.maxX, bb2.maxY, bb2.maxZ))
-                    .collect(Collectors.toList());
-        }
-
-        @Override
-        public Block getBlockAt(BlockPos blockPos) {
-            //Optional<org.bukkit.block.Block>
-            val block = BlockUtils.getBlockAsync(
-                    new Location(getBukkitPlayer().getWorld(), blockPos.getX(), blockPos.getY(), blockPos.getZ()));
-
-            if(block.isPresent()) {
-                XMaterial xmaterial = XMaterial.matchXMaterial(block.get().getType());
-
-                switch (xmaterial) {
-                    case SLIME_BLOCK: {
-                        return new BlockSlime();
-                    }
-                    case SOUL_SAND : {
-                        return new BlockSoulSand();
-                    }
-                    case COBWEB: {
-                        return new BlockWeb();
-                    }
-                    case ICE:
-                    case PACKED_ICE:
-                    case FROSTED_ICE: {
-                        return new BlockIce();
-                    }
-                    case BLUE_ICE: {
-                        return new BlockBlueIce();
-                    }
-                }
-            }
-            return new Block();
-        }
-    });
+    public Emulator EMULATOR;
 
     public int hitsToCancel;
 
@@ -179,6 +138,49 @@ public class APlayer {
             RunUtils.task(() -> {
                 checkHandler.initChecks();
             });
+
+            EMULATOR = new Emulator(new DataSupplier() {
+                @Override
+                public List<AxisAlignedBB> getCollidingBoxes(AxisAlignedBB bb) {
+                    return Helper.getCollisions(APlayer.this,
+                                    new SimpleCollisionBox(bb.minX, bb.minY, bb.minZ, bb.maxX, bb.maxY, bb.maxZ),
+                                    Materials.COLLIDABLE).stream().map(bb2 ->
+                                    new AxisAlignedBB(bb2.minX, bb2.minY, bb2.minZ, bb2.maxX, bb2.maxY, bb2.maxZ))
+                            .collect(Collectors.toList());
+                }
+
+                @Override
+                public Block getBlockAt(BlockPos blockPos) {
+                    //Optional<org.bukkit.block.Block>
+                    val block = BlockUtils.getBlockAsync(
+                            new Location(getBukkitPlayer().getWorld(), blockPos.getX(), blockPos.getY(), blockPos.getZ()));
+
+                    if (block.isPresent()) {
+                        XMaterial xmaterial = XMaterial.matchXMaterial(block.get().getType());
+
+                        switch (xmaterial) {
+                            case SLIME_BLOCK: {
+                                return new BlockSlime();
+                            }
+                            case SOUL_SAND: {
+                                return new BlockSoulSand();
+                            }
+                            case COBWEB: {
+                                return new BlockWeb();
+                            }
+                            case ICE:
+                            case PACKED_ICE:
+                            case FROSTED_ICE: {
+                                return new BlockIce();
+                            }
+                            case BLUE_ICE: {
+                                return new BlockBlueIce();
+                            }
+                        }
+                    }
+                    return new Block();
+                }
+            }, playerVersion.getVersion());
         });
 
         // Removing inventory achievement
