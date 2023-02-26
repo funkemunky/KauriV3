@@ -5,9 +5,10 @@ import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.data.APlayer;
+import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInWindowClick;
 
-@CheckData(name = "Inventory (B)", checkId = "inventoryB", type = CheckType.INVENTORY)
+@CheckData(name = "Inventory (B)", checkId = "inventoryB", type = CheckType.INVENTORY, maxVersion = ProtocolVersion.V1_11)
 public class InventoryB extends Check {
 
     public InventoryB(APlayer player) {

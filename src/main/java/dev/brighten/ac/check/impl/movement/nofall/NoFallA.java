@@ -22,6 +22,7 @@ public class NoFallA extends Check {
                 || player.getInfo().isGeneralCancel()
                 || (player.getMovement().getDeltaXZ() == 0 && player.getMovement().getDeltaY() == 0)
                 || player.getBlockInfo().inLiquid
+                || player.getMovement().getTeleportsToConfirm() > 0
                 || player.getInfo().velocity.isNotPassed(1)
                 || player.getMovement().getLastTeleport().isNotPassed(1)) {
             if(buffer > 0) buffer-= 0.5f;
