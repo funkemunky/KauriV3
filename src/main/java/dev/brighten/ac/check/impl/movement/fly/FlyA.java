@@ -19,7 +19,7 @@ import org.bukkit.util.Vector;
 
 import java.util.List;
 
-@CheckData(name = "Fly (A)", checkId = "flya", type = CheckType.MOVEMENT, experimental = true, punishVl = 7)
+@CheckData(name = "Fly (Predict)", checkId = "flya", type = CheckType.MOVEMENT, experimental = true, punishVl = 7)
 public class FlyA extends Check {
 
     public FlyA(APlayer player) {
@@ -98,6 +98,17 @@ public class FlyA extends Check {
             debug("Setting y to 0");
         }
 
+        // Accounting for the potential vertical velocity
+        for (Vector possibleVector : player.getVelocityHandler().getPossibleVectors()) {
+            double deltaVelocity = MathUtils.getDelta(possibleVector.getY(), player.getMovement().getDeltaY());
+
+            if(deltaVelocity < MathUtils.getDelta(predicted, player.getMovement().getDeltaY())) {
+                predicted = possibleVector.getY();
+            }
+
+            threshold+= 0.05;
+        }
+
         // Vanilla collision algorithm to correct any false positives related to modified deltaY related to ground
         // collision.
         if(player.getBlockInfo().blocksBelow || player.getBlockInfo().blocksAbove
@@ -121,9 +132,7 @@ public class FlyA extends Check {
             predicted = d9;
         }
 
-
-        // This stuff will false flag the detection and cause a buffer decrease, so we're just going to prevent
-        // the check from processing to save resources.
+        // These are all things that can cause potential issues.
         if(player.getInfo().isGeneralCancel()
                 || player.getMovement().getTeleportsToConfirm() > 0
                 || player.getInfo().isOnLadder()
@@ -142,9 +151,6 @@ public class FlyA extends Check {
         double deltaPredict = MathUtils.getDelta(player.getMovement().getDeltaY(), predicted);
 
         boolean flagged = false;
-        for (Vector possibleVector : player.getVelocityHandler().getPossibleVectors()) {
-            threshold+= (possibleVector.getY() + 0.4);
-        }
 
         // We want it to be at 0.005 since that is the maximum variance from loss of precision
         // We also don't really want to flag if there was a skip in flying related to < 9.0E-4 movement.

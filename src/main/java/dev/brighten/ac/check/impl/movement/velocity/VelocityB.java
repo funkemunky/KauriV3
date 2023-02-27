@@ -9,6 +9,7 @@ import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
 import dev.brighten.ac.utils.KLocation;
 import dev.brighten.ac.utils.MathHelper;
+import dev.brighten.ac.utils.MathUtils;
 import dev.brighten.ac.utils.math.IntVector;
 import dev.brighten.ac.utils.timer.Timer;
 import dev.brighten.ac.utils.timer.impl.TickTimer;
@@ -72,6 +73,13 @@ public class VelocityB extends Check {
                 ticks = 0;
                 break check;
             }
+
+            // Too small of velocity
+            if(MathUtils.hypotSqrt(pvX, pvZ) < 0.025) {
+                pvX = pvZ = 0;
+                ticks = 0;
+                break check;
+            }
             double smallestDelta = Double.MAX_VALUE;
 
             double pmotionx = 0, pmotionz = 0;
@@ -118,10 +126,6 @@ public class VelocityB extends Check {
                         lmotionZ = 0;
                 }
 
-                //Less than 0.05
-                if (((lmotionX * lmotionX) + (lmotionZ * lmotionZ)) < 0.0025 && player.getMovement().getDeltaXZ() < 0.2) {
-                    break check;
-                }
                 // Attack slowdown
                 if (iteration.attack) {
                     lmotionX *= 0.6;
@@ -132,9 +136,9 @@ public class VelocityB extends Check {
                     aiMoveSpeed += aiMoveSpeed * 0.30000001192092896D;
 
                 if (speed.isPresent())
-                    aiMoveSpeed += (speed.get().getAmplifier() + 1) * (double) 0.20000000298023224D * aiMoveSpeed;
+                    aiMoveSpeed += (speed.get().getAmplifier() + 1) * 0.20000000298023224D * aiMoveSpeed;
                 if (slow.isPresent())
-                    aiMoveSpeed += (slow.get().getAmplifier() + 1) * (double) -0.15000000596046448D * aiMoveSpeed;
+                    aiMoveSpeed += (slow.get().getAmplifier() + 1) * -0.15000000596046448D * aiMoveSpeed;
 
                 float f5;
                 if (onGround) {

@@ -7,7 +7,7 @@ import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
 
-@CheckData(name = "Fly (E)", checkId = "flye", type = CheckType.MOVEMENT)
+@CheckData(name = "Fly (YPort)", checkId = "flye", type = CheckType.MOVEMENT)
 public class FlyE extends Check {
 
     public FlyE(APlayer player) {

@@ -10,6 +10,7 @@ import dev.brighten.ac.packet.wrapper.objects.WrappedWatchableObject;
 import dev.brighten.ac.packet.wrapper.out.*;
 import dev.brighten.ac.utils.MathHelper;
 import dev.brighten.ac.utils.MiscUtils;
+import dev.brighten.ac.utils.math.FloatVector;
 import dev.brighten.ac.utils.math.IntVector;
 import dev.brighten.ac.utils.reflections.types.WrappedClass;
 import dev.brighten.ac.utils.reflections.types.WrappedField;
@@ -805,7 +806,6 @@ public class Processor_18 implements PacketConverter {
     public WPacketPlayInWindowClick processInWindowClick(Object packet) {
         PacketPlayInWindowClick windowClick = (PacketPlayInWindowClick) packet;
 
-
         return WPacketPlayInWindowClick.builder().windowId(windowClick.a())
                 .slot(windowClick.b()).button(windowClick.c())
                 .action(windowClick.d()).mode(windowClick.f())
@@ -842,6 +842,72 @@ public class Processor_18 implements PacketConverter {
         gameStateChange.a(serialized);
 
         return gameStateChange;
+    }
+
+    @Override
+    public WPacketPlayOutExplosion processOutExplosion(Object object) {
+        PacketPlayOutExplosion packet = (PacketPlayOutExplosion) object;
+        PacketDataSerializer serialized = serialize(packet);
+
+        float originX = serialized.readFloat();
+        float originY = serialized.readFloat();
+        float originZ = serialized.readFloat();
+        float radius = serialized.readFloat();
+        int count = serialized.readInt();
+        IntVector[] exploded = new IntVector[count];
+        int x = (int) originX, y = (int) originY, z = (int) originZ;
+
+        for (int i = 0; i < count; i++) {
+            int dx = serialized.readByte() + x;
+            int dy = serialized.readByte() + y;
+            int dz = serialized.readByte() + z;
+            exploded[i] = new IntVector(dx, dy, dz);
+        }
+
+        float playerMotionX = serialized.readFloat();
+        float playerMotionY = serialized.readFloat();
+        float playerMotionZ = serialized.readFloat();
+
+        return WPacketPlayOutExplosion.builder()
+                .origin(new Vector(originX, originY, originZ))
+                .radius(radius)
+                .blocksExploded(exploded)
+                .entityPush(new FloatVector(playerMotionX, playerMotionY, playerMotionZ))
+                .build();
+    }
+
+    @Override
+    public Object processOutExplosion(WPacketPlayOutExplosion packet) {
+        PacketPlayOutExplosion explosion = new PacketPlayOutExplosion();
+        PacketDataSerializer serialized = new PacketDataSerializer(Unpooled.buffer());
+
+
+        serialized.writeFloat((float) packet.getOrigin().getX());
+        serialized.writeFloat((float) packet.getOrigin().getY());
+        serialized.writeFloat((float) packet.getOrigin().getZ());
+        serialized.writeFloat(packet.getRadius());
+        serialized.writeInt(packet.getBlocksExploded().length);
+        int x = (int) packet.getOrigin().getX(),
+                y = (int) packet.getOrigin().getY(),
+                z = (int) packet.getOrigin().getZ();
+
+        for (IntVector vector : packet.getBlocksExploded()) {
+            serialized.writeByte(vector.getX() - x);
+            serialized.writeByte(vector.getY() - y);
+            serialized.writeByte(vector.getZ() - z);
+        }
+
+        serialized.writeFloat(packet.getEntityPush().getX());
+        serialized.writeFloat(packet.getEntityPush().getY());
+        serialized.writeFloat(packet.getEntityPush().getZ());
+
+        try {
+            explosion.a(serialized);
+
+            return explosion;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private static void processChunk(byte[] locs, int size, int chunkX, int chunkZ, boolean groundUp,

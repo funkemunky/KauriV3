@@ -160,6 +160,8 @@ public enum PacketType {
                 return convert.processInWindowClick(object);
             case GAME_STATE_CHANGE:
                 return convert.processOutGameStateChange(object);
+            case EXPLOSION:
+                return convert.processOutExplosion(object);
             default:
                 return object;
         }

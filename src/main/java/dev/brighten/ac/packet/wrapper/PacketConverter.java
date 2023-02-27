@@ -98,4 +98,8 @@ public interface PacketConverter {
     WPacketPlayOutGameStateChange processOutGameStateChange(Object packet);
 
     Object processOutGameStateChange(WPacketPlayOutGameStateChange packet);
+
+    WPacketPlayOutExplosion processOutExplosion(Object packet);
+
+    Object processOutExplosion(WPacketPlayOutExplosion packet);
 }

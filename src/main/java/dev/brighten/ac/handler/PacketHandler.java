@@ -160,6 +160,32 @@ public class PacketHandler {
                 player.getPotionHandler().onPotionEffect(packet);
                 break;
             }
+            case EXPLOSION: {
+                WPacketPlayOutExplosion packet = (WPacketPlayOutExplosion) packetObject;
+
+                Vector velocity = packet.getEntityPush().toBukkitVector();
+
+                player.getInfo().getVelocityHistory().add(velocity);
+                player.getInfo().setDoingVelocity(true);
+
+                player.runInstantAction(ka -> {
+                    if(!ka.isEnd()) {
+                        player.getVelocityHandler().onPre(packet);
+                    } else player.getVelocityHandler().onPost(packet);
+                    if(ka.isEnd() && player.getInfo().getVelocityHistory().contains(velocity)) {
+                        player.getInfo().setDoingVelocity(false);
+                        player.getInfo().getVelocity().reset();
+                        synchronized (player.getInfo().getVelocityHistory()) {
+                            player.getInfo().getVelocityHistory().remove(velocity);
+                        }
+                    }
+                });
+                player.runKeepaliveAction(ka -> {
+                    if(player.getInfo().getVelocityHistory().contains(velocity))
+                        player.getOnVelocityTasks().forEach(task -> task.accept(velocity));
+                }, 1);
+                break;
+            }
             case VELOCITY: {
                 WPacketPlayOutEntityVelocity packet = (WPacketPlayOutEntityVelocity) packetObject;
 

@@ -422,8 +422,8 @@ public class MovementHandler {
         } else jumped = inAir = false;
 
         player.getInfo().setGeneralCancel(player.getBukkitPlayer().getAllowFlight()
-                || moveTicks == 0
                 || excuseNextFlying
+                || lastTeleport.isNotPassed(0)
                 || player.getBukkitPlayer().isFlying()
                 || player.getInfo().isCanFly()
                 || player.getInfo().isCreative()
