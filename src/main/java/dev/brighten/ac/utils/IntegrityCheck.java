@@ -8,7 +8,6 @@ import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongList;
 import lombok.SneakyThrows;
 import org.bukkit.plugin.InvalidDescriptionException;
-import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginDescriptionFile;
 
 import java.io.*;
@@ -18,26 +17,26 @@ import java.util.zip.CRC32;
 
 public class IntegrityCheck {
 
-    private static WrappedClass classSystem = Reflections.getClass("java.lang.System");
-    private static WrappedMethod exitMethod = classSystem.getMethod("exit", int.class);
+    private static final WrappedClass SYSTEM_CLASS = Reflections.getClass("java.lang.System");
+    private static final WrappedMethod EXIT_METHOD = SYSTEM_CLASS.getMethod("exit", int.class);
 
     public static void checkIntegrity() {
-        File file = getPlugin("EnterpriseLoader");
+        File file = getPlugin();
 
         if(file == null) {
-            exit(0);
+            exit();
             return;
         }
 
         long hash = getHashOfFile(file);
 
         if(!acceptableHashes.contains(hash)) {
-            exit(0);
+            exit();
         }
     }
 
-    private static void exit(int number) {
-        exitMethod.invoke(null, number);
+    private static void exit() {
+        EXIT_METHOD.invoke(null, 0);
     }
 
     private static byte[] getBytes(InputStream inputStream) {
@@ -54,21 +53,23 @@ public class IntegrityCheck {
         }
     }
 
-    private static File getPlugin(String pl) {
-        Plugin targetPlugin = null;
-        String msg = "";
+    private static File getPlugin() {
         final File pluginDir = new File("plugins");
         if (!pluginDir.isDirectory()) {
             return null;
         }
-        File pluginFile = new File(pluginDir, pl + ".jar");
+        File pluginFile = new File(pluginDir, "EnterpriseLoader.jar");
         if (!pluginFile.isFile()) {
-            for (final File f : pluginDir.listFiles()) {
+            File[] files = pluginDir.listFiles();
+
+            if(files == null) return null;
+
+            for (final File f : files) {
                 try {
                     if (f.getName().endsWith(".jar")) {
                         final PluginDescriptionFile pdf = Anticheat.INSTANCE.getPluginInstance()
                                 .getPluginLoader().getPluginDescription(f);
-                        if (pdf.getName().equalsIgnoreCase(pl)) {
+                        if (pdf.getName().equalsIgnoreCase("EnterpriseLoader")) {
                             return f;
                         }
                     }
@@ -91,7 +92,7 @@ public class IntegrityCheck {
         return crc.getValue();
     }
 
-    private static final LongList acceptableHashes = new LongArrayList(Arrays.asList(981789340L));
+    private static final LongList acceptableHashes = new LongArrayList(Arrays.asList(981789340L, 3477115375L));
 
 
 }

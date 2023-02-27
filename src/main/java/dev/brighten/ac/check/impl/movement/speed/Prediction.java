@@ -14,7 +14,7 @@ import dev.brighten.ac.utils.timer.impl.TickTimer;
 import me.hydro.emulator.object.iteration.Motion;
 
 @CheckData(name = "Prediction", checkId = "predictiona", type = CheckType.MOVEMENT,
-        maxVersion = ProtocolVersion.V1_8_9, experimental = true)
+        maxVersion = ProtocolVersion.V1_16_5, experimental = true)
 public class Prediction extends Check {
     private float buffer;
     private boolean maybeSkippedPos;

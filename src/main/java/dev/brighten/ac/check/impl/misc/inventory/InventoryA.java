@@ -9,7 +9,7 @@ import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
 import dev.brighten.ac.utils.annotation.Async;
 
-@CheckData(name = "Inventory (A)", checkId = "inventoryA", type = CheckType.INVENTORY, maxVersion = ProtocolVersion.V1_11)
+@CheckData(name = "Inventory (Move)", checkId = "inventoryA", type = CheckType.INVENTORY, maxVersion = ProtocolVersion.V1_11)
 public class InventoryA extends Check {
 
     public InventoryA(APlayer player) {

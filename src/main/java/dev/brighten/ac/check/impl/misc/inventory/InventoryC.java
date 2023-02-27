@@ -8,7 +8,7 @@ import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInWindowClick;
 
-@CheckData(name = "Inventory (Invalid_Click)", checkId = "inventoryc", type = CheckType.INVENTORY)
+@CheckData(name = "Inventory (ClickMove)", checkId = "inventoryc", type = CheckType.INVENTORY)
 public class InventoryC extends Check {
     public InventoryC(APlayer player) {
         super(player);
@@ -32,6 +32,7 @@ public class InventoryC extends Check {
 
         // Any of these could result in false positives as our emulator does not account for these things yet.
         if(player.getInfo().lastLiquid.isNotPassed(3)
+                || player.getMovement().getLastTeleport().isNotPassed(2)
                 || player.getInfo().climbTimer.isNotPassed(2)
                 || player.getBlockInfo().pistonNear) {
             return;

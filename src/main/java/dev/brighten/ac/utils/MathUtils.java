@@ -499,6 +499,14 @@ public class MathUtils {
         return (float) Math.sqrt(total);
     }
 
+    public static double hypotSqrt(double left, double right) {
+        return (left * left) + (right * right);
+    }
+
+    public static float hypotSqrt(float left, float right) {
+        return (left * left) + (right * right);
+    }
+
     public static double get3DDistance(Vector one, Vector two) {
         return hypot(one.getX() - two.getX(), one.getY() - two.getY(), one.getZ() - two.getZ());
     }

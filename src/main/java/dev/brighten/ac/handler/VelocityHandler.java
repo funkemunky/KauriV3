@@ -3,6 +3,7 @@ package dev.brighten.ac.handler;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
 import dev.brighten.ac.packet.wrapper.out.WPacketPlayOutEntityVelocity;
+import dev.brighten.ac.packet.wrapper.out.WPacketPlayOutExplosion;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.bukkit.util.Vector;
@@ -34,10 +35,19 @@ public class VelocityHandler {
         VELOCITY_MAP.put(new Vector(packet.getDeltaX(), packet.getDeltaY(), packet.getDeltaZ()), false);
     }
 
+    public void onPre(WPacketPlayOutExplosion packet) {
+        VELOCITY_MAP.put(packet.getEntityPush().toBukkitVector(), false);
+    }
+
     public void onPost(WPacketPlayOutEntityVelocity packet) {
         if(packet.getEntityId() != PLAYER.getBukkitPlayer().getEntityId()) return;
 
         VELOCITY_MAP.computeIfPresent(new Vector(packet.getDeltaX(), packet.getDeltaY(), packet.getDeltaZ()),
+                (velocity, queuedToRemove) -> true);
+    }
+
+    public void onPost(WPacketPlayOutExplosion packet) {
+        VELOCITY_MAP.computeIfPresent(packet.getEntityPush().toBukkitVector(),
                 (velocity, queuedToRemove) -> true);
     }
 
