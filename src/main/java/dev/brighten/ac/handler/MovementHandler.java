@@ -18,11 +18,10 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.val;
 import me.hydro.emulator.object.input.IterationInput;
-import me.hydro.emulator.object.iteration.Motion;
 import me.hydro.emulator.object.result.IterationResult;
-import me.hydro.emulator.util.mcp.MathHelper.FastMathType;
 import me.hydro.emulator.util.PotionEffect;
 import me.hydro.emulator.util.Vector;
+import me.hydro.emulator.util.mcp.MathHelper.FastMathType;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
@@ -42,7 +41,7 @@ public class MovementHandler {
             lDeltaX, lDeltaY, lDeltaZ, lDeltaXZ;
 
     @Getter
-    private Motion predicted;
+    private Vector predicted;
     @Getter
     private float lookX, lookY, lastLookX, lastLookY;
     @Getter
@@ -181,7 +180,7 @@ public class MovementHandler {
         }
 
         if(minimum != null) {
-            predicted = minimum.getMotion().clone();
+            predicted = minimum.getPredicted();
             if (minimum.getOffset() > 1E-8) {
                 minimum.getTags().add("bad_offset");
                 minimum.getMotion().setMotionX(deltaX);

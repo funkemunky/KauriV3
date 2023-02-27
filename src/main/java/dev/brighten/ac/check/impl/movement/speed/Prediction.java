@@ -9,12 +9,14 @@ import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
 import dev.brighten.ac.utils.Color;
 import dev.brighten.ac.utils.KLocation;
+import dev.brighten.ac.utils.MathUtils;
 import dev.brighten.ac.utils.timer.Timer;
 import dev.brighten.ac.utils.timer.impl.TickTimer;
-import me.hydro.emulator.object.iteration.Motion;
+import lombok.val;
+import me.hydro.emulator.util.Vector;
 
-@CheckData(name = "Prediction", checkId = "predictiona", type = CheckType.MOVEMENT,
-        maxVersion = ProtocolVersion.V1_8_9, experimental = true)
+@CheckData(name = "Prediction", checkId = "predictiona", type = CheckType.MOVEMENT, experimental = true,
+        punishable = false)
 public class Prediction extends Check {
     private float buffer;
     private boolean maybeSkippedPos;
@@ -39,21 +41,25 @@ public class Prediction extends Check {
             int forward = player.EMULATOR.getInput().getForward();
             int strafe = player.EMULATOR.getInput().getStrafing();
             String tags = String.join(", ", player.EMULATOR.getTags());
-            Motion predicted = player.getMovement().getPredicted();
+            Vector predicted = player.getMovement().getPredicted();
+            
+            val to = player.getMovement().getTo();
+            
+            double px = MathUtils.getDelta(predicted.getX(), to.getX()), 
+                    py = MathUtils.getDelta(predicted.getY(), to.getY()),
+                    pz = MathUtils.getDelta(predicted.getZ(), to.getZ());
 
-            boolean zeroThree =
-                    predicted.getMotionX() * predicted.getMotionX()
-                            + predicted.getMotionY() * predicted.getMotionY()
-                            + predicted.getMotionZ() * predicted.getMotionZ() < 9E-4;
+            double totalMotion = px * px + py * py + pz * pz;
+            boolean zeroThree = totalMotion < 9E-4;
 
-            boolean badOffset = offset > (lastSkipPos.isNotPassed(4) ? 0.03 : 5E-4);
+            boolean badOffset = offset > (zeroThree ? 0.03 : 5E-9);
 
             if(badOffset) {
                 debug("[%s] dx=%.6f px=%.6f dz=%.6f pz=%.6f dy=%.6f py=%.6f", zeroThree, player.getMovement().getDeltaX(),
-                        predicted.getMotionX(), player.getMovement().getDeltaZ(), predicted.getMotionZ(),
-                        player.getMovement().getDeltaY(), predicted.getMotionY());
+                        px, player.getMovement().getDeltaZ(), pz,
+                        player.getMovement().getDeltaY(), py);
                 KLocation loc = player.getMovement().getFrom().getLoc().clone()
-                        .add(predicted.getMotionX(), predicted.getMotionY(), predicted.getMotionZ());
+                        .add(px, py, pz);
 
                 if(++buffer > 5) {
                     flag("%s", offset);
@@ -61,8 +67,8 @@ public class Prediction extends Check {
                     buffer = 4;
                 }
             } else if(buffer > 0) buffer-= 0.1f;
-            debug((badOffset ? Color.Red : "") + "offset=%s f=%s s=%s py=%.3f tags=[%s]",
-                    offset, forward, strafe, predicted.getMotionY(), tags);
+            debug((badOffset ? Color.Red : "") + "offset=%s f=%s s=%s py=%.3f [%s] tags=[%s]",
+                    offset, forward, strafe, py, totalMotion, tags);
         }
 
         if (ProtocolVersion.getGameVersion().isBelow(ProtocolVersion.V1_9)) {
