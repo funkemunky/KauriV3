@@ -805,7 +805,6 @@ public class Processor_18 implements PacketConverter {
     public WPacketPlayInWindowClick processInWindowClick(Object packet) {
         PacketPlayInWindowClick windowClick = (PacketPlayInWindowClick) packet;
 
-
         return WPacketPlayInWindowClick.builder().windowId(windowClick.a())
                 .slot(windowClick.b()).button(windowClick.c())
                 .action(windowClick.d()).mode(windowClick.f())

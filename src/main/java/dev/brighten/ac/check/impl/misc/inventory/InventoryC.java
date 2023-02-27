@@ -31,8 +31,8 @@ public class InventoryC extends Check {
             return;
 
         // Any of these could result in false positives as our emulator does not account for these things yet.
-        if(player.getInfo().lastLiquid.isPassed(3)
-                || player.getInfo().climbTimer.isPassed(2)
+        if(player.getInfo().lastLiquid.isNotPassed(3)
+                || player.getInfo().climbTimer.isNotPassed(2)
                 || player.getBlockInfo().pistonNear) {
             return;
         }
