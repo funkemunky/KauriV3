@@ -20,6 +20,8 @@ public class InventoryA extends Check {
     
     @Async
     public WAction<WPacketPlayInFlying> flying = packet -> {
+        if(player.getInfo().isGeneralCancel()) return;
+
         // Running inventory check
         final int STRAFING = player.EMULATOR.getInput().getStrafing();
         final int FORWARD = player.EMULATOR.getInput().getForward();
