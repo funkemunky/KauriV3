@@ -94,7 +94,19 @@
         <dependency>
             <groupId>dev.brighten.ac</groupId>
             <artifactId>API</artifactId>
-            <version>1.0</version>
+            <version>1.0-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>dev.brighten.ac</groupId>
+            <artifactId>LegacyAPI</artifactId>
+            <version>1.0-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>dev.brighten.ac</groupId>
+            <artifactId>ModernAPI</artifactId>
+            <version>1.0-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
         <dependency>

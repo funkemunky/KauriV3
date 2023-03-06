@@ -65,21 +65,6 @@ public class Color {
         return ChatColor.stripColor(string);
     }
 
-    @Deprecated
-    public static String getColorFromString(String string) {
-        if (string.contains("&")) {
-            return Color.translate(string);
-        } else {
-            String color = (String) ReflectionsUtil.getFieldValue(ReflectionsUtil.getFieldByName(null, string), null);
-
-            if (color == null) {
-                Bukkit.getLogger().log(Level.WARNING, "The color '" + string + "' does not exist.");
-                return Strikethrough;
-            }
-            return color;
-        }
-    }
-
     /** Method from TranslatableRewriter1_16.java in https://github.com/ViaVersion/ViaBackwards **/
     public static String getClosestColor(int rgb) {
         int r = (rgb >> 16) & 0xFF;

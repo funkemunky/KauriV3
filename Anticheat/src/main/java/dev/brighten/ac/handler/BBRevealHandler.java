@@ -1,6 +1,7 @@
 package dev.brighten.ac.handler;
 
 import dev.brighten.ac.Anticheat;
+import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.packet.wrapper.objects.EnumParticle;
 import dev.brighten.ac.utils.ItemBuilder;
@@ -45,7 +46,10 @@ public class BBRevealHandler implements Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onInteract(PlayerInteractEvent event) {
-        if(!event.getPlayer().getItemInHand().isSimilar(wand)) return;
+        APlayer player = Anticheat.INSTANCE.getPlayerRegistry()
+                .getPlayer(event.getPlayer().getUniqueId()).orElse(null);
+
+        if(player == null || !player.getWrappedPlayer().getItemInHand().isSimilar(wand)) return;
 
         if(event.getAction() == Action.RIGHT_CLICK_BLOCK) {
             if(Materials.checkFlag(event.getClickedBlock().getType(), Materials.COLLIDABLE)) {

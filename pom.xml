@@ -12,6 +12,8 @@
     <modules>
         <module>AntiCheat</module>
         <module>API</module>
+        <module>LegacyAPI</module>
+        <module>ModernAPI</module>
     </modules>
 
     <properties>

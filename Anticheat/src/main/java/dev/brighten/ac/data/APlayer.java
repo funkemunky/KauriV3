@@ -1,6 +1,8 @@
 package dev.brighten.ac.data;
 
 import dev.brighten.ac.Anticheat;
+import dev.brighten.ac.api.spigot.impl.LegacyPlayer;
+import dev.brighten.ac.api.spigot.impl.ModernPlayer;
 import dev.brighten.ac.check.Check;
 import dev.brighten.ac.data.info.BlockInformation;
 import dev.brighten.ac.data.info.CheckHandler;
@@ -99,6 +101,9 @@ public class APlayer {
     public boolean sniffing;
 
     @Getter
+    private dev.brighten.ac.api.spigot.Player wrappedPlayer;
+
+    @Getter
     private final Deque<Object> packetQueue = new LinkedList<>();
     @Getter
     private final List<Consumer<Vector>> onVelocityTasks = new ArrayList<>();
@@ -135,9 +140,11 @@ public class APlayer {
         Anticheat.INSTANCE.getScheduler().execute(() -> {
             playerVersion = ProtocolVersion.getVersion(ProtocolAPI.INSTANCE.getPlayerVersion(getBukkitPlayer()));
 
-            RunUtils.task(() -> {
-                checkHandler.initChecks();
-            });
+            RunUtils.task(() -> checkHandler.initChecks());
+
+            if(ProtocolVersion.getGameVersion().isBelow(ProtocolVersion.V1_9)) {
+                this.wrappedPlayer = new LegacyPlayer(getBukkitPlayer());
+            } else this.wrappedPlayer = new ModernPlayer(getBukkitPlayer());
 
             EMULATOR = new Emulator(new DataSupplier() {
                 @Override

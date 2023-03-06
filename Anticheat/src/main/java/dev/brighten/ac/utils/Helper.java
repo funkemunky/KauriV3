@@ -267,7 +267,8 @@ public class Helper {
         for (Entity entity : player.getInfo().getNearbyEntities()) {
             if (!BlockUtils.isEntityCollidable(entity)) continue;
 
-            SimpleCollisionBox entityCollisionBox = new SimpleCollisionBox(ReflectionsUtil.getBoundingBox(entity));
+            SimpleCollisionBox entityCollisionBox =
+                    new SimpleCollisionBox((Object)MinecraftReflection.getEntityBoundingBox(entity));
 
             if (entityCollisionBox.isIntersected(collisionBox))
                 entityCollisionBox.downCast(collisionBoxes);
