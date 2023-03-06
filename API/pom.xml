@@ -5,9 +5,14 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>dev.brighten.ac</groupId>
     <artifactId>API</artifactId>
     <version>1.0</version>
+	
+	<parent>
+	    <groupId>dev.brighten.ac</groupId>
+        <artifactId>EnterpriseAnticheat</artifactId>
+        <version>1.0-SNAPSHOT</version>
+	</parent>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -45,12 +50,6 @@
     </build>
 
     <dependencies>
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <version>1.18.24</version>
-            <scope>provided</scope>
-        </dependency>
         <dependency>
             <groupId>org.github.spigot</groupId>
             <artifactId>1.8.8</artifactId>
