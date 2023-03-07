@@ -149,8 +149,17 @@ public class APlayer {
             EMULATOR = new Emulator(new DataSupplier() {
                 @Override
                 public List<AxisAlignedBB> getCollidingBoxes(AxisAlignedBB bb) {
+                    SimpleCollisionBox sbc = new SimpleCollisionBox(bb.minX, bb.minY, bb.minZ, bb.maxX, bb.maxY, bb.maxZ);
+
+                    // Greater than 20? We want to truncate to prevent huge processing cost
+                    if(sbc.min().distanceSquared(sbc.max()) > 400) {
+                        sbc.maxX = sbc.minX + Math.min(sbc.maxX - sbc.minX, 20);
+                        sbc.maxY = sbc.minY + Math.max(sbc.maxY - sbc.minY, 20);
+                        sbc.maxZ = sbc.minZ + Math.max(sbc.maxZ - sbc.minZ, 20);
+                    }
+
                     return Helper.getCollisions(APlayer.this,
-                                    new SimpleCollisionBox(bb.minX, bb.minY, bb.minZ, bb.maxX, bb.maxY, bb.maxZ),
+                                    sbc,
                                     Materials.COLLIDABLE).stream().map(bb2 ->
                                     new AxisAlignedBB(bb2.minX, bb2.minY, bb2.minZ, bb2.maxX, bb2.maxY, bb2.maxZ))
                             .collect(Collectors.toList());

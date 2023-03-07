@@ -729,6 +729,7 @@ it
 
                     if (distance < 1E-9) {
                         lastTeleport.reset();
+                        from.setLoc(this.to);
                         iterator.remove();
                         break;
                     }
