@@ -24,7 +24,7 @@ import java.util.Optional;
 
 @RequiredArgsConstructor
 public class BlockUpdateHandler {
-    private final Map<Integer[], WrappedBlock> blockInformation = new HashMap<>();
+    private final Map<Integer[], WrappedBlock> blockInformation = new Object2ObjectOpenHashMap<>();
 
     private final APlayer player;
 

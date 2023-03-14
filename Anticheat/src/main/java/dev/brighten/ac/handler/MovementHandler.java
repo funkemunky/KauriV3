@@ -1,6 +1,7 @@
 package dev.brighten.ac.handler;
 
 import com.google.common.collect.Sets;
+import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.data.obj.CMove;
 import dev.brighten.ac.handler.compat.CompatHandler;
@@ -136,6 +137,8 @@ public class MovementHandler {
         IterationResult minimum = null;
         iteration: {
             for (KLocation posLoc : posLocs) {
+                // Resetting to prevent lag issues.
+
                 IterationResult result = player.EMULATOR.runTeleportIteration(new Vector(posLoc.x, posLoc.y, posLoc.z));
 
                 if (minimum == null || minimum.getOffset() > result.getOffset()) {
@@ -172,6 +175,7 @@ public class MovementHandler {
                                                 .lastReportedBoundingBox(from.getBox().toNeo())
                                                 .effectSpeed(EFFECTS[0])
                                                 .effectSlow(EFFECTS[1])
+                                                .waitingForTeleport(posLocs.size() > 0)
                                                 .effectJump(EFFECTS[2])
                                                 .build();
 
