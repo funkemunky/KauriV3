@@ -25,12 +25,10 @@ public class JoinListener implements Listener {
                     .getPlayer(event.getPlayer().getUniqueId());
 
             aplayer.ifPresent(player -> {
-                RunUtils.task(() -> {
-                    if(Anticheat.INSTANCE.getPacketHandler()
-                            .process(player, event.getType(), event.getPacket())) {
-                        event.setCancelled(true);
-                    }
-                });
+                if(Anticheat.INSTANCE.getPacketHandler()
+                        .process(player, event.getType(), event.getPacket())) {
+                    event.setCancelled(true);
+                }
             });
         });
 
