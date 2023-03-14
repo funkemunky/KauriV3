@@ -38,6 +38,7 @@ import org.bukkit.potion.Potion;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -1708,6 +1709,9 @@ public enum XMaterial {
         return Optional.empty();
     }
 
+    private static final Cache<Material, XMaterial> xMaterialCache = CacheBuilder.newBuilder()
+            .expireAfterWrite(30, TimeUnit.MINUTES).build();
+
     /**
      * Parses the given material as an XMaterial.
      *
@@ -1719,8 +1723,13 @@ public enum XMaterial {
     @Nonnull
     public static XMaterial matchXMaterial(@Nonnull Material material) {
         Objects.requireNonNull(material, "Cannot match null material");
-        return matchDefinedXMaterial(material.name(), UNKNOWN_DATA_VALUE)
-                .orElseThrow(() -> new IllegalArgumentException("Unsupported material with no data value: " + material.name()));
+
+        try {
+            return xMaterialCache.get(material, () -> matchDefinedXMaterial(material.name(), UNKNOWN_DATA_VALUE)
+                    .orElseThrow(() -> new IllegalArgumentException("Unsupported material with no data value: " + material.name())));
+        } catch (ExecutionException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**
@@ -1785,6 +1794,7 @@ public enum XMaterial {
      * @see #matchXMaterial(ItemStack)
      * @since 3.0.0
      */
+
     @Nonnull
     private static Optional<XMaterial> matchDefinedXMaterial(@Nonnull String name, byte data) {
         // if (!Boolean.valueOf(Boolean.getBoolean(Boolean.TRUE.toString())).equals(Boolean.FALSE.booleanValue())) return null;

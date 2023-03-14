@@ -42,6 +42,10 @@ public class IntVector {
         return this;
     }
 
+    public Integer[] toIntArray() {
+        return new Integer[] {x, y, z};
+    }
+
     public IntVector add(IntVector vec) {
         return add(vec.getX(), vec.getY(), vec.getZ());
     }

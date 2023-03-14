@@ -18,11 +18,13 @@ import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 @RequiredArgsConstructor
 public class BlockUpdateHandler {
-    private final Object2ObjectOpenHashMap<IntVector, WrappedBlock> blockInformation = new Object2ObjectOpenHashMap<>();
+    private final Map<Integer[], WrappedBlock> blockInformation = new HashMap<>();
 
     private final APlayer player;
 
@@ -63,7 +65,7 @@ public class BlockUpdateHandler {
         player.getInfo().getLastPlace().reset();
 
         synchronized (blockInformation) {
-            blockInformation.put(pos, new WrappedBlock(pos.toLocation(player.getBukkitPlayer().getWorld()),
+            blockInformation.put(pos.toIntArray(), new WrappedBlock(pos.toLocation(player.getBukkitPlayer().getWorld()),
                     place.getItemStack().getType(), (byte) 0));
         }
     }
@@ -77,7 +79,7 @@ public class BlockUpdateHandler {
         player.getInfo().lastBlockUpdate.reset();
         if (dig.getDigType() == WPacketPlayInBlockDig.EnumPlayerDigType.STOP_DESTROY_BLOCK) {
             synchronized (blockInformation) {
-                blockInformation.put(dig.getBlockPos(),
+                blockInformation.put(dig.getBlockPos().toIntArray(),
                         new WrappedBlock(dig.getBlockPos().toLocation(player.getBukkitPlayer().getWorld()),
                         Material.AIR, (byte) 0));
             }
@@ -91,7 +93,7 @@ public class BlockUpdateHandler {
             // Updating block information
             player.runInstantAction(k -> {
                 if (k.isEnd()) {
-                    blockInformation.put(packet.getBlockLocation(),
+                    blockInformation.put(packet.getBlockLocation().toIntArray(),
                             new WrappedBlock(packet.getBlockLocation().toLocation(player.getBukkitPlayer().getWorld()),
                                     packet.getMaterial(), packet.getBlockData()));
                 }
@@ -108,7 +110,7 @@ public class BlockUpdateHandler {
                         WrappedBlock block = new WrappedBlock(info.getLocation()
                                 .toLocation(player.getBukkitPlayer().getWorld()),
                                 info.getMaterial(), info.getData());
-                        blockInformation.put(info.getLocation(),
+                        blockInformation.put(info.getLocation().toIntArray(),
                                 new WrappedBlock(info.getLocation().toLocation(player.getBukkitPlayer().getWorld()),
                                         info.getMaterial(), info.getData()));
                     }
@@ -124,7 +126,7 @@ public class BlockUpdateHandler {
                     chunkUpdate.getChunk().getBlocks().forEach((vec, mblock) -> {
                         WrappedBlock block = new WrappedBlock(vec.toLocation(player.getBukkitPlayer().getWorld()),
                                 mblock.material, mblock.data);
-                        blockInformation.put(vec, block);
+                        blockInformation.put(vec.toIntArray(), block);
                     });
                 }
             }
@@ -144,7 +146,7 @@ public class BlockUpdateHandler {
                     IntVector intVec = new IntVector(bloc.getBlockX(), bloc.getBlockY(), bloc.getBlockZ());
                     block = new WrappedBlock(intVec.toLocation(player.getBukkitPlayer().getWorld()),
                             bukkitBlock.get().getType(), bukkitBlock.get().getData());
-                    blockInformation.put(loc, block);
+                    blockInformation.put(loc.toIntArray(), block);
                 } else
                     block = new WrappedBlock(loc.toLocation(player.getBukkitPlayer().getWorld()), Material.AIR, (byte)0);
             }

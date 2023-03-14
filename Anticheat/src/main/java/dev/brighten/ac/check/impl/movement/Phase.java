@@ -71,14 +71,18 @@ public class Phase extends Check {
         } else if(player.getMovement().getMoveTicks() > 0 && player.getMovement().getTeleportsToConfirm() == 0) {
             POSITIONS.clear();
         } else if(teleportLoc != null) {
-            RunUtils.task(() -> player.getBukkitPlayer().teleport(teleportLoc));
+            final Location finalLoc = teleportLoc.clone(); // This is to make sure it isn't set null later.
+            RunUtils.task(() -> player.getBukkitPlayer().teleport(finalLoc));
             return true;
         }
 
         if(player.getMovement().getFrom().getLoc().distanceSquared(player.getMovement().getTo().getLoc()) > 400) {
             MiscUtils.printToConsole(player.getBukkitPlayer().getName() + " moved too fast!");
-            RunUtils.task(() -> player.getBukkitPlayer().teleport(player.getMovement().getFrom().getLoc()
-                    .toLocation(player.getBukkitPlayer().getWorld())));
+            // This is to make sure it isn't set null later.
+            final Location fromLoc = player.getMovement().getFrom().getLoc()
+                    .toLocation(player.getBukkitPlayer().getWorld());
+
+            RunUtils.task(() -> player.getBukkitPlayer().teleport(fromLoc));
             return true;
         }
 

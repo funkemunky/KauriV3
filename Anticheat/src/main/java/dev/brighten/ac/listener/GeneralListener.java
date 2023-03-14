@@ -54,7 +54,11 @@ public class GeneralListener implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onTeleport(PlayerTeleportEvent event) {
-        if(event.getFrom().getWorld().equals(event.getTo().getWorld())) return;
+        if(event.getFrom()
+                .getWorld()
+                .equals(event
+                        .getTo()
+                        .getWorld())) return;
 
         Anticheat.INSTANCE.getPlayerRegistry().getPlayer(event.getPlayer().getUniqueId())
                 .ifPresent(player -> {
