@@ -104,6 +104,7 @@ public class MovementHandler {
     private static final boolean[] ALWAYS_FALSE = new boolean[1];
     private static final int[] FULL_RANGE = new int[]{-1, 0, 1};
 
+    // TODO Fix the massive performance issues on teleports and world changes.
     public void runEmulation(WPacketPlayInFlying packet) {
         /*
          * (org.bukkit.potion.PotionEffectType
