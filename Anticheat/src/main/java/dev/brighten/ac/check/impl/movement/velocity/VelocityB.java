@@ -230,17 +230,6 @@ public class VelocityB extends Check {
         previousFrom = player.getMovement().getFrom().getLoc().clone();
     };
 
-    /*
-     for (int f = -1; f < 2; f++) {
-                    for (int s = -1; s < 2; s++) {
-                        for (boolean sprinting : TRUE_FALSE) {
-                            for (int fastMath = 0; fastMath <= 2; fastMath++) {
-                                for (boolean attack : TRUE_FALSE) {
-                                    for (boolean using : TRUE_FALSE) {
-                                        for (boolean sneaking : TRUE_FALSE) {
-                                            for (boolean jumped : TRUE_FALSE) {
-     */
-
     @AllArgsConstructor
     private static class Iteration {
         final int f, s, fastMath;

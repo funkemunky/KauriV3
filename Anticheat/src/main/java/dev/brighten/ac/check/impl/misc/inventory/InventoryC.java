@@ -35,6 +35,7 @@ public class InventoryC extends Check {
         if(player.getInfo().lastLiquid.isNotPassed(3)
                 || player.getMovement().getLastTeleport().isNotPassed(2)
                 || player.getInfo().climbTimer.isNotPassed(2)
+                || player.getInfo().velocity.isNotPassed(2)
                 || player.getBlockInfo().pistonNear) {
             return;
         }
