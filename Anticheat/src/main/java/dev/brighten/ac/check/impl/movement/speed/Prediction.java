@@ -31,8 +31,6 @@ public class Prediction extends Check {
 
         check: {
             if(!packet.isMoved()
-                    || player.getMovement().getLastTeleport().isNotPassed(1)
-                    || player.getInfo().getVelocity().isNotPassed(2)
                     || player.getBlockInfo().onClimbable
                     || player.getInfo().lastLiquid.isNotPassed(2)
                     || player.getInfo().isGeneralCancel()) break check;
@@ -61,12 +59,16 @@ public class Prediction extends Check {
                 KLocation loc = player.getMovement().getFrom().getLoc().clone()
                         .add(px, py, pz);
 
+                if(tags.contains("velocity")) {
+                    buffer++;
+                }
+
                 if(++buffer > 5) {
                     flag("%s", offset);
                     correctMovement(loc);
                     buffer = 4;
                 }
-            } else if(buffer > 0) buffer-= 0.1f;
+            } else if(buffer > 0) buffer-= 0.05f;
             debug((badOffset ? Color.Red : "") + "offset=%s f=%s s=%s py=%.3f [%s] tags=[%s]",
                     offset, forward, strafe, py, totalMotion, tags);
         }

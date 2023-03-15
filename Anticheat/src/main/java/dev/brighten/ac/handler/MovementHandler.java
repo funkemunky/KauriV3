@@ -19,6 +19,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.val;
 import me.hydro.emulator.object.input.IterationInput;
+import me.hydro.emulator.object.iteration.Motion;
 import me.hydro.emulator.object.result.IterationResult;
 import me.hydro.emulator.util.PotionEffect;
 import me.hydro.emulator.util.Vector;
@@ -151,41 +152,67 @@ public class MovementHandler {
                 }
             }
 
+            List<org.bukkit.util.Vector> possibleVelocity = new ArrayList<>();
+
+            possibleVelocity.add(null);
+            possibleVelocity.addAll(player.getVelocityHandler().getPossibleVectors());
+
+            Motion previousMotion = player.EMULATOR.getMotion().clone();
+
             for (int forward : FULL_RANGE) {
                 for (int strafe : FULL_RANGE) {
-                    for (boolean jumping : getJumpingIterations()) {
-                        for (boolean usingItem : getUsingItemIterations(forward, strafe)) {
-                            for (boolean sprinting : getSprintingIterations(forward)) {
-                                for (boolean hitSlow : (player.getInfo().lastAttack.isNotPassed(1)
-                                        ? IS_OR_NOT : ALWAYS_FALSE)) {
-                                    for (FastMathType fastMath : getFastMathIterations()) {
-                                        IterationInput input = IterationInput.builder()
-                                                .jumping(jumping)
-                                                .forward(forward)
-                                                .strafing(strafe)
-                                                .sprinting(sprinting)
-                                                .usingItem(usingItem)
-                                                .hitSlowdown(hitSlow)
-                                                .aiMoveSpeed(player.getBukkitPlayer().getWalkSpeed() / 2)
-                                                .fastMathType(fastMath)
-                                                .sneaking(player.getInfo().isSneaking())
-                                                .ground(from.isOnGround())
-                                                .to(new Vector(to.getX(), to.getY(), to.getZ()))
-                                                .yaw(to.getYaw())
-                                                .lastReportedBoundingBox(from.getBox().toNeo())
-                                                .effectSpeed(EFFECTS[0])
-                                                .effectSlow(EFFECTS[1])
-                                                .waitingForTeleport(posLocs.size() > 0)
-                                                .effectJump(EFFECTS[2])
-                                                .build();
+                        for (boolean jumping : getJumpingIterations()) {
+                            for (boolean usingItem : getUsingItemIterations(forward, strafe)) {
+                                for (boolean sprinting : getSprintingIterations(forward)) {
+                                    for (boolean hitSlow : (player.getInfo().lastAttack.isNotPassed(1)
+                                            ? IS_OR_NOT : ALWAYS_FALSE)) {
+                                        for (FastMathType fastMath : getFastMathIterations()) {
+                                            for(org.bukkit.util.Vector possibleVector : possibleVelocity) {
+                                            IterationInput input = IterationInput.builder()
+                                                    .jumping(jumping)
+                                                    .forward(forward)
+                                                    .strafing(strafe)
+                                                    .sprinting(sprinting)
+                                                    .usingItem(usingItem)
+                                                    .hitSlowdown(hitSlow)
+                                                    .aiMoveSpeed(player.getBukkitPlayer().getWalkSpeed() / 2)
+                                                    .fastMathType(fastMath)
+                                                    .sneaking(player.getInfo().isSneaking())
+                                                    .ground(from.isOnGround())
+                                                    .to(new Vector(to.getX(), to.getY(), to.getZ()))
+                                                    .yaw(to.getYaw())
+                                                    .lastReportedBoundingBox(from.getBox().toNeo())
+                                                    .effectSpeed(EFFECTS[0])
+                                                    .effectSlow(EFFECTS[1])
+                                                    .waitingForTeleport(posLocs.size() > 0)
+                                                    .effectJump(EFFECTS[2]).build();
 
-                                        IterationResult result = player.EMULATOR.runIteration(input);
+                                            boolean isVelocity = false;
+                                            if(possibleVector != null) {
+                                                // Setting the motion to the possible velocity vector.
+                                                player.EMULATOR.getMotion().setMotionX(possibleVector.getX());
+                                                player.EMULATOR.getMotion().setMotionY(possibleVector.getY());
+                                                player.EMULATOR.getMotion().setMotionZ(possibleVector.getZ());
+                                                isVelocity = true;
+                                            } else {
+                                                // Resetting the motion to the previous motion.
+                                                player.EMULATOR.getMotion().setMotionX(previousMotion.getMotionX());
+                                                player.EMULATOR.getMotion().setMotionY(previousMotion.getMotionY());
+                                                player.EMULATOR.getMotion().setMotionZ(previousMotion.getMotionZ());
+                                            }
 
-                                        if (minimum == null || minimum.getOffset() > result.getOffset()) {
-                                            minimum = result;
+                                            IterationResult result = player.EMULATOR.runIteration(input);
 
-                                            if(minimum.getOffset() < 1E-26) {
-                                                break iteration;
+                                            if(isVelocity) {
+                                                result.getTags().add("velocity");
+                                            }
+
+                                            if (minimum == null || minimum.getOffset() > result.getOffset()) {
+                                                minimum = result;
+
+                                                if (minimum.getOffset() < 1E-26) {
+                                                    break iteration;
+                                                }
                                             }
                                         }
                                     }
@@ -690,7 +717,14 @@ it
 
         teleportsToConfirm++;
 
-        player.runKeepaliveAction(ka -> teleportsToConfirm--, 2);
+        loc.timeStamp = System.currentTimeMillis();
+
+        player.runKeepaliveAction(ka -> {
+            teleportsToConfirm--;
+            synchronized (posLocs) {
+                posLocs.remove(loc);
+            }
+        }, 2);
         synchronized (posLocs) {
             posLocs.add(loc);
         }
