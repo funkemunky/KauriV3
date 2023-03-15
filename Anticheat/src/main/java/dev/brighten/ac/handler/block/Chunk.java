@@ -12,6 +12,11 @@ public class Chunk {
     private final int chunkX, chunkZ;
     private final WrappedBlock[][][] blocks = new WrappedBlock[16][384][16];
 
+    /**
+     * Get a block at the specified location
+     * @param location - Location of the block
+     * @return Optional of the block at the specified location
+     */
     public Optional<WrappedBlock> getBlockAt(IntVector location) {
         return getBlockAt(location.getX(), location.getY(), location.getZ());
     }
