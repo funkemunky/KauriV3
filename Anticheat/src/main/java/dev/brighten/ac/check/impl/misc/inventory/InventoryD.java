@@ -3,9 +3,10 @@ package dev.brighten.ac.check.impl.misc.inventory;
 import dev.brighten.ac.api.check.CheckType;
 import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
-import dev.brighten.ac.check.WTimedAction;
+import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.data.APlayer;
-import dev.brighten.ac.packet.wrapper.in.WPacketPlayInWindowClick;
+import org.bukkit.event.inventory.InventoryAction;
+import org.bukkit.event.inventory.InventoryClickEvent;
 
 @CheckData(name = "Inventory (FastClick)", checkId = "inventoryd", type = CheckType.INVENTORY)
 public class InventoryD extends Check {
@@ -14,16 +15,18 @@ public class InventoryD extends Check {
     }
 
     private long lastClick = 0, lastClickPT = 0;
-    private int lastSlot;
     private float buffer = 0;
 
-    WTimedAction<WPacketPlayInWindowClick> windowClick = (packet, time) -> {
+    WAction<InventoryClickEvent> windowClick = (event) -> {
         int playerTick = player.getPlayerTick();
 
         check: {
-            if(lastClick == 0 || lastClickPT == 0 || lastSlot == packet.getSlot()) break check;
+            if(event.getAction() != InventoryAction.MOVE_TO_OTHER_INVENTORY
+                    || lastClick == 0 || lastClickPT == 0) {
+                break check;
+            }
 
-            long delta = time - lastClick;
+            long delta = System.currentTimeMillis() - lastClick;
             if(delta < 50 && playerTick - lastClickPT <= 1) {
                 if(++buffer > 5) {
                     flag("b=%.1f d=%s", buffer, delta);
@@ -34,8 +37,7 @@ public class InventoryD extends Check {
             debug("b=%.1f d=%s pt=%s", buffer, delta, playerTick);
         }
 
-        lastClick = time;
+        lastClick = System.currentTimeMillis();
         lastClickPT = playerTick;
-        lastSlot = packet.getSlot();
     };
 }
