@@ -125,7 +125,7 @@ public class BlockUpdateHandler {
 
         WrappedBlock block;
 
-        if (!blockOptional.isPresent()) {
+        if (blockOptional.isEmpty()) {
             Optional<Block> bukkitBlock = BlockUtils.getBlockAsync(
                     new Location(player.getBukkitPlayer().getWorld(), x, y, z));
 
