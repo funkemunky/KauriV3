@@ -1,7 +1,6 @@
 package dev.brighten.ac.handler;
 
 import com.google.common.collect.Sets;
-import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.data.obj.CMove;
 import dev.brighten.ac.handler.compat.CompatHandler;
@@ -161,13 +160,12 @@ public class MovementHandler {
 
             for (int forward : FULL_RANGE) {
                 for (int strafe : FULL_RANGE) {
-                        for (boolean jumping : getJumpingIterations()) {
+                    for (boolean jumping : getJumpingIterations()) {
+                        for (boolean sprinting : getSprintingIterations(forward)) {
                             for (boolean usingItem : getUsingItemIterations(forward, strafe)) {
-                                for (boolean sprinting : getSprintingIterations(forward)) {
-                                    for (boolean hitSlow : (player.getInfo().lastAttack.isNotPassed(1)
-                                            ? IS_OR_NOT : ALWAYS_FALSE)) {
-                                        for (FastMathType fastMath : getFastMathIterations()) {
-                                            for(org.bukkit.util.Vector possibleVector : possibleVelocity) {
+                                for (boolean hitSlow : getHitSlowIterations(forward, strafe, sprinting)) {
+                                    for (FastMathType fastMath : getFastMathIterations(forward, strafe)) {
+                                        for(org.bukkit.util.Vector possibleVector : possibleVelocity) {
                                             IterationInput input = IterationInput.builder()
                                                     .jumping(jumping)
                                                     .forward(forward)
@@ -193,6 +191,7 @@ public class MovementHandler {
                                                 player.EMULATOR.getMotion().setMotionX(possibleVector.getX());
                                                 player.EMULATOR.getMotion().setMotionY(possibleVector.getY());
                                                 player.EMULATOR.getMotion().setMotionZ(possibleVector.getZ());
+                                                // Has to be this way because order of operations in the emulator.
                                                 isVelocity = true;
                                             } else {
                                                 // Resetting the motion to the previous motion.
@@ -236,7 +235,12 @@ public class MovementHandler {
         }
     }
 
-    private FastMathType[] getFastMathIterations() {
+    private FastMathType[] getFastMathIterations(int strafe, int forward) {
+        // Because no movement is being applied, there is no angle calculation being done
+        if(strafe == 0 && forward == 0) {
+            return new FastMathType[]{FastMathType.FAST_LEGACY};
+        }
+
         if (player.getPlayerVersion().isBelow(ProtocolVersion.V1_16)) {
             return new FastMathType[]{
                     FastMathType.FAST_LEGACY,
@@ -247,10 +251,12 @@ public class MovementHandler {
     }
 
     private boolean[] getSprintingIterations(int forward) {
-        if (player.getInfo().isSneaking())
-            return ALWAYS_FALSE;
+        return forward <= 0 || player.getInfo().isSneaking() ? ALWAYS_FALSE : IS_OR_NOT;
+    }
 
-        return IS_OR_NOT;
+    private boolean[] getHitSlowIterations(int forward, int strafing, boolean sprinting) {
+        return (forward == 0 && strafing == 0) || sprinting
+                || player.getInfo().lastAttack.isPassed(1) ? ALWAYS_FALSE : IS_OR_NOT;
     }
 
     private boolean[] getUsingItemIterations(int forward, int strafe) {
