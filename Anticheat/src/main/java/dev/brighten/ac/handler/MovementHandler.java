@@ -163,7 +163,7 @@ public class MovementHandler {
                     for (boolean jumping : getJumpingIterations()) {
                         for (boolean sprinting : getSprintingIterations(forward)) {
                             for (boolean usingItem : getUsingItemIterations(forward, strafe)) {
-                                for (boolean hitSlow : getHitSlowIterations(sprinting)) {
+                                for (boolean hitSlow : getHitSlowIterations()) {
                                     for (FastMathType fastMath : getFastMathIterations(forward, strafe)) {
                                         for(org.bukkit.util.Vector possibleVector : possibleVelocity) {
                                             IterationInput input = IterationInput.builder()
@@ -254,9 +254,8 @@ public class MovementHandler {
         return forward <= 0 || player.getInfo().isSneaking() ? ALWAYS_FALSE : IS_OR_NOT;
     }
 
-    private boolean[] getHitSlowIterations(boolean sprinting) {
-        return sprinting
-                || player.getInfo().lastAttack.isPassed(2) ? ALWAYS_FALSE : IS_OR_NOT;
+    private boolean[] getHitSlowIterations() {
+        return player.getInfo().lastAttack.isPassed(2) ? ALWAYS_FALSE : IS_OR_NOT;
     }
 
     private boolean[] getUsingItemIterations(int forward, int strafe) {
@@ -399,15 +398,13 @@ public class MovementHandler {
                         sensXPercent = sensToPercent(sensitivityX = getSensitivityFromYawGCD(yawMode));
                         sensYPercent = sensToPercent(sensitivityY = getSensitivityFromPitchGCD(pitchMode));
 
-                        table:
-                        {
-                            sensitivitySamples.add(Math.max(sensXPercent, sensYPercent));
+                        // Creating a table of sensitivity
+                        sensitivitySamples.add(Math.max(sensXPercent, sensYPercent));
 
-                            if (sensitivitySamples.size() > 30) {
-                                final long mode = MathUtils.getMode(sensitivitySamples);
+                        if (sensitivitySamples.size() > 30) {
+                            final long mode = MathUtils.getMode(sensitivitySamples);
 
-                                sensitivityMcp = AimbotUtil.SENSITIVITY_MAP.getOrDefault((int) mode, -1.0F);
-                            }
+                            sensitivityMcp = AimbotUtil.SENSITIVITY_MAP.getOrDefault((int) mode, -1.0F);
                         }
                     }
 

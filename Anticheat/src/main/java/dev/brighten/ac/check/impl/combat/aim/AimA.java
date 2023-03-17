@@ -13,9 +13,9 @@ import dev.brighten.ac.utils.timer.impl.TickTimer;
 
 import java.util.List;
 
-@CheckData(name = "Aim", checkId = "aima", type = CheckType.COMBAT)
-public class Aim extends Check {
-    public Aim(APlayer player) {
+@CheckData(name = "Aim (A)", checkId = "aima", type = CheckType.COMBAT)
+public class AimA extends Check {
+    public AimA(APlayer player) {
         super(player);
     }
 
