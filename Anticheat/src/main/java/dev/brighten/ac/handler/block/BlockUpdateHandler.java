@@ -12,18 +12,13 @@ import dev.brighten.ac.utils.Materials;
 import dev.brighten.ac.utils.XMaterial;
 import dev.brighten.ac.utils.math.IntVector;
 import dev.brighten.ac.utils.world.types.RayCollision;
-import io.netty.util.collection.LongObjectHashMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectArrayMap;
-import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -135,8 +130,11 @@ public class BlockUpdateHandler {
                 block = new WrappedBlock(bloc,
                         bukkitBlock.get().getType(), bukkitBlock.get().getData());
 
-            } else
-                block = new WrappedBlock(loc.toLocation(player.getBukkitPlayer().getWorld()), Material.AIR, (byte)0);
+            } else {
+                block = BlockUtils.getWrappedBlock(player, new Location(player.getBukkitPlayer().getWorld(), x, y, z))
+                        .orElse(new WrappedBlock(loc
+                                .toLocation(player.getBukkitPlayer().getWorld()), Material.AIR, (byte) 0));
+            }
         } else block = blockOptional.get();
 
         return block;

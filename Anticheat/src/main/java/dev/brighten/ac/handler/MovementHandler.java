@@ -163,7 +163,7 @@ public class MovementHandler {
                     for (boolean jumping : getJumpingIterations()) {
                         for (boolean sprinting : getSprintingIterations(forward)) {
                             for (boolean usingItem : getUsingItemIterations(forward, strafe)) {
-                                for (boolean hitSlow : getHitSlowIterations(forward, strafe, sprinting)) {
+                                for (boolean hitSlow : getHitSlowIterations(sprinting)) {
                                     for (FastMathType fastMath : getFastMathIterations(forward, strafe)) {
                                         for(org.bukkit.util.Vector possibleVector : possibleVelocity) {
                                             IterationInput input = IterationInput.builder()
@@ -254,9 +254,9 @@ public class MovementHandler {
         return forward <= 0 || player.getInfo().isSneaking() ? ALWAYS_FALSE : IS_OR_NOT;
     }
 
-    private boolean[] getHitSlowIterations(int forward, int strafing, boolean sprinting) {
-        return (forward == 0 && strafing == 0) || sprinting
-                || player.getInfo().lastAttack.isPassed(1) ? ALWAYS_FALSE : IS_OR_NOT;
+    private boolean[] getHitSlowIterations(boolean sprinting) {
+        return sprinting
+                || player.getInfo().lastAttack.isPassed(2) ? ALWAYS_FALSE : IS_OR_NOT;
     }
 
     private boolean[] getUsingItemIterations(int forward, int strafe) {

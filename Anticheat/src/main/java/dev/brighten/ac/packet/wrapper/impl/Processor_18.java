@@ -15,6 +15,7 @@ import dev.brighten.ac.utils.math.IntVector;
 import dev.brighten.ac.utils.reflections.types.WrappedClass;
 import dev.brighten.ac.utils.reflections.types.WrappedField;
 import io.netty.buffer.Unpooled;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import lombok.SneakyThrows;
 import lombok.val;
 import net.minecraft.server.v1_8_R3.*;
@@ -27,7 +28,6 @@ import org.bukkit.util.Vector;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -760,7 +760,7 @@ public class Processor_18 implements PacketConverter {
         byte[] locs = new byte[serialized.e()];
         serialized.readBytes(locs);
 
-        Map<IntVector, WPacketPlayOutMapChunk.MinBlock> blocks = new HashMap<>();
+        Map<IntVector, WPacketPlayOutMapChunk.MinBlock> blocks = new Object2ObjectOpenHashMap<>(locs.length);
 
         processChunk(locs, size, chunkX, chunkZ, groundUp, blocks);
 
@@ -784,7 +784,7 @@ public class Processor_18 implements PacketConverter {
             chunkMap.b = serialized.readShort() & '\uffff';
             chunkMap.a = new byte[a(Integer.bitCount(chunkMap.b), groundUp, true)];
 
-            Map<IntVector, WPacketPlayOutMapChunk.MinBlock> blocks = new HashMap<>();
+            Map<IntVector, WPacketPlayOutMapChunk.MinBlock> blocks = new Object2ObjectOpenHashMap<>(chunkMap.a.length);
 
             processChunk(chunkMap.a, chunkMap.b, chunkX, chunkZ, groundUp, blocks);
 
