@@ -14,6 +14,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.PlayerEditBookEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
@@ -49,6 +50,12 @@ public class GeneralListener implements Listener {
     @EventHandler(ignoreCancelled = true)
     public void onBookEdit(PlayerEditBookEvent event) {
         Anticheat.INSTANCE.getPlayerRegistry().getPlayer(event.getPlayer().getUniqueId())
+                .ifPresent(player -> player.getCheckHandler().callEvent(event));
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onInvClick(InventoryClickEvent event) {
+        Anticheat.INSTANCE.getPlayerRegistry().getPlayer(event.getWhoClicked().getUniqueId())
                 .ifPresent(player -> player.getCheckHandler().callEvent(event));
     }
 
