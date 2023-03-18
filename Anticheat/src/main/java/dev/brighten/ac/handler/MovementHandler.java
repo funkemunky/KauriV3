@@ -105,8 +105,7 @@ public class MovementHandler {
     private static final boolean[] ALWAYS_FALSE = new boolean[1];
     private static final int[] FULL_RANGE = new int[]{-1, 0, 1};
 
-    // TODO Fix the massive performance issues on teleports and world changes.
-    public void runEmulation(WPacketPlayInFlying packet) {
+    public void runEmulation(KLocation to) {
         /*
          * (org.bukkit.potion.PotionEffectType
          * Element 0: SPEED
@@ -177,8 +176,8 @@ public class MovementHandler {
                                                     .fastMathType(fastMath)
                                                     .sneaking(player.getInfo().isSneaking())
                                                     .ground(from.isOnGround())
-                                                    .to(new Vector(to.getX(), to.getY(), to.getZ()))
-                                                    .yaw(to.getYaw())
+                                                    .to(new Vector(to.x, to.y, to.z))
+                                                    .yaw(to.yaw)
                                                     .lastReportedBoundingBox(from.getBox().toNeo())
                                                     .effectSpeed(EFFECTS[0])
                                                     .effectSlow(EFFECTS[1])
@@ -236,9 +235,6 @@ public class MovementHandler {
             double mx = player.EMULATOR.getMotion().getMotionX();
             double my = player.EMULATOR.getMotion().getMotionY();
             double mz = player.EMULATOR.getMotion().getMotionZ();
-
-            //TODO Fix false positive caused by 9E-4 flying not being sent when jumping on slime
-            System.out.println("Predicted: " + predicted + " | " + mx + " " + my + " " + mz);
         }
     }
 
@@ -301,7 +297,7 @@ public class MovementHandler {
             player.getBlockInfo().runCollisionCheck();
         }
 
-        runEmulation(packet);
+        runEmulation(to.getLoc());
 
         if (moveTicks > 0) {
 

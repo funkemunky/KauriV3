@@ -48,9 +48,17 @@ public class Prediction extends Check {
                     pz = predicted.getZ() - from.getZ();
 
             double totalMotion = px * px + py * py + pz * pz;
-            boolean zeroThree = totalMotion < 9E-4;
+            double mx = player.EMULATOR.getMotion().getMotionX(),
+                    my = player.EMULATOR.getMotion().getMotionY(),
+                    mz = player.EMULATOR.getMotion().getMotionZ();
+            if(totalMotion < 9E-4 || (mx * mx + my * my + mz * mz) < 9E-4) {
+                lastSkipPos.reset();
+            }
+            boolean zeroThree = lastSkipPos.isNotPassed(2);
 
-            boolean badOffset = offset > (zeroThree ? 0.03 : 5E-9);
+            boolean badOffset = offset > (player.getMovement().getDeltaXZ() == 0
+                    && lastSkipPos.isNotPassed(4 )
+                    ? (zeroThree ? 0.2 : 0.03) : (zeroThree ? 0.05 : 5E-9));
 
             if(badOffset) {
                 debug("[%s] dx=%.6f px=%.6f dz=%.6f pz=%.6f dy=%.6f py=%.6f", zeroThree, player.getMovement().getDeltaX(),
@@ -72,20 +80,6 @@ public class Prediction extends Check {
             debug((badOffset ? Color.Red : "") + "offset=%s f=%s s=%s dy=%.4f dpy=%.4f py=%.2f [%s] tags=[%s]",
                     offset, forward, strafe, player.getMovement().getDeltaY(),
                     py, predicted.getY(), totalMotion, tags);
-        }
-
-        if (ProtocolVersion.getGameVersion().isBelow(ProtocolVersion.V1_9)) {
-            maybeSkippedPos = !packet.isMoved();
-        } else {
-            if (player.getPlayerTick() - lastFlying > 1) {
-                maybeSkippedPos = true;
-                debug("maybe skipped pos");
-            }
-            lastFlying = player.getPlayerTick();
-        }
-
-        if (maybeSkippedPos) {
-            lastSkipPos.reset();
         }
     };
 }
