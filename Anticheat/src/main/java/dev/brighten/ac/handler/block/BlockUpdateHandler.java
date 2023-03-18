@@ -12,15 +12,13 @@ import dev.brighten.ac.utils.Materials;
 import dev.brighten.ac.utils.XMaterial;
 import dev.brighten.ac.utils.math.IntVector;
 import dev.brighten.ac.utils.world.types.RayCollision;
-import it.unimi.dsi.fastutil.longs.Long2ObjectArrayMap;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
-import org.bukkit.craftbukkit.libs.it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 
-import java.util.Map;
 import java.util.Optional;
 
 @RequiredArgsConstructor

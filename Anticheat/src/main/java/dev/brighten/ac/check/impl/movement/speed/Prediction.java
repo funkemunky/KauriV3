@@ -41,11 +41,11 @@ public class Prediction extends Check {
             String tags = String.join(", ", player.EMULATOR.getTags());
             Vector predicted = player.getMovement().getPredicted();
             
-            val to = player.getMovement().getTo();
+            val from = player.getMovement().getFrom();
             
-            double px = MathUtils.getDelta(predicted.getX(), to.getX()), 
-                    py = MathUtils.getDelta(predicted.getY(), to.getY()),
-                    pz = MathUtils.getDelta(predicted.getZ(), to.getZ());
+            double px = predicted.getX() - from.getX(),
+                    py = predicted.getY() - from.getY(),
+                    pz = predicted.getZ() - from.getZ();
 
             double totalMotion = px * px + py * py + pz * pz;
             boolean zeroThree = totalMotion < 9E-4;
@@ -69,8 +69,9 @@ public class Prediction extends Check {
                     buffer = 4;
                 }
             } else if(buffer > 0) buffer-= 0.05f;
-            debug((badOffset ? Color.Red : "") + "offset=%s f=%s s=%s py=%.3f [%s] tags=[%s]",
-                    offset, forward, strafe, py, totalMotion, tags);
+            debug((badOffset ? Color.Red : "") + "offset=%s f=%s s=%s dy=%.4f dpy=%.4f py=%.2f [%s] tags=[%s]",
+                    offset, forward, strafe, player.getMovement().getDeltaY(),
+                    py, predicted.getY(), totalMotion, tags);
         }
 
         if (ProtocolVersion.getGameVersion().isBelow(ProtocolVersion.V1_9)) {

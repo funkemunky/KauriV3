@@ -232,6 +232,13 @@ public class MovementHandler {
                 minimum.getMotion().setMotionZ(deltaZ);
             }
             player.EMULATOR.confirm(minimum.getIteration());
+
+            double mx = player.EMULATOR.getMotion().getMotionX();
+            double my = player.EMULATOR.getMotion().getMotionY();
+            double mz = player.EMULATOR.getMotion().getMotionZ();
+
+            //TODO Fix false positive caused by 9E-4 flying not being sent when jumping on slime
+            System.out.println("Predicted: " + predicted + " | " + mx + " " + my + " " + mz);
         }
     }
 
