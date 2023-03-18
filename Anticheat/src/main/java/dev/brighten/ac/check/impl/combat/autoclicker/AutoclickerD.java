@@ -62,7 +62,7 @@ public class AutoclickerD extends Check {
     };
 
     WAction<WPacketPlayInBlockPlace> place = packet -> {
-        if(packet.getItemStack() == null || !packet.getItemStack().getType().name().contains("SWORD")) return;
+        if(packet.getItemStack() == null || !SWORDS.contains(packet.getItemStack().getType())) return;
         blocked = true;
     };
 }
