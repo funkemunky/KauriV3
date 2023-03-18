@@ -18,13 +18,14 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
+import org.bukkit.craftbukkit.libs.it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 
 import java.util.Map;
 import java.util.Optional;
 
 @RequiredArgsConstructor
 public class BlockUpdateHandler {
-    private final Map<Long, Chunk> chunks = new Long2ObjectArrayMap<>();
+    private final Long2ObjectOpenHashMap<Chunk> chunks = new Long2ObjectOpenHashMap<>(1000);
 
     private final APlayer player;
 
@@ -88,10 +89,11 @@ public class BlockUpdateHandler {
             Chunk chunk = chunks.get(hash);
 
             // If the chunk is null, create a new one
-            if(chunk == null)
+            if(chunk == null) {
                 chunk = new Chunk(x, z);
 
-            chunks.put(hash, chunk);
+                chunks.put(hash, chunk);
+            }
 
             return chunk;
         }
