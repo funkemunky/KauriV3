@@ -131,9 +131,8 @@ public class BlockUpdateHandler {
                         bukkitBlock.get().getType(), bukkitBlock.get().getData());
 
             } else {
-                block = BlockUtils.getWrappedBlock(player, new Location(player.getBukkitPlayer().getWorld(), x, y, z))
-                        .orElse(new WrappedBlock(loc
-                                .toLocation(player.getBukkitPlayer().getWorld()), Material.AIR, (byte) 0));
+                block = new WrappedBlock(loc
+                        .toLocation(player.getBukkitPlayer().getWorld()), Material.AIR, (byte) 0);
             }
         } else block = blockOptional.get();
 

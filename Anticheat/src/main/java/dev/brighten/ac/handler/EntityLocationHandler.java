@@ -7,15 +7,19 @@ import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.packet.wrapper.objects.WrappedWatchableObject;
 import dev.brighten.ac.packet.wrapper.out.*;
 import dev.brighten.ac.utils.EntityLocation;
+import dev.brighten.ac.utils.KLocation;
 import dev.brighten.ac.utils.Tuple;
+import dev.brighten.ac.utils.math.RayTrace;
 import dev.brighten.ac.utils.timer.Timer;
 import dev.brighten.ac.utils.timer.impl.MillisTimer;
+import dev.brighten.ac.utils.world.types.RayCollision;
 import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
+import org.bukkit.util.Vector;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -69,6 +73,8 @@ public class EntityLocationHandler {
         else {
             streak = 1;
         }
+
+        processZombie();
 
         entityLocationMap.values().forEach(eloc -> {
             if(eloc.one != null) {
@@ -275,10 +281,49 @@ public class EntityLocationHandler {
             mobs.add(mob);
         }
 
+        KLocation eyeLoc = data.getMovement().getTo().getLoc().clone()
+                .add(0, data.getInfo().isSneaking() ? 1.54f : 1.62f, 0);
+
+        RayCollision collision = new RayCollision(eyeLoc.toVector(), eyeLoc.getDirection());
+
+        Vector point = collision.collisionPoint(1);
+
+        FakeMob mob = new FakeMob(EntityType.ZOMBIE);
+
+        mob.spawn(true, point.toLocation(location.getWorld()), data);
+
+        fakeMobToEntityId.put(mob.getEntityId(), data.getBukkitPlayer().getEntityId());
+
+
+        this.fakeMobs.put(data.getBukkitPlayer().getEntityId(), new ArrayList<>(Collections.singletonList(mob)));
         this.fakeMobs.put(entityId, mobs);
         canCreateMob.remove(entityId);
 
         data.runKeepaliveAction(ka -> clientHasEntity.set(true));
+    }
+
+    public void processZombie() {
+        List<FakeMob> fakeMobs = this.fakeMobs.get(data.getBukkitPlayer().getEntityId());
+
+        if(fakeMobs == null) return;
+
+        if(fakeMobs.size() > 1) {
+            fakeMobs.forEach(fakeMob -> removeFakeMob(fakeMob.getEntityId()));
+        }
+
+        for (FakeMob fakeMob : fakeMobs) {
+            if(fakeMob.getType() == EntityType.ZOMBIE) {
+                KLocation eyeLoc = data.getMovement().getTo().getLoc().clone()
+                        .add(0, data.getInfo().isSneaking() ? 1.54f : 1.62f, 0);
+
+                RayCollision collision = new RayCollision(eyeLoc.toVector(), eyeLoc.getDirection());
+
+                Vector point = collision.collisionPoint(1);
+
+                fakeMob.teleport(point.getX(), point.getY(), point.getZ(), 0 ,0);
+                break;
+            }
+        }
     }
 
     public void processFakeMobs(int entityId, boolean rel, double x, double y, double z) {
@@ -291,12 +336,14 @@ public class EntityLocationHandler {
             return;
         }
 
-        if(fakeMobs.size() != offsets.length) {
+        if(fakeMobs.size() != offsets.length + 1) {
             fakeMobs.forEach(fakeMob -> removeFakeMob(fakeMob.getEntityId()));
         }
 
         int current = 0;
         for (FakeMob fakeMob : fakeMobs) {
+            if(fakeMob.getType() == EntityType.ZOMBIE)
+                continue;
             double offset = offsets[current++];
 
             if(rel) {

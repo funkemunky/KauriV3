@@ -24,6 +24,43 @@ public class MathUtils {
         return to.subtract(from).length();
     }
 
+    /**
+     * Get Average
+     *
+     * @return double
+     */
+    public static double getAverage(List<Double> list) {
+        double sum = 0;
+        for (double d : list) {
+            sum += d;
+        }
+        return sum / list.size();
+    }
+
+    public static double getAverage(double[] list) {
+        double sum = 0;
+        for (double d : list) {
+            sum += d;
+        }
+        return sum / list.length;
+    }
+
+    public static double getAverage(int[] list) {
+        double sum = 0;
+        for (double d : list) {
+            sum += d;
+        }
+        return sum / list.length;
+    }
+
+    public static float getAverage(float[] list) {
+        float sum = 0;
+        for (float d : list) {
+            sum += d;
+        }
+        return sum / list.length;
+    }
+
     public static int angularDistance(double alpha, double beta) {
         while (alpha < 0) alpha += 360;
         while (beta < 0) beta += 360;
@@ -92,13 +129,28 @@ public class MathUtils {
         return (max - average) - min;
     }
 
+    public static double getGrid(final float[] entry) {
+        double average = 0.0;
+        double min = 0.0, max = 0.0;
+
+        for (final double number : entry) {
+            if (number < min) min = number;
+            if (number > max) max = number;
+            average += number;
+        }
+
+        average /= entry.length;
+
+        return (max - average) - min;
+    }
+
     //Skidded from Luke.
     public static double getAngle(Location loc1, Location loc2) {
         if (loc1 == null || loc2 == null) return -1;
         Vector playerRotation = new Vector(loc1.getYaw(), loc1.getPitch(), 0.0f);
         loc1.setY(0);
         loc2.setY(0);
-        val rot = MathUtils.getRotations(loc1, loc2);
+        val rot = MathUtils.getRotation(loc1, loc2);
         Vector expectedRotation = new Vector(rot[0], rot[1], 0);
         return MathUtils.yawTo180D(playerRotation.getX() - expectedRotation.getX());
     }
@@ -129,8 +181,8 @@ public class MathUtils {
 
         if(values.size() < 4) return new Tuple<>(new ArrayList<>(), new ArrayList<>());
 
-        double q1 = getMedian(values.subList(0, values.size() / 2)),
-                q3 = getMedian(values.subList(values.size() / 2, values.size()));
+        double q1 = getMedianFloat(values.subList(0, values.size() / 2)),
+                q3 = getMedianFloat(values.subList(values.size() / 2, values.size()));
         double iqr = Math.abs(q1 - q3);
 
         double lowThreshold = q1 - 1.5 * iqr, highThreshold = q3 + 1.5 * iqr;
@@ -149,8 +201,8 @@ public class MathUtils {
     public static Tuple<List<Float>, List<Float>> getOutliersFloat(List<Float> values) {
         if(values.size() < 4) return new Tuple<>(new ArrayList<>(), new ArrayList<>());
 
-        double q1 = getMedian(values.subList(0, values.size() / 2)),
-                q3 = getMedian(values.subList(values.size() / 2, values.size()));
+        double q1 = MathUtils.getMedianFloat(values.subList(0, values.size() / 2)),
+                q3 = MathUtils.getMedianFloat(values.subList(values.size() / 2, values.size()));
         double iqr = Math.abs(q1 - q3);
 
         double lowThreshold = q1 - 1.5 * iqr, highThreshold = q3 + 1.5 * iqr;
@@ -170,8 +222,8 @@ public class MathUtils {
 
         if(values.size() < 4) return new Tuple<>(new ArrayList<>(), new ArrayList<>());
 
-        double q1 = getMedian(values.subList(0, values.size() / 2)),
-                q3 = getMedian(values.subList(values.size() / 2, values.size()));
+        double q1 = getMedianFloat(values.subList(0, values.size() / 2)),
+                q3 = getMedianFloat(values.subList(values.size() / 2, values.size()));
         double iqr = Math.abs(q1 - q3);
 
         double lowThreshold = q1 - 1.5 * iqr, highThreshold = q3 + 1.5 * iqr;
@@ -195,14 +247,25 @@ public class MathUtils {
         }
         return 0;
     }
-    public static double getMedian(Iterable<? extends Number> iterable) {
+
+    public static float getMedianFloat(List<Float> data) {
+        if(data.size() > 1) {
+            if (data.size() % 2 == 0)
+                return (data.get(data.size() / 2) + data.get(data.size() / 2 - 1)) / 2;
+            else
+                return data.get(Math.round(data.size() / 2f));
+        }
+        return 0;
+    }
+
+    public static double getMedianFloat(Iterable<? extends Number> iterable) {
         List<Double> data = new ArrayList<>();
 
         for (Number number : iterable) {
             data.add(number.doubleValue());
         }
 
-        return getMedian(data);
+        return getMedianFloat(data);
     }
 
     //Copied from apache math Kurtosis class.
@@ -845,29 +908,26 @@ public class MathUtils {
         return MathUtils.yawTo180F((float) (FastTrig.fast_atan2(difZ, difX) * 180.0 / 3.141592653589793) - 90.0f);
     }
 
-    public static float[] getRotations(Location one, Location two) {
-        double diffX = two.getX() - one.getX();
-        double diffZ = two.getZ() - one.getZ();
-        double diffY = two.getY() + 2.0 - 0.4 - (one.getY() + 2.0);
+    public static float[] getRotation(Location one, Location two) {
+        return getRotation(new KLocation(one), new KLocation(two));
+    }
+
+    public static float[] getRotation(KLocation one, KLocation two) {
+        double diffX = two.x - one.x;
+        double diffZ = two.z - one.z;
+        double diffY = two.y - one.y;
         double dist = Math.sqrt(diffX * diffX + diffZ * diffZ);
         float yaw = (float) (FastTrig.fast_atan2(diffZ, diffX) * 180.0 / 3.141592653589793) - 90.0f;
         float pitch = (float) (-FastTrig.fast_atan2(diffY, dist) * 180.0 / 3.141592653589793);
         return new float[]{yaw, pitch};
     }
 
-    public static float[] getRotations(LivingEntity origin, LivingEntity point) {
-        Location two = point.getLocation(), one = origin.getLocation();
-        double diffX = two.getX() - one.getX();
-        double diffZ = two.getZ() - one.getZ();
-        double diffY = two.getY() + 2.0 - 0.4 - (one.getY() + 2.0);
-        double dist = Math.sqrt(diffX * diffX + diffZ * diffZ);
-        float yaw = (float) (FastTrig.fast_atan2(diffZ, diffX) * 180.0 / 3.141592653589793) - 90.0f;
-        float pitch = (float) (-FastTrig.fast_atan2(diffY, dist) * 180.0 / 3.141592653589793);
-        return new float[]{yaw, pitch};
+    public static float[] getRotation(LivingEntity origin, LivingEntity point) {
+        return getRotation(origin.getLocation(), point.getLocation());
     }
 
     public static boolean isLookingTowardsEntity(Location from, Location to, LivingEntity entity) {
-        float[] rotFrom = getRotations(from, entity.getLocation()), rotTo = getRotations(to, entity.getLocation());
+        float[] rotFrom = getRotation(from, entity.getLocation()), rotTo = getRotation(to, entity.getLocation());
         float deltaOne = getDelta(from.getYaw(), rotTo[0]), deltaTwo = getDelta(to.getYaw(), rotTo[1]);
         float offsetFrom = getDelta(yawTo180F(from.getYaw()), yawTo180F(rotFrom[0])), offsetTo = getDelta(yawTo180F(to.getYaw()), yawTo180F(rotTo[0]));
 
@@ -875,14 +935,14 @@ public class MathUtils {
     }
 
     public static double[] getOffsetFromEntity(Player player, LivingEntity entity) {
-        double yawOffset = Math.abs(MathUtils.yawTo180F(player.getEyeLocation().getYaw()) - MathUtils.yawTo180F(MathUtils.getRotations(player.getLocation(), entity.getLocation())[0]));
-        double pitchOffset = Math.abs(Math.abs(player.getEyeLocation().getPitch()) - Math.abs(MathUtils.getRotations(player.getLocation(), entity.getLocation())[1]));
+        double yawOffset = Math.abs(MathUtils.yawTo180F(player.getEyeLocation().getYaw()) - MathUtils.yawTo180F(MathUtils.getRotation(player.getLocation(), entity.getLocation())[0]));
+        double pitchOffset = Math.abs(Math.abs(player.getEyeLocation().getPitch()) - Math.abs(MathUtils.getRotation(player.getLocation(), entity.getLocation())[1]));
         return new double[]{yawOffset, pitchOffset};
     }
 
     public static double[] getOffsetFromLocation(Location one, Location two) {
-        double yaw = MathUtils.getRotations(one, two)[0];
-        double pitch = MathUtils.getRotations(one, two)[1];
+        double yaw = MathUtils.getRotation(one, two)[0];
+        double pitch = MathUtils.getRotation(one, two)[1];
         double yawOffset = Math.abs(yaw - MathUtils.yawTo180F(one.getYaw()));
         double pitchOffset = Math.abs(pitch - one.getPitch());
         return new double[]{yawOffset, pitchOffset};

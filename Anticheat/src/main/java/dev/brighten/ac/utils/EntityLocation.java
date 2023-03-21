@@ -4,6 +4,7 @@ import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.utils.objects.evicting.EvictingList;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.entity.Entity;
+import org.bukkit.util.Vector;
 
 import java.util.ArrayList;
 import java.util.Deque;
@@ -121,5 +122,9 @@ public class EntityLocation {
         loc.interpolatedLocations.addAll(interpolatedLocations);
 
         return loc;
+    }
+
+    public Vector getCurrentIteration() {
+        return new Vector(x, y, z);
     }
 }

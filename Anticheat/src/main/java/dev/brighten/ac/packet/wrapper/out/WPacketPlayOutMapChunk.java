@@ -34,6 +34,7 @@ public class WPacketPlayOutMapChunk extends WPacket {
     @AllArgsConstructor
     @Getter
     public static class WrappedChunk {
+        private int x, z;
         private Map<IntVector, MinBlock> blocks;
     }
 }

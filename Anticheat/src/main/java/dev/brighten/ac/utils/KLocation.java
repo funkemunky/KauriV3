@@ -37,6 +37,13 @@ public class KLocation implements Cloneable {
         this.timeStamp = System.currentTimeMillis();
     }
 
+    public KLocation(Vector vector) {
+        this.x = vector.getX();
+        this.y = vector.getY();
+        this.z = vector.getZ();
+        this.timeStamp = System.currentTimeMillis();
+    }
+
     public KLocation(Location location) {
         this.x = location.getX();
         this.y = location.getY();

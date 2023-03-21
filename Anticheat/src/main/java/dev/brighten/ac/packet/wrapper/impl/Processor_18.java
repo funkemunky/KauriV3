@@ -764,7 +764,13 @@ public class Processor_18 implements PacketConverter {
 
         processChunk(locs, size, chunkX, chunkZ, groundUp, blocks);
 
-        return new WPacketPlayOutMapChunk(new WPacketPlayOutMapChunk.WrappedChunk(blocks));
+        return new WPacketPlayOutMapChunk(new WPacketPlayOutMapChunk.WrappedChunk(chunkX, chunkZ, blocks));
+    }
+
+    @Override
+    public Object processMapChunk(WPacketPlayOutMapChunk packet) {
+        PacketPlayOutMapChunk vanilla = new PacketPlayOutMapChunk();
+        return null;
     }
 
     @Override
@@ -788,7 +794,7 @@ public class Processor_18 implements PacketConverter {
 
             processChunk(chunkMap.a, chunkMap.b, chunkX, chunkZ, groundUp, blocks);
 
-            chunks.add(new WPacketPlayOutMapChunk.WrappedChunk(blocks));
+            chunks.add(new WPacketPlayOutMapChunk.WrappedChunk(chunkX, chunkZ, blocks));
         }
 
         return new WPacketPlayOutMapChunkBulk(chunks);

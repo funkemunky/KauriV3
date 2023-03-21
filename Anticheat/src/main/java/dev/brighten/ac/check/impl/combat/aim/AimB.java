@@ -10,7 +10,7 @@ import dev.brighten.ac.utils.MathUtils;
 import dev.brighten.ac.utils.timer.Timer;
 import dev.brighten.ac.utils.timer.impl.TickTimer;
 
-@CheckData(name = "Aim (B)", checkId = "aimb", type = CheckType.COMBAT, experimental = true)
+//@CheckData(name = "Aim (B)", checkId = "aimb", type = CheckType.COMBAT, experimental = true)
 public class AimB extends Check {
     public AimB(APlayer player) {
         super(player);
@@ -58,15 +58,17 @@ public class AimB extends Check {
         if(Math.abs(totalDelta - lDelta) < 0.00004 && lastLargeDelta > 0.65 && lastLargeLook.isNotPassed(5)) {
             if(++bufferA > 60) {
                 flag("Type=[A];b=%s", bufferA);
+                if(bufferA > 100) bufferA = 100;
             }
         } else bufferA = 0;
 
         // Type B, checks if player math is too imperfect
-        if(Math.abs(totalDelta - lDelta) > 0.005) {
+        if(Math.abs(totalDelta - lDelta) > 0.005 && !player.getMovement().isCinematic()) {
             if(++bufferB > 25) {
                 flag("Type=[B];b=%s", bufferB);
+                if(bufferB > 50) bufferB = 50;
             }
-        } else if(bufferB > 0) bufferB-= 2;
+        } else if(bufferB > 0) bufferB-= 4;
 
         debug("a=%s b=%s total: %s sens=%.7f", bufferA, bufferB, totalDelta, sensitivity);
 

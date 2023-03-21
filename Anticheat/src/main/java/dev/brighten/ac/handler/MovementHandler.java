@@ -224,13 +224,17 @@ public class MovementHandler {
 
         if(minimum != null) {
             predicted = minimum.getPredicted();
-            if (minimum.getOffset() > 1E-8) {
+            if (minimum.getOffset() > 1E-7) {
                 minimum.getTags().add("bad_offset");
                 minimum.getMotion().setMotionX(deltaX);
                 minimum.getMotion().setMotionY(deltaY);
                 minimum.getMotion().setMotionZ(deltaZ);
             }
             player.EMULATOR.confirm(minimum.getIteration());
+
+            if(minimum.getTags().contains("bad_offset")) {
+                player.EMULATOR.setLastReportedBoundingBox(getTo().getBox().toNeo());
+            }
 
             double mx = player.EMULATOR.getMotion().getMotionX();
             double my = player.EMULATOR.getMotion().getMotionY();

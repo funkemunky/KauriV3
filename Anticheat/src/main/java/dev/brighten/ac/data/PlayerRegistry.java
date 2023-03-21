@@ -113,6 +113,8 @@ public class PlayerRegistry {
             unregister(player.getUniqueId());
         }
 
+
+
         synchronized (aplayerMap) {
             APlayer aplayer = new APlayer(player);
             aplayerMap.put(player.getUniqueId().hashCode(), aplayer);
