@@ -1,9 +1,9 @@
 package dev.brighten.ac.logging;
 
-import lombok.Builder;
-import lombok.Getter;
 import dev.brighten.ac.utils.json.JSONException;
 import dev.brighten.ac.utils.json.JSONObject;
+import lombok.Builder;
+import lombok.Getter;
 
 import java.util.UUID;
 

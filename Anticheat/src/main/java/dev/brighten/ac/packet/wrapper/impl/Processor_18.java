@@ -8,7 +8,6 @@ import dev.brighten.ac.packet.wrapper.objects.PlayerCapabilities;
 import dev.brighten.ac.packet.wrapper.objects.WrappedEnumDirection;
 import dev.brighten.ac.packet.wrapper.objects.WrappedWatchableObject;
 import dev.brighten.ac.packet.wrapper.out.*;
-import dev.brighten.ac.utils.MathHelper;
 import dev.brighten.ac.utils.MiscUtils;
 import dev.brighten.ac.utils.math.FloatVector;
 import dev.brighten.ac.utils.math.IntVector;
@@ -18,6 +17,7 @@ import io.netty.buffer.Unpooled;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import lombok.SneakyThrows;
 import lombok.val;
+import me.hydro.emulator.util.mcp.MathHelper;
 import net.minecraft.server.v1_8_R3.*;
 import org.bukkit.Material;
 import org.bukkit.craftbukkit.v1_8_R3.inventory.CraftItemStack;
@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+@SuppressWarnings("deprecation")
 public class Processor_18 implements PacketConverter {
     @Override
     public WPacketPlayInFlying processFlying(Object object) {
@@ -266,7 +267,7 @@ public class Processor_18 implements PacketConverter {
 
         serial.b(packet.getId()); //No matter what this will always be written
 
-        Object packetToReturn = null;
+        Object packetToReturn;
 
         if(packet.isLooked() && packet.isMoved()) { // Moved and looked
             serial.writeByte(MathHelper.floor_double(packet.getX() * 32.));
@@ -574,8 +575,7 @@ public class Processor_18 implements PacketConverter {
     }
 
     private static final WrappedClass classSpawnEntityLiving = new WrappedClass(PacketPlayOutSpawnEntityLiving.class);
-    private static final WrappedField splDataWatcher = classSpawnEntityLiving.getFieldByType(DataWatcher.class, 0),
-            splWatchList = classSpawnEntityLiving.getFieldByType(List.class, 0);
+    private static final WrappedField splDataWatcher = classSpawnEntityLiving.getFieldByType(DataWatcher.class, 0);
 
     @SneakyThrows
     @Override
@@ -598,8 +598,6 @@ public class Processor_18 implements PacketConverter {
         return builder.build();
     }
 
-    private static final WrappedClass dataWatcherClass = new WrappedClass(DataWatcher.class);
-    private static final WrappedField watchableMap = dataWatcherClass.getFieldByName("d");
     @Override
     public Object processSpawnLiving(WPacketPlayOutSpawnEntityLiving packet) {
         PacketPlayOutSpawnEntityLiving vanilla = new PacketPlayOutSpawnEntityLiving();
@@ -621,7 +619,7 @@ public class Processor_18 implements PacketConverter {
             DataWatcher watcher = new DataWatcher(null);
 
             for (WrappedWatchableObject w : packet.getWatchedObjects()) {
-                watcher.a(w.getDataValueId(), w.getWatchedObject());;
+                watcher.a(w.getDataValueId(), w.getWatchedObject());
             }
 
             watcher.a(serializer);
@@ -788,7 +786,7 @@ public class Processor_18 implements PacketConverter {
             int chunkZ = serialized.readInt();
             PacketPlayOutMapChunk.ChunkMap chunkMap = new PacketPlayOutMapChunk.ChunkMap();
             chunkMap.b = serialized.readShort() & '\uffff';
-            chunkMap.a = new byte[a(Integer.bitCount(chunkMap.b), groundUp, true)];
+            chunkMap.a = new byte[a(Integer.bitCount(chunkMap.b), groundUp)];
 
             Map<IntVector, WPacketPlayOutMapChunk.MinBlock> blocks = new Object2ObjectOpenHashMap<>(chunkMap.a.length);
 
@@ -957,17 +955,12 @@ public class Processor_18 implements PacketConverter {
         }
     }
 
-    private static int a(int i, boolean flag, boolean flag1) {
+    private static int a(int i, boolean flag) {
         int j = i * 2 * 16 * 16 * 16;
         int k = i * 16 * 16 * 16 / 2;
         int l = flag ? i * 16 * 16 * 16 / 2 : 0;
-        int i1 = flag1 ? 256 : 0;
+        int i1 = 256;
         return j + k + l + i1;
-    }
-
-    private static int a(byte[] abyte, byte[] abyte1, int i) {
-        System.arraycopy(abyte, 0, abyte1, i, abyte.length);
-        return i + abyte.length;
     }
 
     private PacketDataSerializer serialize(Packet<?> packet) {
@@ -985,44 +978,26 @@ public class Processor_18 implements PacketConverter {
             int i = (object.getObjectType() << 5 | object.getDataValueId() & 31) & 255;
             serializer.writeByte(i);
             switch (object.getObjectType()) {
-                case 0: {
-                    serializer.writeByte((Byte)object.getWatchedObject());
-                    break;
-                }
-                case 1: {
-                    serializer.writeShort((Short)object.getWatchedObject());
-                    break;
-                }
-                case 2: {
-                    serializer.writeInt((Integer)object.getWatchedObject());
-                    break;
-                }
-                case 3: {
-                    serializer.writeFloat((Float)object.getWatchedObject());
-                    break;
-                }
-                case 4: {
-                    serializer.a((String)object.getWatchedObject());
-                    break;
-                }
-                case 5: {
-                    ItemStack itemStack = (ItemStack)object.getWatchedObject();
+                case 0 -> serializer.writeByte((Byte) object.getWatchedObject());
+                case 1 -> serializer.writeShort((Short) object.getWatchedObject());
+                case 2 -> serializer.writeInt((Integer) object.getWatchedObject());
+                case 3 -> serializer.writeFloat((Float) object.getWatchedObject());
+                case 4 -> serializer.a((String) object.getWatchedObject());
+                case 5 -> {
+                    ItemStack itemStack = (ItemStack) object.getWatchedObject();
                     serializer.a(itemStack);
-                    break;
                 }
-                case 6: {
-                    BlockPosition blockPosition = (BlockPosition)object.getWatchedObject();
+                case 6 -> {
+                    BlockPosition blockPosition = (BlockPosition) object.getWatchedObject();
                     serializer.writeInt(blockPosition.getX());
                     serializer.writeInt(blockPosition.getY());
                     serializer.writeInt(blockPosition.getZ());
-                    break;
                 }
-                case 7: {
-                    Vector3f vector3f = (Vector3f)object.getWatchedObject();
+                case 7 -> {
+                    Vector3f vector3f = (Vector3f) object.getWatchedObject();
                     serializer.writeFloat(vector3f.getX());
                     serializer.writeFloat(vector3f.getY());
                     serializer.writeFloat(vector3f.getZ());
-                    break;
                 }
             }
         }

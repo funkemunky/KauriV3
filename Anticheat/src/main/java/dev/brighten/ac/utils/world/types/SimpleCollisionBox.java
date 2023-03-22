@@ -83,7 +83,14 @@ public class SimpleCollisionBox implements CollisionBox {
     }
 
     public SimpleCollisionBox(Object aabb) {
-        this(MinecraftReflection.fromAABB(aabb));
+        double[] box = MinecraftReflection.fromAABB(aabb);
+
+        this.minX = box[0];
+        this.minY = box[1];
+        this.minZ = box[2];
+        this.maxX = box[3];
+        this.maxY = box[4];
+        this.maxZ = box[5];
     }
 
     public void sort() {
@@ -343,7 +350,7 @@ public class SimpleCollisionBox implements CollisionBox {
     }
 
     public <T> T toAxisAlignedBB() {
-        return MinecraftReflection.toAABB(this);
+        return MinecraftReflection.toAABB(minX, minY, minZ, maxX, maxY, maxZ);
     }
 
     public AxisAlignedBB toNeo() {

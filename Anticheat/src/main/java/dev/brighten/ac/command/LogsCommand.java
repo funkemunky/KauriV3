@@ -1,8 +1,8 @@
 package dev.brighten.ac.command;
 
 import co.aikar.commands.BaseCommand;
-import co.aikar.commands.annotation.*;
 import co.aikar.commands.annotation.Optional;
+import co.aikar.commands.annotation.*;
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.check.CheckSettings;
 import dev.brighten.ac.gui.Logs;

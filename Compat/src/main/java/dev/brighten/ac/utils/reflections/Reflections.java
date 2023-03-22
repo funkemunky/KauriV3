@@ -8,10 +8,10 @@
  */
 package dev.brighten.ac.utils.reflections;
 
-import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.utils.objects.QuadFunction;
 import dev.brighten.ac.utils.objects.TriFunction;
 import dev.brighten.ac.utils.reflections.types.WrappedClass;
+import dev.brighten.ac.packet.ProtocolVersion;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.val;
@@ -59,10 +59,6 @@ public class Reflections {
         } catch(Throwable e) {
             throw new ClassNotFoundException(name);
         }
-    }
-
-    public void hi() {
-        System.out.println("hi");
     }
 
     public static WrappedClass getClass(String name) {

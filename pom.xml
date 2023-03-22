@@ -14,6 +14,8 @@
         <module>API</module>
         <module>LegacyAPI</module>
         <module>ModernAPI</module>
+        <module>Compat</module>
+        <module>Compat-1_19_R3</module>
     </modules>
 
     <properties>

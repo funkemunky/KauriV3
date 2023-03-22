@@ -1,13 +1,11 @@
 package dev.brighten.ac.utils.reflections.impl;
 
 import dev.brighten.ac.packet.ProtocolVersion;
-import dev.brighten.ac.utils.BoundingBox;
 import dev.brighten.ac.utils.reflections.Reflections;
 import dev.brighten.ac.utils.reflections.types.WrappedClass;
 import dev.brighten.ac.utils.reflections.types.WrappedConstructor;
 import dev.brighten.ac.utils.reflections.types.WrappedField;
 import dev.brighten.ac.utils.reflections.types.WrappedMethod;
-import dev.brighten.ac.utils.world.types.SimpleCollisionBox;
 import org.bukkit.World;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.HumanEntity;
@@ -179,21 +177,6 @@ public class MinecraftReflection {
         return getMainThread(CraftReflection.getMinecraftServer());
     }
 
-    //a, b, c is minX, minY, minZ
-    //d, e, f is maxX, maxY, maxZ
-    public static BoundingBox fromAABB(Object aabb) {
-        double a, b, c, d, e, f;
-
-        a = aBB.get(aabb);
-        b = bBB.get(aabb);
-        c = cBB.get(aabb);
-        d = dBB.get(aabb);
-        e = eBB.get(aabb);
-        f = fBB.get(aabb);
-
-        return new BoundingBox((float) a,(float) b,(float) c,(float) d,(float) e,(float) f);
-    }
-
 
     //Can either use Player or EntityPlayer object.
     public static <T> T getPlayerConnection(Object player) {
@@ -229,26 +212,37 @@ public class MinecraftReflection {
         return itemStackAsBukkitCopy.invoke(null, vanillaItemStack);
     }
 
-    public static <T> T toAABB(BoundingBox box) {
-        if(ProtocolVersion.getGameVersion().isBelow(ProtocolVersion.V1_8)) {
-            return idioticOldStaticConstructorAABB
-                    .invoke(null,
-                            (double)box.minX, (double)box.minY, (double)box.minZ,
-                            (double)box.maxX, (double)box.maxY, (double)box.maxZ);
-        } else return aabbConstructor
-                .newInstance((double)box.minX, (double)box.minY, (double)box.minZ,
-                        (double)box.maxX, (double)box.maxY, (double)box.maxZ);
+    /**
+     * Extracts AxisAlignedBB Points.
+     * @param aabb AxisAlignedBB
+     * @return double[6] of points.
+     */
+    public static double[] fromAABB(Object aabb) {
+        double[] boxArray = new double[6];
+
+        boxArray[0] = aBB.get(aabb);
+        boxArray[1] = bBB.get(aabb);
+        boxArray[2] = cBB.get(aabb);
+        boxArray[3] = dBB.get(aabb);
+        boxArray[4] = eBB.get(aabb);
+        boxArray[5] = fBB.get(aabb);
+
+        return boxArray;
     }
 
-    public static <T> T toAABB(SimpleCollisionBox box) {
+    /**
+     * Creates a new AxisAlignedBB.
+     * @return new AxisAlignedBB
+     */
+    public static <T> T toAABB(double minX, double minY, double minZ, double maxX, double maxY, double maxZ) {
         if(ProtocolVersion.getGameVersion().isBelow(ProtocolVersion.V1_8)) {
             return idioticOldStaticConstructorAABB
                     .invoke(null,
-                            box.minX, box.minY, box.minZ,
-                            box.maxX, box.maxY, box.maxZ);
+                            minX, minY, minZ,
+                            maxX, maxY, maxZ);
         } else return aabbConstructor
-                .newInstance(box.minX, box.minY, box.minZ,
-                        box.maxX, box.maxY, box.maxZ);
+                .newInstance(minX, minY, minZ,
+                        maxX, maxY, maxZ);
     }
 
     //Either bukkit or vanilla world object can be used.

@@ -9,7 +9,6 @@ import dev.brighten.ac.packet.wrapper.out.*;
 import dev.brighten.ac.utils.EntityLocation;
 import dev.brighten.ac.utils.KLocation;
 import dev.brighten.ac.utils.Tuple;
-import dev.brighten.ac.utils.math.RayTrace;
 import dev.brighten.ac.utils.timer.Timer;
 import dev.brighten.ac.utils.timer.impl.MillisTimer;
 import dev.brighten.ac.utils.world.types.RayCollision;
@@ -282,15 +281,16 @@ public class EntityLocationHandler {
         }
 
         KLocation eyeLoc = data.getMovement().getTo().getLoc().clone()
-                .add(0, data.getInfo().isSneaking() ? 1.54f : 1.62f, 0);
+                .add(0, 0.6, 0);
 
         RayCollision collision = new RayCollision(eyeLoc.toVector(), eyeLoc.getDirection());
 
-        Vector point = collision.collisionPoint(1);
+        Vector point = collision.collisionPoint(0.4);
 
-        FakeMob mob = new FakeMob(EntityType.ZOMBIE);
+        FakeMob mob = new FakeMob(EntityType.SLIME);
 
-        mob.spawn(true, point.toLocation(location.getWorld()), data);
+        mob.spawn(true, point.toLocation(location.getWorld()),  new ArrayList<>(Collections.singletonList(
+                new WrappedWatchableObject(0, 16, (byte) 5))), data);
 
         fakeMobToEntityId.put(mob.getEntityId(), data.getBukkitPlayer().getEntityId());
 
@@ -312,13 +312,12 @@ public class EntityLocationHandler {
         }
 
         for (FakeMob fakeMob : fakeMobs) {
-            if(fakeMob.getType() == EntityType.ZOMBIE) {
-                KLocation eyeLoc = data.getMovement().getTo().getLoc().clone()
-                        .add(0, data.getInfo().isSneaking() ? 1.54f : 1.62f, 0);
+            if(fakeMob.getType() == EntityType.SLIME) {
+                KLocation eyeLoc = data.getMovement().getTo().getLoc().clone().add(0, 0.6, 0);
 
                 RayCollision collision = new RayCollision(eyeLoc.toVector(), eyeLoc.getDirection());
 
-                Vector point = collision.collisionPoint(1);
+                Vector point = collision.collisionPoint(0.4);
 
                 fakeMob.teleport(point.getX(), point.getY(), point.getZ(), 0 ,0);
                 break;
@@ -342,8 +341,6 @@ public class EntityLocationHandler {
 
         int current = 0;
         for (FakeMob fakeMob : fakeMobs) {
-            if(fakeMob.getType() == EntityType.ZOMBIE)
-                continue;
             double offset = offsets[current++];
 
             if(rel) {

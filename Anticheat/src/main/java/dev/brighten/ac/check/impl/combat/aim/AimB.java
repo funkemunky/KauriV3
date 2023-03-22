@@ -1,8 +1,6 @@
 package dev.brighten.ac.check.impl.combat.aim;
 
-import dev.brighten.ac.api.check.CheckType;
 import dev.brighten.ac.check.Check;
-import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;

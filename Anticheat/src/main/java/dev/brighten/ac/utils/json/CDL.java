@@ -24,11 +24,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-import dev.brighten.ac.utils.json.JSONArray;
-import dev.brighten.ac.utils.json.JSONException;
-import dev.brighten.ac.utils.json.JSONObject;
-import dev.brighten.ac.utils.json.JSONTokener;
-
 /**
  * This provides static methods to convert comma delimited text into a
  * JSONArray, and to covert a JSONArray into comma delimited text. Comma

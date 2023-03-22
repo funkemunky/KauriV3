@@ -1,6 +1,7 @@
 package dev.brighten.ac.utils;
 
 import lombok.val;
+import me.hydro.emulator.util.mcp.MathHelper;
 import org.bukkit.Location;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
@@ -13,6 +14,8 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+//
+@SuppressWarnings("unused")
 public class MathUtils {
 
     public static double GROUND_DIVISOR = 0.015625;
@@ -239,13 +242,7 @@ public class MathUtils {
     }
 
     public static double getMedian(List<Double> data) {
-        if(data.size() > 1) {
-            if (data.size() % 2 == 0)
-                return (data.get(data.size() / 2) + data.get(data.size() / 2 - 1)) / 2;
-            else
-                return data.get(Math.round(data.size() / 2f));
-        }
-        return 0;
+        return calculateDoubleMedian(data);
     }
 
     public static float getMedianFloat(List<Float> data) {
@@ -265,7 +262,18 @@ public class MathUtils {
             data.add(number.doubleValue());
         }
 
-        return getMedianFloat(data);
+        return calculateDoubleMedian(data);
+    }
+
+    private static double calculateDoubleMedian(List<Double> data) {
+        if(data.size() > 1) {
+            if (data.size() % 2 == 0)
+                return (data.get(data.size() / 2) + data.get(data.size() / 2 - 1)) / 2;
+            else
+                return data.get(Math.round(data.size() / 2f));
+        }
+
+        return 0;
     }
 
     //Copied from apache math Kurtosis class.
@@ -523,22 +531,13 @@ public class MathUtils {
         return Arrays.stream(equals).allMatch(equal -> MathUtils.getDelta(equalTo, equal) < accuracy);
     }
 
-    public static double getDistanceToBox(Vector vec, BoundingBox box) {
-        return vec.distance(getCenterOfBox(box));
-    }
-
-    public static Vector getCenterOfBox(BoundingBox box) {
-        return box.getMinimum().midpoint(box.getMaximum());
-    }
-
     //Returns -1 if fails.
-    public static <T extends Number> T tryParse(String string) {
+    public static Number tryParse(String string) {
         try {
-            return (T)(Number)Double.parseDouble(string);
-        } catch(NumberFormatException e) {
-
+            return Double.parseDouble(string);
+        } catch(NumberFormatException exception) {
+            return (-1);
         }
-        return (T)(Number)(-1);
     }
 
     //A lighter version of the Java hypotenuse function.
@@ -668,10 +667,10 @@ public class MathUtils {
     }
 
     public static Vector getDirection(float yaw, float pitch) {
-        float f = MathHelper.cos(-yaw * 0.017453292F - (float)Math.PI);
-        float f1 = MathHelper.sin(-yaw * 0.017453292F - (float)Math.PI);
-        float f2 = -MathHelper.cos(-pitch * 0.017453292F);
-        float f3 = MathHelper.sin(-pitch * 0.017453292F);
+        float f = MathHelper.cos(MathHelper.FastMathType.VANILLA, -yaw * 0.017453292F - (float)Math.PI);
+        float f1 = MathHelper.sin(MathHelper.FastMathType.VANILLA, -yaw * 0.017453292F - (float)Math.PI);
+        float f2 = -MathHelper.cos(MathHelper.FastMathType.VANILLA, -pitch * 0.017453292F);
+        float f3 = MathHelper.sin(MathHelper.FastMathType.VANILLA, -pitch * 0.017453292F);
         return new Vector(f1 * f2, f3, f * f2);
     }
 
@@ -771,33 +770,13 @@ public class MathUtils {
         return Math.abs(from.getY() - to.getY());
     }
 
-    public static int getDistanceToGround(Player p) {
-        Location loc = p.getLocation().clone();
-        double y = loc.getBlockY();
-        int distance = 0;
-        for (double i = y; i >= 0.0; i -= 1.0) {
-            loc.setY(i);
-            if (BlockUtils.getBlock(loc).getType().isSolid() || BlockUtils.getBlock(loc).isLiquid()) break;
-            ++distance;
-        }
-        return distance;
-    }
-
     public static double trim(int degree, double d) {
-        String format = "#.#";
-        for (int i = 1; i < degree; ++i) {
-            format = format + "#";
-        }
-        DecimalFormat twoDForm = new DecimalFormat(format);
+        DecimalFormat twoDForm = new DecimalFormat("#.#" + "#".repeat(Math.max(0, degree - 1)));
         return Double.parseDouble(twoDForm.format(d).replaceAll(",", "."));
     }
 
     public static float trimFloat(int degree, float d) {
-        String format = "#.#";
-        for (int i = 1; i < degree; ++i) {
-            format = format + "#";
-        }
-        DecimalFormat twoDForm = new DecimalFormat(format);
+        DecimalFormat twoDForm = new DecimalFormat("#.#" + "#".repeat(Math.max(0, degree - 1)));
         return Float.parseFloat(twoDForm.format(d).replaceAll(",", "."));
     }
 

@@ -10,8 +10,6 @@ import org.bukkit.Server;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.material.Step;
-import org.bukkit.material.WoodenStep;
 import org.bukkit.util.Vector;
 
 import java.io.File;
@@ -23,7 +21,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.logging.Level;
 
 public class ReflectionsUtil {
     public static Class<?> blockPosition = null;
@@ -149,109 +146,6 @@ public class ReflectionsUtil {
             }
         });
         return toReturn;
-    }
-
-    public static BoundingBox getBlockBoundingBox(Block block) {
-        try {
-            if (!isBukkitVerison("1_7")) {
-                Object bPos = blockPosition.getConstructor(int.class, int.class, int.class).newInstance(block.getLocation().getBlockX(), block.getLocation().getBlockY(), block.getLocation().getBlockZ());
-                Object world = getWorldHandle(block.getWorld());
-                Object data = getMethodValue(getMethod(world.getClass(), "getType", blockPosition), world, bPos);
-                Object blockNMS = getMethodValue(getMethod(getNMSClass("IBlockData"), "getBlock"), data);
-
-                if (ProtocolVersion.getGameVersion().isBelow(ProtocolVersion.V1_13)) {
-                    if (!isNewVersion()) {
-
-                        if (getMethodValueNoST(getMethodNoST(blockNMS.getClass(), "a", World, blockPosition, iBlockData), blockNMS, world, bPos, data) != null
-                                && !BlockUtils.isSlab(block)) {
-                            BoundingBox box = toBoundingBox(getMethodValue(getMethod(blockNMS.getClass(), "a", World, blockPosition, iBlockData), blockNMS, world, bPos, data));
-
-                            if (ProtocolVersion.getGameVersion().isBelow(ProtocolVersion.V1_13)) {
-                                if (block.getType().toString().contains("STEP") && !block.getType().toString().contains("WOOD")) {
-                                    Step slab = (Step) block.getType().getNewData(block.getData());
-
-                                    box.minY = block.getY();
-                                    box.maxY = block.getY();
-                                    if (slab.isInverted()) {
-                                        box = box.add(0, 0.5f, 0, 0, 1f, 0);
-                                    } else {
-                                        box = box.add(0, 0f, 0, 0, 0.5f, 0);
-                                    }
-                                } else if (block.getType().toString().contains("STEP")) {
-                                    WoodenStep slab = (WoodenStep) block.getType().getNewData(block.getData());
-
-                                    box.minY = block.getY();
-                                    box.maxY = block.getY();
-                                    if (slab.isInverted()) {
-                                        box = box.add(0, 0.5f, 0, 0, 1f, 0);
-                                    } else {
-                                        box = box.add(0, 0f, 0, 0, 0.5f, 0);
-                                    }
-                                }
-                            }
-                            return box;
-                        } else if (getMethodValueNoST(getMethodNoST(vanillaBlock, "a", World, blockPosition, iBlockData), blockNMS, world, bPos, data) != null) {
-                            BoundingBox box = toBoundingBox(getMethodValue(getMethod(vanillaBlock, "a", World, blockPosition, iBlockData), blockNMS, world, bPos, data));
-
-                            if (ProtocolVersion.getGameVersion().isBelow(ProtocolVersion.V1_13)) {
-                                if (block.getType().toString().contains("STEP") && !block.getType().toString().contains("WOOD")) {
-                                    Step slab = (Step) block.getType().getNewData(block.getData());
-
-                                    box.minY = block.getY();
-                                    box.maxY = block.getY();
-                                    if (slab.isInverted()) {
-                                        box = box.add(0, 0.5f, 0, 0, 1f, 0);
-                                    } else {
-                                        box = box.add(0, 0f, 0, 0, 0.5f, 0);
-                                    }
-                                } else if (block.getType().toString().contains("STEP")) {
-                                    WoodenStep slab = (WoodenStep) block.getType().getNewData(block.getData());
-
-                                    box.minY = block.getY();
-                                    box.maxY = block.getY();
-                                    if (slab.isInverted()) {
-                                        box = box.add(0, 0.5f, 0, 0, 1f, 0);
-                                    } else {
-                                        box = box.add(0, 0f, 0, 0, 0.5f, 0);
-                                    }
-                                }
-                            }
-                            return box;
-                        } else {
-                            return new BoundingBox(block.getX(), block.getY(), block.getZ(), block.getX(), block.getY(), block.getZ());
-                        }
-                    } else {
-                        if (getMethodValueNoST(getMethodNoST(blockNMS.getClass(), "a", iBlockData, getNMSClass("IBlockAccess"), blockPosition), blockNMS, data, world, bPos) != null) {
-                            return toBoundingBox(getMethodValue(getMethod(blockNMS.getClass(), "a", iBlockData, getNMSClass("IBlockAccess"), blockPosition), blockNMS, data, world, bPos)).add(block.getX(), block.getY(), block.getZ(), block.getX(), block.getY(), block.getZ());
-                        } else if (getMethodValueNoST(getMethodNoST(vanillaBlock, "a", iBlockData, getNMSClass("IBlockAccess"), blockPosition), blockNMS, data, world, bPos) != null) {
-                            return toBoundingBox(getMethodValue(getMethod(vanillaBlock, "a", iBlockData, getNMSClass("IBlockAccess"), blockPosition), blockNMS, data, world, bPos)).add(block.getX(), block.getY(), block.getZ(), block.getX(), block.getY(), block.getZ());
-                        } else {
-                            return new BoundingBox(block.getX(), block.getY(), block.getZ(), block.getX(), block.getY(), block.getZ());
-                        }
-                    }
-                } else {
-                    Object voxelShape = getMethodValue(getMethod(vanillaBlock, "a", iBlockData, getNMSClass("IBlockAccess"), blockPosition), blockNMS, data, world, bPos);
-                    Object axisAlignedBB = getMethodValue(getMethod(getNMSClass("VoxelShape"), "a"), voxelShape);
-
-
-                    return toBoundingBox(axisAlignedBB);
-
-                }
-            } else {
-                Object blockNMS = getVanillaBlock(block);
-                Object world = getWorldHandle(block.getWorld());
-                if (getMethodValueNoST(getMethodNoST(vanillaBlock, "a", getNMSClass("World"), int.class, int.class, int.class), blockNMS, world, block.getLocation().getBlockX(), block.getLocation().getBlockY(), block.getLocation().getBlockZ()) != null) {
-                    return toBoundingBox(getMethodValue(getMethod(vanillaBlock, "a", getNMSClass("World"), int.class, int.class, int.class), blockNMS, world, block.getLocation().getBlockX(), block.getLocation().getBlockY(), block.getLocation().getBlockZ()));
-                } else {
-                    //Bukkit.broadcastMessage(block.getType().name());
-                    return new BoundingBox(block.getX(), block.getY(), block.getZ(), block.getX(), block.getY(), block.getZ());
-                }
-            }
-        } catch (Exception e) {
-            Bukkit.getLogger().log(Level.SEVERE, "Error occured with block: " + block.getType().toString());
-            e.printStackTrace();
-        }
-        return null;
     }
 
     public static double getTPS(Server server) {

@@ -8,6 +8,7 @@ import dev.brighten.ac.utils.world.BlockData;
 import dev.brighten.ac.utils.world.CollisionBox;
 import dev.brighten.ac.utils.world.types.SimpleCollisionBox;
 import lombok.val;
+import me.hydro.emulator.util.mcp.MathHelper;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.enchantments.Enchantment;

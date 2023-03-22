@@ -1,10 +1,10 @@
 package dev.brighten.ac.utils.math;
 
-import dev.brighten.ac.utils.MathHelper;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import me.hydro.emulator.util.mcp.MathHelper;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.util.Vector;

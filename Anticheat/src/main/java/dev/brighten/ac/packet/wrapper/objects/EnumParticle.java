@@ -2,6 +2,7 @@ package dev.brighten.ac.packet.wrapper.objects;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+
 import java.util.ArrayList;
 import java.util.Map;
 

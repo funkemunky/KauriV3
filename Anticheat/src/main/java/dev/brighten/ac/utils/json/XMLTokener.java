@@ -24,10 +24,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-import dev.brighten.ac.utils.json.JSONException;
-import dev.brighten.ac.utils.json.JSONTokener;
-import dev.brighten.ac.utils.json.XML;
-
 /**
  * The XMLTokener extends the JSONTokener to provide additional methods
  * for the parsing of XML texts.

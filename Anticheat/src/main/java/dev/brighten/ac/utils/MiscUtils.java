@@ -7,6 +7,7 @@ import dev.brighten.ac.utils.reflections.types.WrappedClass;
 import dev.brighten.ac.utils.reflections.types.WrappedField;
 import dev.brighten.ac.utils.world.types.SimpleCollisionBox;
 import dev.brighten.ac.utils.wrapper.Wrapper;
+import me.hydro.emulator.util.mcp.MathHelper;
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
@@ -356,6 +357,18 @@ public class MiscUtils {
             }
         }
         return true;
+    }
+
+    public static int getDistanceToGround(Player p) {
+        Location loc = p.getLocation().clone();
+        double y = loc.getBlockY();
+        int distance = 0;
+        for (double i = y; i >= 0.0; i -= 1.0) {
+            loc.setY(i);
+            if (BlockUtils.getBlock(loc).getType().isSolid() || BlockUtils.getBlock(loc).isLiquid()) break;
+            ++distance;
+        }
+        return distance;
     }
 
     public static <T> T getArgOrNull(T[] array, int index) {

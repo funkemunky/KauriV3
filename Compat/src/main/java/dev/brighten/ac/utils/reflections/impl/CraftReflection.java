@@ -1,9 +1,9 @@
 package dev.brighten.ac.utils.reflections.impl;
 
-import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.utils.reflections.Reflections;
 import dev.brighten.ac.utils.reflections.types.WrappedClass;
 import dev.brighten.ac.utils.reflections.types.WrappedMethod;
+import dev.brighten.ac.packet.ProtocolVersion;
 import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
 import org.bukkit.Material;

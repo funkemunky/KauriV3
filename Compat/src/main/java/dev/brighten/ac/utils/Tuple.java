@@ -15,9 +15,8 @@ public class Tuple<A, B> {
     }
 
     public boolean equals(Object object) {
-        if (object instanceof Tuple) {
-            Tuple toCompare = (Tuple) object;
-
+        if (this.getClass().isInstance(object)) {
+            var toCompare = (Tuple<?, ?>) object;
             return one.equals(toCompare.one) && two.equals(toCompare.two);
         } else return false;
     }

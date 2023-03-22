@@ -1,8 +1,8 @@
 package dev.brighten.ac.utils.menu.preset;
 
-import dev.brighten.ac.utils.MathHelper;
 import dev.brighten.ac.utils.menu.preset.button.SettingButton;
 import dev.brighten.ac.utils.menu.type.impl.ChestMenu;
+import me.hydro.emulator.util.mcp.MathHelper;
 
 public class SettingsMenu extends ChestMenu {
     public SettingsMenu(String title, SettingButton... buttons) {

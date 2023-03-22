@@ -5,7 +5,6 @@ import dev.brighten.ac.handler.block.WrappedBlock;
 import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.utils.BlockUtils;
 import dev.brighten.ac.utils.MiscUtils;
-import dev.brighten.ac.utils.ReflectionsUtil;
 import dev.brighten.ac.utils.XMaterial;
 import dev.brighten.ac.utils.math.IntVector;
 import dev.brighten.ac.utils.world.blocks.*;
@@ -51,10 +50,10 @@ public enum BlockData {
             new SimpleCollisionBox(0.4375, 0.0, 0.4375, 0.5625, 0.875, 0.5625) //top
     ), Material.BREWING_STAND),
 
-    _RAIL((protocol, player, b) -> ReflectionsUtil.getBlockBoundingBox(BlockUtils.getBlock(b.getLocation()))
+   /* _RAIL((protocol, player, b) -> ReflectionsUtil.getBlockBoundingBox(BlockUtils.getBlock(b.getLocation()))
             .toCollisionBox(),Arrays.stream(Material.values())
             .filter(mat -> mat.name().toLowerCase().contains("rail"))
-            .toArray(Material[]::new)),
+            .toArray(Material[]::new)),*/
 
     _ANVIL((protocol, player, b) -> {
         int dir = b.getData() & 0b01;

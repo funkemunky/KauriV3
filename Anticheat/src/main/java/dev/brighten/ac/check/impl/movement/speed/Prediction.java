@@ -5,11 +5,9 @@ import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.data.APlayer;
-import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
 import dev.brighten.ac.utils.Color;
 import dev.brighten.ac.utils.KLocation;
-import dev.brighten.ac.utils.MathUtils;
 import dev.brighten.ac.utils.timer.Timer;
 import dev.brighten.ac.utils.timer.impl.TickTimer;
 import lombok.val;
@@ -20,7 +18,7 @@ import me.hydro.emulator.util.Vector;
 public class Prediction extends Check {
     private float buffer;
     private boolean maybeSkippedPos;
-    private int lastFlying;
+    private int lastFlying, notMoveTicks;
     private final Timer lastSkipPos = new TickTimer();
 
     public Prediction(APlayer player) {
@@ -28,10 +26,13 @@ public class Prediction extends Check {
     }
 
     WAction<WPacketPlayInFlying> flying = packet -> {
-
+        if(!packet.isMoved()) {
+            if(++notMoveTicks > 2) {
+                return;
+            }
+        } else notMoveTicks = 0;
         check: {
-            if(!packet.isMoved()
-                    || player.getBlockInfo().onClimbable
+            if(player.getBlockInfo().onClimbable
                     || player.getInfo().lastLiquid.isNotPassed(2)
                     || player.getInfo().isGeneralCancel()) break check;
 

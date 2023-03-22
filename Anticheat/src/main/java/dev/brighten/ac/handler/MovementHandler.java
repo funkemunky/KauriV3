@@ -22,6 +22,7 @@ import me.hydro.emulator.object.iteration.Motion;
 import me.hydro.emulator.object.result.IterationResult;
 import me.hydro.emulator.util.PotionEffect;
 import me.hydro.emulator.util.Vector;
+import me.hydro.emulator.util.mcp.MathHelper;
 import me.hydro.emulator.util.mcp.MathHelper.FastMathType;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
@@ -105,7 +106,7 @@ public class MovementHandler {
     private static final boolean[] ALWAYS_FALSE = new boolean[1];
     private static final int[] FULL_RANGE = new int[]{-1, 0, 1};
 
-    public void runEmulation(KLocation to) {
+    public void runEmulation(KLocation to, boolean isZeroThree) {
         /*
          * (org.bukkit.potion.PotionEffectType
          * Element 0: SPEED
@@ -133,6 +134,10 @@ public class MovementHandler {
             }
         }
 
+        if(player.EMULATOR.getTags().contains("003") && !isZeroThree) {
+            runEmulation(to, true);
+        }
+
         IterationResult minimum = null;
         iteration: {
             for (KLocation posLoc : posLocs) {
@@ -157,8 +162,8 @@ public class MovementHandler {
 
             Motion previousMotion = player.EMULATOR.getMotion().clone();
 
-            for (int forward : FULL_RANGE) {
-                for (int strafe : FULL_RANGE) {
+            for (int forward : isZeroThree ? new int[] {0} : FULL_RANGE) {
+                for (int strafe : isZeroThree ? new int[] {0} : FULL_RANGE) {
                     for (boolean jumping : getJumpingIterations()) {
                         for (boolean sprinting : getSprintingIterations(forward)) {
                             for (boolean usingItem : getUsingItemIterations(forward, strafe)) {
@@ -224,7 +229,20 @@ public class MovementHandler {
 
         if(minimum != null) {
             predicted = minimum.getPredicted();
-            if (minimum.getOffset() > 1E-7) {
+
+            double mx = player.EMULATOR.getMotion().getMotionX();
+            double my = player.EMULATOR.getMotion().getMotionY();
+            double mz = player.EMULATOR.getMotion().getMotionZ();
+
+            double total = mx * mx + my * my + mz * mz;
+
+            if(total < 9E-4) {
+                player.getInfo().lastCanceledFlying.reset();
+                player.getBukkitPlayer().sendMessage("003");
+                minimum.getTags().add("003");
+            }
+
+            if (minimum.getOffset() > 1E-7 && !isZeroThree) {
                 minimum.getTags().add("bad_offset");
                 minimum.getMotion().setMotionX(deltaX);
                 minimum.getMotion().setMotionY(deltaY);
@@ -232,13 +250,13 @@ public class MovementHandler {
             }
             player.EMULATOR.confirm(minimum.getIteration());
 
+            if(minimum.getTags().contains("003")) {
+                player.EMULATOR.getTags().add("003");
+            }
+
             if(minimum.getTags().contains("bad_offset")) {
                 player.EMULATOR.setLastReportedBoundingBox(getTo().getBox().toNeo());
             }
-
-            double mx = player.EMULATOR.getMotion().getMotionX();
-            double my = player.EMULATOR.getMotion().getMotionY();
-            double mz = player.EMULATOR.getMotion().getMotionZ();
         }
     }
 
@@ -301,7 +319,7 @@ public class MovementHandler {
             player.getBlockInfo().runCollisionCheck();
         }
 
-        runEmulation(to.getLoc());
+        runEmulation(to.getLoc(), false);
 
         if (moveTicks > 0) {
 

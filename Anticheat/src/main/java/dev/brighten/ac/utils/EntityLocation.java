@@ -3,6 +3,7 @@ package dev.brighten.ac.utils;
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.utils.objects.evicting.EvictingList;
 import lombok.RequiredArgsConstructor;
+import me.hydro.emulator.util.mcp.MathHelper;
 import org.bukkit.entity.Entity;
 import org.bukkit.util.Vector;
 

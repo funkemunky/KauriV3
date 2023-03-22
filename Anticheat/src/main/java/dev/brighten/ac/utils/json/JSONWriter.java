@@ -1,8 +1,5 @@
 package dev.brighten.ac.utils.json;
 
-import dev.brighten.ac.utils.json.JSONException;
-import dev.brighten.ac.utils.json.JSONObject;
-
 import java.io.IOException;
 import java.io.Writer;
 

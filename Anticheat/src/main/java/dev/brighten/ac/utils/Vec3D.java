@@ -5,12 +5,13 @@
 
 package dev.brighten.ac.utils;
 
-import org.bukkit.Location;
+import lombok.SneakyThrows;
+import me.hydro.emulator.util.mcp.MathHelper;
 
 import javax.annotation.Nullable;
 import java.util.Objects;
 
-public class Vec3D {
+public class Vec3D implements Cloneable {
     public static final Vec3D a = new Vec3D(0.0D, 0.0D, 0.0D);
     public final double x;
     public final double y;
@@ -34,10 +35,6 @@ public class Vec3D {
         this.z = var5;
     }
 
-    public Vec3D(Location var1) {
-        this(var1.getX(), var1.getY(), var1.getZ());
-    }
-
     public Vec3D a(Vec3D var1) {
         return new Vec3D(var1.x - this.x, var1.y - this.y, var1.z - this.z);
     }
@@ -47,8 +44,9 @@ public class Vec3D {
         return var1 < 1.0E-4D ? a : new Vec3D(this.x / var1, this.y / var1, this.z / var1);
     }
 
+    @SneakyThrows
     public Vec3D clone() {
-        return new Vec3D(x, y, z);
+        return (Vec3D) super.clone();
     }
 
     public double b(Vec3D var1) {
@@ -146,19 +144,17 @@ public class Vec3D {
     public Vec3D a(float var1) {
         float var2 = MathHelper.cos(var1);
         float var3 = MathHelper.sin(var1);
-        double var4 = this.x;
         double var6 = this.y * (double)var2 + this.z * (double)var3;
         double var8 = this.z * (double)var2 - this.y * (double)var3;
-        return new Vec3D(var4, var6, var8);
+        return new Vec3D(this.x, var6, var8);
     }
 
     public Vec3D b(float var1) {
         float var2 = MathHelper.cos(var1);
         float var3 = MathHelper.sin(var1);
         double var4 = this.x * (double)var2 + this.z * (double)var3;
-        double var6 = this.y;
         double var8 = this.z * (double)var2 - this.x * (double)var3;
-        return new Vec3D(var4, var6, var8);
+        return new Vec3D(var4, this.y, var8);
     }
 
     @Override

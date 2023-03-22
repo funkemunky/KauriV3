@@ -2,10 +2,10 @@ package dev.brighten.ac.packet.wrapper.objects;
 
 
 import dev.brighten.ac.packet.ProtocolVersion;
-import dev.brighten.ac.utils.MathHelper;
 import dev.brighten.ac.utils.math.IntVector;
 import dev.brighten.ac.utils.reflections.Reflections;
 import dev.brighten.ac.utils.reflections.types.WrappedClass;
+import me.hydro.emulator.util.mcp.MathHelper;
 
 import java.util.Arrays;
 import java.util.HashMap;

@@ -24,11 +24,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-import dev.brighten.ac.utils.json.Cookie;
-import dev.brighten.ac.utils.json.JSONException;
-import dev.brighten.ac.utils.json.JSONObject;
-import dev.brighten.ac.utils.json.JSONTokener;
-
 import java.util.Iterator;
 
 /**
