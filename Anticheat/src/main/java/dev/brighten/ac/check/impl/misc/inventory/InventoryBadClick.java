@@ -9,9 +9,9 @@ import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInWindowClick;
 
 @CheckData(name = "Inventory (BadClick)", checkId = "inventoryB", type = CheckType.INVENTORY, maxVersion = ProtocolVersion.V1_11)
-public class InventoryB extends Check {
+public class InventoryBadClick extends Check {
 
-    public InventoryB(APlayer player) {
+    public InventoryBadClick(APlayer player) {
         super(player);
     }
 

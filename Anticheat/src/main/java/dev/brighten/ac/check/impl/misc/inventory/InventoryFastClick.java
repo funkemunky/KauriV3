@@ -9,8 +9,8 @@ import org.bukkit.event.inventory.InventoryAction;
 import org.bukkit.event.inventory.InventoryClickEvent;
 
 @CheckData(name = "Inventory (FastClick)", checkId = "inventoryd", type = CheckType.INVENTORY)
-public class InventoryD extends Check {
-    public InventoryD(APlayer player) {
+public class InventoryFastClick extends Check {
+    public InventoryFastClick(APlayer player) {
         super(player);
     }
 

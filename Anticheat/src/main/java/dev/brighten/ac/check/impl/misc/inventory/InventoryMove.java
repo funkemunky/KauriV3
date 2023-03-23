@@ -10,9 +10,9 @@ import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
 import dev.brighten.ac.utils.annotation.Async;
 
 @CheckData(name = "Inventory (Move)", checkId = "inventoryA", type = CheckType.INVENTORY, maxVersion = ProtocolVersion.V1_11)
-public class InventoryA extends Check {
+public class InventoryMove extends Check {
 
-    public InventoryA(APlayer player) {
+    public InventoryMove(APlayer player) {
         super(player);
     }
 

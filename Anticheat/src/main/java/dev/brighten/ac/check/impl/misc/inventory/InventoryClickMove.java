@@ -9,12 +9,12 @@ import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInWindowClick;
 
 @CheckData(name = "Inventory (ClickMove)", checkId = "inventoryc", type = CheckType.INVENTORY)
-public class InventoryC extends Check {
-    public InventoryC(APlayer player) {
+public class InventoryClickMove extends Check {
+    public InventoryClickMove(APlayer player) {
         super(player);
     }
 
-    private int lastWindowClick;
+    private int lastWindowClick = Integer.MAX_VALUE;
 
     // Updating the last time the player clicked in a menu for use in the below check for positional movement.
     WAction<WPacketPlayInWindowClick> windowClick = packet -> lastWindowClick = player.getPlayerTick();
