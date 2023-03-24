@@ -14,7 +14,7 @@ public class InventoryClickMove extends Check {
         super(player);
     }
 
-    private int lastWindowClick = Integer.MAX_VALUE;
+    private int lastWindowClick = -2;
 
     // Updating the last time the player clicked in a menu for use in the below check for positional movement.
     WAction<WPacketPlayInWindowClick> windowClick = packet -> lastWindowClick = player.getPlayerTick();

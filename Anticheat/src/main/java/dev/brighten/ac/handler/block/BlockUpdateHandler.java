@@ -21,6 +21,7 @@ import org.bukkit.block.BlockFace;
 
 import java.util.Optional;
 
+@SuppressWarnings("unused")
 @RequiredArgsConstructor
 public class BlockUpdateHandler {
     private final Long2ObjectOpenHashMap<Chunk> chunks = new Long2ObjectOpenHashMap<>(1000);
@@ -118,25 +119,8 @@ public class BlockUpdateHandler {
 
         Optional<WrappedBlock> blockOptional = chunk.getBlockAt(x, y, z);
 
-        WrappedBlock block;
-
-        if (blockOptional.isEmpty()) {
-            Optional<Block> bukkitBlock = BlockUtils.getBlockAsync(
-                    new Location(player.getBukkitPlayer().getWorld(), x, y, z));
-
-            IntVector loc = new IntVector(x, y, z);
-            if (bukkitBlock.isPresent()) {
-                Location bloc = bukkitBlock.get().getLocation();
-                block = new WrappedBlock(bloc,
-                        bukkitBlock.get().getType(), bukkitBlock.get().getData());
-
-            } else {
-                block = new WrappedBlock(loc
-                        .toLocation(player.getBukkitPlayer().getWorld()), Material.AIR, (byte) 0);
-            }
-        } else block = blockOptional.get();
-
-        return block;
+        return blockOptional.orElseGet(() -> new WrappedBlock(new IntVector(x, y, z)
+                .toLocation(player.getBukkitPlayer().getWorld()), Material.AIR, (byte) 0));
     }
 
     /**

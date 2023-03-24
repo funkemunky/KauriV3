@@ -3,6 +3,7 @@ package dev.brighten.ac.packet.wrapper;
 import dev.brighten.ac.packet.wrapper.in.*;
 import dev.brighten.ac.packet.wrapper.login.WPacketHandshakingInSetProtocol;
 import dev.brighten.ac.packet.wrapper.out.*;
+import org.bukkit.Chunk;
 
 public interface PacketConverter {
     WPacketPlayInFlying processFlying(Object object);
@@ -89,7 +90,7 @@ public interface PacketConverter {
 
     WPacketPlayOutMapChunk processMapChunk(Object object);
 
-    Object processMapChunk(WPacketPlayOutMapChunk packet);
+    Object createMapChunk(Chunk chunk);
 
     WPacketPlayOutMapChunkBulk processMapChunkBulk(Object packet);
 

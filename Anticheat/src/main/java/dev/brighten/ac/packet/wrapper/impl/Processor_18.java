@@ -19,7 +19,9 @@ import lombok.SneakyThrows;
 import lombok.val;
 import me.hydro.emulator.util.mcp.MathHelper;
 import net.minecraft.server.v1_8_R3.*;
+import org.bukkit.Chunk;
 import org.bukkit.Material;
+import org.bukkit.craftbukkit.v1_8_R3.CraftChunk;
 import org.bukkit.craftbukkit.v1_8_R3.inventory.CraftItemStack;
 import org.bukkit.craftbukkit.v1_8_R3.util.CraftMagicNumbers;
 import org.bukkit.entity.EntityType;
@@ -766,9 +768,8 @@ public class Processor_18 implements PacketConverter {
     }
 
     @Override
-    public Object processMapChunk(WPacketPlayOutMapChunk packet) {
-        PacketPlayOutMapChunk vanilla = new PacketPlayOutMapChunk();
-        return null;
+    public Object createMapChunk(Chunk chunk) {
+        return new PacketPlayOutMapChunk(((CraftChunk)chunk).getHandle(), true, 20);
     }
 
     @Override

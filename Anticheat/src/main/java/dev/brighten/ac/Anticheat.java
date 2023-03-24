@@ -5,6 +5,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import dev.brighten.ac.api.AnticheatAPI;
 import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckManager;
+import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.data.PlayerRegistry;
 import dev.brighten.ac.depends.LibraryLoader;
 import dev.brighten.ac.depends.MavenLibrary;
@@ -32,7 +33,9 @@ import dev.brighten.loader.LoaderPlugin;
 import lombok.Getter;
 import lombok.experimental.PackagePrivate;
 import org.bukkit.Bukkit;
+import org.bukkit.Chunk;
 import org.bukkit.World;
+import org.bukkit.entity.Player;
 import org.bukkit.event.HandlerList;
 
 import java.io.File;
@@ -165,6 +168,29 @@ public class Anticheat extends LoaderPlugin {
         this.packetHandler = new PacketHandler();
         logManager = new LoggerManager();
         this.actionManager = new ActionManager();
+
+        int chunkDistance = Bukkit.getViewDistance() * 2 + 1;
+        // Created players on server reload
+        if(playerRegistry.aplayerMap.size() > 0) {
+            getLogger().warning("Players are online, resending chunk map to players so anticheat is up to date.");
+            for (APlayer aplayer : playerRegistry.aplayerMap.values()) {
+                Player player = aplayer.getBukkitPlayer();
+
+                getLogger().info("Sending chunks to " + player.getName());
+                int chunkX = player.getLocation().getBlockX() >> 4,
+                        chunkZ = player.getLocation().getBlockZ() >> 4;
+
+                for (int x = chunkX - chunkDistance; x <= chunkX + chunkDistance; x++) {
+                    for (int z = chunkZ - chunkDistance; z <= chunkZ + chunkDistance; z++) {
+                        Chunk chunk = player.getWorld().getChunkAt(x, z);
+                        Object mapChunk = packetProcessor.getPacketConverter().createMapChunk(chunk);
+
+                        aplayer.sendPacket(mapChunk);
+                    }
+                }
+            }
+        }
+
 
         keepaliveProcessor.start();
 
