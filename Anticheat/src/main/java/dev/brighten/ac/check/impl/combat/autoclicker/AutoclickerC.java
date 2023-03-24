@@ -3,10 +3,12 @@ package dev.brighten.ac.check.impl.combat.autoclicker;
 import dev.brighten.ac.api.check.CheckType;
 import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
-import dev.brighten.ac.check.WTimedAction;
+import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInArmAnimation;
-import dev.brighten.ac.utils.annotation.Async;
+import dev.brighten.ac.utils.objects.evicting.EvictingList;
+
+import java.util.List;
 
 @CheckData(name = "Autoclicker (C)", checkId = "autoclickerc", type = CheckType.AUTOCLICKER)
 public class AutoclickerC extends Check {
@@ -15,71 +17,45 @@ public class AutoclickerC extends Check {
         super(player);
     }
 
-    private long totalClickTime, lastClickTime;
-    private int clicks, oscillationTime, oscillationLevel, lowest, highest;
+    private int lastPlace;
+    private float buffer;
+    private final List<Integer> tickDeltas = new EvictingList<>(15);
 
-    @Async
-    WTimedAction<WPacketPlayInArmAnimation> action = (packet, timeStamp) -> {
-        if(player.getInfo().isBreakingBlock()) return;
 
-        clicks++;
-        long diff = timeStamp - lastClickTime;
+    WAction<WPacketPlayInArmAnimation> action = (packet) -> {
+        if(player.getInfo().isBreakingBlock() || player.getWrappedPlayer().getItemInHand().getType().isBlock()) return;
 
-        if ((totalClickTime += diff) > 990) {
+        int currentTick = player.getPlayerTick();
+        int deltaPlace = currentTick - lastPlace;
 
-            if (clicks >= 3 && diff <= 200.0f) {
-                int time = oscillationTime + 1;
-                int lowest = this.lowest;
-                int highest = this.highest;
+        tickDeltas.add(deltaPlace);
+        if(tickDeltas.size() > 8) {
+            int max = -10000000, min = Integer.MAX_VALUE;
+            double average = 0;
+            int range, total = 0;
 
-                if (lowest == -1) {
-                    lowest = clicks;
-                } else if (clicks < lowest) {
-                    lowest = clicks;
-                }
-                if (highest == -1) {
-                    highest = clicks;
-                } else if (clicks > highest) {
-                    highest = clicks;
-                }
+            for (Integer delta : tickDeltas) {
+                max = Math.max(delta, max);
+                min = Math.min(delta, min);
 
-                int oscillation = highest - lowest;
-                int oscLevel = oscillationLevel;
-                if (time >= 9) {
-                    if (highest >= 8) {
-                        if (highest >= 9 && oscillation <= 5) {
-                            oscLevel += 2;
-                        }
-                        if (oscillation > 3 && oscLevel > 0) {
-                            --oscLevel;
-                        }
-                    } else if (oscLevel > 0) {
-                        --oscLevel;
-                    }
-                    time = 0;
-                    highest = -1;
-                    lowest = -1;
-                }
-                if (oscillation > 2) {
-                    time = 0;
-                    oscLevel = 0;
-                    highest = -1;
-                    lowest = -1;
-                }
-                if (oscLevel >= 10) {
-                    vl++;
-                    flag("osc=" + oscLevel);
-                }
-                debug("osc=%s level=%s high=%s low=%s", oscillation, oscLevel, highest, lowest);
-                this.lowest = lowest;
-                this.highest = highest;
-                this.oscillationTime = time;
-                this.oscillationLevel = oscLevel;
-
+                average+= delta;
+                total++;
             }
-            totalClickTime = 0;
-            clicks = 1;
+
+            average/= total;
+            range = max - min;
+
+            if(average < 3 && range <= 1) {
+                if(++buffer > 12) {
+                    vl++;
+                    flag("range=%s", range);
+                }
+            } else if(vl > 0) buffer-= 0.5f;
+
+            debug("range=%s average=%.1f vl=%.1f", range, average, vl);
         }
-        lastClickTime = timeStamp;
+
+        debug("deltaArm=%s", deltaPlace);
+        lastPlace = currentTick;
     };
 }

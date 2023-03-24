@@ -10,6 +10,7 @@ import java.lang.annotation.RetentionPolicy;
 public @interface CheckData {
     String name();
     String checkId();
+    String description() default "A check that detects cheats";
     CheckType type();
 
     boolean enabled() default true;
