@@ -2,6 +2,7 @@ package dev.brighten.ac.utils.reflections.impl;
 
 import dev.brighten.ac.utils.reflections.Reflections;
 import dev.brighten.ac.utils.reflections.types.WrappedClass;
+import dev.brighten.ac.utils.reflections.types.WrappedConstructor;
 import dev.brighten.ac.utils.reflections.types.WrappedMethod;
 import dev.brighten.ac.packet.ProtocolVersion;
 import org.bukkit.Bukkit;
@@ -42,6 +43,9 @@ public class CraftReflection {
     private static final WrappedMethod methodGetBlockFromMaterial = ProtocolVersion.getGameVersion()
             .isOrAbove(ProtocolVersion.V1_13) ? craftMagicNumbers.getMethod("getBlock", Material.class)
             : craftMagicNumbers.getMethod("getBlock", int.class);
+
+    private static final WrappedConstructor getBlockFromChunk = craftBlock
+            .getConstructor(craftChunk.getParent(), int.class, int.class, int.class);
     private static WrappedMethod fromComponent;
 
     public static <T> T getVanillaItemStack(ItemStack stack) {
@@ -95,6 +99,10 @@ public class CraftReflection {
     public static String getMessageFromComp(Object ichatcomp, String defaultColor) {
         if(fromComponent == null) return "Not a usable version (1.8+ only)";
         return fromComponent.invoke(null, ichatcomp);
+    }
+
+    public static Block getBlockFromChunk(Chunk chunk, int x, int y, int z) {
+        return getBlockFromChunk.newInstance(chunk, x, y, z);
     }
 
     static {

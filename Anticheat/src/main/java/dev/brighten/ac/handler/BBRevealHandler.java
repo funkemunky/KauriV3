@@ -2,18 +2,17 @@ package dev.brighten.ac.handler;
 
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.data.APlayer;
-import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.packet.wrapper.objects.EnumParticle;
 import dev.brighten.ac.utils.ItemBuilder;
 import dev.brighten.ac.utils.Materials;
 import dev.brighten.ac.utils.annotation.Init;
+import dev.brighten.ac.utils.math.IntVector;
 import dev.brighten.ac.utils.world.BlockData;
 import dev.brighten.ac.utils.world.EntityData;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
-import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -24,14 +23,13 @@ import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 @Init
 public class BBRevealHandler implements Listener {
 
-    private final Set<Block> blocksToShow = new HashSet<>();
+    private final Map<UUID, Set<IntVector>> blocksToShow = new HashMap<>();
     private final Set<Entity> entitiesToShow = new HashSet<>();
 
     public static BBRevealHandler INSTANCE;
@@ -53,13 +51,17 @@ public class BBRevealHandler implements Listener {
 
         if(event.getAction() == Action.RIGHT_CLICK_BLOCK) {
             if(Materials.checkFlag(event.getClickedBlock().getType(), Materials.COLLIDABLE)) {
-                if(blocksToShow.contains(event.getClickedBlock())) {
-                    blocksToShow.remove(event.getClickedBlock());
+                IntVector blockLoc = new IntVector(event.getClickedBlock().getX(),
+                        event.getClickedBlock().getY(), event.getClickedBlock().getZ());
+                Set<IntVector> blocksToShow = this.blocksToShow
+                        .computeIfAbsent(event.getPlayer().getUniqueId(), k -> new HashSet<>());
+                if(blocksToShow.contains(blockLoc)) {
+                    blocksToShow.remove(blockLoc);
                     event.getPlayer().spigot().sendMessage(new ComponentBuilder("No longer showing block: ")
                             .color(ChatColor.RED).append(event.getClickedBlock().getType().name()).color(ChatColor.WHITE)
                             .create());
                 } else {
-                    blocksToShow.add(event.getClickedBlock());
+                    blocksToShow.add(blockLoc);
                     event.getPlayer().spigot().sendMessage(new ComponentBuilder("Now showing block: ")
                             .color(ChatColor.GREEN).append(event.getClickedBlock().getType().name()).color(ChatColor.WHITE)
                             .create());
@@ -98,12 +100,21 @@ public class BBRevealHandler implements Listener {
 
     private void runShowTask() {
         Anticheat.INSTANCE.getScheduler().scheduleAtFixedRate(() -> {
-            blocksToShow.forEach(b -> BlockData.getData(b.getType()).getBox(b, ProtocolVersion.getGameVersion())
-                    .draw(EnumParticle.FLAME, Bukkit.getOnlinePlayers().toArray(new Player[0])));
-            entitiesToShow.forEach(e -> {
-                EntityData.getEntityBox(e.getLocation(), e)
-                        .draw(EnumParticle.FLAME, Bukkit.getOnlinePlayers().toArray(new Player[0]));
+            blocksToShow.forEach((uuid, blocks) -> {
+                Optional<APlayer> player = Anticheat.INSTANCE.getPlayerRegistry().getPlayer(uuid);
+                if(player.isEmpty()) return;
+
+                blocks.forEach(blockLoc -> {
+                    var block = player.get().getBlockUpdateHandler().getBlock(blockLoc);
+
+                    var blockBox = BlockData.getData(block.getType())
+                            .getBox(player.get(), blockLoc, player.get().getPlayerVersion());
+
+                    blockBox.draw(EnumParticle.FLAME, player.get().getBukkitPlayer());
+                });
             });
+            entitiesToShow.forEach(e -> EntityData.getEntityBox(e.getLocation(), e)
+                    .draw(EnumParticle.FLAME, Bukkit.getOnlinePlayers().toArray(new Player[0])));
         }, 3000, 250, TimeUnit.MILLISECONDS);
     }
 

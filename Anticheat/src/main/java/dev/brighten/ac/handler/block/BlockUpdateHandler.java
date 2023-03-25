@@ -5,11 +5,9 @@ import dev.brighten.ac.packet.wrapper.in.WPacketPlayInBlockDig;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInBlockPlace;
 import dev.brighten.ac.packet.wrapper.out.WPacketPlayOutBlockChange;
 import dev.brighten.ac.packet.wrapper.out.WPacketPlayOutMapChunk;
+import dev.brighten.ac.packet.wrapper.out.WPacketPlayOutMapChunkBulk;
 import dev.brighten.ac.packet.wrapper.out.WPacketPlayOutMultiBlockChange;
-import dev.brighten.ac.utils.BlockUtils;
-import dev.brighten.ac.utils.LongHash;
-import dev.brighten.ac.utils.Materials;
-import dev.brighten.ac.utils.XMaterial;
+import dev.brighten.ac.utils.*;
 import dev.brighten.ac.utils.math.IntVector;
 import dev.brighten.ac.utils.world.types.RayCollision;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
@@ -222,6 +220,27 @@ public class BlockUpdateHandler {
                     chunk.updateBlock(vec, block);
                 });
             }
+        });
+    }
+
+    public void runUpdate(WPacketPlayOutMapChunkBulk chunkBulk) {
+        player.runInstantAction(k -> {
+            RunUtils.task(() -> {
+                if(!k.isEnd()) {
+                    for (WPacketPlayOutMapChunk.WrappedChunk chunkUpdate : chunkBulk.getChunks()) {
+                        Chunk chunk = getChunk(chunkUpdate.getX(), chunkUpdate.getZ());
+                        var entrySet = chunkUpdate.getBlocks().entrySet();
+                        (entrySet.size() > 1000 ? entrySet.parallelStream() : entrySet.stream()).forEach(entry -> {
+                            IntVector vec = entry.getKey();
+                            WPacketPlayOutMapChunk.MinBlock mblock = entry.getValue();
+                            WrappedBlock block = new WrappedBlock(vec.toLocation(player.getBukkitPlayer().getWorld()),
+                                    mblock.material, mblock.data);
+
+                            chunk.updateBlock(vec, block);
+                        });
+                    }
+                }
+            });
         });
     }
 

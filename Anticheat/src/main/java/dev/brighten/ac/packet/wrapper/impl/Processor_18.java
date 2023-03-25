@@ -15,6 +15,8 @@ import dev.brighten.ac.utils.reflections.types.WrappedClass;
 import dev.brighten.ac.utils.reflections.types.WrappedField;
 import io.netty.buffer.Unpooled;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.val;
 import me.hydro.emulator.util.mcp.MathHelper;
@@ -30,6 +32,7 @@ import org.bukkit.util.Vector;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -769,7 +772,7 @@ public class Processor_18 implements PacketConverter {
 
     @Override
     public Object createMapChunk(Chunk chunk) {
-        return new PacketPlayOutMapChunk(((CraftChunk)chunk).getHandle(), true, 20);
+        return new PacketPlayOutMapChunk(((CraftChunk) chunk).getHandle(), true, 20);
     }
 
     @Override
@@ -781,22 +784,42 @@ public class Processor_18 implements PacketConverter {
         int size = serialized.e();
 
         final List<WPacketPlayOutMapChunk.WrappedChunk> chunks = new ArrayList<>();
+        final ChunkInfo[] chunkInfos = new ChunkInfo[size];
+
 
         for (int i = 0; i < size; ++i) {
             int chunkX = serialized.readInt();
             int chunkZ = serialized.readInt();
+
             PacketPlayOutMapChunk.ChunkMap chunkMap = new PacketPlayOutMapChunk.ChunkMap();
             chunkMap.b = serialized.readShort() & '\uffff';
             chunkMap.a = new byte[a(Integer.bitCount(chunkMap.b), groundUp)];
 
-            Map<IntVector, WPacketPlayOutMapChunk.MinBlock> blocks = new Object2ObjectOpenHashMap<>(chunkMap.a.length);
+            chunkInfos[i] = new ChunkInfo(chunkX, chunkZ, chunkMap);
+        }
+
+        for (ChunkInfo chunkInfo : chunkInfos) {
+            serialized.readBytes(chunkInfo.getMap().a);
+
+            var chunkMap = chunkInfo.getMap();
+            int chunkX = chunkInfo.getX();
+            int chunkZ = chunkInfo.getZ();
+
+            Map<IntVector, WPacketPlayOutMapChunk.MinBlock> blocks = new HashMap<>(chunkMap.a.length);
 
             processChunk(chunkMap.a, chunkMap.b, chunkX, chunkZ, groundUp, blocks);
-
             chunks.add(new WPacketPlayOutMapChunk.WrappedChunk(chunkX, chunkZ, blocks));
         }
 
+
         return new WPacketPlayOutMapChunkBulk(chunks);
+    }
+
+    @AllArgsConstructor
+    @Getter
+    private static class ChunkInfo {
+        private int x, z;
+        private PacketPlayOutMapChunk.ChunkMap map;
     }
 
     @Override
