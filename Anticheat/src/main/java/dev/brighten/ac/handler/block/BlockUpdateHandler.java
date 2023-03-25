@@ -1,6 +1,5 @@
 package dev.brighten.ac.handler.block;
 
-import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInBlockDig;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInBlockPlace;
@@ -102,7 +101,6 @@ public class BlockUpdateHandler {
 
     private void updateChunk(Chunk chunk) {
         synchronized (chunks) {
-            Anticheat.INSTANCE.getLogger().info("Updating chunk " + chunk.getX() + ", " + chunk.getZ() + " for " + player.getBukkitPlayer().getName());
             chunks.put(LongHash.toLong(chunk.getX(), chunk.getZ()), chunk);
         }
     }
