@@ -9,7 +9,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class Chunk {
     @Getter
-    private final int chunkX, chunkZ;
+    private final int x, z;
     private final WrappedBlock[][][] blocks = new WrappedBlock[16][384][16];
 
     /**
@@ -29,12 +29,16 @@ public class Chunk {
      */
     public Optional<WrappedBlock> getBlockAt(int x, int y, int z) {
        synchronized (blocks) {
-           if(x < 0 || x > 15 || y > 320 || y < -64 || z < 0 || z > 15) return Optional.empty();
+           x = x & 15;
+           z = z & 15;
+           if(y > 320 || y < -64) {
+               return Optional.empty();
+           }
 
            if(y < 0) {
                y = Math.abs(y) + 320;
            }
-           return Optional.ofNullable(blocks[x & 15][y][z & 15]);
+           return Optional.ofNullable(blocks[x][y][z]);
        }
     }
 

@@ -32,7 +32,7 @@ public class IntVector {
 
     @Override
     public String toString() {
-        return "IntVector[" + x + ", " +  y + ", " + z + "]";
+        return "[" + x + ", " +  y + ", " + z + "]";
     }
 
     public IntVector add(int x, int y, int z) {

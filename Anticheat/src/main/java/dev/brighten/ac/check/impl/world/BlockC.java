@@ -8,6 +8,7 @@ import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInBlockPlace;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
 import dev.brighten.ac.utils.KLocation;
+import dev.brighten.ac.utils.annotation.Bind;
 
 @CheckData(name = "Block (C)", checkId = "blockc", type = CheckType.INTERACT)
 public class BlockC extends Check {
@@ -20,6 +21,7 @@ public class BlockC extends Check {
         super(player);
     }
 
+    @Bind
     WTimedAction<WPacketPlayInFlying> flying = (packet, timestamp) -> {
         if(player.getInfo().isCreative() || player.getMovement().isExcuseNextFlying()) return;
         if(place) {
@@ -33,6 +35,7 @@ public class BlockC extends Check {
         }
     };
 
+    @Bind
     WTimedAction<WPacketPlayInBlockPlace> blockPlace = (packet, timestamp) -> {
         if(player.pastLocations.isEmpty()) return;
 

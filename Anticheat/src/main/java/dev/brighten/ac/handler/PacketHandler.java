@@ -27,6 +27,10 @@ public class PacketHandler {
 
     public boolean process(APlayer player, PacketType type, Object packetObject) {
         long timestamp = System.currentTimeMillis();
+
+        if(player.getPlayerTick() < 10) {
+            System.out.println(packetObject.getClass().getSimpleName());
+        }
         switch (type) {
             case CLIENT_TRANSACTION -> {
                 WPacketPlayInTransaction packet = (WPacketPlayInTransaction) packetObject;

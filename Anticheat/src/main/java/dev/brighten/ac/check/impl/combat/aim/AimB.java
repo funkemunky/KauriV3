@@ -5,6 +5,7 @@ import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
 import dev.brighten.ac.utils.MathUtils;
+import dev.brighten.ac.utils.annotation.Bind;
 import dev.brighten.ac.utils.timer.Timer;
 import dev.brighten.ac.utils.timer.impl.TickTimer;
 
@@ -21,6 +22,7 @@ public class AimB extends Check {
     private int totalLookTicks = 0;
     private final Timer lastLargeLook = new TickTimer();
 
+    @Bind
     WAction<WPacketPlayInFlying> flying = packet -> {
         if(!packet.isLooked()) return;
         final float sensitivity = player.getMovement().getSensitivityMcp();

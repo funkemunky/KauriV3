@@ -6,6 +6,7 @@ import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
+import dev.brighten.ac.utils.annotation.Bind;
 
 @CheckData(name = "NoFall (A)", checkId = "nofalla", type = CheckType.MOVEMENT)
 public class NoFallA extends Check {
@@ -17,6 +18,7 @@ public class NoFallA extends Check {
     private static double divisor = 1. / 64.;
     private float buffer;
 
+    @Bind
     WAction<WPacketPlayInFlying> flying = packet -> {
         if(!packet.isMoved()
                 || player.getInfo().isGeneralCancel()

@@ -10,24 +10,15 @@ import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInArmAnimation;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInBlockPlace;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
+import dev.brighten.ac.utils.BlockUtils;
+import dev.brighten.ac.utils.annotation.Bind;
 import dev.brighten.ac.utils.math.cond.MaxDouble;
-import org.bukkit.Material;
-
-import java.util.Arrays;
-import java.util.EnumSet;
 
 @CheckData(name = "Autoclicker (D)", checkId = "autoclickerd", type = CheckType.AUTOCLICKER, punishVl = 15,
         maxVersion = ProtocolVersion.V1_8_9)
-public class AutoclickerD extends Check {
-    public AutoclickerD(APlayer player) {
+public class AutoClickerD extends Check {
+    public AutoClickerD(APlayer player) {
         super(player);
-    }
-
-    private static final EnumSet<Material> SWORDS = EnumSet.allOf(Material.class);
-
-    static {
-        Arrays.stream(Material.values()).filter(material -> material.name().contains("SWORD"))
-                .forEach(SWORDS::add);
     }
 
     private long lastArm;
@@ -36,6 +27,7 @@ public class AutoclickerD extends Check {
     private int armTicks;
     private final MaxDouble verbose = new MaxDouble(40);
 
+    @Bind
     WTimedAction<WPacketPlayInArmAnimation> animation = (packet, timeStamp) -> {
         if(player.getInfo().isBreakingBlock()) return;
 
@@ -44,6 +36,7 @@ public class AutoclickerD extends Check {
         armTicks++;
     };
 
+    @Bind
     WAction<WPacketPlayInFlying> flying = packet -> {
         if(blocked) {
             if(armTicks > 0) {
@@ -62,7 +55,7 @@ public class AutoclickerD extends Check {
     };
 
     WAction<WPacketPlayInBlockPlace> place = packet -> {
-        if(packet.getItemStack() == null || !SWORDS.contains(packet.getItemStack().getType())) return;
+        if(packet.getItemStack() == null || !BlockUtils.isSword(packet.getItemStack().getType())) return;
         blocked = true;
     };
 }

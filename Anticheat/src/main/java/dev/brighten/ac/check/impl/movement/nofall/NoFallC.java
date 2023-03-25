@@ -7,6 +7,7 @@ import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
 import dev.brighten.ac.utils.MathUtils;
+import dev.brighten.ac.utils.annotation.Bind;
 
 @CheckData(name = "NoFall (C)", checkId = "nofallc", type = CheckType.MOVEMENT, punishVl = 5, punishable = false, experimental = true)
 public class NoFallC extends Check {
@@ -17,6 +18,7 @@ public class NoFallC extends Check {
 
     private double fallDistance, trueFallDistance;
 
+    @Bind
     WAction<WPacketPlayInFlying> flying = packet -> {
         if(!packet.isMoved())
             return;

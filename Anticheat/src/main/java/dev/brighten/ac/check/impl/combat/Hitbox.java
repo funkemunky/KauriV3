@@ -9,6 +9,7 @@ import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInUseEntity;
 import dev.brighten.ac.utils.*;
+import dev.brighten.ac.utils.annotation.Bind;
 import dev.brighten.ac.utils.timer.Timer;
 import dev.brighten.ac.utils.timer.impl.TickTimer;
 import dev.brighten.ac.utils.world.EntityData;
@@ -36,6 +37,7 @@ public class Hitbox extends Check {
         super(player);
     }
 
+    @Bind
     WAction<WPacketPlayInUseEntity> useEntity = packet -> {
         Entity entity = packet.getEntity(player.getBukkitPlayer().getWorld());
         if(entity == null) return;
@@ -48,6 +50,7 @@ public class Hitbox extends Check {
     //TODO Figure out how to make the check more sensitive without compromising network stability
     //Aka figure out how to minimize the amount of previous locations needed to process to keep network
     //stability. like shortening the amount stored, or removing older ones.
+    @Bind
     WAction<WPacketPlayInFlying> onFlying = packet -> {
         if(player.getInfo().isCreative() || player.getInfo().isInVehicle()) {
             attacks.clear();

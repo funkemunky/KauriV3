@@ -5,6 +5,7 @@ import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.utils.MiscUtils;
 import dev.brighten.ac.utils.RunUtils;
 import dev.brighten.ac.utils.annotation.Init;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import lombok.Getter;
 import org.bukkit.entity.Player;
 
@@ -15,7 +16,7 @@ import java.util.concurrent.Executors;
 public class ThreadHandler {
     @Getter
     private final List<PlayerThread> services = new ArrayList<>();
-    private final Map<UUID, Integer> threadCorrelations = new HashMap<>();
+    private final Map<UUID, Integer> threadCorrelations = new Object2ObjectOpenHashMap<>();
     private final int maxThreads;
     public static ThreadHandler INSTANCE;
 

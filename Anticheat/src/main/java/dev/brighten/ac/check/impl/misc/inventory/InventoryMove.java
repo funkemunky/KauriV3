@@ -7,7 +7,7 @@ import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
-import dev.brighten.ac.utils.annotation.Async;
+import dev.brighten.ac.utils.annotation.Bind;
 
 @CheckData(name = "Inventory (Move)", checkId = "inventoryA", type = CheckType.INVENTORY, maxVersion = ProtocolVersion.V1_11)
 public class InventoryMove extends Check {
@@ -17,8 +17,8 @@ public class InventoryMove extends Check {
     }
 
     public int buffer;
-    
-    @Async
+
+    @Bind
     public WAction<WPacketPlayInFlying> flying = packet -> {
         if(player.getInfo().isGeneralCancel()) return;
 

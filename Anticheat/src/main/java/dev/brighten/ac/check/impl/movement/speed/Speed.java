@@ -11,6 +11,7 @@ import dev.brighten.ac.utils.BlockUtils;
 import dev.brighten.ac.utils.PlayerUtils;
 import dev.brighten.ac.utils.TagsBuilder;
 import dev.brighten.ac.utils.XMaterial;
+import dev.brighten.ac.utils.annotation.Bind;
 import org.bukkit.potion.PotionEffectType;
 
 @CheckData(name = "Speed", checkId = "speeda", type = CheckType.MOVEMENT)
@@ -20,6 +21,7 @@ public class Speed extends Check {
     private float friction = 0.6f;
     private float buffer;
 
+    @Bind
     WAction<WPacketPlayInFlying> flying = packet -> {
         if(player.getMovement().isExcuseNextFlying()) return;
         checkProccesing:

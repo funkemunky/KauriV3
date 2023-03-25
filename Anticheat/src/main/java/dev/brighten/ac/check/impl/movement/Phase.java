@@ -9,6 +9,7 @@ import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
 import dev.brighten.ac.packet.wrapper.out.WPacketPlayOutPosition;
 import dev.brighten.ac.utils.*;
+import dev.brighten.ac.utils.annotation.Bind;
 import dev.brighten.ac.utils.world.types.SimpleCollisionBox;
 import org.bukkit.Location;
 import org.bukkit.util.Vector;
@@ -28,6 +29,7 @@ public class Phase extends Check {
     private final Set<Vector> POSITIONS = new HashSet<>();
     private Location teleportLoc = null;
 
+    @Bind
     WAction<WPacketPlayOutPosition> positionOut = packet -> {
         KLocation loc = new KLocation(packet.getX(), packet.getY(), packet.getZ(),
                 packet.getYaw(), packet.getPitch());
@@ -50,6 +52,7 @@ public class Phase extends Check {
         POSITIONS.add(loc.toVector());
     };
 
+    @Bind
     WCancellable<WPacketPlayInFlying> packet = (packet) -> {
         if(packet.isMoved() && ticks < 3) {
             ticks++;

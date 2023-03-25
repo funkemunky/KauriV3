@@ -12,6 +12,7 @@ import dev.brighten.ac.packet.wrapper.in.WPacketPlayInBlockPlace;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInTransaction;
 import dev.brighten.ac.packet.wrapper.out.WPacketPlayOutPosition;
+import dev.brighten.ac.utils.annotation.Bind;
 import dev.brighten.ac.utils.timer.impl.TickTimer;
 
 @CheckData(name = "Timer", checkId = "timer", type = CheckType.ORDER)
@@ -26,10 +27,12 @@ public class Timer extends Check {
             lastReset = new TickTimer();
     private long totalTimer = -1;
 
+    @Bind
     WAction<WPacketPlayOutPosition> position = packet -> {
         totalTimer-= 50;
     };
 
+    @Bind
     WAction<WPacketPlayInBlockPlace> blockPlace = packet -> {
         if(player.getPlayerVersion().isOrAbove(ProtocolVersion.V1_17))
             totalTimer-= 50;
@@ -38,6 +41,7 @@ public class Timer extends Check {
     /**
      * Fixing bug with 1.9 since flying packets are not always sent
      */
+    @Bind
     WTimedAction<WPacketPlayInTransaction> transaction = (packet, timestamp) -> {
         if(player.getPlayerVersion().isBelow(ProtocolVersion.V1_9)) return;
 
@@ -50,6 +54,7 @@ public class Timer extends Check {
         });
     };
 
+    @Bind
     WTimedAction<WPacketPlayInFlying> flying = (packet, timestamp) -> {
         if(totalTimer == -1) {
             totalTimer = player.getCreation().getCurrent() - 50;

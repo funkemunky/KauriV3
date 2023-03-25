@@ -1,5 +1,6 @@
 package dev.brighten.ac.packet.wrapper.impl;
 
+import dev.brighten.ac.handler.block.WrappedBlock;
 import dev.brighten.ac.packet.wrapper.PacketConverter;
 import dev.brighten.ac.packet.wrapper.in.*;
 import dev.brighten.ac.packet.wrapper.login.WPacketHandshakingInSetProtocol;
@@ -14,14 +15,15 @@ import dev.brighten.ac.utils.math.IntVector;
 import dev.brighten.ac.utils.reflections.types.WrappedClass;
 import dev.brighten.ac.utils.reflections.types.WrappedField;
 import io.netty.buffer.Unpooled;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.val;
 import me.hydro.emulator.util.mcp.MathHelper;
 import net.minecraft.server.v1_8_R3.*;
+import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.craftbukkit.v1_8_R3.CraftChunk;
 import org.bukkit.craftbukkit.v1_8_R3.inventory.CraftItemStack;
@@ -32,9 +34,7 @@ import org.bukkit.util.Vector;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 @SuppressWarnings("deprecation")
@@ -763,11 +763,11 @@ public class Processor_18 implements PacketConverter {
         byte[] locs = new byte[serialized.e()];
         serialized.readBytes(locs);
 
-        Map<IntVector, WPacketPlayOutMapChunk.MinBlock> blocks = new Object2ObjectOpenHashMap<>(locs.length);
+        dev.brighten.ac.handler.block.Chunk chunk = new dev.brighten.ac.handler.block.Chunk(chunkX, chunkZ);
 
-        processChunk(locs, size, chunkX, chunkZ, groundUp, blocks);
+        processChunk(locs, size, chunkX, chunkZ, groundUp, chunk);
 
-        return new WPacketPlayOutMapChunk(new WPacketPlayOutMapChunk.WrappedChunk(chunkX, chunkZ, blocks));
+        return new WPacketPlayOutMapChunk(chunk);
     }
 
     @Override
@@ -783,7 +783,7 @@ public class Processor_18 implements PacketConverter {
         boolean groundUp = serialized.readBoolean();
         int size = serialized.e();
 
-        final List<WPacketPlayOutMapChunk.WrappedChunk> chunks = new ArrayList<>();
+        final List<dev.brighten.ac.handler.block.Chunk> chunks = new ArrayList<>();
         final ChunkInfo[] chunkInfos = new ChunkInfo[size];
 
 
@@ -805,10 +805,10 @@ public class Processor_18 implements PacketConverter {
             int chunkX = chunkInfo.getX();
             int chunkZ = chunkInfo.getZ();
 
-            Map<IntVector, WPacketPlayOutMapChunk.MinBlock> blocks = new HashMap<>(chunkMap.a.length);
+            dev.brighten.ac.handler.block.Chunk chunk = new dev.brighten.ac.handler.block.Chunk(chunkX, chunkZ);
 
-            processChunk(chunkMap.a, chunkMap.b, chunkX, chunkZ, groundUp, blocks);
-            chunks.add(new WPacketPlayOutMapChunk.WrappedChunk(chunkX, chunkZ, blocks));
+            processChunk(chunkMap.a, chunkMap.b, chunkX, chunkZ, groundUp, chunk);
+            chunks.add(chunk);
         }
 
 
@@ -939,7 +939,7 @@ public class Processor_18 implements PacketConverter {
     }
 
     private static void processChunk(byte[] locs, int size, int chunkX, int chunkZ, boolean groundUp,
-                                Map<IntVector, WPacketPlayOutMapChunk.MinBlock> blocks) {
+                                dev.brighten.ac.handler.block.Chunk chunk) {
         ChunkSection[] sections = new ChunkSection[16];
 
         int i = 0;
@@ -968,10 +968,9 @@ public class Processor_18 implements PacketConverter {
 
                     Material material = CraftMagicNumbers.getMaterial(iblockdata.getBlock());
 
-                    WPacketPlayOutMapChunk.MinBlock block = new WPacketPlayOutMapChunk
-                            .MinBlock(material, (byte)iblockdata.getBlock().toLegacyData(iblockdata));
-
-                    blocks.put(new IntVector(x, y, z), block);
+                    WrappedBlock block = new WrappedBlock(new Location(Bukkit.getWorld("world"), x, y, z),
+                            material, (byte)iblockdata.getBlock().toLegacyData(iblockdata));
+                    chunk.updateBlock(x, y, z, block);
                 }
             } else if (groundUp && sections[index] != null) {
                 sections[index] = null;

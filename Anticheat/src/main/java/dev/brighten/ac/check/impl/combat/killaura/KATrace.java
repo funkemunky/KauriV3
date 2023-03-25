@@ -8,6 +8,7 @@ import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInUseEntity;
 import dev.brighten.ac.utils.KLocation;
+import dev.brighten.ac.utils.annotation.Bind;
 import dev.brighten.ac.utils.world.CollisionBox;
 import dev.brighten.ac.utils.world.EntityData;
 import dev.brighten.ac.utils.world.types.RayCollision;
@@ -33,6 +34,7 @@ public class KATrace extends Check {
 
     private int buffer;
 
+    @Bind
     WAction<WPacketPlayInUseEntity> useEntity = packet -> {
         if(player.getInfo().getTarget() == null
                 || packet.getAction() != WPacketPlayInUseEntity.EnumEntityUseAction.ATTACK)

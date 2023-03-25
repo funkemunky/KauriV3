@@ -6,7 +6,7 @@ import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
-import dev.brighten.ac.utils.annotation.Async;
+import dev.brighten.ac.utils.annotation.Bind;
 
 @CheckData(name = "Fly (Increment)", checkId = "flyd", type = CheckType.MOVEMENT, experimental = true)
 public class FlyD extends Check {
@@ -16,7 +16,7 @@ public class FlyD extends Check {
 
     private double totalY;
 
-    @Async
+    @Bind
     WAction<WPacketPlayInFlying> flyingPacket = packet -> {
         if(!packet.isMoved() || player.getMovement().getMoveTicks() <= 2
                 || player.getBlockInfo().miscNear || player.getBlockInfo().onSlab

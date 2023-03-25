@@ -8,6 +8,7 @@ import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInArmAnimation;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInUseEntity;
+import dev.brighten.ac.utils.annotation.Bind;
 import lombok.val;
 
 import java.util.List;
@@ -22,17 +23,20 @@ public class KABot extends Check {
     private int buffer = 0;
     private float buffer2;
 
+    @Bind
     WAction<WPacketPlayInArmAnimation> arm =  packet -> {
         // We want to go ahead and lower the buffer every time they miss the bot to help prevent false positives
         if(buffer2 > 0) buffer2-= 0.25f;
     };
 
+    @Bind
     WAction<WPacketPlayInFlying> flying = packet -> {
         if(player.getInfo().lastAttack.isNotPassed(20)) {
             player.getMob().setInvisible(false);
         } else player.getMob().setInvisible(true);
     };
 
+    @Bind
     WAction<WPacketPlayInUseEntity> packet = packet -> {
         val optional = player.getEntityLocationHandler().getFakeMob(packet.getEntityId());
 

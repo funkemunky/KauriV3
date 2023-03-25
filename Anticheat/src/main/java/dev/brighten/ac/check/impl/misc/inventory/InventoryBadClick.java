@@ -7,6 +7,7 @@ import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInWindowClick;
+import dev.brighten.ac.utils.annotation.Bind;
 
 @CheckData(name = "Inventory (BadClick)", checkId = "inventoryB", type = CheckType.INVENTORY, maxVersion = ProtocolVersion.V1_11)
 public class InventoryBadClick extends Check {
@@ -15,6 +16,7 @@ public class InventoryBadClick extends Check {
         super(player);
     }
 
+    @Bind
     WAction<WPacketPlayInWindowClick> windowClick = packet -> {
         if(!player.getInfo().isInventoryOpen()) {
             flag("Inventory not open");

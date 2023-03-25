@@ -8,6 +8,7 @@ import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.handler.HandlerAbstract;
 import dev.brighten.ac.packet.wrapper.objects.WrappedWatchableObject;
 import dev.brighten.ac.packet.wrapper.out.WPacketPlayOutEntityMetadata;
+import dev.brighten.ac.utils.annotation.Bind;
 
 @CheckData(name = "HealthSpoof", checkId = "healthspoof", type = CheckType.EXPLOIT)
 public class HealthSpoof extends Check {
@@ -16,6 +17,7 @@ public class HealthSpoof extends Check {
         super(player);
     }
 
+    @Bind
     WCancellable<WPacketPlayOutEntityMetadata> event = packet -> {
         if(packet.getEntityId() == player.getBukkitPlayer().getEntityId()) return false;
 

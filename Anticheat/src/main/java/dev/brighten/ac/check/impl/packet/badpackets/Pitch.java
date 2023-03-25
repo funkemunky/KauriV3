@@ -6,7 +6,7 @@ import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
-import dev.brighten.ac.utils.annotation.Async;
+import dev.brighten.ac.utils.annotation.Bind;
 
 @CheckData(name = "BadPackets (Pitch)", checkId = "badpacketspitch", type = CheckType.BADPACKETS, punishVl = 1)
 public class Pitch extends Check {
@@ -14,7 +14,7 @@ public class Pitch extends Check {
         super(player);
     }
 
-    @Async
+    @Bind
     WAction<WPacketPlayInFlying> flying = packet -> {
         if(packet.isLooked() && Math.abs(packet.getPitch()) > 90) {
             flag("pitch=%.2f", Math.abs(packet.getPitch()));

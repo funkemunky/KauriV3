@@ -3,6 +3,7 @@ package dev.brighten.ac.check;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.wrapper.WPacket;
 import dev.brighten.ac.utils.Tuple;
+import dev.brighten.ac.utils.annotation.Bind;
 import dev.brighten.ac.utils.reflections.types.WrappedClass;
 import dev.brighten.ac.utils.reflections.types.WrappedConstructor;
 import dev.brighten.ac.utils.reflections.types.WrappedField;
@@ -32,6 +33,8 @@ public class CheckStatic {
     private void processClass() {
         initConst = checkClass.getConstructor(APlayer.class);
         for (WrappedField field : checkClass.getFields()) {
+            if(!field.isAnnotationPresent(Bind.class)) continue;
+
             if(!WAction.class.isAssignableFrom(field.getType())
                     && !WCancellable.class.isAssignableFrom(field.getType())
                     && !WTimedAction.class.isAssignableFrom(field.getType())) continue;

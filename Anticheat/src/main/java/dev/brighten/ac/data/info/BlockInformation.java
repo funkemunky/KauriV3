@@ -16,7 +16,6 @@ import me.hydro.emulator.util.mcp.MathHelper;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
-import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 
@@ -30,7 +29,6 @@ public class BlockInformation {
             nearSteppableEntity;
     public final List<SimpleCollisionBox> aboveCollisions = Collections.synchronizedList(new ArrayList<>()),
             belowCollisions = Collections.synchronizedList(new ArrayList<>());
-    public final List<Block> blocks = Collections.synchronizedList(new ArrayList<>());
     public final List<CollisionBox> entityCollisionBoxes = new ArrayList<>();
     //Caching material
     private final Material cobweb = XMaterial.COBWEB.parseMaterial(),
@@ -54,7 +52,6 @@ public class BlockInformation {
         double dy = Math.abs(player.getMovement().getDeltaY()) * 2;
         double dh = player.getMovement().getDeltaXZ() * 2;
 
-        blocks.clear();
         entityCollisionBoxes.clear();
 
         player.getInfo().setServerGround(false);
@@ -139,8 +136,6 @@ public class BlockInformation {
 
                         final Material type =
                                 player.getBlockUpdateHandler().getBlock(new IntVector(x, y, z)).getType();
-
-                        BlockUtils.getBlockAsync(new Location(world, x, y, z)).ifPresent(blocks::add);
 
                         if (type != Material.AIR) {
 

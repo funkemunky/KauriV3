@@ -5,7 +5,7 @@ import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.data.APlayer;
-import dev.brighten.ac.utils.annotation.Async;
+import dev.brighten.ac.utils.annotation.Bind;
 import org.bukkit.block.Block;
 import org.bukkit.event.block.BlockPlaceEvent;
 
@@ -15,7 +15,7 @@ public class BlockB extends Check {
         super(player);
     }
 
-    @Async
+    @Bind
     WAction<BlockPlaceEvent> blockPlaceEvent = event -> {
         Block ba = event.getBlockAgainst();
 

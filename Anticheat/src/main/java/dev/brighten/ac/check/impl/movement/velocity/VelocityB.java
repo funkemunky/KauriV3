@@ -9,6 +9,7 @@ import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
 import dev.brighten.ac.utils.KLocation;
 import dev.brighten.ac.utils.MathUtils;
+import dev.brighten.ac.utils.annotation.Bind;
 import dev.brighten.ac.utils.math.IntVector;
 import dev.brighten.ac.utils.timer.Timer;
 import dev.brighten.ac.utils.timer.impl.TickTimer;
@@ -50,6 +51,7 @@ public class VelocityB extends Check {
 
     public double strafe, forward;
 
+    @Bind
     WAction<WPacketPlayInFlying> flying = packet -> {
 
         check:

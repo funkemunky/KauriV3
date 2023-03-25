@@ -8,6 +8,7 @@ import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
 import dev.brighten.ac.utils.Color;
 import dev.brighten.ac.utils.KLocation;
+import dev.brighten.ac.utils.annotation.Bind;
 import dev.brighten.ac.utils.timer.Timer;
 import dev.brighten.ac.utils.timer.impl.TickTimer;
 import lombok.val;
@@ -25,6 +26,7 @@ public class Prediction extends Check {
         super(player);
     }
 
+    @Bind
     WAction<WPacketPlayInFlying> flying = packet -> {
         if(!packet.isMoved()) {
             if(++notMoveTicks > 2) {

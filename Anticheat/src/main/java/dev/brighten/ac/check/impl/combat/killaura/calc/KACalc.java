@@ -10,6 +10,7 @@ import dev.brighten.ac.utils.EntityLocation;
 import dev.brighten.ac.utils.KLocation;
 import dev.brighten.ac.utils.MathUtils;
 import dev.brighten.ac.utils.Tuple;
+import dev.brighten.ac.utils.annotation.Bind;
 import dev.brighten.ac.utils.objects.evicting.EvictingList;
 import org.bukkit.util.Vector;
 
@@ -24,6 +25,7 @@ public class KACalc extends Check {
 
     List<float[]> floats = new EvictingList<>(100);
 
+    @Bind
     WAction<WPacketPlayInFlying> flying = packet -> {
         if(player.getInfo().getTarget() == null || player.getInfo().lastAttack.isPassed(40)) return;
         Optional<Tuple<EntityLocation, EntityLocation>> optional = player.getEntityLocationHandler()

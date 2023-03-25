@@ -16,19 +16,24 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.Vehicle;
 import org.bukkit.inventory.ItemStack;
 
-import java.util.EnumMap;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 public class BlockUtils {
 
     public static Map<Material, BoundingBox> collisionBoundingBoxes = new HashMap<>();
     private static final EnumMap<Material, XMaterial> matchMaterial = new EnumMap<>(Material.class);
+    private static final EnumSet<Material> SWORDS = EnumSet.allOf(Material.class),
+            STAINED_CLAY =  EnumSet.allOf(Material.class);
 
     static {
         for (Material mat : Material.values()) {
             matchMaterial.put(mat, XMaterial.matchXMaterial(mat));
+
+            if(mat.toString().contains("STAINED_CLAY")) {
+                STAINED_CLAY.add(mat);
+            } else if(mat.toString().contains("SWORD")) {
+                SWORDS.add(mat);
+            }
         }
     }
 
@@ -43,6 +48,14 @@ public class BlockUtils {
         } else {
             return null;
         }
+    }
+
+    public static boolean isStainedClay(Material material) {
+        return STAINED_CLAY.contains(material);
+    }
+
+    public static boolean isSword(Material material) {
+        return SWORDS.contains(material);
     }
 
     public static Optional<Block> getBlockAsync(Location location) {

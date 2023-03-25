@@ -6,6 +6,7 @@ import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
+import dev.brighten.ac.utils.annotation.Bind;
 import org.bukkit.util.Vector;
 
 @CheckData(name = "Velocity (Vertical)", checkId = "velocitya", type = CheckType.MOVEMENT)
@@ -23,6 +24,7 @@ public class VelocityA extends Check {
         });
     }
 
+    @Bind
     WAction<WPacketPlayInFlying> flying = packet -> {
         if(currentVelocity != null && currentVelocity.getY() > 0
                 && !player.getBlockInfo().inWeb

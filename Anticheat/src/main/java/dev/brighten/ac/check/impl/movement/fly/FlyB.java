@@ -8,6 +8,7 @@ import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
 import dev.brighten.ac.utils.MathUtils;
 import dev.brighten.ac.utils.MovementUtils;
+import dev.brighten.ac.utils.annotation.Bind;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -22,6 +23,7 @@ public class FlyB extends Check {
 
     private double slimeY = 0;
 
+    @Bind
     WAction<WPacketPlayInFlying> flyingAction = packet -> {
         if(player.getMovement().getLastTeleport().isNotPassed((1))
                 || player.getMovement().getMoveTicks() <= 2

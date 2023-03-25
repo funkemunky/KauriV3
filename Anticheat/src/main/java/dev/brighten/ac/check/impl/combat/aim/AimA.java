@@ -7,11 +7,10 @@ import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
 import dev.brighten.ac.utils.Color;
-import dev.brighten.ac.utils.annotation.Async;
+import dev.brighten.ac.utils.MathUtils;
+import dev.brighten.ac.utils.annotation.Bind;
 import dev.brighten.ac.utils.timer.Timer;
 import dev.brighten.ac.utils.timer.impl.TickTimer;
-
-import java.util.List;
 
 @CheckData(name = "Aim (A)", checkId = "aima", type = CheckType.COMBAT)
 public class AimA extends Check {
@@ -22,7 +21,7 @@ public class AimA extends Check {
     private float buffer;
     protected Timer lastGrid = new TickTimer(3);
 
-    @Async
+    @Bind
     WAction<WPacketPlayInFlying> onFlying = (packet) -> {
         if(!packet.isLooked()) return;
 
@@ -36,8 +35,8 @@ public class AimA extends Check {
         final float deltaX = deltaYaw / player.getMovement().getYawMode(),
                 deltaY = deltaPitch / player.getMovement().getPitchMode();
 
-        final double gridX = getGrid(player.getMovement().getYawGcdList()),
-                gridY = getGrid(player.getMovement().getPitchGcdList());
+        final double gridX = MathUtils.getGrid(player.getMovement().getYawGcdList()),
+                gridY = MathUtils.getGrid(player.getMovement().getPitchGcdList());
 
         if(gridX < 0.005 || gridY < 0.005) lastGrid.reset();
 
@@ -63,47 +62,4 @@ public class AimA extends Check {
                 player.getMovement().getSensitivityMcp(), player.getMovement().getCurrentSensX(),
                 player.getMovement().getCurrentSensY(), deltaX, deltaY);
     };
-
-    /*
-     * This is an attempt to reverse the logistics of cinematic camera without having to run a full on prediction using
-     * mouse filters. Otherwise, we would need to run more heavy calculations which is not really production friendly.
-     * It may be more accurate, but it is not really worth it if in the end of the day we're eating server performance.
-     */
-    protected static double getGrid(final List<Float> entry) {
-        /*
-         * We're creating the variables average min and max to start calculating the possibility of cinematic camera.
-         * Why does this work? Cinematic camera is essentially a slowly increasing slowdown (which is why cinematic camera
-         * becomes slower the more you use it) which in turn makes it so the min max and average are extremely close together.
-         */
-        double average = 0.0;
-        double min = 0.0, max = 0.0;
-
-        /*
-         * These are simple min max calculations done manually for the sake of simplicity. We're using the numbers 0.0
-         * since we also want to account for the possibility of a negative number. If there are no negative numbers then
-         * there is absolutely no need for us to care about that number other than getting the max.
-         */
-        for (final double number : entry) {
-            if (number < min) min = number;
-            if (number > max) max = number;
-
-            /*
-             * Instead of having a sum variable we can use an average variable which we divide
-             * right after the loop is over. Smart programming trick if you want to use it.
-             */
-            average += number;
-        }
-
-        /*
-         * We're dividing the average by the length since this is the formula to getting the average.
-         * Specifically its (sum(n) / length(n)) = average(n) -- with n being the entry set we're analyzing.
-         */
-        average /= entry.size();
-
-        /*
-         * This is going to estimate how close the average and the max were together with the possibility of a min
-         * variable which is going to represent a negative variable since the preset variable on min is 0.0.
-         */
-        return (max - average) - min;
-    }
 }

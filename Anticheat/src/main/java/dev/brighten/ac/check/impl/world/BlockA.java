@@ -12,7 +12,7 @@ import dev.brighten.ac.utils.BlockUtils;
 import dev.brighten.ac.utils.KLocation;
 import dev.brighten.ac.utils.MathUtils;
 import dev.brighten.ac.utils.Tuple;
-import dev.brighten.ac.utils.annotation.Async;
+import dev.brighten.ac.utils.annotation.Bind;
 import dev.brighten.ac.utils.math.cond.MaxDouble;
 import dev.brighten.ac.utils.world.BlockData;
 import dev.brighten.ac.utils.world.CollisionBox;
@@ -31,26 +31,24 @@ public class BlockA extends Check {
         super(player);
     }
 
-    private final MaxDouble verbose = new MaxDouble(20);
-    private Queue<Tuple<Block, SimpleCollisionBox>> blockPlacements = new LinkedBlockingQueue<>();
+    private final MaxDouble VERBOSE = new MaxDouble(20);
+    private final Queue<Tuple<Block, SimpleCollisionBox>> PLACEMENTS = new LinkedBlockingQueue<>();
 
-    @Async
+    @Bind
     WAction<WPacketPlayInBlockPlace> blockPlace = packet -> {
         Location loc = packet.getBlockPos().toBukkitVector().toLocation(player.getBukkitPlayer().getWorld());
         Optional<Block> optionalBlock = BlockUtils.getBlockAsync(loc);
 
-        if(!optionalBlock.isPresent()) return;
+        if(optionalBlock.isEmpty()) return;
 
         final Block block = optionalBlock.get();
         CollisionBox box = BlockData.getData(block.getType()).getBox(block, player.getPlayerVersion());
 
         debug(packet.getBlockPos().toString());
-        if(!(box instanceof SimpleCollisionBox)) {
+        if(!(box instanceof final SimpleCollisionBox simpleBox)) {
             debug("Not SimpleCollisionBox: " + box.getClass().getSimpleName() + ";" + block.getType());
             return;
         }
-
-        final SimpleCollisionBox simpleBox = ((SimpleCollisionBox) box);
 
         if(Math.abs(simpleBox.maxY - simpleBox.minY) != 1.
                 || Math.abs(simpleBox.maxX - simpleBox.minX) != 1.
@@ -62,14 +60,14 @@ public class BlockA extends Check {
             return;
         }
 
-        blockPlacements.add(new Tuple<>(block, simpleBox.expand(0.1)));
+        PLACEMENTS.add(new Tuple<>(block, simpleBox.expand(0.1)));
     };
 
-    @Async
+    @Bind
     WAction<WPacketPlayInFlying> flying = packet -> {
         Tuple<Block, SimpleCollisionBox> tuple;
 
-        while((tuple = blockPlacements.poll()) != null) {
+        while((tuple = PLACEMENTS.poll()) != null) {
             final SimpleCollisionBox box = tuple.two.copy().expand(0.025);
             final Block block = tuple.one;
 
@@ -89,14 +87,14 @@ public class BlockA extends Check {
             final boolean collided = rayTo.isCollided(box) || rayFrom.isCollided(box);
 
             if (!collided) {
-                if (verbose.add() > 4) {
+                if (VERBOSE.add() > 4) {
                     flag("to=[x=%.1f y=%.1f z=%.1f yaw=%.1f pitch=%.1f] loc=[%.1f,%.1f,%.1f]",
                             to.x, to.y, to.z, to.yaw, from.pitch,
                             block.getLocation().getX(), block.getLocation().getY(), block.getLocation().getZ());
                 }
-            } else verbose.subtract(0.33);
+            } else VERBOSE.subtract(0.33);
 
-            debug("collided=%s verbose=%s", collided, verbose.value());
+            debug("collided=%s verbose=%s", collided, VERBOSE.value());
         }
     };
 }

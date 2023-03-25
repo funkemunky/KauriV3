@@ -6,6 +6,7 @@ import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.WCancellable;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInChat;
+import dev.brighten.ac.utils.annotation.Bind;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -19,6 +20,7 @@ public class Log4J extends Check {
 
     private static final Pattern pattern = Pattern.compile("\\$\\{.*}");
 
+    @Bind
     WCancellable<WPacketPlayInChat> chatPacket = packet -> {
         Matcher matcher = pattern.matcher(packet.getMessage());
         if(matcher.matches()) {

@@ -7,6 +7,7 @@ import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInWindowClick;
+import dev.brighten.ac.utils.annotation.Bind;
 
 @CheckData(name = "Inventory (ClickMove)", checkId = "inventoryc", type = CheckType.INVENTORY)
 public class InventoryClickMove extends Check {
@@ -17,8 +18,10 @@ public class InventoryClickMove extends Check {
     private int lastWindowClick = -2;
 
     // Updating the last time the player clicked in a menu for use in the below check for positional movement.
+    @Bind
     WAction<WPacketPlayInWindowClick> windowClick = packet -> lastWindowClick = player.getPlayerTick();
 
+    @Bind
     WAction<WPacketPlayInFlying> flying = packet -> {
         // If the player isn't sending any rotational or positional updates, then we don't need to check them.
         if((!packet.isMoved()

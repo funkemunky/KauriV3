@@ -4,7 +4,6 @@ import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.handler.HandlerAbstract;
 import dev.brighten.ac.packet.wrapper.PacketType;
-import dev.brighten.ac.utils.RunUtils;
 import dev.brighten.ac.utils.annotation.Init;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -82,17 +81,13 @@ public class JoinListener implements Listener {
     public void onJoin(PlayerJoinEvent event) {
         APlayer player = Anticheat.INSTANCE.getPlayerRegistry().generate(event.getPlayer());
 
-        RunUtils.taskTimer(task -> {
-            if(Anticheat.INSTANCE.getPlayerRegistry().aplayerMap.containsKey(event.getPlayer().getUniqueId().hashCode())) {
-                if(task != null
-                        && Anticheat.INSTANCE.getPlayerRegistry().aplayerMap
-                        .containsKey(event.getPlayer().getUniqueId().hashCode())
-                        && event.getPlayer() != null && event.getPlayer().isOnline()) {
-                    HandlerAbstract.getHandler().add(event.getPlayer());
-                    task.cancel();
-                }
+        if(Anticheat.INSTANCE.getPlayerRegistry().aplayerMap.containsKey(event.getPlayer().getUniqueId().hashCode())) {
+            if(Anticheat.INSTANCE.getPlayerRegistry().aplayerMap
+                    .containsKey(event.getPlayer().getUniqueId().hashCode())
+                    && event.getPlayer() != null && event.getPlayer().isOnline()) {
+                HandlerAbstract.getHandler().add(event.getPlayer());
             }
-        }, 6, 1);
+        }
 
         player.getCheckHandler().callEvent(event);
     }

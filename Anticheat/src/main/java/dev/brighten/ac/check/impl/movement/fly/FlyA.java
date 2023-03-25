@@ -11,6 +11,7 @@ import dev.brighten.ac.utils.Color;
 import dev.brighten.ac.utils.Helper;
 import dev.brighten.ac.utils.MathUtils;
 import dev.brighten.ac.utils.MovementUtils;
+import dev.brighten.ac.utils.annotation.Bind;
 import dev.brighten.ac.utils.timer.Timer;
 import dev.brighten.ac.utils.timer.impl.MillisTimer;
 import dev.brighten.ac.utils.timer.impl.TickTimer;
@@ -34,6 +35,7 @@ public class FlyA extends Check {
     private float buffer;
     private boolean didNextPrediction = false;
 
+    @Bind
     WAction<WPacketPlayInFlying> flying = packet -> {
         if(!packet.isMoved() || (player.getMovement().getDeltaXZ() == 0
                 && player.getMovement().getDeltaY() == 0)) {

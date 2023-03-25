@@ -1,5 +1,6 @@
 package dev.brighten.ac.packet.wrapper.out;
 
+import dev.brighten.ac.handler.block.Chunk;
 import dev.brighten.ac.packet.wrapper.PacketType;
 import dev.brighten.ac.packet.wrapper.WPacket;
 import lombok.AllArgsConstructor;
@@ -11,7 +12,7 @@ import java.util.List;
 @Getter
 public class WPacketPlayOutMapChunkBulk extends WPacket {
 
-    private List<WPacketPlayOutMapChunk.WrappedChunk> chunks;
+    private List<Chunk> chunks;
 
     @Override
     public PacketType getPacketType() {
