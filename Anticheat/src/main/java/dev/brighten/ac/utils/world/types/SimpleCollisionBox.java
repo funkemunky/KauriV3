@@ -61,7 +61,7 @@ public class SimpleCollisionBox implements CollisionBox {
     }
 
     public SimpleCollisionBox(KLocation loc, double width, double height) {
-        this(loc.x, loc.y, loc.z, loc.x, loc.y, loc.z);
+        this(loc.getX(), loc.getY(), loc.getZ(), loc.getX(), loc.getY(), loc.getZ());
 
         expand(width / 2, 0, width / 2);
         maxY += height;

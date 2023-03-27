@@ -7,6 +7,7 @@ import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
 import dev.brighten.ac.utils.annotation.Bind;
+import dev.brighten.ac.utils.math.MinecraftConstants;
 
 @CheckData(name = "NoFall (A)", checkId = "nofalla", type = CheckType.MOVEMENT)
 public class NoFallA extends Check {
@@ -14,8 +15,6 @@ public class NoFallA extends Check {
     public NoFallA(APlayer player) {
         super(player);
     }
-
-    private static double divisor = 1. / 64.;
     private float buffer;
 
     @Bind
@@ -41,8 +40,8 @@ public class NoFallA extends Check {
                     && !player.getInfo().isServerGround()
                     && !player.getBlockInfo().fenceNear
                     && (player.getMovement().getDeltaY() >= 0
-                    && (Math.abs(player.getMovement().getTo().getLoc().y) % divisor != 0
-                    || Math.abs(player.getMovement().getDeltaY()) % divisor != 0)
+                    && (Math.abs(player.getMovement().getTo().getLoc().getY()) % MinecraftConstants.BLOCK_DIVISOR != 0
+                    || Math.abs(player.getMovement().getDeltaY()) % MinecraftConstants.BLOCK_DIVISOR != 0)
                     || player.getMovement().getDeltaY() <= player.getMovement().getLDeltaY());
         } else {
             flag = player.getMovement().getDeltaY() == 0 && player.getMovement().getLDeltaY() == 0

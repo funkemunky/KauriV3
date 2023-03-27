@@ -66,12 +66,12 @@ public class BlockInformation {
         if(dy > 10) dy = 10;
         if(dh > 10) dh = 10;
 
-        int startX = Location.locToBlock(player.getMovement().getTo().getLoc().x - 1 - dh);
-        int endX = Location.locToBlock(player.getMovement().getTo().getLoc().x + 1 + dh);
-        int startY = Location.locToBlock(player.getMovement().getTo().getLoc().y - 1 - dy);
-        int endY = Location.locToBlock(player.getMovement().getTo().getLoc().y + 2.82 + dy);
-        int startZ = Location.locToBlock(player.getMovement().getTo().getLoc().z - 1 - dh);
-        int endZ = Location.locToBlock(player.getMovement().getTo().getLoc().z + 1 + dh);
+        int startX = Location.locToBlock(player.getMovement().getTo().getLoc().getX() - 1 - dh);
+        int endX = Location.locToBlock(player.getMovement().getTo().getLoc().getX() + 1 + dh);
+        int startY = Location.locToBlock(player.getMovement().getTo().getLoc().getY() - 1 - dy);
+        int endY = Location.locToBlock(player.getMovement().getTo().getLoc().getY() + 2.82 + dy);
+        int startZ = Location.locToBlock(player.getMovement().getTo().getLoc().getZ() - 1 - dh);
+        int endZ = Location.locToBlock(player.getMovement().getTo().getLoc().getZ() + 1 + dh);
 
         SimpleCollisionBox waterBox = player.getMovement().getTo().getBox().copy().expand(0, -.38, 0);
 

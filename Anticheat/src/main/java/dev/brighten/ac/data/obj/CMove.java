@@ -21,22 +21,22 @@ public class CMove {
     }
 
     public double getX() {
-        return loc.x;
+        return loc.getX();
     }
 
     public double getY() {
-        return loc.y;
+        return loc.getY();
     }
 
     public double getZ() {
-        return loc.z;
+        return loc.getZ();
     }
 
     public float getYaw() {
-        return loc.yaw;
+        return loc.getYaw();
     }
 
     public float getPitch() {
-        return loc.pitch;
+        return loc.getPitch();
     }
 }

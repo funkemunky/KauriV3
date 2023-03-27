@@ -90,11 +90,11 @@ public class MovementHandler {
 
         // Initializing player location
         to.setWorld(bplayer.getWorld());
-        to.getLoc().x = bplayer.getLocation().getX();
-        to.getLoc().y = bplayer.getLocation().getY();
-        to.getLoc().z = bplayer.getLocation().getZ();
-        to.getLoc().yaw = bplayer.getLocation().getYaw();
-        to.getLoc().pitch = bplayer.getLocation().getPitch();
+        to.getLoc().setX(bplayer.getLocation().getX());
+        to.getLoc().setY(bplayer.getLocation().getY());
+        to.getLoc().setZ(bplayer.getLocation().getZ());
+        to.getLoc().setYaw(bplayer.getLocation().getYaw());
+        to.getLoc().setPitch(bplayer.getLocation().getPitch());
         to.setBox(new SimpleCollisionBox(to.getLoc(), 0.6, 1.8));
         to.setOnGround(bplayer.isOnGround());
 
@@ -143,7 +143,8 @@ public class MovementHandler {
             for (KLocation posLoc : posLocs) {
                 // Resetting to prevent lag issues.
 
-                IterationResult result = player.EMULATOR.runTeleportIteration(new Vector(posLoc.x, posLoc.y, posLoc.z));
+                IterationResult result = player.EMULATOR
+                        .runTeleportIteration(new Vector(posLoc.getX(), posLoc.getY(), posLoc.getZ()));
 
                 if (minimum == null || minimum.getOffset() > result.getOffset()) {
                     minimum = result;
@@ -181,8 +182,8 @@ public class MovementHandler {
                                                     .fastMathType(fastMath)
                                                     .sneaking(player.getInfo().isSneaking())
                                                     .ground(from.isOnGround())
-                                                    .to(new Vector(to.x, to.y, to.z))
-                                                    .yaw(to.yaw)
+                                                    .to(new Vector(to.getX(), to.getY(), to.getZ()))
+                                                    .yaw(to.getYaw())
                                                     .lastReportedBoundingBox(from.getBox().toNeo())
                                                     .effectSpeed(EFFECTS[0])
                                                     .effectSlow(EFFECTS[1])
@@ -238,7 +239,6 @@ public class MovementHandler {
 
             if(total < 9E-4) {
                 player.getInfo().lastCanceledFlying.reset();
-                player.getBukkitPlayer().sendMessage("003");
                 minimum.getTags().add("003");
             }
 
@@ -380,8 +380,8 @@ public class MovementHandler {
 
             val origin = this.to.getLoc().clone();
 
-            origin.y += player.getInfo().isSneaking()
-                    ? (player.getPlayerVersion().isBelow(ProtocolVersion.V1_14) ? 1.54 : 1.27f) : 1.62;
+            origin.add(0, player.getInfo().isSneaking()
+                    ? (player.getPlayerVersion().isBelow(ProtocolVersion.V1_14) ? 1.54 : 1.27f) : 1.62, 0);
 
             RayCollision collision = new RayCollision(origin.toVector(), MathUtils.getDirection(origin));
 
@@ -558,15 +558,21 @@ it
         if (packet.isMoved() || packet.isLooked()) {
             KLocation origin = to.getLoc().clone().add(0, 1.7, 0);
 
-            RayCollision coll = new RayCollision(origin.toVector(), origin.getDirection().multiply(-1));
+            final double MULTIPLIER = Math.max(-0.5, Math.min(-1, -1 / (Math.abs(deltaYaw) * 0.25)));
+            RayCollision coll = new RayCollision(origin.toVector(), origin.getDirection()
+                    .multiply(MULTIPLIER).setY(0));
 
-            Location loc1 = coll.collisionPoint(2.2).toLocation(player.getBukkitPlayer().getWorld());
+            Location loc1 = coll.collisionPoint(1.5).toLocation(player.getBukkitPlayer().getWorld());
 
             if (player.getInfo().botAttack.isNotPassed(7)) {
-                loc1.setY(Math.max(origin.y + 1.2, loc1.getY()));
-            } else loc1.setY(Math.max(origin.y + 0.3, loc1.getY()));
-
-            player.getMob().teleport(loc1.getX(), loc1.getY(), loc1.getZ(), loc1.getYaw(), loc1.getPitch());
+                loc1.setY(Math.max(origin.getY() + 2, loc1.getY()));
+                player.getMob().teleport(loc1.getX(), loc1.getY(), loc1.getZ(), loc1.getYaw(), loc1.getPitch());
+            } else {
+                loc1.setY(Math.max(origin.getY() + 0.6, loc1.getY()));
+                if(Math.random() > 0.2)
+                    RunUtils.taskLaterAsync(() -> player.getMob()
+                            .teleport(loc1.getX(), loc1.getY(), loc1.getZ(), loc1.getYaw(), loc1.getPitch()), 5);
+            }
         }
     }
 
@@ -725,27 +731,27 @@ it
 
     public void addPosition(WPacketPlayOutPosition packet) {
         int i = 0;
-        KLocation loc = new KLocation(packet.getX(), packet.getY(), packet.getZ(),
+        final KLocation loc = new KLocation(packet.getX(), packet.getY(), packet.getZ(),
                 packet.getYaw(), packet.getPitch());
         if (packet.getFlags().contains(WPacketPlayOutPosition.EnumPlayerTeleportFlags.X)) {
-            loc.x += player.getMovement().getTo().getLoc().x;
+            loc.add(player.getMovement().getTo().getLoc().getX(), 0 ,0);
         }
         if (packet.getFlags().contains(WPacketPlayOutPosition.EnumPlayerTeleportFlags.Y)) {
-            loc.y += player.getMovement().getTo().getLoc().y;
+            loc.add(0, player.getMovement().getTo().getLoc().getY() ,0);
         }
         if (packet.getFlags().contains(WPacketPlayOutPosition.EnumPlayerTeleportFlags.Z)) {
-            loc.z += player.getMovement().getTo().getLoc().z;
+            loc.add(0, 0, player.getMovement().getTo().getLoc().getZ());
         }
         if (packet.getFlags().contains(WPacketPlayOutPosition.EnumPlayerTeleportFlags.X_ROT)) {
-            loc.pitch += player.getMovement().getTo().getLoc().pitch;
+            loc.setPitch(loc.getPitch() + player.getMovement().getTo().getLoc().getPitch());
         }
         if (packet.getFlags().contains(WPacketPlayOutPosition.EnumPlayerTeleportFlags.Y_ROT)) {
-            loc.yaw += player.getMovement().getTo().getLoc().yaw;
+            loc.setYaw(loc.getYaw() + player.getMovement().getTo().getLoc().getYaw());
         }
 
         teleportsToConfirm++;
 
-        loc.timeStamp = System.currentTimeMillis();
+        loc.setTimeStamp(System.currentTimeMillis());
 
         player.runKeepaliveAction(ka -> {
             teleportsToConfirm--;
@@ -765,11 +771,9 @@ it
      * @param location Location
      */
     public void moveTo(Location location) {
-        to.getLoc().x = from.getLoc().x = location.getX();
-        to.getLoc().y = from.getLoc().y = location.getY();
-        to.getLoc().z = from.getLoc().z = location.getZ();
-        to.getLoc().yaw = from.getLoc().yaw = location.getYaw();
-        to.getLoc().pitch = from.getLoc().pitch = location.getPitch();
+        KLocation newLoc = new KLocation(location);
+        to.getLoc().setLocation(newLoc);
+        to.getLoc().setLocation(newLoc);
 
         deltaX = deltaY = deltaZ = deltaXZ
                 = lDeltaX = lDeltaY = lDeltaZ
@@ -818,13 +822,13 @@ it
     private void setTo(WPacketPlayInFlying packet) {
         to.setWorld(player.getBukkitPlayer().getWorld());
         if (packet.isMoved()) {
-            to.getLoc().x = packet.getX();
-            to.getLoc().y = packet.getY();
-            to.getLoc().z = packet.getZ();
+            to.getLoc().setX(packet.getX());
+            to.getLoc().setY(packet.getY());
+            to.getLoc().setZ(packet.getZ());
         }
         if (packet.isLooked()) {
-            to.getLoc().yaw = packet.getYaw();
-            to.getLoc().pitch = packet.getPitch();
+            to.getLoc().setYaw(packet.getYaw());
+            to.getLoc().setPitch(packet.getPitch());
         }
         to.setBox(new SimpleCollisionBox(to.getLoc(), 0.6, 1.8));
         to.setOnGround(packet.isOnGround());
@@ -852,12 +856,12 @@ it
         lDeltaYaw = deltaYaw;
         lDeltaPitch = deltaPitch;
 
-        deltaX = to.getLoc().x - from.getLoc().x;
-        deltaY = to.getLoc().y - from.getLoc().y;
-        deltaZ = to.getLoc().z - from.getLoc().z;
+        deltaX = to.getLoc().getX() - from.getLoc().getX();
+        deltaY = to.getLoc().getY() - from.getLoc().getY();
+        deltaZ = to.getLoc().getZ() - from.getLoc().getZ();
         deltaXZ = Math.hypot(deltaX, deltaZ); // Calculating here to cache since hypot() can be heavy.
-        deltaYaw = to.getLoc().yaw - from.getLoc().yaw;
-        deltaPitch = to.getLoc().pitch - from.getLoc().pitch;
+        deltaYaw = to.getLoc().getYaw() - from.getLoc().getYaw();
+        deltaPitch = to.getLoc().getPitch() - from.getLoc().getPitch();
 
         player.getInfo().setClientGroundTicks(packet.isOnGround() ? player.getInfo().getClientGroundTicks() + 1 : 0);
         player.getInfo().setClientAirTicks(!packet.isOnGround() ? player.getInfo().getClientAirTicks() + 1 : 0);

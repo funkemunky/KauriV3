@@ -5,7 +5,6 @@ import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.data.APlayer;
-import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInBlockPlace;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
 import dev.brighten.ac.utils.BlockUtils;
@@ -71,13 +70,8 @@ public class BlockA extends Check {
             final SimpleCollisionBox box = tuple.two.copy().expand(0.025);
             final Block block = tuple.one;
 
-            final KLocation to = player.getMovement().getTo().getLoc().clone(),
-                    from = player.getMovement().getFrom().getLoc().clone();
-
-            to.y += player.getInfo().sneaking ? (ProtocolVersion.getGameVersion().isOrAbove(ProtocolVersion.V1_14)
-                    ? 1.27f : 1.54f) : 1.62f;
-            from.y += player.getInfo().lsneaking ? (ProtocolVersion.getGameVersion().isOrAbove(ProtocolVersion.V1_14)
-                    ? 1.27f : 1.54f) : 1.62f;
+            final KLocation to = player.getMovement().getTo().getLoc().clone().add(0, player.getEyeHeight(), 0),
+                    from = player.getMovement().getFrom().getLoc().clone().add(0, player.getPreviousEyeHeight(), 0);
 
             final RayCollision rayTo = new RayCollision(to.toVector(),
                     MathUtils.getDirection(to)),
@@ -89,7 +83,7 @@ public class BlockA extends Check {
             if (!collided) {
                 if (VERBOSE.add() > 4) {
                     flag("to=[x=%.1f y=%.1f z=%.1f yaw=%.1f pitch=%.1f] loc=[%.1f,%.1f,%.1f]",
-                            to.x, to.y, to.z, to.yaw, from.pitch,
+                            to.getX(), to.getY(), to.getZ(), to.getYaw(), from.getPitch(),
                             block.getLocation().getX(), block.getLocation().getY(), block.getLocation().getZ());
                 }
             } else VERBOSE.subtract(0.33);

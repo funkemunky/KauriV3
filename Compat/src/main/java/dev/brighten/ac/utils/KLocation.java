@@ -1,15 +1,17 @@
 package dev.brighten.ac.utils;
 
+import lombok.Data;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.util.Vector;
 
 import java.util.Objects;
 
+@Data
 public class KLocation implements Cloneable {
-    public double x, y, z;
-    public float yaw, pitch;
-    public long timeStamp;
+    private double x, y, z;
+    private float yaw, pitch;
+    private long timeStamp;
 
     public KLocation(double x, double y, double z, float yaw, float pitch, long timeStamp) {
         this.x = x;

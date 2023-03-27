@@ -10,11 +10,11 @@ import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
 import dev.brighten.ac.packet.wrapper.out.WPacketPlayOutPosition;
 import dev.brighten.ac.utils.*;
 import dev.brighten.ac.utils.annotation.Bind;
+import dev.brighten.ac.utils.objects.evicting.EvictingSet;
 import dev.brighten.ac.utils.world.types.SimpleCollisionBox;
 import org.bukkit.Location;
 import org.bukkit.util.Vector;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -26,7 +26,7 @@ public class Phase extends Check {
     }
 
     private int ticks;
-    private final Set<Vector> POSITIONS = new HashSet<>();
+    private final Set<Vector> POSITIONS = new EvictingSet<>(10);
     private Location teleportLoc = null;
 
     @Bind
@@ -34,19 +34,19 @@ public class Phase extends Check {
         KLocation loc = new KLocation(packet.getX(), packet.getY(), packet.getZ(),
                 packet.getYaw(), packet.getPitch());
         if (packet.getFlags().contains(WPacketPlayOutPosition.EnumPlayerTeleportFlags.X)) {
-            loc.x += player.getMovement().getTo().getLoc().x;
+            loc.add(player.getMovement().getTo().getLoc().getX(), 0, 0);
         }
         if (packet.getFlags().contains(WPacketPlayOutPosition.EnumPlayerTeleportFlags.Y)) {
-            loc.y += player.getMovement().getTo().getLoc().y;
+            loc.add(0, player.getMovement().getTo().getLoc().getY(), 0);
         }
         if (packet.getFlags().contains(WPacketPlayOutPosition.EnumPlayerTeleportFlags.Z)) {
-            loc.z += player.getMovement().getTo().getLoc().z;
+            loc.add(0, 0, player.getMovement().getTo().getLoc().getZ());
         }
         if (packet.getFlags().contains(WPacketPlayOutPosition.EnumPlayerTeleportFlags.X_ROT)) {
-            loc.pitch += player.getMovement().getTo().getLoc().pitch;
+            loc.setPitch(loc.getPitch() + player.getMovement().getTo().getLoc().getPitch());
         }
         if (packet.getFlags().contains(WPacketPlayOutPosition.EnumPlayerTeleportFlags.Y_ROT)) {
-            loc.yaw += player.getMovement().getTo().getLoc().yaw;
+            loc.setYaw(loc.getYaw() + player.getMovement().getTo().getLoc().getYaw());
         }
 
         POSITIONS.add(loc.toVector());
@@ -115,7 +115,7 @@ public class Phase extends Check {
 
         toBox.offset(0, 0, deltaZ);
 
-        KLocation calculatedTo = player.getMovement().getFrom().getLoc().clone().add(deltaX, deltaY, deltaZ);
+        KLocation calculatedTo = player.getMovement().getFrom().getLoc().clone();
 
         double dx = Math.abs(deltaX - player.getMovement().getDeltaX()),
                 dy = Math.abs(deltaY - player.getMovement().getDeltaY()),
@@ -123,7 +123,7 @@ public class Phase extends Check {
 
         double totalDelta = dx + dy + dz;
 
-        if(totalDelta > 0.00001) {
+        if(totalDelta > 0.0001) {
             RunUtils.task(() -> {
                 teleportLoc = calculatedTo
                         .toLocation(player.getBukkitPlayer().getWorld());

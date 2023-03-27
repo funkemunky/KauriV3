@@ -5,7 +5,6 @@ import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.data.APlayer;
-import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInUseEntity;
 import dev.brighten.ac.utils.KLocation;
 import dev.brighten.ac.utils.annotation.Bind;
@@ -24,12 +23,8 @@ import org.bukkit.util.Vector;
 @CheckData(name = "KillAura (Trace)", checkId = "katrace", type = CheckType.KILLAURA)
 public class KATrace extends Check {
 
-    private float sneakY = 1.54f;
     public KATrace(APlayer player) {
         super(player);
-
-        // We're caching the player's sneak height here, so we don't have to do it every time.
-        sneakY = player.getPlayerVersion().isBelow(ProtocolVersion.V1_14) ? 1.27f : 1.54f;
     }
 
     private int buffer;
@@ -57,7 +52,7 @@ public class KATrace extends Check {
         final KLocation origin = player.getMovement().getTo().getLoc().clone();
 
         // Setting the player's eye height based on their sneak status
-        origin.y+= player.getInfo().isSneaking() ? sneakY : 1.62f;
+        origin.add(0, player.getEyeHeight(), 0);
 
         final Vector originVec = origin.toVector();
 
@@ -78,8 +73,7 @@ public class KATrace extends Check {
         // the result from there in this check to save on compute time.
         synchronized (player.getMovement().getLookingAtBoxes()) {
             for (CollisionBox lookingAtBox : player.getMovement().getLookingAtBoxes()) {
-                if((lookingAtBox instanceof SimpleCollisionBox)) {
-                    SimpleCollisionBox box = (SimpleCollisionBox) lookingAtBox;
+                if((lookingAtBox instanceof SimpleCollisionBox box)) {
                     if(box.minX % 1 != 0 || box.minY % 1 != 0 || box.minZ % 1 != 0
                             || box.maxX % 1 != 0 || box.maxY % 1 != 0 || box.maxZ % 1 != 0)
                         continue;

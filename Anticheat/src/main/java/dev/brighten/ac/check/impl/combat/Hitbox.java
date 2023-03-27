@@ -43,7 +43,8 @@ public class Hitbox extends Check {
         if(entity == null) return;
         if(packet.getAction() == WPacketPlayInUseEntity.EnumEntityUseAction.ATTACK
                 && allowedEntityTypes.contains(entity.getType())) {
-            attacks.add(new Tuple<>(packet.getEntity(player.getBukkitPlayer().getWorld()), player.getMovement().getTo().getLoc().clone()));
+            attacks.add(new Tuple<>(packet.getEntity(player.getBukkitPlayer().getWorld()),
+                    player.getMovement().getTo().getLoc().clone()));
         }
     };
 
@@ -60,9 +61,10 @@ public class Hitbox extends Check {
 
         while((target = attacks.poll()) != null) {
             //Updating new entity loc
-            Optional<Tuple<EntityLocation, EntityLocation>> optionalEloc = player.getEntityLocationHandler().getEntityLocation(target.one);
+            Optional<Tuple<EntityLocation, EntityLocation>> optionalEloc = player.getEntityLocationHandler()
+                    .getEntityLocation(target.one);
 
-            if(!optionalEloc.isPresent()) {
+            if(optionalEloc.isEmpty()) {
                 return;
             }
 
@@ -118,13 +120,13 @@ public class Hitbox extends Check {
                     || player.getInfo().getLastElytra().isNotPassed(40);
 
             List<Vector> directions = new ArrayList<>(Arrays.asList(MathUtils.getDirection(
-                            player.getMovement().getTo().getLoc().yaw,
-                            player.getMovement().getTo().getLoc().pitch),
-                    MathUtils.getDirection(player.getMovement().getFrom().getLoc().yaw,
-                            player.getMovement().getTo().getLoc().pitch)));
+                            player.getMovement().getTo().getLoc().getYaw(),
+                            player.getMovement().getTo().getLoc().getPitch()),
+                    MathUtils.getDirection(player.getMovement().getFrom().getLoc().getYaw(),
+                            player.getMovement().getTo().getLoc().getPitch())));
 
             if(!didSneakOrElytra) {
-                to.y+= 1.62f;
+                to.add(0, 1.62f, 0);
                 for (Vector direction : directions) {
                     for (SimpleCollisionBox targetBox : boxes) {
                         final AxisAlignedBB vanillaBox = new AxisAlignedBB(targetBox);
@@ -134,7 +136,8 @@ public class Hitbox extends Check {
                         if(intersectTo != null) {
                             lastAimOnTarget.reset();
                             hits++;
-                            distance = Math.min(distance, intersectTo.distanceSquared(new Vec3D(to.x, to.y, to.z)));
+                            distance = Math.min(distance, intersectTo
+                                    .distanceSquared(new Vec3D(to.getX(), to.getY(), to.getZ())));
                             collided = true;
                         }
                     }
@@ -148,13 +151,14 @@ public class Hitbox extends Check {
 
                             KLocation from = to.clone();
 
-                            from.y+= eyeHeight;
+                            from.add(0, eyeHeight, 0);
                             Vec3D intersectTo = vanillaBox.rayTrace(from.toVector(), direction, 10);
 
                             if(intersectTo != null) {
                                 lastAimOnTarget.reset();
                                 hits++;
-                                distance = Math.min(distance, intersectTo.distanceSquared(new Vec3D(from.x, from.y, from.z)));
+                                distance = Math.min(distance, intersectTo
+                                        .distanceSquared(new Vec3D(from.getX(), from.getY(), from.getZ())));
                                 collided = true;
                             }
                         }
@@ -174,7 +178,8 @@ public class Hitbox extends Check {
 
                 if(hbuffer > 0) hbuffer--;
 
-                debug("buffer: %.3f distance=%.2f hits=%s sneaking=%s", buffer, distance, hits, player.getInfo().isSneaking());
+                debug("buffer: %.3f distance=%.2f hits=%s sneaking=%s", buffer, distance, hits,
+                        player.getInfo().isSneaking());
             } else if(player.getEntityLocationHandler().streak > 1) {
                 if (++hbuffer > 5) {
                     flag("%.1f;%.1f;%.1f", eloc.one.x, eloc.one.y, eloc.one.z);

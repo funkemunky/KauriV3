@@ -281,7 +281,7 @@ public class EntityLocationHandler {
         }
 
         KLocation eyeLoc = data.getMovement().getTo().getLoc().clone()
-                .add(0, 0.6, 0);
+                .add(0, data.getEyeHeight() / 2.5, 0);
 
         RayCollision collision = new RayCollision(eyeLoc.toVector(), eyeLoc.getDirection());
 

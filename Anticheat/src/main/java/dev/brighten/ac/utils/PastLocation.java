@@ -6,13 +6,14 @@ import org.bukkit.Location;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@SuppressWarnings("unused")
 public class PastLocation {
     public final LinkedList<KLocation> previousLocations = new LinkedList<>();
 
     public KLocation getPreviousLocation(int time) {
         synchronized (previousLocations) {
             return (this.previousLocations.stream()
-                    .min(Comparator.comparing(loc -> Math.abs(time - loc.timeStamp)))
+                    .min(Comparator.comparing(loc -> Math.abs(time - loc.getTimeStamp())))
                     .orElse(this.previousLocations.getFirst()));
         }
     }
@@ -24,7 +25,7 @@ public class PastLocation {
             List<KLocation> locs = new ArrayList<>();
 
             for (KLocation previousLocation : previousLocations) {
-                if (Math.abs(tick - previousLocation.timeStamp) <= delta) {
+                if (Math.abs(tick - previousLocation.getTimeStamp()) <= delta) {
                     locs.add(previousLocation.clone());
                 }
             }
@@ -51,8 +52,8 @@ public class PastLocation {
     public List<KLocation> getEstimatedLocation(long time, long ping) {
         synchronized (previousLocations) {
             return this.previousLocations.stream()
-                    .filter(loc -> time - loc.timeStamp > 0
-                            && time - loc.timeStamp <= ping + (ping < 50 ? 100 : 50))
+                    .filter(loc -> time - loc.getTimeStamp() > 0
+                            && time - loc.getTimeStamp() <= ping + (ping < 50 ? 100 : 50))
                     .collect(Collectors.toList());
         }
     }
@@ -62,7 +63,7 @@ public class PastLocation {
             long stamp = System.currentTimeMillis();
 
             return this.previousLocations.stream()
-                    .filter(loc -> stamp - loc.timeStamp < delta)
+                    .filter(loc -> stamp - loc.getTimeStamp() < delta)
                     .collect(Collectors.toList());
         }
     }
@@ -73,7 +74,7 @@ public class PastLocation {
                 previousLocations.removeFirst();
 
             KLocation loc = new KLocation(location);
-            loc.timeStamp = Anticheat.INSTANCE.getKeepaliveProcessor().tick;
+            loc.setTimeStamp(Anticheat.INSTANCE.getKeepaliveProcessor().tick);
             previousLocations.add(loc);
         }
     }
@@ -84,7 +85,7 @@ public class PastLocation {
 
     public void addLocation(KLocation location) {
         KLocation loc = location.clone();
-        loc.timeStamp = Anticheat.INSTANCE.getKeepaliveProcessor().tick;
+        loc.setTimeStamp(Anticheat.INSTANCE.getKeepaliveProcessor().tick);
         synchronized (previousLocations) {
             if (previousLocations.size() >= 20)
                 previousLocations.removeFirst();

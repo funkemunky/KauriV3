@@ -43,7 +43,7 @@ public class BlockC extends Check {
 
         if(lastMovePacket == null) return;
 
-        final long delta = timestamp - lastMovePacket.timeStamp;
+        final long delta = timestamp - lastMovePacket.getTimeStamp();
 
         if(delta <= 25) {
             lastPlace = timestamp;

@@ -90,13 +90,13 @@ public class MathUtils {
     }
 
     public static double getDistanceWithoutRoot(KLocation one, KLocation two) {
-        double deltaX = one.x - two.x, deltaY = one.y - two.y, deltaZ = one.z - two.z;
+        double deltaX = one.getX() - two.getX(), deltaY = one.getY() - two.getY(), deltaZ = one.getZ() - two.getZ();
 
         return (deltaX * deltaX) + (deltaY * deltaY) + (deltaZ * deltaZ);
     }
 
     public static boolean isSameLocation(KLocation one, KLocation two) {
-        return one.x == two.x && one.y == two.y && one.z == two.z;
+        return one.getX() == two.getX() && one.getY() == two.getY() && one.getZ() == two.getZ();
     }
 
 
@@ -509,8 +509,8 @@ public class MathUtils {
     /* Stolen from Bukkit */
     public static Vector getDirection(KLocation loc) {
         Vector vector = new Vector();
-        double rotX = loc.yaw;
-        double rotY = loc.pitch;
+        double rotX = loc.getYaw();
+        double rotY = loc.getPitch();
         vector.setY(-Math.sin(Math.toRadians(rotY)));
         double xz = Math.cos(Math.toRadians(rotY));
         vector.setX(-xz * Math.sin(Math.toRadians(rotX)));
@@ -892,9 +892,9 @@ public class MathUtils {
     }
 
     public static float[] getRotation(KLocation one, KLocation two) {
-        double diffX = two.x - one.x;
-        double diffZ = two.z - one.z;
-        double diffY = two.y - one.y;
+        double diffX = two.getX() - one.getX();
+        double diffZ = two.getZ() - one.getZ();
+        double diffY = two.getY() - one.getY();
         double dist = Math.sqrt(diffX * diffX + diffZ * diffZ);
         float yaw = (float) (FastTrig.fast_atan2(diffZ, diffX) * 180.0 / 3.141592653589793) - 90.0f;
         float pitch = (float) (-FastTrig.fast_atan2(diffY, dist) * 180.0 / 3.141592653589793);
@@ -920,6 +920,14 @@ public class MathUtils {
     }
 
     public static double[] getOffsetFromLocation(Location one, Location two) {
+        double yaw = MathUtils.getRotation(one, two)[0];
+        double pitch = MathUtils.getRotation(one, two)[1];
+        double yawOffset = Math.abs(yaw - MathUtils.yawTo180F(one.getYaw()));
+        double pitchOffset = Math.abs(pitch - one.getPitch());
+        return new double[]{yawOffset, pitchOffset};
+    }
+
+    public static double[] getOffsetFromLocation(KLocation one, KLocation two) {
         double yaw = MathUtils.getRotation(one, two)[0];
         double pitch = MathUtils.getRotation(one, two)[1];
         double yawOffset = Math.abs(yaw - MathUtils.yawTo180F(one.getYaw()));

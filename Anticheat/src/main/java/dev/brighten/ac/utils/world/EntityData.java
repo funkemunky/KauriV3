@@ -41,7 +41,7 @@ public class EntityData {
     }
 
     public static CollisionBox getEntityBox(KLocation location, Entity entity) {
-        return bounds(entity).offset(location.x, location.y, location.z);
+        return bounds(entity).offset(location.getX(), location.getY(), location.getZ());
     }
 
     static {

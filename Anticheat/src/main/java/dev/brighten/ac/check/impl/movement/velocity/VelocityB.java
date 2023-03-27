@@ -61,9 +61,9 @@ public class VelocityB extends Check {
                     ? player.getMovement().getFrom().getLoc() : player.getMovement().getTo().getLoc();
 
             Material underMaterial = player.getBlockUpdateHandler()
-                    .getBlock(new IntVector(MathHelper.floor_double(underBlockLoc.x),
-                            MathHelper.floor_double(underBlockLoc.y - 1),
-                            MathHelper.floor_double(underBlockLoc.z)))
+                    .getBlock(new IntVector(MathHelper.floor_double(underBlockLoc.getX()),
+                            MathHelper.floor_double(underBlockLoc.getY() - 1),
+                            MathHelper.floor_double(underBlockLoc.getZ())))
                     .getType();
 
             if (player.getMovement().getMoveTicks() == 0
@@ -149,7 +149,7 @@ public class VelocityB extends Check {
                     f5 = (float) (aiMoveSpeed * (0.16277136F / (drag * drag * drag)));
 
                     if (iteration.sprinting && iteration.jumped) {
-                        float rot = player.getMovement().getTo().getLoc().yaw * 0.017453292F;
+                        float rot = player.getMovement().getTo().getLoc().getYaw() * 0.017453292F;
                         lmotionX -= sin(iteration.fastMath, rot) * 0.2F;
                         lmotionZ += cos(iteration.fastMath, rot) * 0.2F;
                     }
@@ -165,9 +165,9 @@ public class VelocityB extends Check {
                         strafe *= keyedMotion;
 
                         final float yawSin = sin(iteration.fastMath,
-                                player.getMovement().getTo().getLoc().yaw * (float) Math.PI / 180.F),
+                                player.getMovement().getTo().getLoc().getYaw() * (float) Math.PI / 180.F),
                                 yawCos = cos(iteration.fastMath,
-                                        player.getMovement().getTo().getLoc().yaw * (float) Math.PI / 180.F);
+                                        player.getMovement().getTo().getLoc().getYaw() * (float) Math.PI / 180.F);
 
                         lmotionX += (strafe * yawCos - forward * yawSin);
                         lmotionZ += (forward * yawCos + strafe * yawSin);
@@ -181,9 +181,9 @@ public class VelocityB extends Check {
                         strafe *= keyedMotion;
 
                         final float yawSin = sin(iteration.fastMath,
-                                player.getMovement().getTo().getLoc().yaw * (float) Math.PI / 180.F),
+                                player.getMovement().getTo().getLoc().getYaw() * (float) Math.PI / 180.F),
                                 yawCos = cos(iteration.fastMath,
-                                        player.getMovement().getTo().getLoc().yaw * (float) Math.PI / 180.F);
+                                        player.getMovement().getTo().getLoc().getYaw() * (float) Math.PI / 180.F);
 
                         lmotionX += (strafe * yawCos - forward * yawSin);
                         lmotionZ += (forward * yawCos + strafe * yawSin);

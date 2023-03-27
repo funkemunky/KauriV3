@@ -290,6 +290,22 @@ public class APlayer {
         });
     }
 
+    public double getEyeHeight() {
+        if(ProtocolVersion.getGameVersion().isOrAbove(ProtocolVersion.V1_14)) {
+            return getInfo().sneaking ? 1.27f : 1.62f;
+        } else {
+            return getInfo().sneaking ? 1.54f : 1.62f;
+        }
+    }
+
+    public double getPreviousEyeHeight() {
+        if(ProtocolVersion.getGameVersion().isOrAbove(ProtocolVersion.V1_14)) {
+            return getInfo().lsneaking ? 1.27f : 1.62f;
+        } else {
+            return getInfo().lsneaking ? 1.54f : 1.62f;
+        }
+    }
+
     public void addPlayerTick() {
         playerTick++;
     }

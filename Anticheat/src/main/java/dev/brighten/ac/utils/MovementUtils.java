@@ -17,6 +17,7 @@ import org.bukkit.entity.Player;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 
 public class MovementUtils {
 
@@ -32,17 +33,18 @@ public class MovementUtils {
     }
 
     public static boolean isSameLocation(KLocation one, KLocation two) {
-        return one.x == two.x && one.y == two.y && one.z == two.z;
+        return one.getX() == two.getX() && one.getY() == two.getY() && one.getZ() == two.getZ();
     }
 
     public static boolean isOnLadder(APlayer data) {
         try {
-            int i = MathHelper.floor_double(data.getMovement().getTo().getLoc().x);
+            int i = MathHelper.floor_double(data.getMovement().getTo().getLoc().getX());
             int j = MathHelper.floor_double(data.getMovement().getTo().getBox().minY);
-            int k = MathHelper.floor_double(data.getMovement().getTo().getLoc().z);
-            Block block = BlockUtils.getBlock(new Location(data.getBukkitPlayer().getWorld(), i, j, k));
+            int k = MathHelper.floor_double(data.getMovement().getTo().getLoc().getZ());
+            Optional<Block> block = BlockUtils.getBlockAsync(new Location(data.getBukkitPlayer().getWorld(), i, j, k));
 
-            return Materials.checkFlag(block.getType(), Materials.LADDER);
+            return block.filter(value -> Materials.checkFlag(value.getType(), Materials.LADDER)).isPresent();
+
         } catch(NullPointerException e) {
             return false;
         }
@@ -69,24 +71,18 @@ public class MovementUtils {
     }
 
     public static double getHorizontalDistance(KLocation one, KLocation two) {
-        return MathUtils.hypot(one.x - two.x, one.z - two.z);
+        return MathUtils.hypot(one.getX() - two.getX(), one.getZ() - two.getZ());
     }
 
     public static float getFriction(Block block) {
         XMaterial matched = BlockUtils.getXMaterial(block.getType());
 
         if(matched == null) return 0.6f;
-        switch(matched) {
-            case SLIME_BLOCK:
-                return 0.8f;
-            case ICE:
-            case BLUE_ICE:
-            case FROSTED_ICE:
-            case PACKED_ICE:
-                return 0.98f;
-            default:
-                return 0.6f;
-        }
+        return switch (matched) {
+            case SLIME_BLOCK -> 0.8f;
+            case ICE, BLUE_ICE, FROSTED_ICE, PACKED_ICE -> 0.98f;
+            default -> 0.6f;
+        };
     }
 
     public static Location findGroundLocation(APlayer player, int lowestBelow) {
@@ -102,15 +98,14 @@ public class MovementUtils {
             val block = BlockUtils
                     .getBlockAsync(new Location(player.getBukkitPlayer().getWorld(), x, y, z));
 
-            if(!block.isPresent()) break; //No point in continuing since the one below will still be not present.
+            if(block.isEmpty()) break; //No point in continuing since the one below will still be not present.
 
             if(Materials.checkFlag(block.get().getType(), Materials.SOLID)
                     && Materials.checkFlag(block.get().getType(), Materials.LIQUID)) {
                 CollisionBox box = BlockData.getData(block.get().getType())
                         .getBox(block.get(), ProtocolVersion.getGameVersion());
 
-                if(box instanceof SimpleCollisionBox) {
-                    SimpleCollisionBox sbox = (SimpleCollisionBox) box;
+                if(box instanceof SimpleCollisionBox sbox) {
 
                     return new Location(block.get().getWorld(), x, sbox.maxY, z);
                 } else {
@@ -139,15 +134,14 @@ public class MovementUtils {
             val block = BlockUtils
                     .getBlockAsync(new Location(toStart.getWorld(), x, y, z));
 
-            if(!block.isPresent()) break; //No point in continuing since the one below will still be not present.
+            if(block.isEmpty()) break; //No point in continuing since the one below will still be not present.
 
             if(Materials.checkFlag(block.get().getType(), Materials.SOLID)
                     || Materials.checkFlag(block.get().getType(), Materials.LIQUID)) {
                 CollisionBox box = BlockData.getData(block.get().getType())
                         .getBox(block.get(), ProtocolVersion.getGameVersion());
 
-                if(box instanceof SimpleCollisionBox) {
-                    SimpleCollisionBox sbox = (SimpleCollisionBox) box;
+                if(box instanceof SimpleCollisionBox sbox) {
 
                     return new Location(block.get().getWorld(), x, sbox.maxY, z);
                 } else {

@@ -14,16 +14,22 @@ import dev.brighten.ac.utils.annotation.Bind;
 import dev.brighten.ac.utils.objects.evicting.EvictingList;
 import org.bukkit.util.Vector;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 @CheckData(name = "KillAura (Calc)", checkId = "kacalc", type = CheckType.KILLAURA)
-public class KACalc extends Check {
+public abstract class KACalc extends Check {
+
+    private final List<KACalc> CALCULATION_CHECKS = new ArrayList<>();
     public KACalc(APlayer player) {
         super(player);
     }
 
-    List<float[]> floats = new EvictingList<>(100);
+    private final List<Double> YAW_OFFSET = new EvictingList<>(10),
+            PITCH_OFFSET = new EvictingList<>(10);
+
+    private int buffer;
 
     @Bind
     WAction<WPacketPlayInFlying> flying = packet -> {
@@ -42,30 +48,31 @@ public class KACalc extends Check {
                 .add(0, player.getInfo().isSneaking() ? 1.54f : 1.62f, 0);
 
         double halfHeight = player.getInfo().getTarget().getEyeHeight() / 2;
+        KLocation targetLocation = new KLocation(current.getX(), current.getY(), current.getZ());
         var rotations = MathUtils
-                .getRotation(originKLoc, new KLocation(current.getX(), current.getY() + halfHeight, current.getZ()));
+                .getRotation(originKLoc, targetLocation.clone().add(0, halfHeight, 0));
+        var offset = MathUtils.getOffsetFromLocation(originKLoc, targetLocation);
 
-        var diff = new float[3];
-        diff[0] = MathUtils.getAngleDelta(player.getMovement().getTo().getYaw(), rotations[0]);
-        diff[1] = player.getMovement().getTo().getPitch() - rotations[1];
-        diff[2] = player.getMovement().getTo().getYaw();
+        YAW_OFFSET.add(offset[0]);
+        PITCH_OFFSET.add(offset[1]);
 
-        floats.add(diff);
+        if(YAW_OFFSET.size() < 10 || PITCH_OFFSET.size() < 10) return;
 
-        if(floats.size() == 60) {
-            float[] xFloats = new float[floats.size()], yawFloats = new float[floats.size()];
+        double[] std = new double[2];
 
-            for (int i = 0; i < floats.size(); i++) {
-                float[] floats = this.floats.get(i);
+        std[0] = MathUtils.stdev(YAW_OFFSET);
+        std[1] = MathUtils.stdev(PITCH_OFFSET);
 
-                xFloats[i] = floats[0] + Math.abs(floats[1]);
-                yawFloats[i] = floats[2];
-            }
-
-            double x = MathUtils.getAverage(xFloats), y = MathUtils.getGrid(yawFloats);
-
-            debug("avg=%.4f grid=%.4f", x, y);
-            floats.clear();
+        for (KACalc check : CALCULATION_CHECKS) {
+            check.runCheck(tuple, std, offset, rotations);
         }
     };
+
+    /**
+     *
+     * @param std double[] - Standard deviation of the offset. Arg 0 is yaw, arg 1 is pitch.
+     * @param offset double[] - Offset of the target. Arg 0 is yaw, arg 1 is pitch.
+     * @param rot float[] - Rotations to the target. Arg 0 is yaw, arg 1 is pitch.
+     */
+    public abstract void runCheck(Tuple<EntityLocation, EntityLocation> locs, double[] std, double[] offset, float[] rot);
 }

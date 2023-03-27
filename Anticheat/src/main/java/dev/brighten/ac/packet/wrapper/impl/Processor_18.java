@@ -34,6 +34,7 @@ import org.bukkit.util.Vector;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -191,7 +192,8 @@ public class Processor_18 implements PacketConverter {
                 .pitch(serializer.readFloat())
                 .flags(PacketPlayOutPosition.EnumPlayerTeleportFlags.a(serializer.readUnsignedByte()).stream()
                         .map(f -> WPacketPlayOutPosition.EnumPlayerTeleportFlags.valueOf(f.name()))
-                        .collect(Collectors.toSet()))
+                        .collect(Collectors.toCollection(() -> EnumSet
+                                .allOf(WPacketPlayOutPosition.EnumPlayerTeleportFlags.class))))
                 .build();
     }
 
