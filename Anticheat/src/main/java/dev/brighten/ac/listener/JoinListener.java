@@ -34,7 +34,7 @@ public class JoinListener implements Listener {
         Anticheat.INSTANCE.getPacketProcessor().process(EventPriority.HIGHEST, event -> {
             Optional<APlayer> op = Anticheat.INSTANCE.getPlayerRegistry().getPlayer(event.getPlayer().getUniqueId());
 
-            if(!op.isPresent()) {
+            if(op.isEmpty()) {
                 return;
             }
 
@@ -45,7 +45,7 @@ public class JoinListener implements Listener {
             if(event.getType().equals(PacketType.CLIENT_TRANSACTION)) {
                 if(player.getPacketQueue().size() > 0) {
                     player.setSendingPackets(true);
-                    Object packetToSend = null;
+                    Object packetToSend;
                     synchronized (player.getPacketQueue()) {
                         while((packetToSend = player.getPacketQueue().pollFirst()) != null) {
                             HandlerAbstract.getHandler().sendPacketSilently(player, packetToSend);
@@ -55,22 +55,15 @@ public class JoinListener implements Listener {
                 }
             } else {
                 switch (event.getType()) {
-                    case ENTITY:
-                    case ENTITY_DESTROY:
-                    case ENTITY_HEAD_ROTATION:
-                    case ENTITY_MOVE:
-                    case ENTITY_MOVELOOK:
-                    case ENTITY_LOOK:
-                    case BLOCK_CHANGE:
-                    case MULTI_BLOCK_CHANGE:
-                    case MAP_CHUNK: {
-                        if(player.getLagInfo().getLastClientTransaction().isPassed(200L) && player.getCreation().isPassed(6000L)) {
+                    case ENTITY, ENTITY_DESTROY, ENTITY_HEAD_ROTATION, ENTITY_MOVE, ENTITY_MOVELOOK, ENTITY_LOOK,
+                            BLOCK_CHANGE, MULTI_BLOCK_CHANGE, MAP_CHUNK -> {
+                        if (player.getLagInfo().getLastClientTransaction().isPassed(200L)
+                                && player.getCreation().isPassed(6000L)) {
                             synchronized (player.getPacketQueue()) {
                                 player.getPacketQueue().add(event.getPacket());
                             }
                             event.setCancelled(true);
                         }
-                        break;
                     }
                 }
             }

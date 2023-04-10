@@ -31,8 +31,6 @@ import org.apache.commons.lang.WordUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.inventory.meta.SpawnEggMeta;
 import org.bukkit.potion.Potion;
 
 import javax.annotation.Nonnull;
@@ -1594,7 +1592,7 @@ public enum XMaterial {
     /**
      * This is just an extra method that can be used for many cases.
      * It can be used in {@link org.bukkit.event.player.PlayerInteractEvent}
-     * or when accessing {@link org.bukkit.entity.Player#getMainHand()},
+     * or when accessing org.bukkit.entity.Player#getMainHand(),
      * or other compatibility related methods.
      * <p>
      * An invocation of this method yields exactly the same result as the expression:
@@ -1748,15 +1746,6 @@ public enum XMaterial {
         Objects.requireNonNull(item, "Cannot match null ItemStack");
         String material = item.getType().name();
         byte data = (byte) (Data.ISFLAT || item.getType().getMaxDurability() > 0 ? 0 : item.getDurability());
-
-        // They didn't really use the items data value in older versions.
-        if (!Data.ISFLAT && item.hasItemMeta() && material.equals("MONSTER_EGG")) {
-            ItemMeta meta = item.getItemMeta();
-            if (meta instanceof SpawnEggMeta) {
-                SpawnEggMeta egg = (SpawnEggMeta) meta;
-                material = egg.getSpawnedType().name() + "_SPAWN_EGG";
-            }
-        }
 
         // Potions used the items data value to store
         // information about the type of potion in 1.8

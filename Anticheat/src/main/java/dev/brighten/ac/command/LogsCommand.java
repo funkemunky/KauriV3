@@ -29,12 +29,12 @@ import java.util.*;
 public class LogsCommand extends BaseCommand {
 
     @Subcommand("logs")
-    @Syntax("[player] [check]")
+    @Syntax("[player] [check] [limit]")
     @CommandCompletion("@players @checkIds")
     @CommandPermission("anticheat.command.logs")
     @Description("Get player logs")
     public void onLogs(CommandSender sender, @Single String playername,
-                       @Single @Optional @Default("none") String check) {
+                       @Single @Optional @Default("none") String check, @Single @Optional @Default("5000") int limit) {
         UUID uuid = Bukkit.getOfflinePlayer(playername).getUniqueId();
 
         sender.sendMessage(Color.Red + "Getting logs for " + playername + "...");
@@ -53,7 +53,7 @@ public class LogsCommand extends BaseCommand {
             List<String> logs = new ArrayList<>();
 
             if(check.equals("none")) {
-                Anticheat.INSTANCE.getLogManager().getLogs(uuid, logsList -> {
+                Anticheat.INSTANCE.getLogManager().getLogs(uuid, limit, logsList -> {
                     logsList.forEach(log -> {
                         logs.add("[" + new Timestamp(log.getTime()).toLocalDateTime()
                                 .format(DateTimeFormatter.ISO_DATE_TIME) + "] funkemunky failed "
@@ -75,7 +75,7 @@ public class LogsCommand extends BaseCommand {
                     }
                 });
             } else {
-                Anticheat.INSTANCE.getLogManager().getLogs(uuid, check, logsList -> {
+                Anticheat.INSTANCE.getLogManager().getLogs(uuid, check, limit, logsList -> {
                     logsList.forEach(log -> {
                         logs.add("[" + new Timestamp(log.getTime()).toLocalDateTime()
                                 .format(DateTimeFormatter.ISO_DATE_TIME) + "] funkemunky failed "

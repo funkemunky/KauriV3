@@ -1,8 +1,8 @@
-package dev.brighten.ac.handler.compat;
+package dev.brighten.ac.compat;
 
-import dev.brighten.ac.handler.compat.impl.CompatHandler1_13;
-import dev.brighten.ac.handler.compat.impl.CompatHandler1_8;
-import dev.brighten.ac.handler.compat.impl.CompatHandler1_9;
+import dev.brighten.ac.compat.impl.CompatHandler1_13;
+import dev.brighten.ac.compat.impl.CompatHandler1_8;
+import dev.brighten.ac.compat.impl.CompatHandler1_9;
 import dev.brighten.ac.packet.ProtocolVersion;
 import org.bukkit.entity.Player;
 
@@ -12,10 +12,10 @@ public abstract class CompatHandler {
 
     public abstract boolean isGliding(Player player);
 
-    private static CompatHandler instance;
+    private static CompatHandler INSTANCE;
 
-    public static CompatHandler getInstance() {
-        if (instance == null) {
+    public static CompatHandler getINSTANCE() {
+        if (INSTANCE == null) {
             if(ProtocolVersion.getGameVersion().isOrAbove(ProtocolVersion.V1_13)) {
                 return new CompatHandler1_13();
             } else if(ProtocolVersion.getGameVersion().isOrAbove(ProtocolVersion.V1_9)) {
@@ -23,6 +23,6 @@ public abstract class CompatHandler {
             } else return new CompatHandler1_8();
         }
 
-        return instance;
+        return INSTANCE;
     }
 }

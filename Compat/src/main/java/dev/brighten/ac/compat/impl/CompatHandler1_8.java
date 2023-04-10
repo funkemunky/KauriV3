@@ -1,9 +1,9 @@
-package dev.brighten.ac.handler.compat.impl;
+package dev.brighten.ac.compat.impl;
 
-import dev.brighten.ac.handler.compat.CompatHandler;
+import dev.brighten.ac.compat.CompatHandler;
 import org.bukkit.entity.Player;
 
-public class CompatHandler1_9 extends CompatHandler {
+public class CompatHandler1_8 extends CompatHandler {
 
     @Override
     public boolean isRiptiding(Player player) {
@@ -12,6 +12,6 @@ public class CompatHandler1_9 extends CompatHandler {
 
     @Override
     public boolean isGliding(Player player) {
-        return player.isGliding();
+        return false;
     }
 }

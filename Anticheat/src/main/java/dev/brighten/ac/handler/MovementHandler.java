@@ -3,7 +3,7 @@ package dev.brighten.ac.handler;
 import com.google.common.collect.Sets;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.data.obj.CMove;
-import dev.brighten.ac.handler.compat.CompatHandler;
+import dev.brighten.ac.compat.CompatHandler;
 import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
 import dev.brighten.ac.packet.wrapper.out.WPacketPlayOutPosition;
@@ -473,8 +473,8 @@ public class MovementHandler {
         boolean hasLevitation = ProtocolVersion.getGameVersion().isOrAbove(ProtocolVersion.V1_9)
                 && player.getPotionHandler().hasPotionEffect(XPotion.LEVITATION.getPotionEffectType());
 
-        player.getInfo().setRiptiding(CompatHandler.getInstance().isRiptiding(player.getBukkitPlayer()));
-        player.getInfo().setGliding(CompatHandler.getInstance().isGliding(player.getBukkitPlayer()));
+        player.getInfo().setRiptiding(CompatHandler.getINSTANCE().isRiptiding(player.getBukkitPlayer()));
+        player.getInfo().setGliding(CompatHandler.getINSTANCE().isGliding(player.getBukkitPlayer()));
 
         // Resetting glide/sneak timers
         if (player.getInfo().isGliding()) player.getInfo().getLastElytra().reset();

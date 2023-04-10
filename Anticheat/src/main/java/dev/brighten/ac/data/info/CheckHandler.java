@@ -6,7 +6,9 @@ import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.data.obj.ActionStore;
 import dev.brighten.ac.data.obj.CancellableActionStore;
 import dev.brighten.ac.data.obj.TimedActionStore;
+import dev.brighten.ac.utils.ClassScanner;
 import dev.brighten.ac.utils.Tuple;
+import dev.brighten.ac.utils.reflections.types.WrappedClass;
 import dev.brighten.ac.utils.reflections.types.WrappedField;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.event.Event;
@@ -26,6 +28,14 @@ public class CheckHandler {
 
     private final APlayer player;
 
+    private static final List<CheckStatic> TO_HOOK = new ArrayList<>();
+
+    static {
+        for (WrappedClass aClass : ClassScanner.getClasses(Hook.class)) {
+            TO_HOOK.add(new CheckStatic(aClass));
+        }
+    }
+
     public synchronized Check findCheck(Class<? extends Check> checkClass) {
         return checkCache.computeIfAbsent(checkClass, key -> {
             for (Check check : checks) {
@@ -39,6 +49,58 @@ public class CheckHandler {
 
     public void initChecks() {
         // Enabling checks for players on join
+
+        for (CheckStatic toHook : TO_HOOK) {
+            KListener listener = toHook.playerInit(player);
+            synchronized (EVENTS) {
+                for (Tuple<WrappedField, Class<?>> tuple : toHook.getActions()) {
+                    WAction<?> action = tuple.one.get(listener);
+
+                    EVENTS.compute(tuple.two, (packetClass, array) -> {
+                        if (array == null) {
+                            return new ActionStore[] {new ActionStore(action, toHook.getCheckClass().getParent())};
+                        } else {
+                            ActionStore[] newArray = Arrays.copyOf(array, array.length + 1);
+                            newArray[array.length] = new ActionStore(action, toHook.getCheckClass().getParent());
+                            return newArray;
+                        }
+                    });
+                }
+            }
+            synchronized (EVENTS_TIMESTAMP) {
+                for (Tuple<WrappedField, Class<?>> tuple : toHook.getTimedActions()) {
+                    WTimedAction<?> action = tuple.one.get(listener);
+
+                    EVENTS_TIMESTAMP.compute(tuple.two, (packetClass, array) -> {
+                        if (array == null) {
+                            return new TimedActionStore[] {new TimedActionStore(action, toHook.getCheckClass().getParent())};
+                        } else {
+                            TimedActionStore<?>[] newArray = Arrays.copyOf(array, array.length + 1);
+                            newArray[array.length] = new TimedActionStore(action, toHook.getCheckClass().getParent());
+                            return newArray;
+                        }
+                    });
+                }
+            }
+            synchronized (EVENTS_CANCELLABLE) {
+                for (Tuple<WrappedField, Class<?>> tuple : toHook.getCancellableActions()) {
+                    WCancellable<?> action = tuple.one.get(listener);
+
+                    if(tuple.one.isAnnotationPresent(Pre.class)) continue;
+
+                    EVENTS_CANCELLABLE.compute(tuple.two, (packetClass, array) -> {
+                        if (array == null) {
+                            return new CancellableActionStore[] {new CancellableActionStore(action, toHook.getCheckClass().getParent())};
+                        } else {
+                            CancellableActionStore[] newArray = Arrays.copyOf(array, array.length + 1);
+                            newArray[array.length] = new CancellableActionStore(action, toHook.getCheckClass().getParent());
+                            return newArray;
+                        }
+                    });
+                }
+            }
+        }
+
         for (CheckStatic checkClass : Anticheat.INSTANCE.getCheckManager().getCheckClasses().values()) {
             CheckData data = checkClass.getCheckClass().getAnnotation(CheckData.class);
 
@@ -112,9 +174,6 @@ public class CheckHandler {
                         }
                     });
                 }
-            }
-            synchronized (EVENTS_PRE_CANCELLABLE) {
-                
             }
         }
     }

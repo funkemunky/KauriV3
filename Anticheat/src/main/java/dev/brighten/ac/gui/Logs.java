@@ -4,6 +4,8 @@ import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.logging.Log;
 import dev.brighten.ac.utils.*;
 import dev.brighten.ac.utils.menu.button.Button;
+import dev.brighten.ac.utils.menu.button.UpdatingButton;
+import dev.brighten.ac.utils.menu.type.impl.ChestMenu;
 import dev.brighten.ac.utils.menu.type.impl.PagedMenu;
 import org.apache.commons.lang.time.DateFormatUtils;
 import org.bukkit.Material;
@@ -17,128 +19,105 @@ public class Logs extends PagedMenu {
 
     private final UUID uuid;
     private boolean generatedItems;
-    private Set<String> allowedLogs = new HashSet<>();
+    private final Set<String> allowedLogs = new HashSet<>();
 
     public Logs(UUID uuid) {
+        this(uuid, 5000);
+    }
+
+    public Logs(UUID uuid, int limit) {
         super(Color.Gold + MojangAPI.getUsername(uuid).orElse("Unknown Player") + "'s Logs", 6);
 
         this.uuid = uuid;
 
-        generateItems();
+        updateLogs(limit, this::generateItems);
     }
 
     public Logs(UUID uuid, String check) {
+        this(uuid, 5000, check);
+    }
+
+    public Logs(UUID uuid, int limit, String check) {
         super(Color.Gold + MojangAPI.getUsername(uuid).orElse("Unknown Player") + "'s Logs", 6);
 
         this.uuid = uuid;
 
-        generateItems(check);
+        updateLogs(check, limit, this::generateItems);
     }
 
-    private void generateItems(String check) {
-        contents.clear();
-        Anticheat.INSTANCE.getLogManager().getLogs(uuid, check, 5000, 0, logs -> {
-            if(allowedLogs.size() > 0) {
-                Button button = new Button(false, new ItemBuilder(Material.REDSTONE).amount(1)
-                        .name(Color.Red + "Stop Filtering").build(),
-                        (player, info) -> {
-                            allowedLogs.clear();
-                            setCurrentPage(1);
-                            getFixedItems().remove(getMenuDimension().getSize() - 5);
-                            generateItems();
-                        });
-                getFixedItems().put(getMenuDimension().getSize() - 5, button);
+    private final List<Log> logs = new ArrayList<>();
+
+    private void showFilterMenu(Player player) {
+        ChestMenu filterMenu = new ChestMenu(Color.Gold + "Filter Logs", 4);
+
+        this.close(player);
+        logs.stream().map(Log::getCheckId).distinct().forEach(check -> filterMenu
+                .addItem(new UpdatingButton(false, (pl, info) -> {
+            if(!allowedLogs.contains(check)) {
+                allowedLogs.add(check);
+                setCurrentPage(1);
+                pl.sendMessage("Filtering" + check);
+                generateItems();
+            } else {
+                allowedLogs.remove(check);
+                setCurrentPage(1);
+                info.getMenu().setItem(info.getIndex(), info.getButton());
+                generateItems();
             }
-            for (Log log : logs) {
-                ItemBuilder builder = new ItemBuilder(XMaterial.PAPER.parseMaterial()).amount(1)
-                        .name(Color.Gold + log.getCheckId());
 
-                String[] split = MiscUtils.splitIntoLine(log.getData(), 45);
-                List<String> lore = new ArrayList<>(Arrays.asList("&eVL: &f" + log.getVl(),
-                        "&eTime: &f" + DateFormatUtils.ISO_DATETIME_FORMAT.format(log.getTime()),
-                        "&eData: &f" + split[0]));
+        }, () ->  new ItemBuilder(allowedLogs.contains(check)
+                ? Material.EMERALD_BLOCK : Material.REDSTONE_BLOCK).amount(1)
+                .name(Color.Gold + check).build(), 5)));
+        filterMenu.showMenu(player);
+        filterMenu.setCloseHandler((pl, menu) -> Logs.this.showMenu(pl));
+    }
 
-                for (int i = 1; i < split.length; i++) {
-                    lore.add(Color.White + split[i]);
-                }
-
-                ItemStack stack = builder.lore(lore).build();
-
-                addItem(new Button(false, stack, (player, info) -> {
-                    switch(info.getClickType()) {
-                        case SHIFT_LEFT: {
-                            if(!allowedLogs.contains(log.getCheckId())) {
-                                allowedLogs.add(log.getCheckId());
-                                setCurrentPage(1);
-                                generateItems(log.getCheckId());
-                            } else {
-                                allowedLogs.remove(log.getCheckId());
-                                setCurrentPage(1);
-                                generateItems(log.getCheckId());
-                            }
-                            break;
-                        }
-                    }
-                }));
-            }
-            buildInventory(getHolder() == null);
-            generatedItems = true;
+    private void updateLogs(int limit, Runnable onUpdate) {
+        Anticheat.INSTANCE.getLogManager().getLogs(uuid, limit, logs -> {
+            this.logs.clear();
+            this.logs.addAll(logs);
+            if(onUpdate != null)
+                onUpdate.run();
         });
     }
+
+    private void updateLogs(String check, int limit, Runnable onUpdate) {
+        Anticheat.INSTANCE.getLogManager().getLogs(uuid, check, limit, 0, logs -> {
+            this.logs.clear();
+            this.logs.addAll(logs);
+            if(onUpdate != null)
+                onUpdate.run();
+        });
+    }
+
     private void generateItems() {
         contents.clear();
-        Anticheat.INSTANCE.getLogManager().getLogs(uuid, logs -> {
-            if(allowedLogs.size() > 0) {
-                Button button = new Button(false, new ItemBuilder(Material.REDSTONE).amount(1)
-                        .name(Color.Red + "Stop Filtering").build(),
-                        (player, info) -> {
-                    allowedLogs.clear();
-                    setCurrentPage(1);
-                    getFixedItems().remove(getMenuDimension().getSize() - 5);
-                    generateItems();
-                });
-                getFixedItems().put(getMenuDimension().getSize() - 5, button);
+        Button button = new Button(false, new ItemBuilder(Material.REDSTONE).amount(1)
+                .name(Color.Red + "Modify Filter").build(),
+                (player, info) -> showFilterMenu(player));
+
+        getFixedItems().put(getMenuDimension().getSize() - 5, button);
+        for (Log log : logs) {
+            if(allowedLogs.size() > 0 && !allowedLogs.contains(log.getCheckId())) continue;
+
+            ItemBuilder builder = new ItemBuilder(XMaterial.PAPER.parseMaterial()).amount(1)
+                    .name(Color.Gold + log.getCheckId());
+
+            String[] split = MiscUtils.splitIntoLine(log.getData(), 45);
+            List<String> lore = new ArrayList<>(Arrays.asList("&eVL: &f" + log.getVl(),
+                    "&eTime: &f" + DateFormatUtils.ISO_DATETIME_FORMAT.format(log.getTime()),
+                    "&eData: &f" + split[0]));
+
+            for (int i = 1; i < split.length; i++) {
+                lore.add(Color.White + split[i]);
             }
-            for (Log log : logs) {
-                if(allowedLogs.size() > 0 && !allowedLogs.contains(log.getCheckId())) continue;
 
-                ItemBuilder builder = new ItemBuilder(XMaterial.PAPER.parseMaterial()).amount(1)
-                        .name(Color.Gold + log.getCheckId());
+            ItemStack stack = builder.lore(lore).build();
 
-                String[] split = MiscUtils.splitIntoLine(log.getData(), 45);
-                List<String> lore = new ArrayList<>(Arrays.asList("&eVL: &f" + log.getVl(),
-                        "&eTime: &f" + DateFormatUtils.ISO_DATETIME_FORMAT.format(log.getTime()),
-                        "&eData: &f" + split[0]));
-
-                for (int i = 1; i < split.length; i++) {
-                    lore.add(Color.White + split[i]);
-                }
-
-                ItemStack stack = builder.lore(lore).build();
-
-                final String checkId = log.getCheckId();
-
-                addItem(new Button(false, stack, (player, info) -> {
-                    switch(info.getClickType()) {
-                        case SHIFT_LEFT: {
-                            if(!allowedLogs.contains(checkId)) {
-                                allowedLogs.add(checkId);
-                                player.sendMessage("Filtering" + checkId);
-                                setCurrentPage(1);
-                                generateItems(checkId);
-                            } else {
-                                allowedLogs.remove(checkId);
-                                setCurrentPage(1);
-                                generateItems(checkId);
-                            }
-                            break;
-                        }
-                    }
-                }));
-            }
-            buildInventory(getHolder() == null);
-            generatedItems = true;
-        });
+            addItem(new Button(false, stack));
+        }
+        buildInventory(getHolder() == null);
+        generatedItems = true;
     }
 
     @Override

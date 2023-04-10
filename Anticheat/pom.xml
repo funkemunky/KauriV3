@@ -116,12 +116,6 @@
             <scope>compile</scope>
         </dependency>
         <dependency>
-            <groupId>org.github.spigot</groupId>
-            <artifactId>1.13</artifactId>
-            <version>1.13</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
             <groupId>me.mat1337.loader</groupId>
             <artifactId>loader</artifactId>
             <version>4.1</version>

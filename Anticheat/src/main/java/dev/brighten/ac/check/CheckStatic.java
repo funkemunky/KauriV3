@@ -71,7 +71,7 @@ public class CheckStatic {
         }
     }
 
-    public Check playerInit(APlayer player) {
+    public <T> T playerInit(APlayer player) {
         return initConst.newInstance(player);
     }
 }

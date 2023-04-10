@@ -1,9 +1,9 @@
 package dev.brighten.ac.check.impl.combat.killaura.calc;
 
-import dev.brighten.ac.api.check.CheckType;
-import dev.brighten.ac.check.Check;
-import dev.brighten.ac.check.CheckData;
+import dev.brighten.ac.check.Hook;
+import dev.brighten.ac.check.KListener;
 import dev.brighten.ac.check.WAction;
+import dev.brighten.ac.check.impl.combat.killaura.calc.impl.KAZero;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
 import dev.brighten.ac.utils.EntityLocation;
@@ -14,22 +14,17 @@ import dev.brighten.ac.utils.annotation.Bind;
 import dev.brighten.ac.utils.objects.evicting.EvictingList;
 import org.bukkit.util.Vector;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-@CheckData(name = "KillAura (Calc)", checkId = "kacalc", type = CheckType.KILLAURA)
-public abstract class KACalc extends Check {
-
-    private final List<KACalc> CALCULATION_CHECKS = new ArrayList<>();
+@Hook
+public class KACalc extends KListener {
     public KACalc(APlayer player) {
         super(player);
     }
 
     private final List<Double> YAW_OFFSET = new EvictingList<>(10),
             PITCH_OFFSET = new EvictingList<>(10);
-
-    private int buffer;
 
     @Bind
     WAction<WPacketPlayInFlying> flying = packet -> {
@@ -63,16 +58,6 @@ public abstract class KACalc extends Check {
         std[0] = MathUtils.stdev(YAW_OFFSET);
         std[1] = MathUtils.stdev(PITCH_OFFSET);
 
-        for (KACalc check : CALCULATION_CHECKS) {
-            check.runCheck(tuple, std, offset, rotations);
-        }
+        find(KAZero.class).ifPresent(zero -> zero.runCheck(tuple, std, offset, rotations));
     };
-
-    /**
-     *
-     * @param std double[] - Standard deviation of the offset. Arg 0 is yaw, arg 1 is pitch.
-     * @param offset double[] - Offset of the target. Arg 0 is yaw, arg 1 is pitch.
-     * @param rot float[] - Rotations to the target. Arg 0 is yaw, arg 1 is pitch.
-     */
-    public abstract void runCheck(Tuple<EntityLocation, EntityLocation> locs, double[] std, double[] offset, float[] rot);
 }

@@ -29,6 +29,7 @@ public interface ClickAction {
         private Button button;
         private ClickType clickType;
         private Menu menu;
+        private int index;
     }
 
 }

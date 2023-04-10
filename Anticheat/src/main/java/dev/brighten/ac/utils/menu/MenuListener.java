@@ -69,7 +69,7 @@ public class MenuListener implements Listener {
                             return;
                         }
                         button.getConsumer().accept((Player) event.getWhoClicked(),
-                                new ClickAction.InformationPair(button, event.getClick(), menu));
+                                new ClickAction.InformationPair(button, event.getClick(), menu, slot));
 
                         if (!button.isMoveable()) {
                             event.setResult(Event.Result.DENY);

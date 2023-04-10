@@ -88,8 +88,13 @@ public class LoggerManager {
 
 
     public void getLogs(UUID uuid, Consumer<List<Log>> logConsumer) {
-        getLogs(uuid, 2000, 0, logConsumer);
+        getLogs(uuid, 2000, logConsumer);
     }
+
+    public void getLogs(UUID uuid, int limit, Consumer<List<Log>> logConsumer) {
+        getLogs(uuid, limit, 0, logConsumer);
+    }
+
     public void getLogs(UUID uuid, int limit, int skip, Consumer<List<Log>> logsConsumer) {
         Anticheat.INSTANCE.getScheduler().execute(() -> {
             try {
@@ -117,6 +122,10 @@ public class LoggerManager {
 
     public void getLogs(UUID uuid, String checkId, Consumer<List<Log>> logConsumer) {
         getLogs(uuid, checkId, 500, 0, logConsumer);
+    }
+
+    public void getLogs(UUID uuid, String checkId, int limit, Consumer<List<Log>> logConsumer) {
+        getLogs(uuid, checkId, limit, 0, logConsumer);
     }
 
     public void getLogs(UUID uuid, String checkId, int limit, int skip, Consumer<List<Log>> logsConsumer) {
