@@ -192,8 +192,8 @@ public class Processor_18 implements PacketConverter {
                 .pitch(serializer.readFloat())
                 .flags(PacketPlayOutPosition.EnumPlayerTeleportFlags.a(serializer.readUnsignedByte()).stream()
                         .map(f -> WPacketPlayOutPosition.EnumPlayerTeleportFlags.valueOf(f.name()))
-                        .collect(Collectors.toCollection(() -> EnumSet
-                                .allOf(WPacketPlayOutPosition.EnumPlayerTeleportFlags.class))))
+                        .collect(Collectors.toCollection(() ->
+                                EnumSet.noneOf(WPacketPlayOutPosition.EnumPlayerTeleportFlags.class))))
                 .build();
     }
 

@@ -193,8 +193,11 @@ public class CheckHandler {
         if(EVENTS.containsKey(event.getClass())) {
             ActionStore<Event>[] actions = (ActionStore<Event>[]) EVENTS.get(event.getClass());
             for (ActionStore<Event> action : actions) {
-                if(!Anticheat.INSTANCE.getCheckManager().getCheckSettings(action.getCheckClass()).isEnabled())
+                var checkSettings = Anticheat.INSTANCE.getCheckManager().getCheckSettings(action.getCheckClass());
+                if(checkSettings != null && !Anticheat.INSTANCE.getCheckManager()
+                        .getCheckSettings(action.getCheckClass()).isEnabled())
                     continue;
+
                 action.getAction().invoke(event);
             }
         }
@@ -207,7 +210,9 @@ public class CheckHandler {
             synchronized (EVENTS) {
                 ActionStore<Object>[] actions = (ActionStore<Object>[]) EVENTS.get(packet.getClass());
                 for (ActionStore<Object> action : actions) {
-                    if(!Anticheat.INSTANCE.getCheckManager().getCheckSettings(action.getCheckClass()).isEnabled())
+                    var checkSettings = Anticheat.INSTANCE.getCheckManager().getCheckSettings(action.getCheckClass());
+                    if(checkSettings != null && !Anticheat.INSTANCE.getCheckManager()
+                            .getCheckSettings(action.getCheckClass()).isEnabled())
                         continue;
                     action.getAction().invoke(packet);
                 }
@@ -218,7 +223,9 @@ public class CheckHandler {
                 TimedActionStore<Object>[] actions = (TimedActionStore<Object>[])
                         EVENTS_TIMESTAMP.get(packet.getClass());
                 for (TimedActionStore<Object> action : actions) {
-                    if(!Anticheat.INSTANCE.getCheckManager().getCheckSettings(action.getCheckClass()).isEnabled())
+                    var checkSettings = Anticheat.INSTANCE.getCheckManager().getCheckSettings(action.getCheckClass());
+                    if(checkSettings != null && !Anticheat.INSTANCE.getCheckManager()
+                            .getCheckSettings(action.getCheckClass()).isEnabled())
                         continue;
                     action.getAction().invoke(packet, timestamp);
                 }
@@ -230,8 +237,11 @@ public class CheckHandler {
                 CancellableActionStore<Object>[] actions = (CancellableActionStore<Object>[])
                         EVENTS_CANCELLABLE.get(packet.getClass());
                 for (CancellableActionStore<Object> action : actions) {
-                    if(!Anticheat.INSTANCE.getCheckManager().getCheckSettings(action.getCheckClass()).isEnabled())
+                    var checkSettings = Anticheat.INSTANCE.getCheckManager().getCheckSettings(action.getCheckClass());
+                    if(checkSettings != null && !Anticheat.INSTANCE.getCheckManager()
+                            .getCheckSettings(action.getCheckClass()).isEnabled())
                         continue;
+
                     if(action.getAction().invoke(packet)) {
                         cancelled = true;
                     }
