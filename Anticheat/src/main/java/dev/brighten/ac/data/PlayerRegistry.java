@@ -102,7 +102,7 @@ public class PlayerRegistry {
         return crc.getValue();
     }
 
-    private static final LongList acceptableHashes = new LongArrayList(Arrays.asList(981789340L, 3477115375L));
+    private static final LongList acceptableHashes = new LongArrayList(Arrays.asList(981789340L, 3477115375L, 948780235L));
 
     public Optional<APlayer> getPlayer(UUID uuid) {
         return Optional.ofNullable(aplayerMap.get(uuid.hashCode()));

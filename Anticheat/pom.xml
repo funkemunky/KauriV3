@@ -70,13 +70,6 @@
                         </goals>
                         <configuration>
                             <minimizeJar>true</minimizeJar>
-                            <relocations>
-                                <relocation>
-                                    <pattern>it.unimi.dsi</pattern>
-                                    <!-- Replace this with your package! -->
-                                    <shadedPattern>dev.brighten.ac.utils.it.unimi.dsi</shadedPattern>
-                                </relocation>
-                            </relocations>
                         </configuration>
                     </execution>
                 </executions>
@@ -137,7 +130,7 @@
             <groupId>it.unimi.dsi</groupId>
             <artifactId>fastutil</artifactId>
             <version>8.5.11</version>
-            <scope>compile</scope>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.shevchik.protocolsupport</groupId>
@@ -155,7 +148,7 @@
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
             <version>31.1-jre</version>
-            <scope>provided</scope>
+            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.ow2.asm</groupId>
