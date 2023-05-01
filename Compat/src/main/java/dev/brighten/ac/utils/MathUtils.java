@@ -147,6 +147,36 @@ public class MathUtils {
         return (max - average) - min;
     }
 
+    public static double getGridDouble(final Collection<Double> entry) {
+        double average = 0.0;
+        double min = 0.0, max = 0.0;
+
+        for (final double number : entry) {
+            if (number < min) min = number;
+            if (number > max) max = number;
+            average += number;
+        }
+
+        average /= entry.size();
+
+        return (max - average) - min;
+    }
+
+    public static double getGridDouble(final double[] entry) {
+        double average = 0.0;
+        double min = 0.0, max = 0.0;
+
+        for (final double number : entry) {
+            if (number < min) min = number;
+            if (number > max) max = number;
+            average += number;
+        }
+
+        average /= entry.length;
+
+        return (max - average) - min;
+    }
+
     //Skidded from Luke.
     public static double getAngle(Location loc1, Location loc2) {
         if (loc1 == null || loc2 == null) return -1;

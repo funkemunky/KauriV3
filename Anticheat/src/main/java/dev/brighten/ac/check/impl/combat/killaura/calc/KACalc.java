@@ -3,6 +3,7 @@ package dev.brighten.ac.check.impl.combat.killaura.calc;
 import dev.brighten.ac.check.Hook;
 import dev.brighten.ac.check.KListener;
 import dev.brighten.ac.check.WAction;
+import dev.brighten.ac.check.impl.combat.killaura.calc.impl.KAGrid;
 import dev.brighten.ac.check.impl.combat.killaura.calc.impl.KAZero;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
@@ -59,5 +60,6 @@ public class KACalc extends KListener {
         std[1] = MathUtils.stdev(PITCH_OFFSET);
 
         find(KAZero.class).ifPresent(zero -> zero.runCheck(tuple, std, offset, rotations));
+        find(KAGrid.class).ifPresent(grid -> grid.runCheck(tuple, std, offset, rotations));
     };
 }
