@@ -38,7 +38,7 @@ public class Speed extends Check {
 
             if(player.getPotionHandler().hasPotionEffect(PotionEffectType.SPEED))
                 moveFactor += (PlayerUtils.getPotionEffectLevel(player.getBukkitPlayer(), PotionEffectType.SPEED)
-                        * (0.20000000298023224D)) * moveFactor;
+                        * (0.200000000298023224D)) * moveFactor;
 
             if(player.getPotionHandler().hasPotionEffect(PotionEffectType.SLOW))
                 moveFactor += (PlayerUtils.getPotionEffectLevel(player.getBukkitPlayer(), PotionEffectType.SLOW)
@@ -112,6 +112,7 @@ public class Speed extends Check {
             if (ratio > 100.8
                     && !player.getBlockInfo().inHoney
                     && !player.getBlockInfo().inScaffolding
+                    && player.getMovement().getLastTeleport().isPassed(1)
                     && player.getInfo().velocity.isPassed(2)
                     && player.getInfo().lastLiquid.isPassed(2)
                     && !player.getInfo().generalCancel) {

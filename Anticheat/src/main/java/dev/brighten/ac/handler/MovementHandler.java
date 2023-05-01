@@ -315,6 +315,8 @@ public class MovementHandler {
 
         updateLocations(packet);
 
+        checkForTeleports(packet);
+
         if (packet.isMoved()) {
             player.getBlockInfo().runCollisionCheck();
         }
@@ -355,8 +357,6 @@ public class MovementHandler {
 
         if (player.getBlockInfo().onSlime) player.getInfo().slimeTimer.reset();
         if (player.getBlockInfo().onClimbable) player.getInfo().climbTimer.reset();
-
-        checkForTeleports(packet);
 
         if (packet.isLooked()) {
             process();
@@ -755,6 +755,7 @@ it
 
         player.runKeepaliveAction(ka -> {
             teleportsToConfirm--;
+
             synchronized (posLocs) {
                 posLocs.remove(loc);
             }
@@ -803,6 +804,7 @@ it
                         from.setLoc(this.to);
                         iterator.remove();
                         break;
+                    } else {
                     }
                 }
 

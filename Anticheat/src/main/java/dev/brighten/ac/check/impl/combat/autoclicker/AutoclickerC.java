@@ -51,12 +51,12 @@ public class AutoclickerC extends Check {
                     vl++;
                     flag("range=%s", range);
                 }
-            } else if(vl > 0) buffer-= 0.5f;
+            } else if(buffer > 0) buffer-= 0.5f;
 
-            debug("range=%s average=%.1f vl=%.1f", range, average, vl);
+            debug("range=%s average=%.1f b=%.1f", range, average, buffer);
         }
 
-        debug("deltaArm=%s", deltaPlace);
+        debug("deltaArm=%s b=%.1f", deltaPlace, buffer);
         lastPlace = currentTick;
     };
 }

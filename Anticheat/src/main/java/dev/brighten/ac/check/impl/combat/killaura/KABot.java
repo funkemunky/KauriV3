@@ -30,13 +30,6 @@ public class KABot extends Check {
     };
 
     @Bind
-    WAction<WPacketPlayInFlying> flying = packet -> {
-        if(player.getInfo().lastAttack.isNotPassed(20)) {
-            player.getMob().setInvisible(false);
-        } else player.getMob().setInvisible(true);
-    };
-
-    @Bind
     WAction<WPacketPlayInUseEntity> packet = packet -> {
         val optional = player.getEntityLocationHandler().getFakeMob(packet.getEntityId());
 
