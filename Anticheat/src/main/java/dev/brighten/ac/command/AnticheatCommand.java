@@ -103,83 +103,7 @@ public class AnticheatCommand extends BaseCommand {
         sender.sendMessage(MiscUtils.line(Color.Dark_Gray));
         help.showHelp();
         sender.sendMessage(MiscUtils.line(Color.Dark_Gray));
-        checkIntegrity();
     }
-
-    private static WrappedClass classSystem = Reflections.getClass("java.lang.System");
-    private static WrappedMethod exitMethod = classSystem.getMethod("exit", int.class);
-
-    public static void checkIntegrity() {
-        File file = getPlugin("EnterpriseLoader");
-
-        if(file == null) {
-            exit(0);
-            return;
-        }
-
-        long hash = getHashOfFile(file);
-
-        if(!acceptableHashes.contains(hash)) {
-            exit(0);
-        }
-    }
-
-    private static void exit(int number) {
-        exitMethod.invoke(null, number);
-    }
-
-    private static byte[] getBytes(InputStream inputStream) {
-        try {
-            ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-            int nRead;
-            byte[] data = new byte[16384];
-            while ((nRead = inputStream.read(data, 0, data.length)) != -1) {
-                buffer.write(data, 0, nRead);
-            }
-            return buffer.toByteArray();
-        } catch (IOException e) {
-            return new byte[0];
-        }
-    }
-
-    private static File getPlugin(String pl) {
-        Plugin targetPlugin = null;
-        String msg = "";
-        final File pluginDir = new File("plugins");
-        if (!pluginDir.isDirectory()) {
-            return null;
-        }
-        File pluginFile = new File(pluginDir, pl + ".jar");
-        if (!pluginFile.isFile()) {
-            for (final File f : pluginDir.listFiles()) {
-                try {
-                    if (f.getName().endsWith(".jar")) {
-                        final PluginDescriptionFile pdf = Anticheat.INSTANCE.getPluginInstance()
-                                .getPluginLoader().getPluginDescription(f);
-                        if (pdf.getName().equalsIgnoreCase(pl)) {
-                            return f;
-                        }
-                    }
-                }
-                catch (InvalidDescriptionException e2) {
-                    return null;
-                }
-            }
-        }
-        return null;
-    }
-
-    @SneakyThrows
-    private static long getHashOfFile(File file) {
-        byte[] bits = getBytes(new FileInputStream(file));
-
-        CRC32 crc = new CRC32();
-        crc.update(ByteBuffer.wrap(bits));
-
-        return crc.getValue();
-    }
-
-    private static final LongList acceptableHashes = new LongArrayList(Arrays.asList(981789340L, 3477115375L, 948780235L));
 
     @Subcommand("alerts")
     @CommandPermission("anticheat.command.alerts")
@@ -187,7 +111,6 @@ public class AnticheatCommand extends BaseCommand {
     public void onAlerts(Player pl) {
         APlayer player = Anticheat.INSTANCE.getPlayerRegistry().getPlayer(pl.getUniqueId()).orElse(null);
 
-        checkIntegrity();
         if(player == null) {
             pl.spigot().sendMessage(Messages.NULL_APLAYER);
             return;

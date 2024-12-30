@@ -19,7 +19,7 @@ public class RunUtils {
     public static BukkitTask taskTimer(BukkitRunnable runnable, long delay, long interval) {
         AtomicReference<BukkitTask> task = new AtomicReference<>(null);
 
-        task.set(Bukkit.getScheduler().runTaskTimer(Anticheat.INSTANCE.getPluginInstance(),
+        task.set(Bukkit.getScheduler().runTaskTimer(Anticheat.INSTANCE,
                 () -> runnable.run(task.get()), delay, interval));
 
         return task.get();
@@ -28,26 +28,26 @@ public class RunUtils {
     public static BukkitTask taskTimerAsync(BukkitRunnable runnable, long delay, long interval) {
         AtomicReference<BukkitTask> task = new AtomicReference<>(null);
 
-        task.set(Bukkit.getScheduler().runTaskTimerAsynchronously(Anticheat.INSTANCE.getPluginInstance(),
+        task.set(Bukkit.getScheduler().runTaskTimerAsynchronously(Anticheat.INSTANCE,
                 () -> runnable.run(task.get()), delay, interval));
 
         return task.get();
     }
 
     public static BukkitTask task(Runnable runnable) {
-        return Bukkit.getScheduler().runTask(Anticheat.INSTANCE.getPluginInstance(), runnable);
+        return Bukkit.getScheduler().runTask(Anticheat.INSTANCE, runnable);
     }
 
     public static BukkitTask taskAsync(Runnable runnable) {
-        return Bukkit.getScheduler().runTaskAsynchronously(Anticheat.INSTANCE.getPluginInstance(), runnable);
+        return Bukkit.getScheduler().runTaskAsynchronously(Anticheat.INSTANCE, runnable);
     }
 
     public static BukkitTask taskLater(Runnable runnable, long delay) {
-        return Bukkit.getScheduler().runTaskLater(Anticheat.INSTANCE.getPluginInstance(), runnable, delay);
+        return Bukkit.getScheduler().runTaskLater(Anticheat.INSTANCE, runnable, delay);
     }
 
     public static BukkitTask taskLaterAsync(Runnable runnable, long delay) {
-        return Bukkit.getScheduler().runTaskLaterAsynchronously(Anticheat.INSTANCE.getPluginInstance(), runnable, delay);
+        return Bukkit.getScheduler().runTaskLaterAsynchronously(Anticheat.INSTANCE, runnable, delay);
     }
 
     public static <T> Future<?> callLater(Future<T> runnable, long delay, Consumer<T> onComplete) {

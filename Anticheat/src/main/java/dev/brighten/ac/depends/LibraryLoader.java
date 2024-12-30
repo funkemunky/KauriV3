@@ -47,7 +47,7 @@ import java.util.Objects;
 public final class LibraryLoader {
 
     @SuppressWarnings("Guava")
-    private static final Supplier<URLClassLoaderAccess> URL_INJECTOR = Suppliers.memoize(() -> URLClassLoaderAccess.create((URLClassLoader) Anticheat.INSTANCE.getPluginInstance().getClass().getClassLoader()));
+    private static final Supplier<URLClassLoaderAccess> URL_INJECTOR = Suppliers.memoize(() -> URLClassLoaderAccess.create((URLClassLoader) Anticheat.INSTANCE.getClass().getClassLoader()));
 
     /**
      * Resolves all {@link MavenLibrary} annotations on the given object.
