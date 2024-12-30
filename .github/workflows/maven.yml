@@ -16,11 +16,8 @@ jobs:
         uses: actions/setup-java@v4
         with:
           java-version: 17.0
-      - name: Cache Maven packages
-        uses: actions/cache@v4
-        with:
-          path: ~/.m2
-          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          distribution: jdk
+          cache: maven
       - name: Compile
         run: mvn -B clean package -DskipTests
         env:
