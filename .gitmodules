@@ -1,0 +1,3 @@
+[submodule "Neo"]
+	path = Neo
+	url = https://github.com/funkemunky/neo
