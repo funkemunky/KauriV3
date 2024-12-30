@@ -188,10 +188,8 @@ public class Check implements ECheck {
                        currentResult.isCancelled());
            }
 
-           if(currentResult.isCancelled()) return;
-
-           //Anticheat.INSTANCE.getLogManager()
-           //        .insertLog(player, checkData, vl, System.currentTimeMillis(), info);
+           Anticheat.INSTANCE.getLogManager()
+                   .insertLog(player, checkData, vl, System.currentTimeMillis(), info);
 
            if(alertCountReset.isPassed(20)) {
                alertCount.set(0);

@@ -1,86 +1,56 @@
 package dev.brighten.ac.logging;
 
-import com.neovisionaries.ws.client.WebSocket;
-import com.neovisionaries.ws.client.WebSocketAdapter;
-import com.neovisionaries.ws.client.WebSocketException;
-import com.neovisionaries.ws.client.WebSocketFactory;
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.data.APlayer;
-import dev.brighten.ac.utils.json.JSONObject;
+import org.dizitart.no2.Nitrite;
+import org.dizitart.no2.collection.FindOptions;
+import org.dizitart.no2.common.SortOrder;
+import org.dizitart.no2.common.mapper.JacksonMapperModule;
+import org.dizitart.no2.filters.Filter;
+import org.dizitart.no2.mvstore.MVStoreModule;
+import org.dizitart.no2.repository.ObjectRepository;
 
-import java.io.*;
-import java.util.ArrayList;
+import java.io.File;
 import java.util.List;
-import java.util.Queue;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
+
+import static org.dizitart.no2.filters.FluentFilter.*;
 
 
 public class LoggerManager {
 
-    private final Queue<Log> logList = new ConcurrentLinkedQueue<>();
-    private String license;
-
+    private final File dbDir = new File(Anticheat.INSTANCE.getDataFolder(), "database");
+    private final File dbFile = new File(dbDir, "logs.db");
     /*
      * Structure of Log
      * UUID hashcode (INT32),
      */
+
+    private Nitrite database = null;
+    private ObjectRepository<Log> logRepo;
+
     public void init() {
-        // Starting up H2
+        if(!dbDir.exists()) {
+            if(!dbDir.mkdirs())
+                throw new RuntimeException("Could not create database directory in plugin folder!");
+        }
 
-        /*
-        license = Anticheat.INSTANCE.getConfig().getString("license");
+        MVStoreModule storeModule = MVStoreModule.withConfig()
+                .filePath(dbFile)
+                .build();
 
-        AtomicLong lastWrite = new AtomicLong();
-        Anticheat.INSTANCE.getScheduler().scheduleAtFixedRate(() -> {
-            long now = System.currentTimeMillis();
-            if(logList.size() > 0 && (now - lastWrite.get() > 10000L || logList.size() > 600)) {
-                try {
-                    WebSocket socket =  new WebSocketFactory().createSocket("ws://logs.funkemunky.cc/logsocket").connect();
+        database = Nitrite.builder()
+                .loadModule(storeModule)
+                .loadModule(new JacksonMapperModule())
+                .openOrCreate("anticheatuser", "anticheat_dbpass590129*");
 
-                    System.out.println("Writing logs");
-                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                    ObjectOutputStream oos = new ObjectOutputStream(baos);
-
-                    oos.writeUTF("LOG_WRITE");
-                    oos.writeUTF(license());
-
-                    int i = 0;
-                    while(logList.size() > 0 && i++ < 400) {
-                        Log log = logList.poll();
-
-                        if(log != null) {
-                            oos.writeUTF(log.toJson());
-                        } else if(logList.size() == 0) {
-                            break;
-                        }
-                    }
-
-                    System.out.println("Wrote " + i + " logs;" + logList.size());
-                    lastWrite.set(now);
-                    oos.close();
-                    socket.sendBinary(baos.toByteArray());
-                    baos.close();
-
-                    socket.disconnect();
-                } catch (IOException | WebSocketException e) {
-                    e.printStackTrace();
-                }
-            }
-        }, 200, 200, TimeUnit.MILLISECONDS);
-        */
-    }
-
-    private String license() {
-        return license;
+        logRepo = database.getRepository(Log.class);
     }
 
     public void insertLog(APlayer player, CheckData checkData, float vl, long time, String data) {
-        logList.add(Log.builder()
+        logRepo.insert(Log.builder()
                 .uuid(player.getUuid())
                 .checkId(checkData.checkId())
                 .vl(vl)
@@ -88,7 +58,6 @@ public class LoggerManager {
                 .time(time)
                 .build());
     }
-
 
     public void getLogs(UUID uuid, Consumer<List<Log>> logConsumer) {
         getLogs(uuid, 2000, logConsumer);
@@ -100,32 +69,12 @@ public class LoggerManager {
 
     public void getLogs(UUID uuid, int limit, int skip, Consumer<List<Log>> logsConsumer) {
         Anticheat.INSTANCE.getScheduler().execute(() -> {
-            try {
-                WebSocket socket = createSocket(logsConsumer).connect();
+            var list = logRepo.find(where("uuid").eq(uuid), new FindOptions().skip(skip).limit(limit)).toList();
 
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                ObjectOutputStream oos = new ObjectOutputStream(baos);
-
-                oos.writeUTF("LOG_REQ_UUID");
-                oos.writeUTF(license());
-
-                oos.writeUTF(uuid.toString());
-                oos.writeInt(skip);
-                oos.writeInt(limit);
-
-                oos.close();
-                socket.sendBinary(baos.toByteArray());
-            } catch(WebSocketException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+            logsConsumer.accept(list);
         });
     }
 
-    public void getLogs(UUID uuid, String checkId, Consumer<List<Log>> logConsumer) {
-        getLogs(uuid, checkId, 500, 0, logConsumer);
-    }
 
     public void getLogs(UUID uuid, String checkId, int limit, Consumer<List<Log>> logConsumer) {
         getLogs(uuid, checkId, limit, 0, logConsumer);
@@ -133,27 +82,10 @@ public class LoggerManager {
 
     public void getLogs(UUID uuid, String checkId, int limit, int skip, Consumer<List<Log>> logsConsumer) {
         Anticheat.INSTANCE.getScheduler().execute(() -> {
-            try {
-                WebSocket socket = createSocket(logsConsumer).connect();
+           var list = logRepo.find(Filter.and(where("uuid").eq(uuid), where("checkId").eq(checkId)),
+                   new FindOptions().skip(skip).limit(limit)).toList();
 
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                ObjectOutputStream oos = new ObjectOutputStream(baos);
-
-                oos.writeUTF("LOG_REQ_UUID_CHECK");
-                oos.writeUTF(license());
-                oos.writeUTF(uuid.toString());
-                oos.writeUTF(checkId);
-                oos.writeInt(skip);
-                oos.writeInt(limit);
-
-
-                oos.close();
-                socket.sendBinary(baos.toByteArray());
-            } catch(WebSocketException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+           logsConsumer.accept(list);
         });
     }
 
@@ -164,81 +96,30 @@ public class LoggerManager {
     public void getLogs(UUID uuid, String checkId, long timeBefore, long timeAfter, int limit, int skip,
                         Consumer<List<Log>> logsConsumer) {
         Anticheat.INSTANCE.getScheduler().execute(() -> {
-            try {
-                WebSocket socket = createSocket(logsConsumer).connect();
+            var list = logRepo.find(Filter
+                    .and(where("uuid").eq(uuid),
+                            where("checkId").eq(checkId),
+                            where("time").lte(timeAfter),
+                            where("time").gte(timeBefore)),
+                    new FindOptions().skip(skip).limit(limit)).toList();
 
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                ObjectOutputStream oos = new ObjectOutputStream(baos);
-
-                oos.writeUTF("LOG_REQ_UUID_CHECK_TIME");
-                oos.writeUTF(license());
-                oos.writeUTF(checkId);
-                oos.writeLong(timeBefore);
-                oos.writeLong(timeAfter);
-                oos.writeInt(skip);
-                oos.writeInt(limit);
-
-
-                oos.writeUTF(uuid.toString());
-                oos.close();
-                socket.sendBinary(baos.toByteArray());
-            } catch(WebSocketException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+            logsConsumer.accept(list);
         });
     }
 
     public void getRecentLogs(int limit, Consumer<List<Log>> logsConsumer) {
         Anticheat.INSTANCE.getScheduler().execute(() -> {
-            try {
-                WebSocket socket = createSocket(logsConsumer).connect();
+            var list = logRepo.find(new FindOptions()
+                    .thenOrderBy("time", SortOrder.Descending)
+                    .limit(limit))
+                    .toList();
 
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                ObjectOutputStream oos = new ObjectOutputStream(baos);
-
-                oos.writeUTF("LOG_REQ_UUID_CHECK");
-                oos.writeUTF(license());
-                oos.writeInt(limit);
-
-                oos.close();
-                socket.sendBinary(baos.toByteArray());
-            } catch (WebSocketException | IOException e) {
-                throw new RuntimeException(e);
-            }
+            logsConsumer.accept(list);
         });
     }
 
-    private WebSocket createSocket(Consumer<List<Log>> logsConsumer) throws IOException {
-        return new WebSocketFactory().createSocket("ws://logs.funkemunky.cc/logsocket")
-                .addListener(new WebSocketAdapter() {
-
-                    @Override
-                    public void onBinaryMessage(WebSocket websocket, byte[] data) throws Exception {
-                        ByteArrayInputStream bais = new ByteArrayInputStream(data);
-                        ObjectInputStream ois = new ObjectInputStream(bais);
-
-                        System.out.println("Received!: " + ois.available());
-                        List<Log> logs = new ArrayList<>();
-                        while(ois.available() > 0) {
-                            String logString = ois.readUTF();
-                            JSONObject logObject = new JSONObject(logString);
-
-                            logs.add(Log.builder()
-                                    .vl((float)logObject.getDouble("vl"))
-                                    .checkId(logObject.getString("checkId"))
-                                    .data(logObject.getString("data"))
-                                    .time(logObject.getLong("time"))
-                                    .uuid(UUID.fromString(logObject.getString("uuid"))).build());
-                        }
-
-                        logsConsumer.accept(logs);
-                        websocket.disconnect();
-                    }
-                });
-    }
     public void shutDown() {
-
+        logRepo = null;
+        database.close();
     }
 }
