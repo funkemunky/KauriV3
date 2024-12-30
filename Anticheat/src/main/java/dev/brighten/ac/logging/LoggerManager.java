@@ -31,7 +31,9 @@ public class LoggerManager {
      */
     public void init() {
         // Starting up H2
-        license = Anticheat.INSTANCE.getPluginInstance().getConfig().getString("license");
+
+        /*
+        license = Anticheat.INSTANCE.getConfig().getString("license");
 
         AtomicLong lastWrite = new AtomicLong();
         Anticheat.INSTANCE.getScheduler().scheduleAtFixedRate(() -> {
@@ -70,6 +72,7 @@ public class LoggerManager {
                 }
             }
         }, 200, 200, TimeUnit.MILLISECONDS);
+        */
     }
 
     private String license() {

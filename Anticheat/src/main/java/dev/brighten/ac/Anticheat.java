@@ -1,5 +1,6 @@
 package dev.brighten.ac;
 
+import co.aikar.commands.BaseCommand;
 import co.aikar.commands.BukkitCommandManager;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import dev.brighten.ac.api.AnticheatAPI;
@@ -20,21 +21,29 @@ import dev.brighten.ac.packet.listener.PacketProcessor;
 import dev.brighten.ac.utils.*;
 import dev.brighten.ac.utils.annotation.ConfigSetting;
 import dev.brighten.ac.utils.annotation.Init;
+import dev.brighten.ac.utils.annotation.Invoke;
 import dev.brighten.ac.utils.config.Configuration;
 import dev.brighten.ac.utils.config.ConfigurationProvider;
 import dev.brighten.ac.utils.config.YamlConfiguration;
 import dev.brighten.ac.utils.math.RollingAverageDouble;
+import dev.brighten.ac.utils.objects.RemoteClassLoader;
+import dev.brighten.ac.utils.reflections.Reflections;
+import dev.brighten.ac.utils.reflections.types.WrappedClass;
+import dev.brighten.ac.utils.reflections.types.WrappedField;
 import dev.brighten.ac.utils.reflections.types.WrappedMethod;
 import dev.brighten.ac.utils.timer.Timer;
 import dev.brighten.ac.utils.timer.impl.TickTimer;
 import dev.brighten.ac.utils.world.WorldInfo;
-import dev.brighten.loader.LoaderPlugin;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.PackagePrivate;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.event.HandlerList;
+import org.bukkit.event.Listener;
+import org.bukkit.plugin.Plugin;
+import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
 import java.io.IOException;
@@ -52,7 +61,7 @@ import java.util.concurrent.atomic.AtomicLong;
 @MavenLibrary(groupId = "it.unimi.dsi", artifactId = "fastutil", version = "8.5.6", repo = @Repository(url = "https://repo1.maven.org/maven2"))
 @MavenLibrary(groupId = "org.ow2.asm", artifactId = "asm", version = "9.4", repo = @Repository(url = "https://repo1.maven.org/maven2"))
 @MavenLibrary(groupId = "org.ow2.asm", artifactId = "asm-tree", version = "9.4", repo = @Repository(url = "https://repo1.maven.org/maven2"))
-public class Anticheat extends LoaderPlugin {
+public class Anticheat extends JavaPlugin {
 
     public static Anticheat INSTANCE;
 
@@ -135,20 +144,20 @@ public class Anticheat extends LoaderPlugin {
 
         loadConfig();
 
-        IntegrityCheck.checkIntegrity();
-
-        commandManager = new BukkitCommandManager(getPluginInstance());
+        commandManager = new BukkitCommandManager(this);
         commandManager.enableUnstableAPI("help");
 
         new CommandPropertiesManager(commandManager, getDataFolder(),
-                getResource2("command-messages.properties"));
+                getResource("command-messages.properties"));
 
         packetProcessor = new PacketProcessor();
 
         new AnticheatAPI();
 
-        ClassScanner.initializeScanner(getPluginInstance().getClass(), getPluginInstance(),
-                ClassScanner.getNames());
+        ClassScanner.initializeScanner(getClass(), this,
+                null,
+                true,
+                true);
 
         if(!getAnticheatConfig().contains("database.username")) {
             getAnticheatConfig().set("database.username", "dbuser");
@@ -202,7 +211,7 @@ public class Anticheat extends LoaderPlugin {
 
         logManager.shutDown();
 
-        Bukkit.getScheduler().cancelTasks(getPluginInstance());
+        Bukkit.getScheduler().cancelTasks(this);
 
 
         // Unregistering APlayer objects
@@ -220,7 +229,7 @@ public class Anticheat extends LoaderPlugin {
 
         // Unregistering packet listeners for players
         HandlerAbstract.getHandler().shutdown();
-        HandlerList.unregisterAll(getPluginInstance());
+        HandlerList.unregisterAll(this);
         packetProcessor.shutdown();
         packetProcessor = null;
 
@@ -260,7 +269,7 @@ public class Anticheat extends LoaderPlugin {
                     throw new RuntimeException("Could not create new anticheat.yml in plugin folder!" +
                             "Insufficient write permissions?");
                 } else {
-                    MiscUtils.copy(INSTANCE.getResource2("anticheat.yml"), configFile);
+                    MiscUtils.copy(INSTANCE.getResource("anticheat.yml"), configFile);
                 }
             }
             anticheatConfig = ConfigurationProvider.getProvider(YamlConfiguration.class).load(configFile);

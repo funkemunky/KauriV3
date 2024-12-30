@@ -130,7 +130,7 @@ public class Logs extends PagedMenu {
                     Logs.super.showMenu(player);
                 }
             }
-        }.runTaskTimer(Anticheat.INSTANCE.getPluginInstance(), 0L, 4L);
+        }.runTaskTimer(Anticheat.INSTANCE, 0L, 4L);
     }
 
 
