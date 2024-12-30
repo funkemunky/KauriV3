@@ -10,7 +10,7 @@
     <packaging>pom</packaging>
 
     <modules>
-        <module>AntiCheat</module>
+        <module>Anticheat</module>
         <module>API</module>
         <module>LegacyAPI</module>
         <module>ModernAPI</module>
