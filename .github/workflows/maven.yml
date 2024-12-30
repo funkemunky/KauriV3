@@ -19,7 +19,7 @@ jobs:
           distribution: zulu
           cache: maven
       - name: Compile
-        run: mvn -B clean package -DskipTests
+        run: mvn -B package --file pom.xml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Upload Enterprise
