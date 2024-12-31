@@ -12,7 +12,10 @@ import dev.brighten.ac.utils.annotation.Bind;
 import dev.brighten.ac.utils.timer.Timer;
 import dev.brighten.ac.utils.timer.impl.TickTimer;
 import lombok.val;
+import me.hydro.emulator.object.MoveTag;
 import me.hydro.emulator.util.Vector;
+
+import java.util.stream.Collectors;
 
 @CheckData(name = "Prediction", checkId = "predictiona", type = CheckType.MOVEMENT, experimental = true,
         punishable = false)
@@ -38,11 +41,15 @@ public class Prediction extends Check {
                     || player.getInfo().lastLiquid.isNotPassed(2)
                     || player.getInfo().isGeneralCancel()) break check;
 
-            double offset = player.EMULATOR.getOffset();
+            double offset = player.EMULATOR.offset();
             int forward = player.EMULATOR.getInput().getForward();
             int strafe = player.EMULATOR.getInput().getStrafing();
-            String tags = String.join(", ", player.EMULATOR.getTags());
-            Vector predicted = player.getMovement().getPredicted();
+
+            String tags = player.EMULATOR.getTags().stream()
+                    .map(td -> String.valueOf(td.getMoveTag()))
+                    .collect(Collectors.joining(", "));
+
+            Vector predicted = player.getMovement().predicted();
             
             val from = player.getMovement().getFrom();
             
@@ -58,8 +65,8 @@ public class Prediction extends Check {
                 lastSkipPos.reset();
             }
             boolean zeroThree = lastSkipPos.isNotPassed(2);
-            boolean collided = player.EMULATOR.getTags().contains("x-collided")
-                    || player.EMULATOR.getTags().contains("z-collided");
+            boolean collided = player.EMULATOR.containsTag(MoveTag.X_COLLIDED)
+                    || player.EMULATOR.containsTag(MoveTag.Z_COLLIDED);
 
             boolean badOffset = offset > (player.getMovement().getDeltaXZ() == 0
                     && lastSkipPos.isNotPassed(4 )

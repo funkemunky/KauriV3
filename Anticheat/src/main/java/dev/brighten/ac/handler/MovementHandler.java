@@ -1,9 +1,9 @@
 package dev.brighten.ac.handler;
 
 import com.google.common.collect.Sets;
+import dev.brighten.ac.compat.CompatHandler;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.data.obj.CMove;
-import dev.brighten.ac.compat.CompatHandler;
 import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
 import dev.brighten.ac.packet.wrapper.out.WPacketPlayOutPosition;
@@ -17,6 +17,8 @@ import dev.brighten.ac.utils.world.types.SimpleCollisionBox;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.val;
+import me.hydro.emulator.object.MoveTag;
+import me.hydro.emulator.object.TagData;
 import me.hydro.emulator.object.input.IterationInput;
 import me.hydro.emulator.object.iteration.Motion;
 import me.hydro.emulator.object.result.IterationResult;
@@ -30,6 +32,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffectType;
 
 import java.util.*;
+
 
 public class MovementHandler {
 
@@ -134,7 +137,7 @@ public class MovementHandler {
             }
         }
 
-        if(player.EMULATOR.getTags().contains("003") && !isZeroThree) {
+        if(player.EMULATOR.containsTag(MoveTag.SLOP_MOVE) && !isZeroThree) {
             runEmulation(to, true);
         }
 
@@ -146,10 +149,10 @@ public class MovementHandler {
                 IterationResult result = player.EMULATOR
                         .runTeleportIteration(new Vector(posLoc.getX(), posLoc.getY(), posLoc.getZ()));
 
-                if (minimum == null || minimum.getOffset() > result.getOffset()) {
+                if (minimum == null || minimum.offset() > result.offset()) {
                     minimum = result;
 
-                    if(minimum.getOffset() < 1E-26) {
+                    if(minimum.offset() < 1E-26) {
                         // The player teleported, therefore we don't need to continue with predictions.
                         break iteration;
                     }
@@ -187,7 +190,7 @@ public class MovementHandler {
                                                     .lastReportedBoundingBox(from.getBox().toNeo())
                                                     .effectSpeed(EFFECTS[0])
                                                     .effectSlow(EFFECTS[1])
-                                                    .waitingForTeleport(posLocs.size() > 0)
+                                                    .waitingForTeleport(!posLocs.isEmpty())
                                                     .effectJump(EFFECTS[2]).build();
 
                                             boolean isVelocity = false;
@@ -208,13 +211,13 @@ public class MovementHandler {
                                             IterationResult result = player.EMULATOR.runIteration(input);
 
                                             if(isVelocity) {
-                                                result.getTags().add("velocity");
+                                                result.tags().add(new TagData(MoveTag.VELOCITY));
                                             }
 
-                                            if (minimum == null || minimum.getOffset() > result.getOffset()) {
+                                            if (minimum == null || minimum.offset() > result.offset()) {
                                                 minimum = result;
 
-                                                if (minimum.getOffset() < 1E-26) {
+                                                if (minimum.offset() < 1E-26) {
                                                     break iteration;
                                                 }
                                             }
@@ -229,7 +232,7 @@ public class MovementHandler {
         }
 
         if(minimum != null) {
-            predicted = minimum.getPredicted();
+            predicted = minimum.predicted();
 
             double mx = player.EMULATOR.getMotion().getMotionX();
             double my = player.EMULATOR.getMotion().getMotionY();
@@ -239,22 +242,22 @@ public class MovementHandler {
 
             if(total < 9E-4) {
                 player.getInfo().lastCanceledFlying.reset();
-                minimum.getTags().add("003");
+                minimum.tags().add(new TagData(MoveTag.SLOP_MOVE));
             }
 
-            if (minimum.getOffset() > 1E-7 && !isZeroThree) {
-                minimum.getTags().add("bad_offset");
-                minimum.getMotion().setMotionX(deltaX);
-                minimum.getMotion().setMotionY(deltaY);
-                minimum.getMotion().setMotionZ(deltaZ);
+            if (minimum.offset() > 1E-7 && !isZeroThree) {
+                minimum.tags().add(new TagData(MoveTag.BAD_OFFSET));
+                minimum.motion().setMotionX(deltaX);
+                minimum.motion().setMotionY(deltaY);
+                minimum.motion().setMotionZ(deltaZ);
             }
-            player.EMULATOR.confirm(minimum.getIteration());
+            player.EMULATOR.confirm(minimum.iteration());
 
-            if(minimum.getTags().contains("003")) {
-                player.EMULATOR.getTags().add("003");
+            if(minimum.containsTag(MoveTag.SLOP_MOVE)) {
+                player.EMULATOR.getTags().add(new TagData(MoveTag.SLOP_MOVE));
             }
 
-            if(minimum.getTags().contains("bad_offset")) {
+            if(minimum.containsTag(MoveTag.BAD_OFFSET)) {
                 player.EMULATOR.setLastReportedBoundingBox(getTo().getBox().toNeo());
             }
         }
@@ -390,7 +393,7 @@ public class MovementHandler {
                 lookingAtBoxes.addAll(collision
                         .boxesOnRay(player.getBukkitPlayer().getWorld(),
                                 player.getBukkitPlayer().getGameMode().equals(GameMode.CREATIVE) ? 6.0 : 5.0));
-                lookingAtBlock = lookingAtBoxes.size() > 0;
+                lookingAtBlock = !lookingAtBoxes.isEmpty();
             }
 
             if (lastTeleport.isPassed(1)) {
@@ -804,12 +807,11 @@ it
                         from.setLoc(this.to);
                         iterator.remove();
                         break;
-                    } else {
                     }
                 }
 
                 //Ensuring the list doesn't overflow with old locations, a potential crash exploit.
-                if (teleportsToConfirm == 0 && posLocs.size() > 0) {
+                if (teleportsToConfirm == 0 && !posLocs.isEmpty()) {
                     posLocs.clear();
                 }
             }
