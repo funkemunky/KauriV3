@@ -21,8 +21,7 @@ import java.util.stream.Collectors;
         punishable = false)
 public class Prediction extends Check {
     private float buffer;
-    private boolean maybeSkippedPos;
-    private int lastFlying, notMoveTicks;
+    private int notMoveTicks;
     private final Timer lastSkipPos = new TickTimer();
 
     public Prediction(APlayer player) {
@@ -41,7 +40,7 @@ public class Prediction extends Check {
                     || player.getInfo().lastLiquid.isNotPassed(2)
                     || player.getInfo().isGeneralCancel()) break check;
 
-            double offset = player.EMULATOR.offset();
+            double offset = player.EMULATOR.getOffset();
             int forward = player.EMULATOR.getInput().getForward();
             int strafe = player.EMULATOR.getInput().getStrafing();
 
@@ -49,7 +48,7 @@ public class Prediction extends Check {
                     .map(td -> String.valueOf(td.getMoveTag()))
                     .collect(Collectors.joining(", "));
 
-            Vector predicted = player.getMovement().predicted();
+            Vector predicted = player.getMovement().getPredicted();
             
             val from = player.getMovement().getFrom();
             
