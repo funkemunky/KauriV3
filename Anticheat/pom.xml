@@ -85,6 +85,13 @@
                 <filtering>true</filtering>
             </resource>
         </resources>
+        <extensions>
+            <extension>
+                <groupId>org.apache.maven.extensions</groupId>
+                <artifactId>maven-build-cache-extension</artifactId>
+                <version>1.0.0</version>
+            </extension>
+        </extensions>
     </build>
 
     <dependencyManagement>
@@ -103,7 +110,7 @@
         <dependency>
             <groupId>dev.brighten.ac</groupId>
             <artifactId>API</artifactId>
-            <version>${version}</version>
+            <version>${project.version}</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
@@ -123,7 +130,7 @@
         <dependency>
             <groupId>dev.brighten.ac</groupId>
             <artifactId>Compat</artifactId>
-            <version>${version}</version>
+            <version>${project.version}</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
@@ -198,5 +205,6 @@
             <scope>compile</scope>
         </dependency>
     </dependencies>
+
 
 </project>
