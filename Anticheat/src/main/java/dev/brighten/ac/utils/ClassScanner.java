@@ -39,16 +39,16 @@ import java.util.zip.ZipFile;
  * This is copied from somewhere, can't remember from where though. Modified.
  * */
 public class ClassScanner {
-    private static final PathMatcher CLASS_FILE = create("glob:*.class");
-    private static final PathMatcher ARCHIVE = create("glob:*.{jar}");
+    private final PathMatcher CLASS_FILE = create("glob:*.class");
+    private final PathMatcher ARCHIVE = create("glob:*.{jar}");
 
-    public static void initializeScanner(Class<? extends Plugin> mainClass, Plugin plugin, ClassLoader loader,
+    public void initializeScanner(Class<? extends Plugin> mainClass, Plugin plugin, ClassLoader loader,
                                          boolean loadListeners, boolean loadCommands) {
-        initializeScanner(mainClass, plugin, loader, ClassScanner.scanFile(null, mainClass), loadListeners,
+        initializeScanner(mainClass, plugin, loader, scanFile(null, mainClass), loadListeners,
                 loadCommands);
     }
 
-    public static void initializeScanner(Class<? extends Plugin> mainClass, Plugin plugin, ClassLoader loader, Set<String> names,
+    public void initializeScanner(Class<? extends Plugin> mainClass, Plugin plugin, ClassLoader loader, Set<String> names,
                                          boolean loadListeners, boolean loadCommands) {
         names.stream()
                 .map(name -> {
@@ -105,13 +105,13 @@ public class ClassScanner {
                     Object obj = c.getParent().equals(mainClass) ? plugin : c.getConstructor().newInstance();
                     Init annotation = c.getAnnotation(Init.class);
 
-                    if(obj instanceof Listener) {
-                        Bukkit.getPluginManager().registerEvents((Listener)obj, plugin);
+                    if(obj instanceof Listener listener) {
+                        Bukkit.getPluginManager().registerEvents(listener, plugin);
                         Anticheat.INSTANCE.alog(true,"&7Registered Bukkit listener &e"
                                 + c.getParent().getSimpleName() + "&7.");
                     }
 
-                    if(obj instanceof BaseCommand) {
+                    if(obj instanceof BaseCommand command) {
                         Anticheat.INSTANCE.alog(true,"&7Found BaseCommand for class &e"
                                 + c.getParent().getSimpleName() + "&7! Registering commands...");
                         Anticheat.INSTANCE.getCommandManager().registerCommand((BaseCommand)obj);
@@ -155,15 +155,15 @@ public class ClassScanner {
                 });
     }
 
-    public static Set<WrappedClass> getClasses(Class<? extends Annotation> annotationClass) {
+    public  Set<WrappedClass> getClasses(Class<? extends Annotation> annotationClass) {
         return scanFile(annotationClass).stream().map(Reflections::getClass).collect(Collectors.toSet());
     }
 
-    public static Set<String> scanFile(Class<? extends Annotation> annotationClass) {
+    public  Set<String> scanFile(Class<? extends Annotation> annotationClass) {
         return scanFile(annotationClass, new URL[]{Anticheat.class.getProtectionDomain().getCodeSource().getLocation()});
     }
 
-    public static Set<String> scanFile(Class<? extends Annotation> annotationClass, URL[] urls) {
+    public  Set<String> scanFile(Class<? extends Annotation> annotationClass, URL[] urls) {
         Set<URI> sources =  new HashSet<>();
         Set<String> plugins =  new HashSet<>();
 
@@ -188,7 +188,7 @@ public class ClassScanner {
         return plugins;
     }
 
-    private static void scanPath(Path path, Class<? extends Annotation> annotationClass, Set<String> plugins) {
+    private  void scanPath(Path path, Class<? extends Annotation> annotationClass, Set<String> plugins) {
         if (Files.exists(path)) {
             if (Files.isDirectory(path)) {
                 scanDirectory(path, annotationClass, plugins);
@@ -198,7 +198,7 @@ public class ClassScanner {
         }
     }
 
-    private static void scanDirectory(Path dir, Class<? extends Annotation> annotationClass, final Set<String> plugins) {
+    private  void scanDirectory(Path dir, Class<? extends Annotation> annotationClass, final Set<String> plugins) {
         try {
             Files.walkFileTree(dir, newHashSet(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE,
                     new SimpleFileVisitor<Path>() {
@@ -222,7 +222,7 @@ public class ClassScanner {
     }
 
 
-    public static String findClass(InputStream in, Class<? extends Annotation> annotationClass) {
+    public  String findClass(InputStream in, Class<? extends Annotation> annotationClass) {
         try {
             ClassReader reader = new ClassReader(in);
             ClassNode classNode = new ClassNode();
@@ -243,7 +243,7 @@ public class ClassScanner {
         return null;
     }
 
-    private static void scanZip(Path path, Class<? extends Annotation> annotationClass, Set<String> plugins) {
+    private  void scanZip(Path path, Class<? extends Annotation> annotationClass, Set<String> plugins) {
         if (!ARCHIVE.matches(path.getFileName())) {
             return;
         }
@@ -268,11 +268,11 @@ public class ClassScanner {
         }
     }
 
-    public static Set<String> scanFile(String file, Class<?> clazz) {
+    public  Set<String> scanFile(String file, Class<?> clazz) {
         return scanFile(file, new URL[]{clazz.getProtectionDomain().getCodeSource().getLocation()});
     }
 
-    public static Set<String> scanFile(String file, URL[] urls) {
+    public  Set<String> scanFile(String file, URL[] urls) {
         Set<URI> sources =  new HashSet<>();
         Set<String> plugins =  new HashSet<>();
 
@@ -297,7 +297,7 @@ public class ClassScanner {
         return plugins;
     }
 
-    private static void scanPath(String file, Path path, Set<String> plugins) {
+    private  void scanPath(String file, Path path, Set<String> plugins) {
         if (Files.exists(path)) {
             if (Files.isDirectory(path)) {
                 scanDirectory(file, path, plugins);
@@ -307,7 +307,7 @@ public class ClassScanner {
         }
     }
 
-    private static void scanDirectory(String file, Path dir, final Set<String> plugins) {
+    private  void scanDirectory(String file, Path dir, final Set<String> plugins) {
         try {
             Files.walkFileTree(dir, newHashSet(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE,
                     new SimpleFileVisitor<Path>() {
@@ -330,14 +330,14 @@ public class ClassScanner {
         }
     }
 
-    private static <E> HashSet<E> newHashSet(E... elements) {
+    private  <E> HashSet<E> newHashSet(E... elements) {
         HashSet<E> set = new HashSet<>();
         Collections.addAll(set, elements);
         return set;
     }
 
 
-    private static void scanZip(String file, Path path, Set<String> plugins) {
+    private  void scanZip(String file, Path path, Set<String> plugins) {
         if (!ARCHIVE.matches(path.getFileName())) {
             return;
         }
@@ -362,7 +362,7 @@ public class ClassScanner {
         }
     }
 
-    public static String findPlugin(String file, InputStream in) {
+    public  String findPlugin(String file, InputStream in) {
         try {
             ClassReader reader = new ClassReader(in);
             ClassNode classNode = new ClassNode();
@@ -385,7 +385,7 @@ public class ClassScanner {
         return null;
     }
 
-    public static PathMatcher create(String pattern) {
+    public  PathMatcher create(String pattern) {
         return FileSystems.getDefault().getPathMatcher(pattern);
     }
 }

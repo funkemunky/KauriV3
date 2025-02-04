@@ -43,7 +43,7 @@ public class JoinListener implements Listener {
 
             APlayer player = op.get();
 
-            if(player.isSendingPackets()) return;
+            if(player.isSendingPackets() || !player.isInitialized()) return;
 
             if(event.getType().equals(PacketType.CLIENT_TRANSACTION)) {
                 if(player.getPacketQueue().size() > 0) {

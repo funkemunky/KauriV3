@@ -20,7 +20,7 @@ public class CheckManager {
     private final Map<Class<? extends Check>, CheckSettings> checkSettings = new HashMap<>();
     public CheckManager() {
         synchronized (checkClasses) {
-            for (WrappedClass aClass : ClassScanner.getClasses(CheckData.class)) {
+            for (WrappedClass aClass : new ClassScanner().getClasses(CheckData.class)) {
                 addCheck(aClass);
             }
         }

@@ -22,7 +22,6 @@
  */
 package dev.brighten.ac.utils;
 
-import com.google.common.base.Enums;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import org.apache.commons.lang.StringUtils;
@@ -1455,7 +1454,7 @@ public enum XMaterial {
     public static final XMaterial[] VALUES = values();
 
     /**
-     * We don't want to use {@link Enums#getIfPresent(Class, String)} to avoid a few checks.
+     * We don't want to use {@link com.google.common.base.Enums#getIfPresent(Class, String)} to avoid a few checks.
      *
      * @since 5.1.0
      */

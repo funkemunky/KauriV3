@@ -31,7 +31,7 @@ public class InventoryClickMove extends Check {
 
         // The player is not moving, therefore we do not check when they last clicked since this behavior
         // is legitimate.
-        if(player.EMULATOR.getInput().getForward() == 0 && player.EMULATOR.getInput().getStrafing() == 0)
+        if(player.EMULATOR.getInput() == null || player.EMULATOR.getInput().getForward() == 0 && player.EMULATOR.getInput().getStrafing() == 0)
             return;
 
         // Any of these could result in false positives as our emulator does not account for these things yet.

@@ -38,6 +38,10 @@ public class Prediction extends Check {
                     || player.getInfo().lastLiquid.isNotPassed(2)
                     || player.getInfo().isGeneralCancel()) break check;
 
+            if(player.EMULATOR.getInput() == null) {
+                return;
+            }
+
             double offset = player.EMULATOR.getOffset();
             int forward = player.EMULATOR.getInput().getForward();
             int strafe = player.EMULATOR.getInput().getStrafing();

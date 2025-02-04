@@ -39,7 +39,7 @@ public class CheckHandler {
     public static final List<CheckStatic> TO_HOOK = new ArrayList<>();
 
     static {
-        for (WrappedClass aClass : ClassScanner.getClasses(Hook.class)) {
+        for (WrappedClass aClass : new ClassScanner().getClasses(Hook.class)) {
             TO_HOOK.add(new CheckStatic(aClass));
         }
     }
@@ -198,6 +198,9 @@ public class CheckHandler {
     }
 
     public void callEvent(Event event) {
+        if(!player.isInitialized()) {
+            return;
+        }
         if(EVENTS.containsKey(event.getClass())) {
             ActionStore<Event>[] actions = (ActionStore<Event>[]) EVENTS.get(event.getClass());
             for (ActionStore<Event> action : actions) {
@@ -214,6 +217,9 @@ public class CheckHandler {
     //TODO When using WPacket wrappers only, make this strictly WPacket param based only
 
     public boolean callSyncPacket(Object packet, long timestamp) {
+        if(!player.isInitialized()) {
+            return false;
+        }
         if(EVENTS.containsKey(packet.getClass())) {
             synchronized (EVENTS) {
                 ActionStore<Object>[] actions = (ActionStore<Object>[]) EVENTS.get(packet.getClass());

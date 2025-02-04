@@ -118,10 +118,9 @@ public class Speed extends Check {
                     && !player.getInfo().generalCancel) {
                 if(++buffer > 2) {
                     vl++;
-                    flag("p=%.1f%% dxz=%.3f a/g=%s,%s aimove=%.3f tags=%s",
+                    flag("p=%.1f%% dxz=%.3f a/g=%s,%stags=%s",
                             ratio, player.getMovement().getDeltaXZ(), player.getMovement().getAirTicks(),
-                            player.getMovement().getGroundTicks(),
-                            player.EMULATOR.getInput().getAiMoveSpeed(), tags.build());
+                            player.getMovement().getGroundTicks(), tags.build());
                     buffer = Math.min(5, buffer); //Preventing runaway flagging
                     cancel();
                 } else if(ratio > 250) {

@@ -1,6 +1,5 @@
 package dev.brighten.ac;
 
-import co.aikar.commands.BaseCommand;
 import co.aikar.commands.BukkitCommandManager;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import dev.brighten.ac.api.AnticheatAPI;
@@ -15,22 +14,16 @@ import dev.brighten.ac.handler.PacketHandler;
 import dev.brighten.ac.handler.entity.FakeEntityTracker;
 import dev.brighten.ac.handler.keepalive.KeepaliveProcessor;
 import dev.brighten.ac.handler.keepalive.actions.ActionManager;
-import dev.brighten.ac.handler.protocolsupport.ProtocolAPI;
 import dev.brighten.ac.logging.LoggerManager;
 import dev.brighten.ac.packet.handler.HandlerAbstract;
 import dev.brighten.ac.packet.listener.PacketProcessor;
 import dev.brighten.ac.utils.*;
 import dev.brighten.ac.utils.annotation.ConfigSetting;
 import dev.brighten.ac.utils.annotation.Init;
-import dev.brighten.ac.utils.annotation.Invoke;
 import dev.brighten.ac.utils.config.Configuration;
 import dev.brighten.ac.utils.config.ConfigurationProvider;
 import dev.brighten.ac.utils.config.YamlConfiguration;
 import dev.brighten.ac.utils.math.RollingAverageDouble;
-import dev.brighten.ac.utils.objects.RemoteClassLoader;
-import dev.brighten.ac.utils.reflections.Reflections;
-import dev.brighten.ac.utils.reflections.types.WrappedClass;
-import dev.brighten.ac.utils.reflections.types.WrappedField;
 import dev.brighten.ac.utils.reflections.types.WrappedMethod;
 import dev.brighten.ac.utils.timer.Timer;
 import dev.brighten.ac.utils.timer.impl.TickTimer;
@@ -40,12 +33,10 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.PackagePrivate;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.event.HandlerList;
-import org.bukkit.event.Listener;
-import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import javax.annotation.Nonnull;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
@@ -53,13 +44,12 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.logging.Level;
 
 @Getter
 @NoArgsConstructor
 @Init
-@MavenLibrary(groupId = "co.aikar", artifactId = "acf-bukkit", version = "0.5.1", repo = @Repository(url = "https://nexus.funkemunky.cc/content/repositories/releases/"))
-@MavenLibrary(groupId = "com.google.guava", artifactId = "guava", version = "21.0", repo = @Repository(url = "https://repo1.maven.org/maven2"))
-@MavenLibrary(groupId = "it.unimi.dsi", artifactId = "fastutil", version = "8.5.6", repo = @Repository(url = "https://repo1.maven.org/maven2"))
+@MavenLibrary(groupId = "it.unimi.dsi", artifactId = "fastutil", version = "8.5.11", repo = @Repository(url = "https://repo1.maven.org/maven2"))
 @MavenLibrary(groupId = "org.ow2.asm", artifactId = "asm", version = "9.4", repo = @Repository(url = "https://repo1.maven.org/maven2"))
 @MavenLibrary(groupId = "org.ow2.asm", artifactId = "asm-tree", version = "9.4", repo = @Repository(url = "https://repo1.maven.org/maven2"))
 public class Anticheat extends JavaPlugin {
@@ -97,11 +87,14 @@ public class Anticheat extends JavaPlugin {
 
     public void onEnable() {
         INSTANCE = this;
-        LibraryLoader.loadAll(getClass());
+        new LibraryLoader().loadAll(getClass());
 
         scheduler = Executors.newScheduledThreadPool(2, new ThreadFactoryBuilder()
                 .setNameFormat("Anticheat Schedular")
-                .setUncaughtExceptionHandler((t, e) -> RunUtils.task(e::printStackTrace))
+                .setUncaughtExceptionHandler((t, e) -> {
+                    Anticheat.INSTANCE.getLogger().log(Level.SEVERE, "Error in scheduler thread!", e);
+                    RunUtils.task(e::printStackTrace);
+                })
                 .build());
 
         loadConfig();
@@ -116,7 +109,7 @@ public class Anticheat extends JavaPlugin {
 
         new AnticheatAPI();
 
-        ClassScanner.initializeScanner(getClass(), this,
+        new ClassScanner().initializeScanner(getClass(), this,
                 null,
                 true,
                 true);
@@ -169,7 +162,6 @@ public class Anticheat extends JavaPlugin {
         checkManager = null;
         keepaliveProcessor.keepAlives.cleanUp();
         keepaliveProcessor = null;
-        ProtocolAPI.INSTANCE = null;
         tps = null;
 
         logManager.shutDown();
@@ -202,6 +194,26 @@ public class Anticheat extends JavaPlugin {
         onTickEnd.clear();
         onTickEnd = null;
         packetHandler = null;
+    }
+
+    public void info(@Nonnull String s) {
+        getLogger().info(s);
+    }
+
+    public void warn(@Nonnull String s) {
+        getLogger().warning(s);
+    }
+
+    public void severe(@Nonnull String s) {
+        getLogger().severe(s);
+    }
+
+    public void warn(@Nonnull String s, Throwable t) {
+        getLogger().log(Level.WARNING, s, t);
+    }
+
+    public void severe(@Nonnull String s, Throwable t) {
+        getLogger().log(Level.SEVERE, s, t);
     }
 
     public void saveConfig() {

@@ -28,7 +28,6 @@ package dev.brighten.ac.depends;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import dev.brighten.ac.Anticheat;
-import dev.brighten.ac.utils.Log;
 import dev.brighten.ac.utils.annotation.NonnullByDefault;
 
 import java.io.File;
@@ -47,14 +46,14 @@ import java.util.Objects;
 public final class LibraryLoader {
 
     @SuppressWarnings("Guava")
-    private static final Supplier<URLClassLoaderAccess> URL_INJECTOR = Suppliers.memoize(() -> URLClassLoaderAccess.create((URLClassLoader) Anticheat.INSTANCE.getClass().getClassLoader()));
+    private final Supplier<URLClassLoaderAccess> URL_INJECTOR = Suppliers.memoize(() -> URLClassLoaderAccess.create((URLClassLoader) Anticheat.INSTANCE.getClass().getClassLoader()));
 
     /**
      * Resolves all {@link MavenLibrary} annotations on the given object.
      *
      * @param object the object to load libraries for.
      */
-    public static void loadAll(Object object) {
+    public void loadAll(Object object) {
         loadAll(object.getClass());
     }
 
@@ -63,7 +62,7 @@ public final class LibraryLoader {
      *
      * @param clazz the class to load libraries for.
      */
-    public static void loadAll(Class<?> clazz) {
+    public void loadAll(Class<?> clazz) {
         MavenLibrary[] libs = clazz.getDeclaredAnnotationsByType(MavenLibrary.class);
         if (libs == null) {
             return;
@@ -74,23 +73,23 @@ public final class LibraryLoader {
         }
     }
 
-    public static void load(String groupId, String artifactId, String version) {
+    public void load(String groupId, String artifactId, String version) {
         load(groupId, artifactId, version, "https://repo1.maven.org/maven2");
     }
 
-    public static void load(String groupId, String artifactId, String version, String repoUrl) {
+    public void load(String groupId, String artifactId, String version, String repoUrl) {
         load(new Dependency(groupId, artifactId, version, repoUrl));
     }
 
-    public static void load(Dependency d) {
-        Log.info(String.format("Loading dependency %s:%s:%s from %s", d.getGroupId(), d.getArtifactId(), d.getVersion(), d.getRepoUrl()));
+    public void load(Dependency d) {
+        Anticheat.INSTANCE.info(String.format("Loading dependency %s:%s:%s from %s", d.getGroupId(), d.getArtifactId(), d.getVersion(), d.getRepoUrl()));
         String name = d.getArtifactId() + "-" + d.getVersion();
 
         File saveLocation = new File(getLibFolder(), name + ".jar");
         if (!saveLocation.exists()) {
 
             try {
-                Log.info("Dependency '" + name + "' is not already in the libraries folder. Attempting to download...");
+                Anticheat.INSTANCE.info("Dependency '" + name + "' is not already in the libraries folder. Attempting to download...");
                 URL url = d.getUrl();
 
                 try (InputStream is = url.openStream()) {
@@ -101,7 +100,7 @@ public final class LibraryLoader {
                 e.printStackTrace();
             }
 
-            Log.info("Dependency '" + name + "' successfully downloaded.");
+            Anticheat.INSTANCE.info("Dependency '" + name + "' successfully downloaded.");
         }
 
         if (!saveLocation.exists()) {
@@ -114,10 +113,10 @@ public final class LibraryLoader {
             throw new RuntimeException("Unable to load dependency: " + saveLocation.toString(), e);
         }
 
-        Log.info("Loaded dependency '" + name + "' successfully.");
+        Anticheat.INSTANCE.info("Loaded dependency '" + name + "' successfully.");
     }
 
-    private static File getLibFolder() {
+    private File getLibFolder() {
         File pluginDataFolder = Anticheat.INSTANCE.getDataFolder();
         File libs = new File(pluginDataFolder, "libraries");
         libs.mkdirs();
@@ -125,7 +124,7 @@ public final class LibraryLoader {
     }
 
     @NonnullByDefault
-    public static final class Dependency {
+    public final class Dependency {
         private final String groupId;
         private final String artifactId;
         private final String version;

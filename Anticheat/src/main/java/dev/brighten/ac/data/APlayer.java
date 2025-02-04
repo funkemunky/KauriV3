@@ -17,7 +17,7 @@ import dev.brighten.ac.handler.VelocityHandler;
 import dev.brighten.ac.handler.block.BlockUpdateHandler;
 import dev.brighten.ac.handler.entity.FakeMob;
 import dev.brighten.ac.handler.keepalive.KeepAlive;
-import dev.brighten.ac.handler.protocolsupport.ProtocolAPI;
+import dev.brighten.ac.handler.protocolsupport.Protocol;
 import dev.brighten.ac.messages.Messages;
 import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.packet.handler.HandlerAbstract;
@@ -49,6 +49,7 @@ import org.bukkit.util.Vector;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 
@@ -121,6 +122,7 @@ public class APlayer {
         this.uuid = player.getUniqueId();
         this.playerConnection = MinecraftReflection.getPlayerConnection(player);
 
+        Anticheat.INSTANCE.getLogger().info("Constructored " + player.getName());
         load();
     }
 
@@ -137,13 +139,12 @@ public class APlayer {
 
         creation.reset();
 
-        // Grabbing the protocol version of the player.
-        Anticheat.INSTANCE.getScheduler().execute(() -> {
-            int numVersion = ProtocolAPI.INSTANCE.getPlayerVersion(getBukkitPlayer());
+        Anticheat.INSTANCE.getLogger().info("Loading " + getBukkitPlayer().getName());
 
-            for(int i = 0 ; i < 50 ; i++) {
-                Anticheat.INSTANCE.getLogger().info("Player version: " + numVersion);
-            }
+        // Grabbing the protocol version of the player.
+        Anticheat.INSTANCE.getScheduler().schedule(() -> {
+            Anticheat.INSTANCE.getLogger().info("Attempting Getting player version for " + getBukkitPlayer().getName());
+            int numVersion = Protocol.getProtocol().getPlayerVersion(getBukkitPlayer());
 
             playerVersion = ProtocolVersion.getVersion(numVersion);
 
@@ -210,7 +211,7 @@ public class APlayer {
                 }
             }, playerVersion.getVersion());
             initialized = true;
-        });
+        }, 100L, TimeUnit.MILLISECONDS);
 
         // Removing inventory achievement
         getBukkitPlayer().removeAchievement(Achievement.OPEN_INVENTORY);
