@@ -10,17 +10,25 @@ import dev.brighten.ac.utils.ClassScanner;
 import dev.brighten.ac.utils.Tuple;
 import dev.brighten.ac.utils.reflections.types.WrappedClass;
 import dev.brighten.ac.utils.reflections.types.WrappedField;
+import dev.brighten.ac.utils.timer.Timer;
+import dev.brighten.ac.utils.timer.impl.TickTimer;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.event.Event;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @RequiredArgsConstructor
 public class CheckHandler {
     private final Map<Class<?>, ActionStore<?>[]> EVENTS = new HashMap<>();
     private final Map<Class<?>, TimedActionStore<?>[]> EVENTS_TIMESTAMP = new HashMap<>();
     private final Map<Class<?>, CancellableActionStore<?>[]> EVENTS_CANCELLABLE = new HashMap<>();
-    private final Map<Class<?>, CancellableActionStore<?>[]> EVENTS_PRE_CANCELLABLE = new HashMap<>();
+
+    @Getter
+    private final Timer alertCountReset = new TickTimer(), lastPunish = new TickTimer();
+    @Getter
+    private final AtomicInteger alertCount = new AtomicInteger(0);
 
     private final Map<Class<? extends Check>, Check> checkCache = new HashMap<>();
 
@@ -28,7 +36,7 @@ public class CheckHandler {
 
     private final APlayer player;
 
-    private static final List<CheckStatic> TO_HOOK = new ArrayList<>();
+    public static final List<CheckStatic> TO_HOOK = new ArrayList<>();
 
     static {
         for (WrappedClass aClass : ClassScanner.getClasses(Hook.class)) {

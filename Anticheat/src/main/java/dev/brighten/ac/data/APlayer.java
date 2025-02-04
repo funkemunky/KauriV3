@@ -139,7 +139,13 @@ public class APlayer {
 
         // Grabbing the protocol version of the player.
         Anticheat.INSTANCE.getScheduler().execute(() -> {
-            playerVersion = ProtocolVersion.getVersion(ProtocolAPI.INSTANCE.getPlayerVersion(getBukkitPlayer()));
+            int numVersion = ProtocolAPI.INSTANCE.getPlayerVersion(getBukkitPlayer());
+
+            for(int i = 0 ; i < 50 ; i++) {
+                Anticheat.INSTANCE.getLogger().info("Player version: " + numVersion);
+            }
+
+            playerVersion = ProtocolVersion.getVersion(numVersion);
 
             RunUtils.task(() -> checkHandler.initChecks());
 
@@ -237,6 +243,7 @@ public class APlayer {
         this.info = null;
         this.lagInfo = null;
         this.movement = null;
+        this.checkHandler.shutdown();
         mob.despawn();
     }
 

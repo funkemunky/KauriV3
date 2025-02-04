@@ -75,6 +75,9 @@ public class JoinListener implements Listener {
 
     @EventHandler
     public void onJoin(PlayerJoinEvent event) {
+        for(int i = 0; i < 10 ; i++) {
+            Anticheat.INSTANCE.getLogger().info("Player joined. " + event.getPlayer().getName());
+        }
         APlayer player = Anticheat.INSTANCE.getPlayerRegistry().generate(event.getPlayer());
 
         if(Anticheat.INSTANCE.getPlayerRegistry().aplayerMap.containsKey(event.getPlayer().getUniqueId().hashCode())) {

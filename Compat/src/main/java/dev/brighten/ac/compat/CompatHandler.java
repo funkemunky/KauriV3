@@ -12,17 +12,11 @@ public abstract class CompatHandler {
 
     public abstract boolean isGliding(Player player);
 
-    private static CompatHandler INSTANCE;
-
     public static CompatHandler getINSTANCE() {
-        if (INSTANCE == null) {
-            if(ProtocolVersion.getGameVersion().isOrAbove(ProtocolVersion.V1_13)) {
-                return new CompatHandler1_13();
-            } else if(ProtocolVersion.getGameVersion().isOrAbove(ProtocolVersion.V1_9)) {
-                return new CompatHandler1_9();
-            } else return new CompatHandler1_8();
-        }
-
-        return INSTANCE;
+        if(ProtocolVersion.getGameVersion().isOrAbove(ProtocolVersion.V1_13)) {
+            return new CompatHandler1_13();
+        } else if(ProtocolVersion.getGameVersion().isOrAbove(ProtocolVersion.V1_9)) {
+            return new CompatHandler1_9();
+        } else return new CompatHandler1_8();
     }
 }

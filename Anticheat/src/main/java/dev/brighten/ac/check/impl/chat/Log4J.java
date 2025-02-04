@@ -18,7 +18,7 @@ public class Log4J extends Check {
         super(player);
     }
 
-    private static final Pattern pattern = Pattern.compile("\\$\\{.*}");
+    private final Pattern pattern = Pattern.compile("\\$\\{.*}");
 
     @Bind
     WCancellable<WPacketPlayInChat> chatPacket = packet -> {

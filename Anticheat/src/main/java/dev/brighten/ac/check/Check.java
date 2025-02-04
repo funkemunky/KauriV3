@@ -10,8 +10,6 @@ import dev.brighten.ac.api.event.result.FlagResult;
 import dev.brighten.ac.api.event.result.PunishResult;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.utils.*;
-import dev.brighten.ac.utils.timer.Timer;
-import dev.brighten.ac.utils.timer.impl.TickTimer;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.val;
@@ -21,7 +19,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 public class Check implements ECheck {
@@ -37,8 +34,6 @@ public class Check implements ECheck {
     @Getter
     @Setter
     private int punishVl;
-    private static final Timer alertCountReset = new TickTimer(), lastPunish = new TickTimer();
-    private static final AtomicInteger alertCount = new AtomicInteger(0);
 
     public static Set<UUID> alertsEnabled = new HashSet<>();
 
@@ -191,12 +186,12 @@ public class Check implements ECheck {
            Anticheat.INSTANCE.getLogManager()
                    .insertLog(player, checkData, vl, System.currentTimeMillis(), info);
 
-           if(alertCountReset.isPassed(20)) {
-               alertCount.set(0);
-               alertCountReset.reset();
+           if(player.getCheckHandler().getAlertCountReset().isPassed(20)) {
+               player.getCheckHandler().getAlertCount().set(0);
+               player.getCheckHandler().getAlertCountReset().reset();
            }
 
-           if(alertCount.incrementAndGet() < 80) {
+           if(player.getCheckHandler().getAlertCount().incrementAndGet() < 80) {
                //Sending Discord webhook alert
 
                List<BaseComponent> toSend = new ArrayList<>();
@@ -223,7 +218,7 @@ public class Check implements ECheck {
                            .ifPresent(apl -> apl.getBukkitPlayer().spigot().sendMessage(toSend
                                    .toArray(new BaseComponent[0])));
                }
-               alertCountReset.reset();
+               player.getCheckHandler().getAlertCountReset().reset();
            }
            if(punish && vl >= punishVl) {
                punish();
@@ -232,9 +227,9 @@ public class Check implements ECheck {
     }
 
     public void punish() {
-        if(!punishable || lastPunish.isNotPassed(20)) return;
+        if(!punishable || player.getCheckHandler().getLastPunish().isNotPassed(20)) return;
 
-        lastPunish.reset();
+        player.getCheckHandler().getLastPunish().reset();
 
         List<String> commands = CheckConfig.punishmentCommands.stream().map(this::addPlaceHolders)
                 .collect(Collectors.toList());

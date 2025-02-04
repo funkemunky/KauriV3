@@ -3,12 +3,15 @@ package dev.brighten.ac.check;
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.utils.ClassScanner;
 import dev.brighten.ac.utils.reflections.types.WrappedClass;
+import dev.brighten.ac.utils.timer.Timer;
+import dev.brighten.ac.utils.timer.impl.TickTimer;
 import lombok.Getter;
 import lombok.val;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Getter
 public class CheckManager {
@@ -34,7 +37,7 @@ public class CheckManager {
 
         Optional<CheckSettings> settings = getConfigSettings(checkData.checkId());
 
-        if(!settings.isPresent()) {
+        if(settings.isEmpty()) {
             generateConfigSettings(checkData);
             settings = Optional.of(CheckSettings.settingsFromData(checkData));
         }
