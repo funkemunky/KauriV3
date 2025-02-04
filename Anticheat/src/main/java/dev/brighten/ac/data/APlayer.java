@@ -113,6 +113,8 @@ public class APlayer {
     @Setter
     @Getter
     private boolean sendingPackets;
+    @Getter
+    private boolean initialized = false;
 
     public APlayer(Player player) {
         this.bukkitPlayer = player;
@@ -201,6 +203,7 @@ public class APlayer {
                     return new Block();
                 }
             }, playerVersion.getVersion());
+            initialized = true;
         });
 
         // Removing inventory achievement
