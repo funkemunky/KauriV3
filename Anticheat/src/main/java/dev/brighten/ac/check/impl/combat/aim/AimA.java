@@ -5,6 +5,7 @@ import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.data.APlayer;
+import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
 import dev.brighten.ac.utils.Color;
 import dev.brighten.ac.utils.MathUtils;
@@ -12,7 +13,7 @@ import dev.brighten.ac.utils.annotation.Bind;
 import dev.brighten.ac.utils.timer.Timer;
 import dev.brighten.ac.utils.timer.impl.TickTimer;
 
-@CheckData(name = "Aim (A)", checkId = "aima", type = CheckType.COMBAT)
+@CheckData(name = "Aim (A)", checkId = "aima", type = CheckType.COMBAT, maxVersion = ProtocolVersion.v_1_21_4)
 public class AimA extends Check {
     public AimA(APlayer player) {
         super(player);

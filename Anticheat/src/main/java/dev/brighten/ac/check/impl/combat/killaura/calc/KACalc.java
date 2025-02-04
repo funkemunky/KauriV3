@@ -18,6 +18,7 @@ import org.bukkit.util.Vector;
 import java.util.List;
 import java.util.Optional;
 
+@Hook
 public class KACalc extends KListener {
     public KACalc(APlayer player) {
         super(player);

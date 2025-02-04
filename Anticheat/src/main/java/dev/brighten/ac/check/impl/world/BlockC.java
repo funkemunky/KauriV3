@@ -5,12 +5,13 @@ import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.WTimedAction;
 import dev.brighten.ac.data.APlayer;
+import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInBlockPlace;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
 import dev.brighten.ac.utils.KLocation;
 import dev.brighten.ac.utils.annotation.Bind;
 
-@CheckData(name = "Block (C)", checkId = "blockc", type = CheckType.INTERACT)
+@CheckData(name = "Block (C)", checkId = "blockc", type = CheckType.INTERACT, maxVersion = ProtocolVersion.v_1_21_4)
 public class BlockC extends Check {
 
     private long lastPlace;

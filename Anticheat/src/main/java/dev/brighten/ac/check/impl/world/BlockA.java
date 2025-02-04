@@ -5,6 +5,7 @@ import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.data.APlayer;
+import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInBlockPlace;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
 import dev.brighten.ac.utils.BlockUtils;
@@ -24,7 +25,7 @@ import java.util.Optional;
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 
-@CheckData(name = "Block (A)", checkId = "blocka", type = CheckType.INTERACT)
+@CheckData(name = "Block (A)", checkId = "blocka", type = CheckType.INTERACT, maxVersion = ProtocolVersion.v_1_21_4)
 public class BlockA extends Check {
     public BlockA(APlayer player) {
         super(player);

@@ -5,10 +5,11 @@ import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.impl.combat.killaura.calc.RotationCheck;
 import dev.brighten.ac.data.APlayer;
+import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.utils.EntityLocation;
 import dev.brighten.ac.utils.Tuple;
 
-@CheckData(name = "KillAura (Zero)", checkId = "kacalczero", type = CheckType.KILLAURA)
+@CheckData(name = "KillAura (Zero)", checkId = "kacalczero", type = CheckType.KILLAURA, maxVersion = ProtocolVersion.v_1_21_4)
 public class KAZero extends Check implements RotationCheck {
     public KAZero(APlayer player) {
         super(player);

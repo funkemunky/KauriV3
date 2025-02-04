@@ -5,11 +5,12 @@ import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.data.APlayer;
+import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.utils.annotation.Bind;
 import org.bukkit.event.inventory.InventoryAction;
 import org.bukkit.event.inventory.InventoryClickEvent;
 
-@CheckData(name = "Inventory (FastClick)", checkId = "inventoryd", type = CheckType.INVENTORY)
+@CheckData(name = "Inventory (FastClick)", checkId = "inventoryd", type = CheckType.INVENTORY, maxVersion = ProtocolVersion.v_1_21_4)
 public class InventoryFastClick extends Check {
     public InventoryFastClick(APlayer player) {
         super(player);

@@ -5,11 +5,12 @@ import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.WTimedAction;
 import dev.brighten.ac.data.APlayer;
+import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInUseEntity;
 import dev.brighten.ac.utils.annotation.Bind;
 
-@CheckData(name = "Order (Use)", checkId = "order_use", type = CheckType.ORDER)
+@CheckData(name = "Order (Use)", checkId = "order_use", type = CheckType.ORDER, maxVersion = ProtocolVersion.v_1_21_4)
 public class UseEntity extends Check {
 
     private long lastFlying;

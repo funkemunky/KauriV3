@@ -5,6 +5,7 @@ import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.data.APlayer;
+import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInArmAnimation;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInUseEntity;
@@ -13,7 +14,7 @@ import lombok.val;
 
 import java.util.List;
 
-@CheckData(name = "KillAura (Bot)", checkId = "kabot", type = CheckType.KILLAURA)
+@CheckData(name = "KillAura (Bot)", checkId = "kabot", type = CheckType.KILLAURA, maxVersion = ProtocolVersion.v_1_21_4)
 public class KABot extends Check {
 
     public KABot(APlayer player) {

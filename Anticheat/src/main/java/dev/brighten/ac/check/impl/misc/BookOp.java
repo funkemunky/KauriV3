@@ -5,11 +5,12 @@ import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.data.APlayer;
+import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.utils.annotation.Bind;
 import lombok.val;
 import org.bukkit.event.player.PlayerEditBookEvent;
 
-@CheckData(name = "BookOp", checkId = "bookop", type = CheckType.EXPLOIT)
+@CheckData(name = "BookOp", checkId = "bookop", type = CheckType.EXPLOIT, maxVersion = ProtocolVersion.v_1_21_4)
 public class BookOp extends Check {
     public BookOp(APlayer player) {
         super(player);

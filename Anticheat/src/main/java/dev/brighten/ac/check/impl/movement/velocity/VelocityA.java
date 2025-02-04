@@ -5,11 +5,12 @@ import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.data.APlayer;
+import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
 import dev.brighten.ac.utils.annotation.Bind;
 import org.bukkit.util.Vector;
 
-@CheckData(name = "Velocity (Vertical)", checkId = "velocitya", type = CheckType.MOVEMENT)
+@CheckData(name = "Velocity (Vertical)", checkId = "velocitya", type = CheckType.MOVEMENT, maxVersion = ProtocolVersion.v_1_21_4)
 public class VelocityA extends Check {
 
     private Vector currentVelocity = null;

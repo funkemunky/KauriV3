@@ -5,11 +5,12 @@ import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.data.APlayer;
+import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
 import dev.brighten.ac.utils.MathUtils;
 import dev.brighten.ac.utils.annotation.Bind;
 
-@CheckData(name = "Aim (C)", checkId = "aimc", type = CheckType.COMBAT)
+@CheckData(name = "Aim (C)", checkId = "aimc", type = CheckType.COMBAT, maxVersion = ProtocolVersion.v_1_21_4)
 public class AimC extends Check {
 
     public AimC(APlayer player) {
