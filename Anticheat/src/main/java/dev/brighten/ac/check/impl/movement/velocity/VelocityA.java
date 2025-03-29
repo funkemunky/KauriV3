@@ -10,7 +10,7 @@ import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
 import dev.brighten.ac.utils.annotation.Bind;
 import org.bukkit.util.Vector;
 
-@CheckData(name = "Velocity (Vertical)", checkId = "velocitya", type = CheckType.MOVEMENT, maxVersion = ProtocolVersion.v_1_21_4)
+@CheckData(name = "Velocity (Vertical)", checkId = "velocitya", type = CheckType.MOVEMENT, maxVersion = ProtocolVersion.V1_21_4)
 public class VelocityA extends Check {
 
     private Vector currentVelocity = null;

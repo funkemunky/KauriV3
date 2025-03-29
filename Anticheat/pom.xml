@@ -16,7 +16,6 @@
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
-        <kotlin.version>1.7.10</kotlin.version>
     </properties>
 
     <repositories>
@@ -75,8 +74,8 @@
                             <minimizeJar>true</minimizeJar>
                             <relocations>
                                 <relocation>
-                                    <pattern>com.google.common</pattern>
-                                    <shadedPattern>dev.brighten.anticheat.libs.com.google.common</shadedPattern>
+                                    <pattern>com.google</pattern>
+                                    <shadedPattern>dev.brighten.anticheat.libs.com.google</shadedPattern>
                                 </relocation>
                                 <relocation>
                                     <pattern>org.dizitart</pattern>
@@ -153,6 +152,11 @@
             <artifactId>1.8.8</artifactId>
             <version>1.8.8</version>
             <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.reflections</groupId>
+            <artifactId>reflections</artifactId>
+            <version>0.10.2</version> <!-- or latest -->
         </dependency>
         <dependency>
             <groupId>org.github.spigot</groupId>

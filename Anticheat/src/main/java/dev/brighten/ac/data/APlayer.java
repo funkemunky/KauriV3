@@ -148,7 +148,7 @@ public class APlayer {
 
             playerVersion = ProtocolVersion.getVersion(numVersion);
 
-            RunUtils.task(() -> checkHandler.initChecks());
+            Anticheat.INSTANCE.getRunUtils().task(() -> checkHandler.initChecks());
 
             if(ProtocolVersion.getGameVersion().isBelow(ProtocolVersion.V1_9)) {
                 this.wrappedPlayer = new LegacyPlayer(getBukkitPlayer());

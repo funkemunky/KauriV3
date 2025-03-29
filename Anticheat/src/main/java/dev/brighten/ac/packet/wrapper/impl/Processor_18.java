@@ -940,6 +940,43 @@ public class Processor_18 implements PacketConverter {
         }
     }
 
+    @Override
+    public WPacketPlayInHeldItemSlot processHeldItemSlot(Object object) {
+        PacketPlayInHeldItemSlot packet = (PacketPlayInHeldItemSlot) object;
+
+        return WPacketPlayInHeldItemSlot.builder()
+                .handIndex(packet.a())
+                .build();
+    }
+
+    @Override
+    public WPacketPlayOutHeldItemSlot processOutHeldItemSlot(Object object) {
+        PacketPlayOutHeldItemSlot packet = (PacketPlayOutHeldItemSlot) object;
+        PacketDataSerializer serialized = serialize(packet);
+
+        int handIndex = serialized.readByte();
+
+        return WPacketPlayOutHeldItemSlot.builder()
+                .handIndex(handIndex)
+                .build();
+    }
+
+    @Override
+    public Object processOutHeldItemSlot(WPacketPlayOutHeldItemSlot packet) {
+        PacketPlayOutHeldItemSlot vanilla = new PacketPlayOutHeldItemSlot();
+        PacketDataSerializer serialized = new PacketDataSerializer(Unpooled.buffer());
+
+        serialized.writeByte(packet.getHandIndex());
+
+        try {
+            vanilla.a(serialized);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        return vanilla;
+    }
+
     private static void processChunk(byte[] locs, int size, int chunkX, int chunkZ, boolean groundUp,
                                 dev.brighten.ac.handler.block.Chunk chunk) {
         ChunkSection[] sections = new ChunkSection[16];

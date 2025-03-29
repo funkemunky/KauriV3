@@ -15,8 +15,6 @@ public class NoFallB extends Check {
         super(player);
     }
 
-    private static double divisor = 1. / 64.;
-
     private int airBuffer, groundBuffer;
 
     @Bind
@@ -48,6 +46,7 @@ public class NoFallB extends Check {
             }
         } else if(groundBuffer > 0) groundBuffer--;
 
+        double divisor = 1. / 64.;
         final boolean dground = Math.abs(player.getMovement().getDeltaY()) % divisor < 1E-4
                 && player.getInfo().isNearGround();
 

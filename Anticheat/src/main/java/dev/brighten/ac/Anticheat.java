@@ -1,15 +1,18 @@
 package dev.brighten.ac;
 
-import co.aikar.commands.BukkitCommandManager;
+import co.aikar.commands.*;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import dev.brighten.ac.api.AnticheatAPI;
 import dev.brighten.ac.check.Check;
+import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.CheckManager;
+import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.data.PlayerRegistry;
 import dev.brighten.ac.data.info.CheckHandler;
 import dev.brighten.ac.depends.LibraryLoader;
 import dev.brighten.ac.depends.MavenLibrary;
 import dev.brighten.ac.depends.Repository;
+import dev.brighten.ac.handler.BBRevealHandler;
 import dev.brighten.ac.handler.PacketHandler;
 import dev.brighten.ac.handler.entity.FakeEntityTracker;
 import dev.brighten.ac.handler.keepalive.KeepaliveProcessor;
@@ -33,6 +36,8 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.PackagePrivate;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
+import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 import org.bukkit.event.HandlerList;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -45,6 +50,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 
 @Getter
 @NoArgsConstructor
@@ -65,6 +71,7 @@ public class Anticheat extends JavaPlugin {
     private KeepaliveProcessor keepaliveProcessor;
     private PacketHandler packetHandler;
     private LoggerManager logManager;
+    private RunUtils runUtils;
 
     private FakeEntityTracker fakeTracker;
     private int currentTick;
@@ -89,11 +96,13 @@ public class Anticheat extends JavaPlugin {
         INSTANCE = this;
         new LibraryLoader().loadAll(getClass());
 
+        runUtils = new RunUtils();
+
         scheduler = Executors.newScheduledThreadPool(2, new ThreadFactoryBuilder()
                 .setNameFormat("Anticheat Schedular")
                 .setUncaughtExceptionHandler((t, e) -> {
                     Anticheat.INSTANCE.getLogger().log(Level.SEVERE, "Error in scheduler thread!", e);
-                    RunUtils.task(e::printStackTrace);
+                    Anticheat.INSTANCE.getRunUtils().task(e::printStackTrace);
                 })
                 .build());
 
@@ -101,6 +110,55 @@ public class Anticheat extends JavaPlugin {
 
         commandManager = new BukkitCommandManager(this);
         commandManager.enableUnstableAPI("help");
+
+        BukkitCommandCompletions cc = (BukkitCommandCompletions) Anticheat.INSTANCE.getCommandManager()
+                .getCommandCompletions();
+
+        cc.registerCompletion("checks", (c) -> Anticheat.INSTANCE.getCheckManager().getCheckClasses().keySet()
+                .stream()  .sorted(Comparator.naturalOrder())
+                .map(name -> name.replace(" ", "_")).collect(Collectors.toList()));
+
+        cc.registerCompletion("checkIds", (c) -> Anticheat.INSTANCE.getCheckManager().getCheckClasses().values()
+                .stream().map(s -> s.getCheckClass().getAnnotation(CheckData.class).checkId())
+                .sorted(Comparator.naturalOrder()).collect(Collectors.toList()));
+
+        BukkitCommandContexts contexts = (BukkitCommandContexts) Anticheat.INSTANCE.getCommandManager()
+                .getCommandContexts();
+
+        contexts.registerOptionalContext(Integer.class, c -> {
+            String arg = c.popFirstArg();
+
+            if(arg == null) return null;
+            try {
+                return Integer.parseInt(arg);
+            } catch(NumberFormatException e) {
+                throw new InvalidCommandArgument(String.format(Color.Red
+                        + "Argument \"%s\" is not an integer", arg));
+            }
+        });
+
+        contexts.registerOptionalContext(APlayer.class, c -> {
+            if(c.hasFlag("other")) {
+                String arg = c.popFirstArg();
+
+                Player onlinePlayer = Bukkit.getPlayer(arg);
+
+                if(onlinePlayer != null) {
+                    return Anticheat.INSTANCE.getPlayerRegistry().getPlayer(onlinePlayer.getUniqueId())
+                            .orElse(null);
+                } else return null;
+            } else {
+                CommandSender sender = c.getSender();
+
+                if(sender instanceof Player) {
+                    return Anticheat.INSTANCE.getPlayerRegistry().getPlayer(((Player) sender).getUniqueId())
+                            .orElse(null);
+                }
+                else if(!c.isOptional()) throw new InvalidCommandArgument(MessageKeys.NOT_ALLOWED_ON_CONSOLE,
+                        false, new String[0]);
+                else return null;
+            }
+        });
 
         new CommandPropertiesManager(commandManager, getDataFolder(),
                 getResource("command-messages.properties"));
@@ -152,8 +210,10 @@ public class Anticheat extends JavaPlugin {
         Bukkit.getOnlinePlayers().forEach(HandlerAbstract.getHandler()::add);
     }
     public void onDisable() {
-        scheduler.shutdown();
+        scheduler.shutdownNow();
         commandManager.unregisterCommands();
+        commandManager.getCommandCompletions().unregisterCompletion("checks");
+        commandManager.getCommandCompletions().unregisterCompletion("checkIds");
         commandManager = null;
 
         checkManager.getCheckClasses().clear();
@@ -172,6 +232,7 @@ public class Anticheat extends JavaPlugin {
         playerRegistry.unregisterAll();
         playerRegistry = null;
         CheckHandler.TO_HOOK.clear();
+        BBRevealHandler.INSTANCE = null;
 
         try {
             injector.eject();
@@ -183,17 +244,24 @@ public class Anticheat extends JavaPlugin {
         fakeTracker.despawnAll();
         fakeTracker = null;
 
+        worldInfoMap.clear();
+
+        actionManager = null;
+
         // Unregistering packet listeners for players
         HandlerAbstract.getHandler().shutdown();
         HandlerList.unregisterAll(this);
         packetProcessor.shutdown();
         packetProcessor = null;
 
-        AnticheatAPI.INSTANCE = null;
+        packetHandler = null;
+        injector = null;
 
         onTickEnd.clear();
         onTickEnd = null;
         packetHandler = null;
+
+        AnticheatAPI.INSTANCE = null;
     }
 
     public void info(@Nonnull String s) {
@@ -278,7 +346,7 @@ public class Anticheat extends JavaPlugin {
         lastTickLag = new TickTimer();
         AtomicInteger ticks = new AtomicInteger();
         AtomicLong lastTimeStamp = new AtomicLong(0);
-        RunUtils.taskTimer(task -> {
+        Anticheat.INSTANCE.getRunUtils().taskTimer(task -> {
             ticks.getAndIncrement();
             currentTick++;
             long currentTime = System.currentTimeMillis();

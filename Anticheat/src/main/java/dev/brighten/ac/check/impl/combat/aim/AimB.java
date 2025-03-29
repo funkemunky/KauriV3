@@ -11,7 +11,7 @@ import dev.brighten.ac.utils.MathUtils;
 import dev.brighten.ac.utils.timer.Timer;
 import dev.brighten.ac.utils.timer.impl.TickTimer;
 
-@CheckData(name = "Aim (B)", checkId = "aimb", type = CheckType.COMBAT, experimental = true, maxVersion = ProtocolVersion.v_1_21_4)
+@CheckData(name = "Aim (B)", checkId = "aimb", type = CheckType.COMBAT, experimental = true, maxVersion = ProtocolVersion.V1_21_4)
 public class AimB extends Check {
     public AimB(APlayer player) {
         super(player);

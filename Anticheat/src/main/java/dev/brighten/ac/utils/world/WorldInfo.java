@@ -1,5 +1,6 @@
 package dev.brighten.ac.utils.world;
 
+import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.utils.RunUtils;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
@@ -27,7 +28,7 @@ public class WorldInfo {
 
     public WorldInfo(World world) {
         this.worldId = world.getUID();
-        task = RunUtils.taskTimer(task -> {
+        task = Anticheat.INSTANCE.getRunUtils().taskTimer(task -> {
             synchronized (entityMap) {
                 entityMap.clear();
                 for (Entity entity : world.getEntities()) {
@@ -57,7 +58,7 @@ public class WorldInfo {
                 return null;
             });
 
-            RunUtils.task(task);
+            Anticheat.INSTANCE.getRunUtils().task(task);
 
             try {
                 return task.get(100, TimeUnit.MILLISECONDS);

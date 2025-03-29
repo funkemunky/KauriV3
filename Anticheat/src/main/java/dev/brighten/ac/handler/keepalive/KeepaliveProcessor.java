@@ -84,7 +84,7 @@ public class KeepaliveProcessor implements BukkitRunnable {
 
     public void start() {
         if (task == null) {
-            task = RunUtils.taskTimer(this, 20L, 0L);
+            task = Anticheat.INSTANCE.getRunUtils().taskTimer(this, 20L, 0L);
         }
     }
 

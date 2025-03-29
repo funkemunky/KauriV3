@@ -71,7 +71,7 @@ public class ModernHandler extends HandlerAbstract {
 
         };
 
-        RunUtils.task(() -> {
+        Anticheat.INSTANCE.getRunUtils().task(() -> {
             Object mcServer = CraftReflection.getMinecraftServer();
             Object serverConnection = MinecraftReflection.getServerConnection(mcServer);
             boolean looking = true;

@@ -1,8 +1,8 @@
 package dev.brighten.ac.command;
 
 import co.aikar.commands.BaseCommand;
-import co.aikar.commands.annotation.Optional;
 import co.aikar.commands.annotation.*;
+import co.aikar.commands.annotation.Optional;
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.check.CheckSettings;
 import dev.brighten.ac.gui.Logs;
@@ -40,7 +40,7 @@ public class LogsCommand extends BaseCommand {
 
         sender.sendMessage(Color.Red + "Getting logs for " + playername + "...");
 
-        RunUtils.taskAsync(() -> {
+        Anticheat.INSTANCE.getRunUtils().taskAsync(() -> {
             if(sender instanceof Player) {
                 if(check.equals("none")) {
                     Logs logs = new Logs(uuid);
@@ -120,7 +120,7 @@ public class LogsCommand extends BaseCommand {
 
         sender.sendMessage(Color.Red + "Getting logs for " + playername + "...");
 
-        RunUtils.taskAsync(() -> {
+        Anticheat.INSTANCE.getRunUtils().taskAsync(() -> {
             if(sender instanceof Player) {
                 Logs logs = new Logs(uuid);
 
@@ -234,7 +234,7 @@ public class LogsCommand extends BaseCommand {
         });
     }
 
-    private static String readAll(Reader rd) throws IOException {
+    private String readAll(Reader rd) throws IOException {
         StringBuilder sb = new StringBuilder();
         int cp;
         while ((cp = rd.read()) != -1) {

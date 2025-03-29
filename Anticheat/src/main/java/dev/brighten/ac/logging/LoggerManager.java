@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.function.Consumer;
 
-import static org.dizitart.no2.filters.FluentFilter.*;
+import static org.dizitart.no2.filters.FluentFilter.where;
 
 
 public class LoggerManager {

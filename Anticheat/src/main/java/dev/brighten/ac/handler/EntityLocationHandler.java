@@ -38,7 +38,7 @@ public class EntityLocationHandler {
     public int streak;
     public AtomicBoolean clientHasEntity = new AtomicBoolean(false);
 
-    private static final EnumSet<EntityType> allowedEntityTypes = EnumSet.of(EntityType.ZOMBIE, EntityType.SHEEP,
+    private final EnumSet<EntityType> allowedEntityTypes = EnumSet.of(EntityType.ZOMBIE, EntityType.SHEEP,
             EntityType.BLAZE, EntityType.SKELETON, EntityType.PLAYER, EntityType.VILLAGER, EntityType.IRON_GOLEM,
             EntityType.WITCH, EntityType.COW, EntityType.CREEPER);
 
@@ -259,7 +259,7 @@ public class EntityLocationHandler {
         clientHasEntity.set(false);
     }
 
-    private static double[] offsets = new double[]{-1.25, 0, 1.25};
+    private double[] offsets = new double[]{-1.25, 0, 1.25};
 
     private void createFakeMob(int entityId, Location location) {
         if(!canCreateMob.contains(entityId)) return;

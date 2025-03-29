@@ -1,9 +1,10 @@
 package dev.brighten.ac.handler;
 
 import com.google.common.collect.Sets;
+import dev.brighten.ac.Anticheat;
+import dev.brighten.ac.compat.CompatHandler;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.data.obj.CMove;
-import dev.brighten.ac.compat.CompatHandler;
 import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
 import dev.brighten.ac.packet.wrapper.out.WPacketPlayOutPosition;
@@ -102,9 +103,9 @@ public class MovementHandler {
         from.setLoc(to);
     }
 
-    private static final boolean[] IS_OR_NOT = new boolean[]{true, false};
-    private static final boolean[] ALWAYS_FALSE = new boolean[1];
-    private static final int[] FULL_RANGE = new int[]{-1, 0, 1};
+    private final boolean[] IS_OR_NOT = new boolean[]{true, false};
+    private final boolean[] ALWAYS_FALSE = new boolean[1];
+    private final int[] FULL_RANGE = new int[]{-1, 0, 1};
 
     public void runEmulation(KLocation to, boolean isZeroThree) {
         /*
@@ -570,18 +571,10 @@ it
             } else {
                 loc1.setY(Math.max(origin.getY() + 0.6, loc1.getY()));
                 if(Math.random() > 0.2)
-                    RunUtils.taskLaterAsync(() -> player.getMob()
+                    Anticheat.INSTANCE.getRunUtils().taskLaterAsync(() -> player.getMob()
                             .teleport(loc1.getX(), loc1.getY(), loc1.getZ(), loc1.getYaw(), loc1.getPitch()), 5);
             }
         }
-    }
-
-    private static float getDeltaX(float yawDelta, float gcd) {
-        return MathHelper.ceiling_float_int(yawDelta / gcd);
-    }
-
-    private static float getDeltaY(float pitchDelta, float gcd) {
-        return MathHelper.ceiling_float_int(pitchDelta / gcd);
     }
 
     public void process() {
@@ -629,7 +622,7 @@ it
         sentPositionUpdate = false;
     }
 
-    private static final Set<WPacketPlayOutPosition.EnumPlayerTeleportFlags>
+    private final Set<WPacketPlayOutPosition.EnumPlayerTeleportFlags>
             relFlags = Sets.newHashSet(WPacketPlayOutPosition.EnumPlayerTeleportFlags.X,
             WPacketPlayOutPosition.EnumPlayerTeleportFlags.Y,
             WPacketPlayOutPosition.EnumPlayerTeleportFlags.Z,
@@ -648,7 +641,7 @@ it
         return pitchGCD < 0.0078125;
     }
 
-    public static float getExperimentalDeltaX(APlayer data) {
+    public float getExperimentalDeltaX(APlayer data) {
         float deltaPitch = data.getMovement().getDeltaYaw();
         float sens = data.getMovement().sensitivityX;
         float f = sens * 0.6f + .2f;
@@ -673,7 +666,7 @@ it
         } else return new double[]{1.54f, 1.62f};
     }
 
-    public static float getExperimentalDeltaY(APlayer data) {
+    public float getExperimentalDeltaY(APlayer data) {
         float deltaPitch = data.getMovement().getDeltaPitch();
         float sens = data.getMovement().sensitivityY;
         float f = sens * 0.6f + .2f;
@@ -682,49 +675,49 @@ it
         return deltaPitch / (calc * .15f);
     }
 
-    public static int sensToPercent(float sensitivity) {
+    public int sensToPercent(float sensitivity) {
         return MathHelper.floor_float(sensitivity / .5f * 100);
     }
 
-    public static float percentToSens(int percent) {
+    public float percentToSens(int percent) {
         return percent * .0070422534f;
     }
 
-    public static float getSensitivityFromYawGCD(float gcd) {
+    public float getSensitivityFromYawGCD(float gcd) {
         return ((float) Math.cbrt(yawToF2(gcd) / 8f) - .2f) / .6f;
     }
 
-    private static float getSensitivityFromPitchGCD(float gcd) {
+    private float getSensitivityFromPitchGCD(float gcd) {
         return ((float) Math.cbrt(pitchToF3(gcd) / 8f) - .2f) / .6f;
     }
 
-    private static float getF1FromYaw(float gcd) {
+    private float getF1FromYaw(float gcd) {
         float f = getFFromYaw(gcd);
 
         return f * f * f * 8;
     }
 
-    private static float getFFromYaw(float gcd) {
+    private float getFFromYaw(float gcd) {
         float sens = getSensitivityFromYawGCD(gcd);
         return sens * .6f + .2f;
     }
 
-    private static float getFFromPitch(float gcd) {
+    private float getFFromPitch(float gcd) {
         float sens = getSensitivityFromPitchGCD(gcd);
         return sens * .6f + .2f;
     }
 
-    private static float getF1FromPitch(float gcd) {
+    private float getF1FromPitch(float gcd) {
         float f = getFFromPitch(gcd);
 
         return (float) Math.pow(f, 3) * 8;
     }
 
-    private static float yawToF2(float yawDelta) {
+    private float yawToF2(float yawDelta) {
         return yawDelta / .15f;
     }
 
-    private static float pitchToF3(float pitchDelta) {
+    private float pitchToF3(float pitchDelta) {
         int b0 = pitchDelta >= 0 ? 1 : -1; //Checking for inverted mouse.
         return (pitchDelta / b0) / .15f;
     }

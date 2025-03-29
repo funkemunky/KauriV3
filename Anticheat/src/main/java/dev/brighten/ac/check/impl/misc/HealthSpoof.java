@@ -11,7 +11,7 @@ import dev.brighten.ac.packet.wrapper.objects.WrappedWatchableObject;
 import dev.brighten.ac.packet.wrapper.out.WPacketPlayOutEntityMetadata;
 import dev.brighten.ac.utils.annotation.Bind;
 
-@CheckData(name = "HealthSpoof", checkId = "healthspoof", type = CheckType.EXPLOIT, maxVersion = ProtocolVersion.v_1_21_4)
+@CheckData(name = "HealthSpoof", checkId = "healthspoof", type = CheckType.EXPLOIT, maxVersion = ProtocolVersion.V1_21_4)
 public class HealthSpoof extends Check {
 
     public HealthSpoof(APlayer player) {

@@ -13,7 +13,6 @@ import dev.brighten.ac.utils.annotation.Bind;
 import dev.brighten.ac.utils.math.IntVector;
 import dev.brighten.ac.utils.timer.Timer;
 import dev.brighten.ac.utils.timer.impl.TickTimer;
-import lombok.AllArgsConstructor;
 import lombok.val;
 import me.hydro.emulator.util.mcp.MathHelper;
 import org.bukkit.Material;
@@ -47,9 +46,11 @@ public class VelocityB extends Check {
     private double buffer;
     private float friction;
     private KLocation previousFrom;
-    private static final boolean[] TRUE_FALSE = new boolean[]{true, false};
+    private final boolean[] TRUE_FALSE = new boolean[]{true, false};
 
     public double strafe, forward;
+
+    private final List<Iteration> iterations = new ArrayList<>();
 
     @Bind
     WAction<WPacketPlayInFlying> flying = packet -> {
@@ -94,15 +95,15 @@ public class VelocityB extends Check {
                 float forward = iteration.f, strafe = iteration.s;
 
                 if (iteration.sneaking) {
-                    forward *= 0.3;
-                    strafe *= 0.3;
+                    forward *= 0.3F;
+                    strafe *= 0.3F;
                 }
 
                 float friction = CraftMagicNumbers.getBlock(underMaterial).frictionFactor;
 
                 if (iteration.using) {
-                    forward *= 0.2;
-                    strafe *= 0.2;
+                    forward *= 0.2F;
+                    strafe *= 0.2F;
                 }
 
                 //Multiplying by 0.98 like in client
@@ -161,8 +162,8 @@ public class VelocityB extends Check {
 
                     if (keyedMotion >= 1.0E-4F) {
                         keyedMotion = f5 / Math.max(1.0, Math.sqrt(keyedMotion));
-                        forward *= keyedMotion;
-                        strafe *= keyedMotion;
+                        forward *= (float) keyedMotion;
+                        strafe *= (float) keyedMotion;
 
                         final float yawSin = sin(iteration.fastMath,
                                 player.getMovement().getTo().getLoc().getYaw() * (float) Math.PI / 180.F),
@@ -232,15 +233,11 @@ public class VelocityB extends Check {
         previousFrom = player.getMovement().getFrom().getLoc().clone();
     };
 
-    @AllArgsConstructor
-    private static class Iteration {
-        final int f, s, fastMath;
-        final boolean sprinting, attack, using, sneaking, jumped;
+    private record Iteration(int f, int s, int fastMath, boolean sprinting, boolean attack, boolean using,
+                                 boolean sneaking, boolean jumped) {
     }
 
-    private static final List<Iteration> iterations = new ArrayList<>();
-
-    static {
+    {
         for (int f = -1; f < 2; f++) {
             for (int s = -1; s < 2; s++) {
                 for (boolean sprinting : TRUE_FALSE) {
@@ -263,38 +260,27 @@ public class VelocityB extends Check {
         }
     }
 
-    private static final float[] SIN_TABLE_FAST = new float[4096], SIN_TABLE_FAST_NEW = new float[4096];
-    private static final float[] SIN_TABLE = new float[65536];
-    private static final float radToIndex = roundToFloat(651.8986469044033D);
+    private final float[] SIN_TABLE_FAST = new float[4096], SIN_TABLE_FAST_NEW = new float[4096];
+    private final float[] SIN_TABLE = new float[65536];
+    private final float radToIndex = roundToFloat(651.8986469044033D);
 
-    public static float sin(int type, float value) {
-        switch (type) {
-            case 0:
-            default: {
-                return SIN_TABLE[(int) (value * 10430.378F) & 65535];
-            }
-            case 1: {
-                return SIN_TABLE_FAST[(int) (value * 651.8986F) & 4095];
-            }
-            case 2: {
-                return SIN_TABLE_FAST_NEW[(int) (value * radToIndex) & 4095];
-            }
-        }
+    public float sin(int type, float value) {
+        return switch (type) {
+            case 1 -> SIN_TABLE_FAST[(int) (value * 651.8986F) & 4095];
+            case 2 -> SIN_TABLE_FAST_NEW[(int) (value * radToIndex) & 4095];
+            default -> SIN_TABLE[(int) (value * 10430.378F) & 65535];
+        };
     }
 
-    public static float cos(int type, float value) {
-        switch (type) {
-            case 0:
-            default:
-                return SIN_TABLE[(int) (value * 10430.378F + 16384.0F) & 65535];
-            case 1:
-                return SIN_TABLE_FAST[(int) ((value + ((float) Math.PI / 2F)) * 651.8986F) & 4095];
-            case 2:
-                return SIN_TABLE_FAST_NEW[(int) (value * radToIndex + 1024.0F) & 4095];
-        }
+    public float cos(int type, float value) {
+        return switch (type) {
+            case 1 -> SIN_TABLE_FAST[(int) ((value + ((float) Math.PI / 2F)) * 651.8986F) & 4095];
+            case 2 -> SIN_TABLE_FAST_NEW[(int) (value * radToIndex + 1024.0F) & 4095];
+            default -> SIN_TABLE[(int) (value * 10430.378F + 16384.0F) & 65535];
+        };
     }
 
-    static {
+    {
         for (int i = 0; i < 65536; ++i) {
             SIN_TABLE[i] = (float) Math.sin((double) i * Math.PI * 2.0D / 65536.0D);
         }
@@ -312,7 +298,7 @@ public class VelocityB extends Check {
         }
     }
 
-    private static float roundToFloat(double d) {
+    private float roundToFloat(double d) {
         return (float) ((double) Math.round(d * 1.0E8D) / 1.0E8D);
     }
 }

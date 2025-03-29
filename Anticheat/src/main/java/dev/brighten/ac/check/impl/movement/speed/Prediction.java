@@ -5,6 +5,7 @@ import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.data.APlayer;
+import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
 import dev.brighten.ac.utils.Color;
 import dev.brighten.ac.utils.KLocation;
@@ -15,7 +16,7 @@ import lombok.val;
 import me.hydro.emulator.util.Vector;
 
 @CheckData(name = "Prediction", checkId = "predictiona", type = CheckType.MOVEMENT, experimental = true,
-        punishable = false)
+        punishable = false, maxVersion = ProtocolVersion.V1_21_4)
 public class Prediction extends Check {
     private float buffer;
     private boolean maybeSkippedPos;
@@ -81,7 +82,9 @@ public class Prediction extends Check {
                 }
 
                 if(++buffer > 5) {
-                    flag("%s", offset);
+                    if(player.getPlayerVersion().isBelow(ProtocolVersion.V1_20_1)) {
+                        flag("%s", offset);
+                    }
                     correctMovement(loc);
                     buffer = 4;
                 }

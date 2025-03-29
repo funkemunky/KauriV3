@@ -40,6 +40,14 @@ public class MathUtils {
         return sum / list.size();
     }
 
+    public static long getAverageLong(List<Long> list) {
+        long sum = 0;
+        for (long d : list) {
+            sum += d;
+        }
+        return sum / list.size();
+    }
+
     public static double getAverage(double[] list) {
         double sum = 0;
         for (double d : list) {

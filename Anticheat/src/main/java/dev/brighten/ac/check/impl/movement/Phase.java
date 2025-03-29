@@ -1,5 +1,6 @@
 package dev.brighten.ac.check.impl.movement;
 
+import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.api.check.CheckType;
 import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
@@ -75,7 +76,7 @@ public class Phase extends Check {
             POSITIONS.clear();
         } else if(teleportLoc != null) {
             final Location finalLoc = teleportLoc.clone(); // This is to make sure it isn't set null later.
-            RunUtils.task(() -> player.getBukkitPlayer().teleport(finalLoc));
+            Anticheat.INSTANCE.getRunUtils().task(() -> player.getBukkitPlayer().teleport(finalLoc));
             return true;
         }
 
@@ -85,7 +86,7 @@ public class Phase extends Check {
             final Location fromLoc = player.getMovement().getFrom().getLoc()
                     .toLocation(player.getBukkitPlayer().getWorld());
 
-            RunUtils.task(() -> player.getBukkitPlayer().teleport(fromLoc));
+            Anticheat.INSTANCE.getRunUtils().task(() -> player.getBukkitPlayer().teleport(fromLoc));
             return true;
         }
 
@@ -124,7 +125,7 @@ public class Phase extends Check {
         double totalDelta = dx + dy + dz;
 
         if(totalDelta > 0.0001) {
-            RunUtils.task(() -> {
+            Anticheat.INSTANCE.getRunUtils().task(() -> {
                 teleportLoc = calculatedTo
                         .toLocation(player.getBukkitPlayer().getWorld());
                 player.getBukkitPlayer().teleport(teleportLoc);

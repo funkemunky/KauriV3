@@ -78,7 +78,7 @@ public class GeneralListener implements Listener {
 
                     Location loc1 = coll.collisionPoint(1.2).toLocation(event.getTo().getWorld());
 
-                    RunUtils.taskLater(() -> {
+                    Anticheat.INSTANCE.getRunUtils().taskLater(() -> {
                         player.getMob().despawn();
                         player.getMob().spawn(true, loc1,
                                 new ArrayList<>(Collections.singletonList(
