@@ -91,12 +91,14 @@ public class FlyA extends Check {
         }
 
         // Vanilla wrapping the deltaY to 0 if it's less than a certain amount.
-        if(player.getPlayerVersion().isBelow(ProtocolVersion.V1_9)) {
-            if(Math.abs(predicted) < 0.005)
+        if(player.getPlayerVersion().isBelow(ProtocolVersion.V1_21_1)) {
+            if(player.getPlayerVersion().isBelow(ProtocolVersion.V1_9)) {
+                if(Math.abs(predicted) < 0.005)
+                    predicted = 0;
+            } else if(Math.abs(predicted) < 0.003) {
                 predicted = 0;
-        } else if(Math.abs(predicted) < 0.003) {
-            predicted = 0;
-            debug("Setting y to 0");
+                debug("Setting y to 0");
+            }
         }
 
         // Accounting for the potential vertical velocity

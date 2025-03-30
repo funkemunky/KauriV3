@@ -29,5 +29,6 @@ public class FlyC extends Check {
         if(acceleration < (player.getMovement().getDeltaXZ() < 0.1 ? -0.17 : -0.1)) {
             flag("acceleration=%.4f", acceleration);
         }
+        debug("acceleration=%.4f", acceleration);
     };
 }
