@@ -1,11 +1,11 @@
 package dev.brighten.ac.command;
 
-import co.aikar.commands.*;
+import co.aikar.commands.BaseCommand;
+import co.aikar.commands.CommandHelp;
 import co.aikar.commands.annotation.*;
 import co.aikar.commands.bukkit.contexts.OnlinePlayer;
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.check.Check;
-import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.handler.BBRevealHandler;
 import dev.brighten.ac.messages.Messages;
@@ -13,88 +13,22 @@ import dev.brighten.ac.packet.handler.HandlerAbstract;
 import dev.brighten.ac.utils.*;
 import dev.brighten.ac.utils.annotation.Init;
 import dev.brighten.ac.utils.msg.ChatBuilder;
-import dev.brighten.ac.utils.reflections.Reflections;
-import dev.brighten.ac.utils.reflections.types.WrappedClass;
-import dev.brighten.ac.utils.reflections.types.WrappedMethod;
-import it.unimi.dsi.fastutil.longs.LongArrayList;
-import it.unimi.dsi.fastutil.longs.LongList;
-import lombok.SneakyThrows;
 import lombok.val;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.minecraft.server.v1_8_R3.PacketPlayOutTitle;
-import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.craftbukkit.v1_8_R3.util.CraftChatMessage;
 import org.bukkit.entity.Player;
-import org.bukkit.plugin.InvalidDescriptionException;
-import org.bukkit.plugin.Plugin;
-import org.bukkit.plugin.PluginDescriptionFile;
 
-import java.io.*;
-import java.nio.ByteBuffer;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.stream.Collectors;
-import java.util.zip.CRC32;
 
 @Init(priority = Priority.LOW)
 @CommandAlias("kauri|anticheat|ac")
 @CommandPermission("anticheat.command")
 public class AnticheatCommand extends BaseCommand {
-
-    public AnticheatCommand() {
-        BukkitCommandCompletions cc = (BukkitCommandCompletions) Anticheat.INSTANCE.getCommandManager()
-                .getCommandCompletions();
-
-        cc.registerCompletion("checks", (c) -> Anticheat.INSTANCE.getCheckManager().getCheckClasses().keySet()
-                .stream()  .sorted(Comparator.naturalOrder())
-                .map(name -> name.replace(" ", "_")).collect(Collectors.toList()));
-
-        cc.registerCompletion("checkIds", (c) -> Anticheat.INSTANCE.getCheckManager().getCheckClasses().values()
-                .stream().map(s -> s.getCheckClass().getAnnotation(CheckData.class).checkId())
-                .sorted(Comparator.naturalOrder()).collect(Collectors.toList()));
-
-        BukkitCommandContexts contexts = (BukkitCommandContexts) Anticheat.INSTANCE.getCommandManager()
-                .getCommandContexts();
-
-        contexts.registerOptionalContext(Integer.class, c -> {
-            String arg = c.popFirstArg();
-
-            if(arg == null) return null;
-            try {
-                return Integer.parseInt(arg);
-            } catch(NumberFormatException e) {
-                throw new InvalidCommandArgument(String.format(Color.Red
-                        + "Argument \"%s\" is not an integer", arg));
-            }
-        });
-
-        contexts.registerOptionalContext(APlayer.class, c -> {
-            if(c.hasFlag("other")) {
-                String arg = c.popFirstArg();
-
-                Player onlinePlayer = Bukkit.getPlayer(arg);
-
-                if(onlinePlayer != null) {
-                    return Anticheat.INSTANCE.getPlayerRegistry().getPlayer(onlinePlayer.getUniqueId())
-                            .orElse(null);
-                } else return null;
-            } else {
-                CommandSender sender = c.getSender();
-                
-                if(sender instanceof Player) {
-                    return Anticheat.INSTANCE.getPlayerRegistry().getPlayer(((Player) sender).getUniqueId())
-                            .orElse(null);
-                }
-                else if(!c.isOptional()) throw new InvalidCommandArgument(MessageKeys.NOT_ALLOWED_ON_CONSOLE,
-                        false, new String[0]);
-                else return null;
-            }
-        });
-    }
 
     @HelpCommand
     @Syntax("")

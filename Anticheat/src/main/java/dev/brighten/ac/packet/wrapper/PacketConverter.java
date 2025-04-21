@@ -105,4 +105,10 @@ public interface PacketConverter {
     WPacketPlayOutExplosion processOutExplosion(Object packet);
 
     Object processOutExplosion(WPacketPlayOutExplosion packet);
+
+    WPacketPlayInHeldItemSlot processHeldItemSlot(Object object);
+
+    WPacketPlayOutHeldItemSlot processOutHeldItemSlot(Object object);
+
+    Object processOutHeldItemSlot(WPacketPlayOutHeldItemSlot packet);
 }

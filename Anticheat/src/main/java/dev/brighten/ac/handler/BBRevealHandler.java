@@ -34,7 +34,7 @@ public class BBRevealHandler implements Listener {
 
     public static BBRevealHandler INSTANCE;
 
-    private static final ItemStack wand = new ItemBuilder(Material.BLAZE_ROD).name("&6Box Wand")
+    private final ItemStack wand = new ItemBuilder(Material.BLAZE_ROD).name("&6Box Wand")
             .amount(1).build();
 
     public BBRevealHandler() {

@@ -3,10 +3,13 @@ package dev.brighten.ac.check;
 import dev.brighten.ac.api.check.CheckType;
 import dev.brighten.ac.packet.ProtocolVersion;
 
+import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.TYPE)
 public @interface CheckData {
     String name();
     String checkId();
@@ -20,5 +23,5 @@ public @interface CheckData {
     int punishVl() default 10;
 
     ProtocolVersion minVersion() default ProtocolVersion.V1_7;
-    ProtocolVersion maxVersion() default ProtocolVersion.v_1_20_1;
+    ProtocolVersion maxVersion() default ProtocolVersion.V1_21_4;
 }

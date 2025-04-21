@@ -5,12 +5,11 @@ import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.data.APlayer;
-import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.utils.annotation.Bind;
 import org.bukkit.block.Block;
 import org.bukkit.event.block.BlockPlaceEvent;
 
-@CheckData(name = "Block (B)", checkId = "blockb", type = CheckType.INTERACT, maxVersion = ProtocolVersion.v_1_21_4)
+@CheckData(name = "Block (B)", checkId = "blockb", type = CheckType.INTERACT)
 public class BlockB extends Check {
     public BlockB(APlayer player) {
         super(player);

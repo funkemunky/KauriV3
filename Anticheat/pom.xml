@@ -16,7 +16,6 @@
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
-        <kotlin.version>1.7.10</kotlin.version>
     </properties>
 
     <repositories>
@@ -75,8 +74,8 @@
                             <minimizeJar>true</minimizeJar>
                             <relocations>
                                 <relocation>
-                                    <pattern>com.google.common</pattern>
-                                    <shadedPattern>dev.brighten.anticheat.libs.com.google.common</shadedPattern>
+                                    <pattern>com.google</pattern>
+                                    <shadedPattern>dev.brighten.anticheat.libs.com.google</shadedPattern>
                                 </relocation>
                                 <relocation>
                                     <pattern>org.dizitart</pattern>
@@ -112,6 +111,12 @@
             <groupId>dev.brighten.ac</groupId>
             <artifactId>API</artifactId>
             <version>${version}</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>33.4.0-jre</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
@@ -155,6 +160,11 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
+            <groupId>org.reflections</groupId>
+            <artifactId>reflections</artifactId>
+            <version>0.10.2</version> <!-- or latest -->
+        </dependency>
+        <dependency>
             <groupId>org.github.spigot</groupId>
             <artifactId>1.7.10</artifactId>
             <version>1.7.10</version>
@@ -177,12 +187,6 @@
             <artifactId>viaversion-api</artifactId>
             <version>LATEST</version>
             <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>32.1.3-jre</version>
-            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.ow2.asm</groupId>

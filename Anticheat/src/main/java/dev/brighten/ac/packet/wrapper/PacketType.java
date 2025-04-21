@@ -95,6 +95,8 @@ public enum PacketType {
         switch (type) {
             case FLYING:
                 return convert.processFlying(object);
+            case CLIENT_HELM_ITEM:
+                return convert.processHeldItemSlot(object);
             case BLOCK_DIG:
                 return convert.processBlockDig(object);
             case USE_ENTITY:

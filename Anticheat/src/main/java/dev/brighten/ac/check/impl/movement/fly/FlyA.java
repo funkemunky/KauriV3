@@ -27,9 +27,6 @@ public class FlyA extends Check {
         super(player);
     }
 
-    private static final double DRAG = 0.98f;
-    private static final double HIT_BLOCK = 1. / 64.;
-
 
     private final Timer LAST_POS = new MillisTimer(), LAST_COLLIDE = new TickTimer();
     private float buffer;
@@ -47,6 +44,7 @@ public class FlyA extends Check {
         double lDeltaY = player.getMovement().getLDeltaY();
 
         // Initial acceleration prediction the vanilla client does
+        double DRAG = 0.98f;
         double predicted = (lDeltaY - 0.08) * DRAG;
         
         boolean jumped = false;
@@ -62,6 +60,7 @@ public class FlyA extends Check {
         double threshold = 0.000005;
 
         // Checking if they collided recently and accounting for the truncated deltaY
+        double HIT_BLOCK = 1. / 64.;
         if(LAST_COLLIDE.isNotPassed(2) // Loose to prevent any missed cases
                 && player.getMovement().getLDeltaY() > 0
                 && player.getMovement().getDeltaY() < player.getMovement().getLDeltaY()

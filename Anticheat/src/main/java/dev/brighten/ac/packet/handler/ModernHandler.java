@@ -7,7 +7,6 @@ import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.wrapper.PacketType;
 import dev.brighten.ac.packet.wrapper.WPacket;
 import dev.brighten.ac.packet.wrapper.login.WPacketHandshakingInSetProtocol;
-import dev.brighten.ac.utils.RunUtils;
 import dev.brighten.ac.utils.reflections.impl.CraftReflection;
 import dev.brighten.ac.utils.reflections.impl.MinecraftReflection;
 import dev.brighten.ac.utils.reflections.types.WrappedClass;
@@ -71,7 +70,7 @@ public class ModernHandler extends HandlerAbstract {
 
         };
 
-        RunUtils.task(() -> {
+        Anticheat.INSTANCE.getRunUtils().task(() -> {
             Object mcServer = CraftReflection.getMinecraftServer();
             Object serverConnection = MinecraftReflection.getServerConnection(mcServer);
             boolean looking = true;

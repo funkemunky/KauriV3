@@ -12,7 +12,9 @@ import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Vehicle;
 
-import java.util.*;
+import java.util.EnumMap;
+import java.util.EnumSet;
+import java.util.Optional;
 
 public class BlockUtils {
     private static final EnumMap<Material, XMaterial> matchMaterial = new EnumMap<>(Material.class);

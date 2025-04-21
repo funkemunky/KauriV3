@@ -90,7 +90,7 @@ public class Check implements ECheck {
                     : MovementUtils.findGroundLocation(player.getMovement().getFrom().getLoc()
                     .toLocation(player.getBukkitPlayer().getWorld()), 10);
 
-            RunUtils.task(() -> player.getBukkitPlayer().teleport(ground));
+            Anticheat.INSTANCE.getRunUtils().task(() -> player.getBukkitPlayer().teleport(ground));
         }
     }
 
@@ -107,7 +107,7 @@ public class Check implements ECheck {
 
         final Location CORRECTED = toLoc.toLocation(player.getBukkitPlayer().getWorld());
 
-        RunUtils.task(() -> player.getBukkitPlayer().teleport(CORRECTED));
+        Anticheat.INSTANCE.getRunUtils().task(() -> player.getBukkitPlayer().teleport(CORRECTED));
     }
 
     public void debug(String information, Object... variables) {
@@ -143,12 +143,12 @@ public class Check implements ECheck {
         return Optional.empty();
     }
 
-    static List<TextComponent> devComponents = new ArrayList<>(), components = new ArrayList<>();
+    static final TextComponent[] devComponents, components;
     static {
-
+        List<TextComponent> devList = new ArrayList<>(), flagList = new ArrayList<>();
         for (BaseComponent dev : new ComponentBuilder("[").color(ChatColor.DARK_GRAY).append("Dev")
                 .color(ChatColor.RED).append("]").color(ChatColor.DARK_GRAY).create()) {
-            devComponents.add((TextComponent)dev);
+            devList.add((TextComponent)dev);
         }
 
         BaseComponent[] textComp = new ComponentBuilder("[").color(ChatColor.DARK_GRAY).append("!")
@@ -158,9 +158,12 @@ public class Check implements ECheck {
                 .color(ChatColor.YELLOW).append(")").color(ChatColor.DARK_GRAY).create();
 
         for (BaseComponent bc : textComp) {
-            devComponents.add(new TextComponent((TextComponent)bc));
-            components.add(new TextComponent((TextComponent)bc));
+            devList.add(new TextComponent((TextComponent)bc));
+            flagList.add(new TextComponent((TextComponent)bc));
         }
+
+        devComponents = devList.toArray(new TextComponent[0]);
+        components = flagList.toArray(new TextComponent[0]);
     }
 
     public void flag(String information, Object... variables) {
@@ -241,7 +244,7 @@ public class Check implements ECheck {
         }
         PunishResult finalResult = result;
         if(finalResult != null && finalResult.getCommands() != null && !finalResult.isCancelled()) {
-            RunUtils.task(() -> {
+            Anticheat.INSTANCE.getRunUtils().task(() -> {
                 for (String punishmentCommand : finalResult.getCommands()) {
                     Bukkit.dispatchCommand(Bukkit.getConsoleSender(), punishmentCommand);
                 }

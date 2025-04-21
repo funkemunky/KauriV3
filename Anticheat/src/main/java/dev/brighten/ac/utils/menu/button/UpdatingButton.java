@@ -1,6 +1,6 @@
 package dev.brighten.ac.utils.menu.button;
 
-import dev.brighten.ac.utils.RunUtils;
+import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.utils.menu.Menu;
 import dev.brighten.ac.utils.menu.type.impl.ChestMenu;
 import lombok.Setter;
@@ -37,7 +37,7 @@ public class UpdatingButton extends Button {
     public void startUpdate() {
         if(updateTask != null) return;
 
-        updateTask = RunUtils.taskTimer(task -> {
+        updateTask = Anticheat.INSTANCE.getRunUtils().taskTimer(task -> {
             if(menu == null) {
                 updateTask.cancel();
                 updateTask = null;

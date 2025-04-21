@@ -29,7 +29,7 @@ public class Hitbox extends Check {
     public Timer lastAimOnTarget = new TickTimer(), lastPosition = new TickTimer();
     private final Queue<Tuple<Entity, KLocation>> attacks = new LinkedBlockingQueue<>();
 
-    private static final EnumSet<EntityType> allowedEntityTypes = EnumSet.of(EntityType.ZOMBIE, EntityType.SHEEP,
+    private final EnumSet<EntityType> allowedEntityTypes = EnumSet.of(EntityType.ZOMBIE, EntityType.SHEEP,
             EntityType.BLAZE, EntityType.SKELETON, EntityType.PLAYER, EntityType.VILLAGER, EntityType.IRON_GOLEM,
             EntityType.WITCH, EntityType.COW, EntityType.CREEPER);
 

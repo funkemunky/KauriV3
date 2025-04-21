@@ -3,7 +3,6 @@ package dev.brighten.ac.listener;
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.wrapper.objects.WrappedWatchableObject;
-import dev.brighten.ac.utils.RunUtils;
 import dev.brighten.ac.utils.annotation.Init;
 import dev.brighten.ac.utils.world.types.RayCollision;
 import org.bukkit.Location;
@@ -78,7 +77,7 @@ public class GeneralListener implements Listener {
 
                     Location loc1 = coll.collisionPoint(1.2).toLocation(event.getTo().getWorld());
 
-                    RunUtils.taskLater(() -> {
+                    Anticheat.INSTANCE.getRunUtils().taskLater(() -> {
                         player.getMob().despawn();
                         player.getMob().spawn(true, loc1,
                                 new ArrayList<>(Collections.singletonList(

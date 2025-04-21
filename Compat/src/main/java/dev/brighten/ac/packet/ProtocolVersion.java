@@ -54,27 +54,27 @@ public enum ProtocolVersion {
     V1_18_2(758, "v1_18_R2"),
     V1_19(759, "v1_19_R1"),
 
-    v1_19_1(760, "v1_19_R1"),
-    v_1_19_3(761, "v1_19_R1"),
-    v_1_19_4(762, "v1_19_R4"),
-    v_1_20_1(763, "v1_20_R1"),
-    v_1_20_2(764, "v1_20_R1"),
-    v_1_20_3(765, "v1_20_R1"),
-    v_1_20_5(766, "v1_20_R1"),
-    v_1_21_1(767, "v1_21_R1"),
-    v_1_21_2(768, "v1_21_R1"),
-    v_1_21_4(769, "v1_21_R1"),
+    V1_19_1(760, "v1_19_R1"),
+    V1_19_3(761, "v1_19_R1"),
+    V1_19_4(762, "v1_19_R4"),
+    V1_20_1(763, "v1_20_R1"),
+    V1_20_2(764, "v1_20_R1"),
+    V1_20_3(765, "v1_20_R1"),
+    V1_20_5(766, "v1_20_R1"),
+    V1_21_1(767, "v1_21_R1"),
+    V1_21_2(768, "v1_21_R1"),
+    V1_21_4(769, "v1_21_R1"),
 
     UNKNOWN(-1, "UNKNOWN");
 
     @Getter
-    private static final ProtocolVersion gameVersion = fetchGameVersion();
+    private static final ProtocolVersion gameVersion = fetchServerVersion();
     private final int version;
     @Getter
     private static boolean paper;
     private final String serverVersion;
 
-    private static ProtocolVersion fetchGameVersion() {
+    private static ProtocolVersion fetchServerVersion() {
         ProtocolVersion toReturn = UNKNOWN;
         for (ProtocolVersion version : values()) {
             if (version.getServerVersion() != null && version.getServerVersion().equals(Reflections.VERSION)) {
@@ -141,6 +141,8 @@ public enum ProtocolVersion {
         return this.getVersion() >= version.getVersion();
     }
 
+    public static final ProtocolVersion NEWEST_VERSION;
+
     static {
         try {
             Class.forName("org.github.paperspigot.PaperSpigotConfig");
@@ -148,5 +150,15 @@ public enum ProtocolVersion {
         } catch(Exception e) {
             paper = false;
         }
+
+        ProtocolVersion newest = V1_7;
+
+        for (ProtocolVersion version : values()) {
+            if (version.getVersion() > newest.getVersion()) {
+                newest = version;
+            }
+        }
+
+        NEWEST_VERSION = newest;
     }
 }

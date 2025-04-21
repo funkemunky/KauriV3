@@ -36,6 +36,10 @@ public class MovementUtils {
         return one.getX() == two.getX() && one.getY() == two.getY() && one.getZ() == two.getZ();
     }
 
+    public static boolean isSameLocation(Location one, Location two) {
+        return one.getX() == two.getX() && one.getY() == two.getY() && one.getZ() == two.getZ();
+    }
+
     public static boolean isOnLadder(APlayer data) {
         try {
             int i = MathHelper.floor_double(data.getMovement().getTo().getLoc().getX());

@@ -15,7 +15,7 @@ import dev.brighten.ac.packet.wrapper.out.WPacketPlayOutPosition;
 import dev.brighten.ac.utils.annotation.Bind;
 import dev.brighten.ac.utils.timer.impl.TickTimer;
 
-@CheckData(name = "Timer", checkId = "timer", type = CheckType.ORDER, maxVersion = ProtocolVersion.v_1_21_4)
+@CheckData(name = "Timer", checkId = "timer", type = CheckType.ORDER)
 public class Timer extends Check {
 
     public Timer(APlayer player) {

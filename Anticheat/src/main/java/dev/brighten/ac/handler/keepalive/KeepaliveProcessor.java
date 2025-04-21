@@ -7,7 +7,6 @@ import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.handler.HandlerAbstract;
 import dev.brighten.ac.packet.wrapper.out.WPacketPlayOutTransaction;
 import dev.brighten.ac.utils.BukkitRunnable;
-import dev.brighten.ac.utils.RunUtils;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
@@ -84,7 +83,7 @@ public class KeepaliveProcessor implements BukkitRunnable {
 
     public void start() {
         if (task == null) {
-            task = RunUtils.taskTimer(this, 20L, 0L);
+            task = Anticheat.INSTANCE.getRunUtils().taskTimer(this, 20L, 0L);
         }
     }
 

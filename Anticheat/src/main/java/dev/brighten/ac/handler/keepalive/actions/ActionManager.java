@@ -1,6 +1,6 @@
 package dev.brighten.ac.handler.keepalive.actions;
 
-import dev.brighten.ac.utils.RunUtils;
+import dev.brighten.ac.Anticheat;
 import lombok.Getter;
 import lombok.val;
 
@@ -11,7 +11,7 @@ public class ActionManager {
 
     public ActionManager() {
         // Removing any unconfirmed actions.
-        RunUtils.taskTimerAsync(task -> unconfirmedActions.removeIf(Action::confirmed), 40, 40);
+        Anticheat.INSTANCE.getRunUtils().taskTimerAsync(task -> unconfirmedActions.removeIf(Action::confirmed), 40, 40);
     }
     private final Map<Class<? extends Action>, List<Consumer<Action>>> actionListeners = new HashMap<>();
 
