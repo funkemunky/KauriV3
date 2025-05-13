@@ -22,7 +22,7 @@ import org.bukkit.entity.LivingEntity;
 import java.util.*;
 
 public class BlockInformation {
-    private APlayer player;
+    private final APlayer player;
     public boolean onClimbable, onSlab, onStairs, onHalfBlock, inLiquid, inLava, inWater, inWeb, onSlime, onIce,
             onSoulSand, blocksAbove, collidesVertically, bedNear, collidesHorizontally, blocksNear, inBlock, miscNear,
             collidedWithEntity, roseBush, fenceNear, inPortal, blocksBelow, pistonNear, fenceBelow, inScaffolding, inHoney,

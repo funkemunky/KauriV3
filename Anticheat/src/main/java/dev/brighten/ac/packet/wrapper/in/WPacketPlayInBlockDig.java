@@ -25,15 +25,6 @@ public class WPacketPlayInBlockDig extends WPacket {
         return null;
     }
 
-    public enum EnumDirection {
-        DOWN,
-        UP,
-        NORTH,
-        SOUTH,
-        WEST,
-        EAST
-    }
-
     public enum EnumPlayerDigType {
         START_DESTROY_BLOCK,
         ABORT_DESTROY_BLOCK,
@@ -42,7 +33,7 @@ public class WPacketPlayInBlockDig extends WPacket {
         DROP_ITEM,
         RELEASE_USE_ITEM;
 
-        private EnumPlayerDigType() {
+        EnumPlayerDigType() {
         }
     }
 

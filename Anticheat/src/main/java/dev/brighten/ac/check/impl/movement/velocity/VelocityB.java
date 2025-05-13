@@ -286,11 +286,11 @@ public class VelocityB extends Check {
         }
 
         for (int j = 0; j < 4096; ++j) {
-            SIN_TABLE_FAST[j] = (float) Math.sin((double) (((float) j + 0.5F) / 4096.0F * ((float) Math.PI * 2F)));
+            SIN_TABLE_FAST[j] = (float) Math.sin(((float) j + 0.5F) / 4096.0F * ((float) Math.PI * 2F));
         }
 
         for (int l = 0; l < 360; l += 90) {
-            SIN_TABLE_FAST[(int) ((float) l * 11.377778F) & 4095] = (float) Math.sin((double) ((float) l * 0.017453292F));
+            SIN_TABLE_FAST[(int) ((float) l * 11.377778F) & 4095] = (float) Math.sin((float) l * 0.017453292F);
         }
 
         for (int j = 0; j < SIN_TABLE_FAST_NEW.length; ++j) {

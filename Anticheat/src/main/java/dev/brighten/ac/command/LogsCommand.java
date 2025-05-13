@@ -22,6 +22,7 @@ import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.logging.Level;
 
 @Init(priority = Priority.LOW)
 @CommandAlias("kauri|anticheat|ac")
@@ -61,7 +62,7 @@ public class LogsCommand extends BaseCommand {
                                     + Anticheat.INSTANCE.getCheckManager().getIdToName().get(log.getCheckId()) + "(VL: "
                                     + log.getVl() + ") {" + log.getData() + "}");
                         });
-                        if(logs.size() == 0) {
+                        if(logs.isEmpty()) {
                             sender.sendMessage(Color.Gray + "There are no logs for player \"" + playername + "\"");
                         } else {
                             String url = null;
@@ -83,7 +84,7 @@ public class LogsCommand extends BaseCommand {
                                     + Anticheat.INSTANCE.getCheckManager().getIdToName().get(log.getCheckId())
                                     + "(VL: " + log.getVl() + ") {" + log.getData() + "}");
                         });
-                        if(logs.size() == 0) {
+                        if(logs.isEmpty()) {
                             sender.sendMessage(Color.Gray + " does not have any violations for check \"" + check + "\"");
                         } else {
                             String url = null;
@@ -134,10 +135,10 @@ public class LogsCommand extends BaseCommand {
                                 + Anticheat.INSTANCE.getCheckManager().getIdToName().get(log.getCheckId()) + "(VL: "
                                 + log.getVl() + ") {" + log.getData() + "}");
                     });
-                    if(logs.size() == 0) {
+                    if(logs.isEmpty()) {
                         sender.sendMessage(Color.Gray + "There are no logs for player \"" + playername + "\"");
                     } else {
-                        String url = null;
+                        String url;
                         try {
                             url = Pastebin.makePaste(String.join("\n", logs), playername + "'s Logs",
                                     Pastebin.Privacy.UNLISTED);
@@ -159,8 +160,7 @@ public class LogsCommand extends BaseCommand {
     @Description("View the logs of a user")
     public void onLogsWeb(CommandSender sender, String[] args) {
         if(args.length == 0) {
-            if(sender instanceof Player) {
-                Player player = (Player) sender;
+            if(sender instanceof Player player) {
                 runWebLog(sender, player);
             } else sender.sendMessage(Color.translate("You cannot view your own logs from console."));
         } else {
@@ -191,13 +191,20 @@ public class LogsCommand extends BaseCommand {
             }
 
 
-            StringBuilder url = new StringBuilder("https://funkemunky.cc/api/kauri?uuid=" + target.getUniqueId().toString().replaceAll("-", "") + (violations.keySet().size() > 0 ? "&violations=" : ""));
+            StringBuilder url = new StringBuilder("https://funkemunky.cc/api/kauri?uuid="
+                    + target.getUniqueId().toString().replaceAll("-", "")
+                    + (!violations.isEmpty() ? "&violations=" : ""));
 
-            if (violations.keySet().size() > 0) {
+            if (!violations.isEmpty()) {
                 for (String key : violations.keySet()) {
                     if (Anticheat.INSTANCE.getCheckManager().isCheck(key)) {
-                        CheckSettings checkData = Anticheat.INSTANCE.getCheckManager().getCheckSettings(Anticheat.INSTANCE.getCheckManager().getCheckClasses()
-                                .get(Anticheat.INSTANCE.getCheckManager().getIdToName().get(key)).getCheckClass().getParent());
+                        var checkClass = Anticheat.INSTANCE.getCheckManager().getCheckClasses()
+                                .get(Anticheat.INSTANCE.getCheckManager().getIdToName().get(key))
+                                .getCheckClass().getParent();
+
+
+                        CheckSettings checkData = Anticheat.INSTANCE.getCheckManager()
+                                .getCheckSettings(checkClass);
                         int vl = violations.get(key), maxVL = checkData.getPunishVl();
                         boolean developer = false;
 
@@ -209,7 +216,7 @@ public class LogsCommand extends BaseCommand {
                     }
                 }
 
-                if (violations.keySet().size() > 0) {
+                if (!violations.isEmpty()) {
                     url.deleteCharAt(url.length() - 1);
                 }
 
@@ -223,7 +230,7 @@ public class LogsCommand extends BaseCommand {
 
                     finalURL = finalURL.replace("%id%", readAll(reader));
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    Anticheat.INSTANCE.getLogger().log(Level.WARNING, "Failed to get logs for " + target.getName(), e);
                 }
 
                 sender.sendMessage(Color.translate("&aView the log here&7: &f" + finalURL));

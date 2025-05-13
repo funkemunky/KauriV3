@@ -84,12 +84,12 @@ public class APlayer {
     @Getter
     private int playerTick;
     @Getter
-    private Timer creation = new MillisTimer();
+    private final Timer creation = new MillisTimer();
     @Getter
     //TODO Actually grab real player version once finished implementing version grabber from Atlas
     private ProtocolVersion playerVersion = ProtocolVersion.UNKNOWN;
     @Getter
-    private Object playerConnection;
+    private final Object playerConnection;
 
     public Emulator EMULATOR;
 
@@ -323,8 +323,7 @@ public class APlayer {
 
     public void sendPacketSilently(Object packet) {
         if(sniffing) {
-            sniffedPackets.add("(Silent) [" +  Anticheat.INSTANCE.getKeepaliveProcessor().tick + "] " +
-                    "" + (packet instanceof WPacket ? ((WPacket)packet).getPacketType()
+            sniffedPackets.add("(Silent) [" +  Anticheat.INSTANCE.getKeepaliveProcessor().tick + "] " + (packet instanceof WPacket ? ((WPacket)packet).getPacketType()
                     : HandlerAbstract.getPacketType(packet)) + ": " + packet);
         }
         HandlerAbstract.getHandler().sendPacketSilently(this, packet);

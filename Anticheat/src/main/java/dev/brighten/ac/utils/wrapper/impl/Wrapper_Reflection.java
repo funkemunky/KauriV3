@@ -13,9 +13,9 @@ import org.bukkit.block.Block;
 
 public class Wrapper_Reflection extends Wrapper {
 
-    private static WrappedClass blockClass = Reflections.getNMSClass("Block");
-    private static WrappedMethod getById = blockClass.getMethodByType(blockClass.getParent(), 0);
-    private static WrappedField fieldFriction = blockClass.getFieldByType(float.class, 3);
+    private static final WrappedClass blockClass = Reflections.getNMSClass("Block");
+    private static final WrappedMethod getById = blockClass.getMethodByType(blockClass.getParent(), 0);
+    private static final WrappedField fieldFriction = blockClass.getFieldByType(float.class, 3);
 
     @Override
     public float getFriction(Material material) {

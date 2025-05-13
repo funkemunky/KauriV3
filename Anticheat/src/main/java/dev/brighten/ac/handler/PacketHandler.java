@@ -369,11 +369,9 @@ public class PacketHandler {
 
         if(player.sniffing) {
             if(type != PacketType.UNKNOWN) {
-                player.sniffedPackets.add("[" + Anticheat.INSTANCE.getKeepaliveProcessor().tick + "] " +
-                        "" + type.name() + ": " + packetObject.toString());
+                player.sniffedPackets.add("[" + Anticheat.INSTANCE.getKeepaliveProcessor().tick + "] " + type.name() + ": " + packetObject.toString());
             } else {
-                player.sniffedPackets.add("[" + Anticheat.INSTANCE.getKeepaliveProcessor().tick + "] (UNKNOWN) " +
-                        "" + packetObject.getClass().getSimpleName() + ": " + packetObject);
+                player.sniffedPackets.add("[" + Anticheat.INSTANCE.getKeepaliveProcessor().tick + "] (UNKNOWN) " + packetObject.getClass().getSimpleName() + ": " + packetObject);
             }
         }
 

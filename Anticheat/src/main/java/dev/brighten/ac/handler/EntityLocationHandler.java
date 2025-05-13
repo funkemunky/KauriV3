@@ -259,7 +259,7 @@ public class EntityLocationHandler {
         clientHasEntity.set(false);
     }
 
-    private double[] offsets = new double[]{-1.25, 0, 1.25};
+    private final double[] offsets = new double[]{-1.25, 0, 1.25};
 
     private void createFakeMob(int entityId, Location location) {
         if(!canCreateMob.contains(entityId)) return;

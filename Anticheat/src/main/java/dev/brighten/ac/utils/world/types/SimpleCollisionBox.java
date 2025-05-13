@@ -1,7 +1,6 @@
 package dev.brighten.ac.utils.world.types;
 
 import dev.brighten.ac.packet.wrapper.objects.EnumParticle;
-import dev.brighten.ac.utils.BoundingBox;
 import dev.brighten.ac.utils.Helper;
 import dev.brighten.ac.utils.KLocation;
 import dev.brighten.ac.utils.reflections.impl.MinecraftReflection;
@@ -76,10 +75,6 @@ public class SimpleCollisionBox implements CollisionBox {
 
         expand(width / 2, 0, width / 2);
         maxY += height;
-    }
-
-    public SimpleCollisionBox(BoundingBox box) {
-        this(box.minX, box.minY, box.minZ, box.maxX, box.maxY, box.maxZ);
     }
 
     public SimpleCollisionBox(Object aabb) {
@@ -237,8 +232,7 @@ public class SimpleCollisionBox implements CollisionBox {
 
     @Override
     public boolean isCollided(CollisionBox other) {
-        if (other instanceof SimpleCollisionBox) {
-            SimpleCollisionBox box = ((SimpleCollisionBox) other);
+        if (other instanceof SimpleCollisionBox box) {
             box.sort();
             sort();
             return box.maxX >= this.minX && box.minX <= this.maxX
@@ -252,8 +246,7 @@ public class SimpleCollisionBox implements CollisionBox {
 
     @Override
     public boolean isIntersected(CollisionBox other) {
-        if(other instanceof SimpleCollisionBox) {
-            SimpleCollisionBox box = (SimpleCollisionBox) other;
+        if(other instanceof SimpleCollisionBox box) {
             box.sort();
             sort();
             return box.maxX > this.minX && box.minX < this.maxX
@@ -343,10 +336,6 @@ public class SimpleCollisionBox implements CollisionBox {
         } else {
             return offsetZ;
         }
-    }
-
-    public BoundingBox toBoundingBox() {
-        return new BoundingBox(new Vector(minX, minY, minZ), new Vector(maxX, maxY, maxZ));
     }
 
     public <T> T toAxisAlignedBB() {

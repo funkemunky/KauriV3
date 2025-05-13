@@ -27,7 +27,6 @@ import dev.brighten.ac.utils.config.Configuration;
 import dev.brighten.ac.utils.config.ConfigurationProvider;
 import dev.brighten.ac.utils.config.YamlConfiguration;
 import dev.brighten.ac.utils.math.RollingAverageDouble;
-import dev.brighten.ac.utils.reflections.types.WrappedMethod;
 import dev.brighten.ac.utils.timer.Timer;
 import dev.brighten.ac.utils.timer.impl.TickTimer;
 import dev.brighten.ac.utils.world.WorldInfo;
@@ -58,6 +57,7 @@ import java.util.stream.Collectors;
 @MavenLibrary(groupId = "it.unimi.dsi", artifactId = "fastutil", version = "8.5.11", repo = @Repository(url = "https://repo1.maven.org/maven2"))
 @MavenLibrary(groupId = "org.ow2.asm", artifactId = "asm", version = "9.4", repo = @Repository(url = "https://repo1.maven.org/maven2"))
 @MavenLibrary(groupId = "org.ow2.asm", artifactId = "asm-tree", version = "9.4", repo = @Repository(url = "https://repo1.maven.org/maven2"))
+@MavenLibrary(groupId = "org.dizitart", artifactId = "nitrite-jackson-mapper", version = "4.3.0",  repo = @Repository(url = "https://repo1.maven.org/maven2"))
 public class Anticheat extends JavaPlugin {
 
     public static Anticheat INSTANCE;
@@ -76,7 +76,6 @@ public class Anticheat extends JavaPlugin {
     private FakeEntityTracker fakeTracker;
     private int currentTick;
     private Deque<Runnable> onTickEnd = new LinkedList<>();
-    private ServerInjector injector;
     //Lag Information
     private Timer lastTickLag;
     private long lastTick;
@@ -87,9 +86,8 @@ public class Anticheat extends JavaPlugin {
     public static boolean allowDebug = true;
 
     @ConfigSetting(path = "logging", name = "verbose")
-    private static boolean verboseLogging = true;
+    private static final boolean verboseLogging = true;
 
-    private WrappedMethod findClassMethod;
     private Configuration anticheatConfig;
 
     public void onEnable() {
@@ -155,7 +153,7 @@ public class Anticheat extends JavaPlugin {
                             .orElse(null);
                 }
                 else if(!c.isOptional()) throw new InvalidCommandArgument(MessageKeys.NOT_ALLOWED_ON_CONSOLE,
-                        false, new String[0]);
+                        false);
                 else return null;
             }
         });
@@ -168,9 +166,7 @@ public class Anticheat extends JavaPlugin {
         new AnticheatAPI();
 
         new ClassScanner().initializeScanner(getClass(), this,
-                null,
-                true,
-                true);
+                null);
 
         if(!getAnticheatConfig().contains("database.username")) {
             getAnticheatConfig().set("database.username", "dbuser");
@@ -200,13 +196,6 @@ public class Anticheat extends JavaPlugin {
         alog(Color.Green + "Loading WorldInfo system...");
         Bukkit.getWorlds().forEach(w -> worldInfoMap.put(w.getUID(), new WorldInfo(w)));
 
-        injector = new ServerInjector();
-        try {
-            injector.inject();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
         Bukkit.getOnlinePlayers().forEach(HandlerAbstract.getHandler()::add);
     }
     public void onDisable() {
@@ -234,13 +223,6 @@ public class Anticheat extends JavaPlugin {
         CheckHandler.TO_HOOK.clear();
         BBRevealHandler.INSTANCE = null;
 
-        try {
-            injector.eject();
-            injector = null;
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-
         fakeTracker.despawnAll();
         fakeTracker = null;
 
@@ -255,7 +237,6 @@ public class Anticheat extends JavaPlugin {
         packetProcessor = null;
 
         packetHandler = null;
-        injector = null;
 
         onTickEnd.clear();
         onTickEnd = null;

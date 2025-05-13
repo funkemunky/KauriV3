@@ -14,7 +14,7 @@ import java.util.List;
 public class DynamicCollisionBox implements CollisionBox {
 
     private final CollisionFactory box;
-    private APlayer player;
+    private final APlayer player;
     @Setter
     private WrappedBlock block;
     @Setter

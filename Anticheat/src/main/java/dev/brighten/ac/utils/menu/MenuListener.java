@@ -99,8 +99,7 @@ public class MenuListener implements Listener {
 
             if (menu != null) {
                 menu.handleClose((Player) event.getPlayer());
-                if(menu instanceof ChestMenu) {
-                    ChestMenu cmenu = (ChestMenu) menu;
+                if(menu instanceof ChestMenu cmenu) {
 
                     for (int i = 0; i < cmenu.contents.length; i++) {
                         Button button = cmenu.contents[i];
@@ -123,8 +122,7 @@ public class MenuListener implements Listener {
                 }.runTaskTimer(Anticheat.INSTANCE, 2L, 0L));
             }
         }
-        if(inventory instanceof AnvilInventory && anvils.containsKey(inventory)) {
-            AnvilInventory anvil = (AnvilInventory) inventory;
+        if(inventory instanceof AnvilInventory anvil && anvils.containsKey(inventory)) {
 
             WrappedMethod method = new WrappedClass(ProtocolVersion.getGameVersion().isOrAbove(ProtocolVersion.V1_11)
                     ? AnvilInventory.class : Inventory.class)

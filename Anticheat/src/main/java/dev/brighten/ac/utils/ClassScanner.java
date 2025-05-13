@@ -14,6 +14,7 @@ import dev.brighten.ac.utils.reflections.types.WrappedMethod;
 import org.bukkit.Bukkit;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.Plugin;
+import org.jetbrains.annotations.NotNull;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.ClassNode;
@@ -27,6 +28,7 @@ import java.net.URL;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -38,14 +40,11 @@ public class ClassScanner {
     private final PathMatcher CLASS_FILE = create("glob:*.class");
     private final PathMatcher ARCHIVE = create("glob:*.{jar}");
 
-    public void initializeScanner(Class<? extends Plugin> mainClass, Plugin plugin, ClassLoader loader,
-                                         boolean loadListeners, boolean loadCommands) {
-        initializeScanner(mainClass, plugin, loader, scanFile(null, mainClass), loadListeners,
-                loadCommands);
+    public void initializeScanner(Class<? extends Plugin> mainClass, Plugin plugin, ClassLoader loader) {
+        initializeScanner(mainClass, plugin, loader, scanFile(null, mainClass));
     }
 
-    public void initializeScanner(Class<? extends Plugin> mainClass, Plugin plugin, ClassLoader loader, Set<String> names,
-                                         boolean loadListeners, boolean loadCommands) {
+    public void initializeScanner(Class<? extends Plugin> mainClass, Plugin plugin, ClassLoader loader, Set<String> names) {
         names.stream()
                 .map(name -> {
                     if(loader != null) {
@@ -55,7 +54,7 @@ public class ClassScanner {
                             } else
                                 return new WrappedClass(Class.forName(name, true, loader));
                         } catch (ClassNotFoundException e) {
-                            e.printStackTrace();
+                            Anticheat.INSTANCE.getLogger().log(Level.SEVERE, "Could not initialize scanner!", e);
                         }
                         return null;
                     } else {
@@ -69,29 +68,16 @@ public class ClassScanner {
                     String[] required = init.requirePlugins();
 
                     if(required.length > 0) {
-                        if(init.requireType() == Init.RequireType.ALL) {
-                            return Arrays.stream(required)
-                                    .allMatch(name -> {
-                                        if(name.contains("||")) {
-                                            return Arrays.stream(name.split("\\|\\|"))
-                                                    .anyMatch(n2 -> Bukkit.getPluginManager().isPluginEnabled(n2));
-                                        } else if(name.contains("&&")) {
-                                            return Arrays.stream(name.split("\\|\\|"))
-                                                    .allMatch(n2 -> Bukkit.getPluginManager().isPluginEnabled(n2));
-                                        } else return Bukkit.getPluginManager().isPluginEnabled(name);
-                                    });
-                        } else {
-                            return Arrays.stream(required)
-                                    .anyMatch(name -> {
-                                        if(name.contains("||")) {
-                                            return Arrays.stream(name.split("\\|\\|"))
-                                                    .anyMatch(n2 -> Bukkit.getPluginManager().isPluginEnabled(n2));
-                                        } else if(name.contains("&&")) {
-                                            return Arrays.stream(name.split("\\|\\|"))
-                                                    .allMatch(n2 -> Bukkit.getPluginManager().isPluginEnabled(n2));
-                                        } else return Bukkit.getPluginManager().isPluginEnabled(name);
-                                    });
-                        }
+                        return Arrays.stream(required)
+                                .anyMatch(name -> {
+                                    if(name.contains("||")) {
+                                        return Arrays.stream(name.split("\\|\\|"))
+                                                .anyMatch(n2 -> Bukkit.getPluginManager().isPluginEnabled(n2));
+                                    } else if(name.contains("&&")) {
+                                        return Arrays.stream(name.split("\\|\\|"))
+                                                .allMatch(n2 -> Bukkit.getPluginManager().isPluginEnabled(n2));
+                                    } else return Bukkit.getPluginManager().isPluginEnabled(name);
+                                });
                     }
                     return true;
                 })
@@ -99,7 +85,6 @@ public class ClassScanner {
                         c.getAnnotation(Init.class).priority().getPriority(), Comparator.reverseOrder()))
                 .forEach(c -> {
                     Object obj = c.getParent().equals(mainClass) ? plugin : c.getConstructor().newInstance();
-                    Init annotation = c.getAnnotation(Init.class);
 
                     if(obj instanceof Listener listener) {
                         Bukkit.getPluginManager().registerEvents(listener, plugin);
@@ -110,7 +95,7 @@ public class ClassScanner {
                     if(obj instanceof BaseCommand command) {
                         Anticheat.INSTANCE.alog(true,"&7Found BaseCommand for class &e"
                                 + c.getParent().getSimpleName() + "&7! Registering commands...");
-                        Anticheat.INSTANCE.getCommandManager().registerCommand((BaseCommand)obj);
+                        Anticheat.INSTANCE.getCommandManager().registerCommand(command);
                     }
 
                     for (WrappedMethod method : c.getMethods()) {
@@ -125,7 +110,7 @@ public class ClassScanner {
                         if(field.isAnnotationPresent(ConfigSetting.class)) {
                             ConfigSetting setting = field.getAnnotation(ConfigSetting.class);
 
-                            String name = setting.name().length() > 0
+                            String name = !setting.name().isEmpty()
                                     ? setting.name()
                                     : field.getField().getName();
 
@@ -136,12 +121,12 @@ public class ClassScanner {
 
                             Configuration config = Anticheat.INSTANCE.getAnticheatConfig();
 
-                            if(config.get((setting.path().length() > 0 ? setting.path() + "." : "") + name) == null) {
+                            if(config.get((!setting.path().isEmpty() ? setting.path() + "." : "") + name) == null) {
                                 Anticheat.INSTANCE.alog(true,"&7Value not set in config! Setting value...");
-                                config.set((setting.path().length() > 0 ? setting.path() + "." : "") + name, field.get(obj));
+                                config.set((!setting.path().isEmpty() ? setting.path() + "." : "") + name, field.get(obj));
                                 Anticheat.INSTANCE.saveConfig();
                             } else {
-                                Object configObj = config.get((setting.path().length() > 0 ? setting.path() + "." : "") + name);
+                                Object configObj = config.get((!setting.path().isEmpty() ? setting.path() + "." : "") + name);
                                 Anticheat.INSTANCE.alog(true, "&7Set field to value &e%s&7.",
                                         (setting.hide() ? "HIDDEN" : configObj));
                                 field.set(obj, configObj);
@@ -197,9 +182,9 @@ public class ClassScanner {
     private  void scanDirectory(Path dir, Class<? extends Annotation> annotationClass, final Set<String> plugins) {
         try {
             Files.walkFileTree(dir, newHashSet(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE,
-                    new SimpleFileVisitor<Path>() {
+                    new SimpleFileVisitor<>() {
                         @Override
-                        public FileVisitResult visitFile(Path path, BasicFileAttributes attrs) throws IOException {
+                        public @NotNull FileVisitResult visitFile(Path path, @NotNull BasicFileAttributes attrs) throws IOException {
                             if (CLASS_FILE.matches(path.getFileName())) {
                                 try (InputStream in = Files.newInputStream(path)) {
                                     String plugin = findClass(in, annotationClass);
@@ -213,7 +198,7 @@ public class ClassScanner {
                         }
                     });
         } catch (IOException e) {
-            e.printStackTrace();
+            Anticheat.INSTANCE.getLogger().log(Level.SEVERE, "Error scanning directory", e);
         }
     }
 
@@ -226,15 +211,14 @@ public class ClassScanner {
             String className = classNode.name.replace('/', '.');
             final String anName = annotationClass.getName().replace(".", "/");
             if (classNode.visibleAnnotations != null) {
-                for (Object node : classNode.visibleAnnotations) {
-                    AnnotationNode annotation = (AnnotationNode) node;
-                    if (annotation.desc
+                for (AnnotationNode node : classNode.visibleAnnotations) {
+                    if (node.desc
                             .equals("L" + anName + ";"))
                         return className;
                 }
             }
         } catch (Exception e) {
-            //Bukkit.getLogger().info("Failed to scan: " + in.toString());
+            Anticheat.INSTANCE.getLogger().log(Level.SEVERE, "Failed to scan: " + in.toString(), e);
         }
         return null;
     }
@@ -260,7 +244,7 @@ public class ClassScanner {
                 }
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            Anticheat.INSTANCE.getLogger().log(Level.SEVERE, "Failed to scan path: " + path, e);
         }
     }
 
@@ -306,9 +290,9 @@ public class ClassScanner {
     private  void scanDirectory(String file, Path dir, final Set<String> plugins) {
         try {
             Files.walkFileTree(dir, newHashSet(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE,
-                    new SimpleFileVisitor<Path>() {
+                    new SimpleFileVisitor<>() {
                         @Override
-                        public FileVisitResult visitFile(Path path, BasicFileAttributes attrs) throws IOException {
+                        public @NotNull FileVisitResult visitFile(Path path, @NotNull BasicFileAttributes attrs) throws IOException {
                             if (CLASS_FILE.matches(path.getFileName())) {
                                 try (InputStream in = Files.newInputStream(path)) {
                                     String plugin = findPlugin(file, in);
@@ -322,10 +306,11 @@ public class ClassScanner {
                         }
                     });
         } catch (IOException e) {
-            e.printStackTrace();
+            Anticheat.INSTANCE.getLogger().log(Level.SEVERE, "Failed to scan dir: " + dir, e);
         }
     }
 
+    @SafeVarargs
     private  <E> HashSet<E> newHashSet(E... elements) {
         HashSet<E> set = new HashSet<>();
         Collections.addAll(set, elements);
@@ -354,7 +339,7 @@ public class ClassScanner {
                 }
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            Anticheat.INSTANCE.getLogger().log(Level.SEVERE, "Failed to scan zip: " + path + "/" + file, e);
         }
     }
 
@@ -365,18 +350,17 @@ public class ClassScanner {
             reader.accept(classNode, ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
             String className = classNode.name.replace('/', '.');
             if (classNode.visibleAnnotations != null) {
-                for (Object node : classNode.visibleAnnotations) {
-                    AnnotationNode annotation = (AnnotationNode) node;
-                    if ((file == null && annotation.desc
+                for (AnnotationNode node : classNode.visibleAnnotations) {
+                    if ((file == null && node.desc
                             .equals("L" + Init.class.getName().replace(".", "/") + ";"))
-                            || (file != null && annotation.desc
+                            || (file != null && node.desc
                             .equals("L" + file.replace(".", "/") + ";")))
                         return className;
                 }
             }
             if (classNode.superName != null && (classNode.superName.equals(file))) return className;
         } catch (Exception e) {
-            //System.out.println("Failed to scan: " + in.toString());
+            Anticheat.INSTANCE.getLogger().log(Level.SEVERE, "Failed to find plugin: " + file, e);
         }
         return null;
     }
