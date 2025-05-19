@@ -74,10 +74,6 @@
                             <minimizeJar>true</minimizeJar>
                             <relocations>
                                 <relocation>
-                                    <pattern>com.google</pattern>
-                                    <shadedPattern>dev.brighten.anticheat.libs.com.google</shadedPattern>
-                                </relocation>
-                                <relocation>
                                     <pattern>org.dizitart</pattern>
                                     <shadedPattern>dev.brighten.anticheat.libs.org.dizitart</shadedPattern>
                                 </relocation>
@@ -181,12 +177,6 @@
             <artifactId>viaversion-api</artifactId>
             <version>LATEST</version>
             <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>32.1.3-jre</version>
-            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.ow2.asm</groupId>
