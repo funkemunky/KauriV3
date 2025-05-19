@@ -86,10 +86,6 @@
                             <minimizeJar>true</minimizeJar>
                             <relocations>
                                 <relocation>
-                                    <pattern>com.google</pattern>
-                                    <shadedPattern>dev.brighten.anticheat.libs.com.google</shadedPattern>
-                                </relocation>
-                                <relocation>
                                     <pattern>org.dizitart</pattern>
                                     <shadedPattern>dev.brighten.anticheat.libs.org.dizitart</shadedPattern>
                                 </relocation>
