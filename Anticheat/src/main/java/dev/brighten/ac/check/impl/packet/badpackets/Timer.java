@@ -1,4 +1,4 @@
-package dev.brighten.ac.check.impl.packet.order;
+package dev.brighten.ac.check.impl.packet.badpackets;
 
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.api.check.CheckType;
@@ -23,14 +23,11 @@ public class Timer extends Check {
     }
 
     private int buffer;
-    private final dev.brighten.ac.utils.timer.Timer lastFlag = new TickTimer(),
-            lastReset = new TickTimer();
+    private final dev.brighten.ac.utils.timer.Timer lastFlag = new TickTimer();
     private long totalTimer = -1;
 
     @Bind
-    WAction<WPacketPlayOutPosition> position = packet -> {
-        totalTimer-= 50;
-    };
+    WAction<WPacketPlayOutPosition> position = packet -> totalTimer-= 50;
 
     @Bind
     WAction<WPacketPlayInBlockPlace> blockPlace = packet -> {
@@ -64,7 +61,7 @@ public class Timer extends Check {
 
         long threshold = timestamp + 100, delta = totalTimer - threshold;
 
-        boolean isLagProblem = Anticheat.INSTANCE.getKeepaliveProcessor().laggyPlayers
+        boolean isLagProblem = (double)Anticheat.INSTANCE.getKeepaliveProcessor().laggyPlayers
                 / (double)Anticheat.INSTANCE.getKeepaliveProcessor().totalPlayers > 0.8;
 
         if(totalTimer > threshold && !isLagProblem) {

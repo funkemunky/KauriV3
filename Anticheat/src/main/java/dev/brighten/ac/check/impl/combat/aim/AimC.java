@@ -10,7 +10,7 @@ import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
 import dev.brighten.ac.utils.MathUtils;
 import dev.brighten.ac.utils.annotation.Bind;
 
-@CheckData(name = "Aim (C)", checkId = "aimc", type = CheckType.COMBAT, maxVersion = ProtocolVersion.V1_21_4)
+@CheckData(name = "Aim (C)", checkId = "aimc", type = CheckType.COMBAT, maxVersion = ProtocolVersion.V1_21_5)
 public class AimC extends Check {
 
     public AimC(APlayer player) {

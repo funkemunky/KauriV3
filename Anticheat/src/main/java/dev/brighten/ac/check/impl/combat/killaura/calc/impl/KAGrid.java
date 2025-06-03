@@ -13,14 +13,13 @@ import dev.brighten.ac.utils.objects.evicting.EvictingList;
 
 import java.util.List;
 
-@CheckData(name = "KillAura (Grid)", checkId = "kacalcgrid", type = CheckType.KILLAURA, maxVersion = ProtocolVersion.V1_21_4)
+@CheckData(name = "KillAura (Grid)", checkId = "kacalcgrid", type = CheckType.KILLAURA, maxVersion = ProtocolVersion.V1_21_5)
 public class KAGrid extends Check implements RotationCheck {
     public KAGrid(APlayer player) {
         super(player);
     }
 
-    private int buffer;
-    private List<Double> offsetGrid = new EvictingList<>(50);
+    private final List<Double> offsetGrid = new EvictingList<>(50);
 
     @Override
     public void runCheck(Tuple<EntityLocation, EntityLocation> locs, double[] std, double[] offset, float[] rot) {

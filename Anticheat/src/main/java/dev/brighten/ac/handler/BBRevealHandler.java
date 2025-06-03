@@ -64,6 +64,8 @@ public class BBRevealHandler implements Listener {
                     blocksToShow.add(blockLoc);
                     event.getPlayer().spigot().sendMessage(new ComponentBuilder("Now showing block: ")
                             .color(ChatColor.GREEN).append(event.getClickedBlock().getType().name()).color(ChatColor.WHITE)
+                                    .append(" (collidable=" + Materials.checkFlag(event.getClickedBlock().getType(), Materials.COLLIDABLE) + ")")
+                                    .color(ChatColor.GRAY)
                             .create());
                 }
             } else {

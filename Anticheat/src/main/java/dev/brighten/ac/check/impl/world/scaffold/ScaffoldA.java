@@ -27,7 +27,7 @@ import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 
-@CheckData(name = "Scaffold", checkId = "scaffold", type = CheckType.INTERACT, maxVersion = ProtocolVersion.V1_21_4)
+@CheckData(name = "Scaffold", checkId = "scaffold", type = CheckType.INTERACT, maxVersion = ProtocolVersion.V1_21_5)
 public class ScaffoldA extends Check {
     public ScaffoldA(APlayer player) {
         super(player);
@@ -199,7 +199,6 @@ public class ScaffoldA extends Check {
                             }
                         } else {
                             placeDiff.clear();
-                            lastValidPlace = 0;
                         }
                     }
                 }

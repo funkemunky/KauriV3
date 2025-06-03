@@ -64,6 +64,7 @@ public enum ProtocolVersion {
     V1_21_1(767, "v1_21_R1"),
     V1_21_2(768, "v1_21_R1"),
     V1_21_4(769, "v1_21_R1"),
+    V1_21_5(770, "V1_21_R1"),
 
     UNKNOWN(-1, "UNKNOWN");
 

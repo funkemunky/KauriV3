@@ -13,7 +13,7 @@ import lombok.val;
 
 import java.util.List;
 
-@CheckData(name = "KillAura (Bot)", checkId = "kabot", type = CheckType.KILLAURA, maxVersion = ProtocolVersion.V1_21_4)
+@CheckData(name = "KillAura (Bot)", checkId = "kabot", type = CheckType.KILLAURA, maxVersion = ProtocolVersion.V1_21_5)
 public class KABot extends Check {
 
     public KABot(APlayer player) {

@@ -24,6 +24,7 @@ import org.bukkit.entity.Player;
 
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.logging.Level;
 
 @Init(priority = Priority.LOW)
 @CommandAlias("kauri|anticheat|ac")
@@ -98,7 +99,7 @@ public class AnticheatCommand extends BaseCommand {
     }
 
     @Subcommand("debug")
-    @CommandCompletion("@checks|none @players")
+    @CommandCompletion("@checks|none|sniff|boxes @players")
     @Description("Debug a player")
     @Syntax("[check] [player]")
     @CommandPermission("anticheat.command.debug")
@@ -136,7 +137,7 @@ public class AnticheatCommand extends BaseCommand {
                                     String.join("\n", targetData.sniffedPackets.toArray(new String[0])),
                                     "Sniffed from " + target.getName(), Pastebin.Privacy.UNLISTED));
                         } catch (UnsupportedEncodingException e) {
-                            e.printStackTrace();
+                            Anticheat.INSTANCE.getLogger().log(Level.WARNING, "Failed to paste link for sniffed packets", e);
                         }
                         targetData.sniffedPackets.clear();
                     } else {
@@ -145,6 +146,23 @@ public class AnticheatCommand extends BaseCommand {
                     }
                 } else {
                     sender.spigot().sendMessage(Messages.NULL_APLAYER);
+                }
+                break;
+            }
+            case "boxes": {
+                APlayer player = Anticheat.INSTANCE.getPlayerRegistry().getPlayer(target.getUniqueId()).orElse(null);
+
+                if(player == null) {
+                    sender.sendMessage(Color.Red + "Error: Could not get your player information.");
+                    break;
+                }
+
+                if(player.isBoxDebug()) {
+                    player.setBoxDebug(false);
+                    sender.sendMessage(Color.Red + "Turned off colliding bounding box debug.");
+                } else {
+                    player.setBoxDebug(true);
+                    sender.sendMessage(Color.Green + "Turned on colliding bounding box debug.");
                 }
                 break;
             }

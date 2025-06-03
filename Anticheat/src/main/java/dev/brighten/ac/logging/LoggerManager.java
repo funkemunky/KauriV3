@@ -3,6 +3,7 @@ package dev.brighten.ac.logging;
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.data.APlayer;
+import lombok.extern.slf4j.Slf4j;
 import org.dizitart.no2.Nitrite;
 import org.dizitart.no2.collection.FindOptions;
 import org.dizitart.no2.common.SortOrder;
@@ -19,6 +20,7 @@ import java.util.function.Consumer;
 import static org.dizitart.no2.filters.FluentFilter.where;
 
 
+@Slf4j
 public class LoggerManager {
 
     private final File dbDir = new File(Anticheat.INSTANCE.getDataFolder(), "database");
@@ -39,6 +41,10 @@ public class LoggerManager {
 
         MVStoreModule storeModule = MVStoreModule.withConfig()
                 .filePath(dbFile)
+                .compress(true)
+                .autoCommit(true)
+                .autoCommitBufferSize(12)
+                .cacheSize(64)
                 .build();
 
         database = Nitrite.builder()
@@ -50,17 +56,20 @@ public class LoggerManager {
     }
 
     public void insertLog(APlayer player, CheckData checkData, float vl, long time, String data) {
-        logRepo.insert(Log.builder()
+        var writeResult = logRepo.insert(Log.builder()
                 .uuid(player.getUuid())
                 .checkId(checkData.checkId())
+                .checkName(checkData.name())
                 .vl(vl)
                 .data(data)
                 .time(time)
                 .build());
-    }
 
-    public void getLogs(UUID uuid, Consumer<List<Log>> logConsumer) {
-        getLogs(uuid, 2000, logConsumer);
+        try {
+            Anticheat.INSTANCE.getLogger().info("Inserted log: " + writeResult.getAffectedCount());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public void getLogs(UUID uuid, int limit, Consumer<List<Log>> logConsumer) {
@@ -69,52 +78,24 @@ public class LoggerManager {
 
     public void getLogs(UUID uuid, int limit, int skip, Consumer<List<Log>> logsConsumer) {
         Anticheat.INSTANCE.getScheduler().execute(() -> {
-            var list = logRepo.find(where("uuid").eq(uuid), new FindOptions().skip(skip).limit(limit)).toList();
+            var cursor = logRepo.find(where("uuid").eq(uuid), new FindOptions()
+                    .limit(limit).skip(skip)
+                    .thenOrderBy("time", SortOrder.Descending));
 
-            logsConsumer.accept(list);
+            List<Log> logs = cursor.toList();
+
+            logsConsumer.accept(logs);
         });
-    }
-
-
-    public void getLogs(UUID uuid, String checkId, int limit, Consumer<List<Log>> logConsumer) {
-        getLogs(uuid, checkId, limit, 0, logConsumer);
     }
 
     public void getLogs(UUID uuid, String checkId, int limit, int skip, Consumer<List<Log>> logsConsumer) {
         Anticheat.INSTANCE.getScheduler().execute(() -> {
-           var list = logRepo.find(Filter.and(where("uuid").eq(uuid), where("checkId").eq(checkId)),
-                   new FindOptions().skip(skip).limit(limit)).toList();
+           var cursor = logRepo.find(Filter.and(where("uuid").eq(uuid), where("checkId").eq(checkId)),
+                   new FindOptions().skip(skip).limit(limit));
 
-           logsConsumer.accept(list);
-        });
-    }
+           List<Log> logs = cursor.toList();
 
-    public void getLogs(UUID uuid, String checkId, long timeBefore, long timeAfter,
-                        Consumer<List<Log>> logsConsumer) {
-        getLogs(uuid, checkId, timeBefore, timeAfter, 500, 0, logsConsumer);
-    }
-    public void getLogs(UUID uuid, String checkId, long timeBefore, long timeAfter, int limit, int skip,
-                        Consumer<List<Log>> logsConsumer) {
-        Anticheat.INSTANCE.getScheduler().execute(() -> {
-            var list = logRepo.find(Filter
-                    .and(where("uuid").eq(uuid),
-                            where("checkId").eq(checkId),
-                            where("time").lte(timeAfter),
-                            where("time").gte(timeBefore)),
-                    new FindOptions().skip(skip).limit(limit)).toList();
-
-            logsConsumer.accept(list);
-        });
-    }
-
-    public void getRecentLogs(int limit, Consumer<List<Log>> logsConsumer) {
-        Anticheat.INSTANCE.getScheduler().execute(() -> {
-            var list = logRepo.find(new FindOptions()
-                    .thenOrderBy("time", SortOrder.Descending)
-                    .limit(limit))
-                    .toList();
-
-            logsConsumer.accept(list);
+           logsConsumer.accept(logs);
         });
     }
 

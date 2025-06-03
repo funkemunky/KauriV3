@@ -5,6 +5,7 @@ import org.bukkit.plugin.Plugin;
 
 import java.util.*;
 
+@SuppressWarnings("unused")
 public class AnticheatAPI {
 
     public static AnticheatAPI INSTANCE;
@@ -13,6 +14,11 @@ public class AnticheatAPI {
         INSTANCE = this;
     }
 
+    /** Registers an AnticheatEvent to be called when an anticheat action is performed.
+     * This method associates the given plugin with the provided AnticheatEvent.
+     * @param plugin org.bukkit.plugin.Plugin
+     * @param event dev.brighten.ac.api.event.AnticheatEvent
+     */
     public void registerEvent(Plugin plugin, AnticheatEvent event) {
         registeredEvents.compute(plugin.getName(), (key, list) -> {
             if(list == null) {
@@ -24,6 +30,12 @@ public class AnticheatAPI {
         });
     }
 
+    public void shutdown() {
+        registeredEvents.clear();
+        INSTANCE = null;
+    }
+
+    
     public void unregisterEvents(Plugin plugin) {
         registeredEvents.remove(plugin.getName());
     }

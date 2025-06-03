@@ -16,11 +16,10 @@ import lombok.val;
 import me.hydro.emulator.util.Vector;
 
 @CheckData(name = "Prediction", checkId = "predictiona", type = CheckType.MOVEMENT, experimental = true,
-        punishable = false, maxVersion = ProtocolVersion.V1_21_4)
+        punishable = false, maxVersion = ProtocolVersion.V1_21_5)
 public class Prediction extends Check {
     private float buffer;
-    private boolean maybeSkippedPos;
-    private int lastFlying, notMoveTicks;
+    private int notMoveTicks;
     private final Timer lastSkipPos = new TickTimer();
 
     public Prediction(APlayer player) {

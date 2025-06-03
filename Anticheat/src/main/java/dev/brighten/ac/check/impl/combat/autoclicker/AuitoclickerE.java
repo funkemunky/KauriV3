@@ -9,7 +9,8 @@ import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.packet.wrapper.in.*;
 import dev.brighten.ac.utils.annotation.Bind;
 
-@CheckData(name = "Autoclicker (E)", checkId = "autoclickere", type = CheckType.AUTOCLICKER, punishable = false, maxVersion = ProtocolVersion.V1_21_4)
+@CheckData(name = "Autoclicker (E)", checkId = "autoclickere", type = CheckType.AUTOCLICKER,
+        punishable = false, maxVersion = ProtocolVersion.V1_21_5)
 public class AuitoclickerE extends Check {
     public AuitoclickerE(APlayer player) {
         super(player);
@@ -23,22 +24,17 @@ public class AuitoclickerE extends Check {
     };
 
     @Bind
-    WAction<WPacketPlayInBlockPlace> placeEvent = packet ->{
-        debug("Place packet");
-    };
+    WAction<WPacketPlayInBlockPlace> placeEvent = packet -> debug("Place packet");
 
     @Bind
-    WAction<WPacketPlayInArmAnimation> animationEvent = packet -> {
-        debug("Arm animation packet");
-    };
+    WAction<WPacketPlayInArmAnimation> animationEvent = packet ->
+            debug("Arm animation packet");
 
     @Bind
-    WAction<WPacketPlayInUseEntity> useEntity = packet -> {
-        debug("Use entity packet: %s, %s", packet.getEntityId(), packet.getAction().toString());
-    };
+    WAction<WPacketPlayInUseEntity> useEntity = packet ->
+            debug("Use entity packet: %s, %s", packet.getEntityId(), packet.getAction().toString());
 
     @Bind
-    WAction<WPacketPlayInBlockDig> blockDigEvent = packet -> {
-        debug("Block dig packet: %s", packet.getDigType().name());
-    };
+    WAction<WPacketPlayInBlockDig> blockDigEvent = (WPacketPlayInBlockDig packet) ->
+            debug("Block dig packet: %s", packet.getDigType().name());
 }

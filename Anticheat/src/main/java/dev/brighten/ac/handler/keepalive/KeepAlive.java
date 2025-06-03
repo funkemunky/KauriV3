@@ -11,12 +11,10 @@ import java.util.UUID;
 
 public class KeepAlive {
 
-    public final int start;
     public final short id;
     public long startStamp;
 
-    public KeepAlive(int start, short id) {
-        this.start = start;
+    public KeepAlive(short id) {
         this.id = id;
     }
 
@@ -36,6 +34,7 @@ public class KeepAlive {
         return Optional.empty();
     }
 
+    @SuppressWarnings("unused")
     @RequiredArgsConstructor
     public static class KAReceived {
         public final APlayer data;

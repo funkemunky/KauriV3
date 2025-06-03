@@ -7,11 +7,11 @@ import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.wrapper.PacketType;
 import dev.brighten.ac.packet.wrapper.WPacket;
 import dev.brighten.ac.packet.wrapper.login.WPacketHandshakingInSetProtocol;
-import dev.brighten.ac.utils.RunUtils;
 import dev.brighten.ac.utils.reflections.impl.CraftReflection;
 import dev.brighten.ac.utils.reflections.impl.MinecraftReflection;
 import dev.brighten.ac.utils.reflections.types.WrappedClass;
 import io.netty.channel.*;
+import lombok.extern.slf4j.Slf4j;
 import net.minecraft.server.v1_8_R3.PacketLoginInStart;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.logging.Level;
 
+@Slf4j
 public class ModernHandler extends HandlerAbstract {
 
     private final Map<String, Channel> channelCache = new HashMap<>();
@@ -34,7 +35,7 @@ public class ModernHandler extends HandlerAbstract {
     private final List<Channel> serverChannels = Lists.newArrayList();
 
     public ModernHandler() {
-        endInitProtocol = new ChannelInitializer<Channel>() {
+        endInitProtocol = new ChannelInitializer<>() {
 
             @Override
             protected void initChannel(Channel channel) {
@@ -51,7 +52,7 @@ public class ModernHandler extends HandlerAbstract {
         };
 
         // This is executed before Minecraft's channel handler
-        beginInitProtocol = new ChannelInitializer<Channel>() {
+        beginInitProtocol = new ChannelInitializer<>() {
 
             @Override
             protected void initChannel(Channel channel) {
@@ -84,7 +85,7 @@ public class ModernHandler extends HandlerAbstract {
                         Object result = m.invoke(mcServer);
                         if (result != null) serverConnection = result;
                     } catch (Exception e) {
-                        e.printStackTrace();
+                        Anticheat.INSTANCE.getLogger().log(Level.SEVERE, "Cannot invoke " + m, e);
                     }
                 }
             }
@@ -112,12 +113,12 @@ public class ModernHandler extends HandlerAbstract {
     @Override
     public void add(Player player) {
         try {
+            Anticheat.INSTANCE.getLogger().info("Handshaking " + player.getName());
             Channel channel = getChannel(player);
 
             injectChannel(channel).player = player;
         } catch(IllegalArgumentException e)  {
-            System.out.println("Error");
-            e.printStackTrace();
+            Anticheat.INSTANCE.getLogger().log(Level.SEVERE, "Cannot inject incomming player " + player, e);
         }
     }
 
@@ -236,11 +237,11 @@ public class ModernHandler extends HandlerAbstract {
                         super.channelRead(ctx, returnedObject);
                     }
                 } catch (Throwable throwable) {
-                    throwable.printStackTrace();
+                    Anticheat.INSTANCE.getLogger().log(Level.SEVERE, "Cannot call packet " + msg, throwable);
                     try {
                         super.channelRead(ctx, msg);
                     } catch (Exception e) {
-                        e.printStackTrace();
+                        Anticheat.INSTANCE.getLogger().log(Level.SEVERE, "Cannot call packet " + msg, e);
                     }
                 }
             } else {
@@ -265,7 +266,7 @@ public class ModernHandler extends HandlerAbstract {
                         super.write(ctx, returnedObject, promise);
                     }
                 } catch(Throwable throwable) {
-                    throwable.printStackTrace();
+                    Anticheat.INSTANCE.getLogger().log(Level.SEVERE, "Cannot call packet " + msg, throwable);
                     super.write(ctx, msg, promise);
                 }
             } else super.write(ctx, msg, promise);
