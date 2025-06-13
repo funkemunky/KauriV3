@@ -88,8 +88,8 @@ public class APlayer {
     @Getter
     //TODO Actually grab real player version once finished implementing version grabber from Atlas
     private ProtocolVersion playerVersion = ProtocolVersion.UNKNOWN;
-    @Getter
-    private final Object playerConnection;
+
+    private Object playerConnection;
 
     public Emulator EMULATOR;
 
@@ -113,7 +113,7 @@ public class APlayer {
 
     @Setter
     @Getter
-    private boolean sendingPackets;
+    private boolean sendingPackets, boxDebug = false;
     @Getter
     private boolean initialized = false;
 
@@ -248,34 +248,36 @@ public class APlayer {
         mob.despawn();
     }
 
+    public Object getPlayerConnection() {
+        if(this.playerConnection == null) {
+            this.playerConnection = MinecraftReflection.getPlayerConnection(bukkitPlayer);
+        }
 
-    public int runKeepaliveAction(Consumer<KeepAlive> action) {
-        return runKeepaliveAction(action, 0);
+        return this.playerConnection;
     }
 
-    public int runKeepaliveAction(Consumer<KeepAlive> action, int later) {
-        int id = Anticheat.INSTANCE.getKeepaliveProcessor().currentKeepalive.start + later;
+
+    public void runKeepaliveAction(Consumer<KeepAlive> action) {
+        runKeepaliveAction(action, 0);
+    }
+
+    public void runKeepaliveAction(Consumer<KeepAlive> action, int later) {
+        int id = Anticheat.INSTANCE.getKeepaliveProcessor().currentKeepalive.id + later;
 
         keepAliveStamps.add(new NormalAction(id, action));
 
-        return id;
     }
 
     public void onVelocity(Consumer<Vector> runnable) {
         onVelocityTasks.add(runnable);
     }
 
-
     public void runInstantAction(Consumer<InstantAction> runnable) {
-        runInstantAction(runnable, false);
-    }
-
-    public void runInstantAction(Consumer<InstantAction> runnable, boolean flush) {
         short startId = (short) ThreadLocalRandom.current().nextInt(Short.MIN_VALUE, Short.MAX_VALUE),
                 endId = (short)(startId + 1);
 
         //Ensuring we don't have any duplicate IDS
-        val map = Anticheat.INSTANCE.getKeepaliveProcessor().keepAlives.asMap();
+        val map = Anticheat.INSTANCE.getKeepaliveProcessor().keepAlives;
         while (map.containsKey(startId)
                 || map.containsKey(endId)) {
             startId = (short) ThreadLocalRandom.current().nextInt(Short.MIN_VALUE, Short.MAX_VALUE);
@@ -323,7 +325,8 @@ public class APlayer {
 
     public void sendPacketSilently(Object packet) {
         if(sniffing) {
-            sniffedPackets.add("(Silent) [" +  Anticheat.INSTANCE.getKeepaliveProcessor().tick + "] " + (packet instanceof WPacket ? ((WPacket)packet).getPacketType()
+            sniffedPackets.add("(Silent) [" +  Anticheat.INSTANCE.getKeepaliveProcessor().tick + "] "
+                    + (packet instanceof WPacket ? ((WPacket)packet).getPacketType()
                     : HandlerAbstract.getPacketType(packet)) + ": " + packet);
         }
         HandlerAbstract.getHandler().sendPacketSilently(this, packet);

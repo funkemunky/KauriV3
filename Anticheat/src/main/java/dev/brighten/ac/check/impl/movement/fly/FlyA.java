@@ -20,7 +20,7 @@ import org.bukkit.util.Vector;
 
 import java.util.List;
 
-@CheckData(name = "Fly (Predict)", checkId = "flya", type = CheckType.MOVEMENT, experimental = true, punishVl = 7)
+@CheckData(name = "Fly (Predict)", checkId = "flya", type = CheckType.MOVEMENT, experimental = true, punishVl = 7, maxVersion = ProtocolVersion.V1_21_5)
 public class FlyA extends Check {
 
     public FlyA(APlayer player) {

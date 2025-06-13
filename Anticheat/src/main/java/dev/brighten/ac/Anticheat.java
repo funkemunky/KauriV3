@@ -72,18 +72,20 @@ public class Anticheat extends JavaPlugin {
     private KeepaliveProcessor keepaliveProcessor;
     private PacketHandler packetHandler;
     private LoggerManager logManager;
+    private CommandPropertiesManager commandPropertiesManager;
     private RunUtils runUtils;
 
     private FakeEntityTracker fakeTracker;
     private int currentTick;
-    private Deque<Runnable> onTickEnd = new LinkedList<>();
-    private ServerInjector injector;
+    private final Deque<Runnable> onTickEnd = new LinkedList<>();
     //Lag Information
     private Timer lastTickLag;
     private long lastTick;
     @PackagePrivate
-    private RollingAverageDouble tps = new RollingAverageDouble(4, 20);
+    private final RollingAverageDouble tps = new RollingAverageDouble(4, 20);
     private final Map<UUID, WorldInfo> worldInfoMap = new HashMap<>();
+
+    private final List<BaseCommand> commands = new ArrayList<>();
 
     public static boolean allowDebug = true;
 
@@ -92,6 +94,7 @@ public class Anticheat extends JavaPlugin {
 
     private Configuration anticheatConfig;
 
+    @SuppressWarnings("deprecation")
     public void onEnable() {
         INSTANCE = this;
         new LibraryLoader().loadAll(getClass());
@@ -111,14 +114,15 @@ public class Anticheat extends JavaPlugin {
         commandManager = new BukkitCommandManager(this);
         commandManager.enableUnstableAPI("help");
 
-        BukkitCommandCompletions cc = (BukkitCommandCompletions) Anticheat.INSTANCE.getCommandManager()
-                .getCommandCompletions();
+        runTpsTask();
 
-        cc.registerCompletion("checks", (c) -> Anticheat.INSTANCE.getCheckManager().getCheckClasses().keySet()
+        Anticheat.INSTANCE.getCommandManager()
+                .getCommandCompletions().registerCompletion("@checks", (c) -> Anticheat.INSTANCE.getCheckManager().getCheckClasses().keySet()
                 .stream()  .sorted(Comparator.naturalOrder())
                 .map(name -> name.replace(" ", "_")).collect(Collectors.toList()));
 
-        cc.registerCompletion("checkIds", (c) -> Anticheat.INSTANCE.getCheckManager().getCheckClasses().values()
+        Anticheat.INSTANCE.getCommandManager()
+                .getCommandCompletions().registerCompletion("@checkIds", (c) -> Anticheat.INSTANCE.getCheckManager().getCheckClasses().values()
                 .stream().map(s -> s.getCheckClass().getAnnotation(CheckData.class).checkId())
                 .sorted(Comparator.naturalOrder()).collect(Collectors.toList()));
 
@@ -155,12 +159,12 @@ public class Anticheat extends JavaPlugin {
                             .orElse(null);
                 }
                 else if(!c.isOptional()) throw new InvalidCommandArgument(MessageKeys.NOT_ALLOWED_ON_CONSOLE,
-                        false, new String[0]);
+                        false);
                 else return null;
             }
         });
 
-        new CommandPropertiesManager(commandManager, getDataFolder(),
+        commandPropertiesManager = new CommandPropertiesManager(commandManager, getDataFolder(),
                 getResource("command-messages.properties"));
 
         packetProcessor = new PacketProcessor();
@@ -168,7 +172,7 @@ public class Anticheat extends JavaPlugin {
         new AnticheatAPI();
 
         new ClassScanner().initializeScanner(getClass(), this,
-                null);
+                null, Collections.emptyNavigableSet());
 
         if(!getAnticheatConfig().contains("database.username")) {
             getAnticheatConfig().set("database.username", "dbuser");
@@ -202,77 +206,65 @@ public class Anticheat extends JavaPlugin {
     }
     public void onDisable() {
         scheduler.shutdownNow();
+
+
+        // Unregistering APlayer objects
+        playerRegistry.unregisterAll();
+        commands.forEach(commandManager::unregisterCommand);
         commandManager.unregisterCommands();
-        commandManager.getCommandCompletions().unregisterCompletion("checks");
-        commandManager.getCommandCompletions().unregisterCompletion("checkIds");
-        commandManager = null;
+        commandManager.getCommandCompletions().unregisterCompletion("@checks");
+        try {
+            commandManager.getCommandCompletions().unregisterCompletion("@checkIds");
+        } catch (IllegalStateException e) {
+            Anticheat.INSTANCE.getLogger().log(Level.SEVERE, "Check ID unregister failed", e);
+        }
+        commandManager.getScheduler().cancelLocaleTask();
+        commandPropertiesManager = null;
+
+        getLogger().info("Disabling the rest of Kauri...");
 
         checkManager.getCheckClasses().clear();
         Check.alertsEnabled.clear();
         Check.debugInstances.clear();
-        checkManager = null;
-        keepaliveProcessor.keepAlives.cleanUp();
-        keepaliveProcessor = null;
-        tps = null;
+        checkManager.getCheckSettings().clear();
+        checkManager.getIdToName().clear();
+
+        keepaliveProcessor.stop();
+        keepaliveProcessor.keepAlives.clear();
+
 
         logManager.shutDown();
 
         Bukkit.getScheduler().cancelTasks(this);
 
-        // Unregistering APlayer objects
-        playerRegistry.unregisterAll();
-        playerRegistry = null;
-        CheckHandler.TO_HOOK.clear();
-        BBRevealHandler.INSTANCE = null;
+        fakeTracker.despawnAll();
 
-        try {
-            injector.eject();
-            injector = null;
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        CheckHandler.TO_HOOK.clear();
 
         fakeTracker.despawnAll();
-        fakeTracker = null;
 
         worldInfoMap.clear();
 
-        actionManager = null;
+
 
         // Unregistering packet listeners for players
         HandlerAbstract.getHandler().shutdown();
         HandlerList.unregisterAll(this);
         packetProcessor.shutdown();
-        packetProcessor = null;
 
-        packetHandler = null;
-        injector = null;
 
         onTickEnd.clear();
-        onTickEnd = null;
-        packetHandler = null;
 
-        AnticheatAPI.INSTANCE = null;
+
+        AnticheatAPI.INSTANCE.shutdown();
+
+        BBRevealHandler.INSTANCE = null;
+        INSTANCE = null;
+
     }
 
     public void info(@Nonnull String s) {
         getLogger().info(s);
-    }
-
-    public void warn(@Nonnull String s) {
-        getLogger().warning(s);
-    }
-
-    public void severe(@Nonnull String s) {
-        getLogger().severe(s);
-    }
-
-    public void warn(@Nonnull String s, Throwable t) {
-        getLogger().log(Level.WARNING, s, t);
-    }
-
-    public void severe(@Nonnull String s, Throwable t) {
-        getLogger().log(Level.SEVERE, s, t);
     }
 
     public void saveConfig() {
@@ -280,7 +272,7 @@ public class Anticheat extends JavaPlugin {
             ConfigurationProvider.getProvider(YamlConfiguration.class)
                     .save(getAnticheatConfig(), new File(getDataFolder().getPath() + File.separator + "anticheat.yml"));
         } catch (IOException e) {
-            e.printStackTrace();
+            Anticheat.INSTANCE.getLogger().log(Level.SEVERE, "Anticheat config save failed", e);
         }
     }
 
@@ -299,8 +291,7 @@ public class Anticheat extends JavaPlugin {
             File configFile = new File(getDataFolder(), "anticheat.yml");
 
             if(!configFile.exists()) {
-                configFile.getParentFile().mkdirs();
-                if(!configFile.createNewFile()) {
+                if(!configFile.getParentFile().mkdirs() && !configFile.createNewFile()) {
                     throw new RuntimeException("Could not create new anticheat.yml in plugin folder!" +
                             "Insufficient write permissions?");
                 } else {

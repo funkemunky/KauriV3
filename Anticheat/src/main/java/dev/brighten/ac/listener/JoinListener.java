@@ -8,8 +8,8 @@ import dev.brighten.ac.utils.annotation.Init;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerKickEvent;
+import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
 import java.util.Optional;
@@ -19,7 +19,7 @@ public class JoinListener implements Listener {
 
     public JoinListener() {
         Anticheat.INSTANCE.getPacketProcessor().processAsync(EventPriority.NORMAL, event -> {
-            if(event.isCancelled()) return;
+            if(event.isCancelled() || !Anticheat.INSTANCE.isEnabled()) return;
             Optional<APlayer> aplayer = Anticheat.INSTANCE.getPlayerRegistry()
                     .getPlayer(event.getPlayer().getUniqueId());
 
@@ -35,6 +35,8 @@ public class JoinListener implements Listener {
         });
 
         Anticheat.INSTANCE.getPacketProcessor().process(EventPriority.HIGHEST, event -> {
+            if(!Anticheat.INSTANCE.isEnabled())
+                return;
             Optional<APlayer> op = Anticheat.INSTANCE.getPlayerRegistry().getPlayer(event.getPlayer().getUniqueId());
 
             if(op.isEmpty()) {
@@ -46,7 +48,7 @@ public class JoinListener implements Listener {
             if(player.isSendingPackets() || !player.isInitialized()) return;
 
             if(event.getType().equals(PacketType.CLIENT_TRANSACTION)) {
-                if(player.getPacketQueue().size() > 0) {
+                if(!player.getPacketQueue().isEmpty()) {
                     player.setSendingPackets(true);
                     Object packetToSend;
                     synchronized (player.getPacketQueue()) {
@@ -73,17 +75,21 @@ public class JoinListener implements Listener {
         });
     }
 
-    @EventHandler
-    public void onJoin(PlayerJoinEvent event) {
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onJoin(PlayerLoginEvent event) {
         for(int i = 0; i < 10 ; i++) {
             Anticheat.INSTANCE.getLogger().info("Player joined. " + event.getPlayer().getName());
+        }
+
+        if(event.getResult() != PlayerLoginEvent.Result.ALLOWED) {
+            return;
         }
         APlayer player = Anticheat.INSTANCE.getPlayerRegistry().generate(event.getPlayer());
 
         if(Anticheat.INSTANCE.getPlayerRegistry().aplayerMap.containsKey(event.getPlayer().getUniqueId().hashCode())) {
             if(Anticheat.INSTANCE.getPlayerRegistry().aplayerMap
                     .containsKey(event.getPlayer().getUniqueId().hashCode())
-                    && event.getPlayer() != null && event.getPlayer().isOnline()) {
+                    && event.getPlayer() != null) {
                 HandlerAbstract.getHandler().add(event.getPlayer());
             }
         }

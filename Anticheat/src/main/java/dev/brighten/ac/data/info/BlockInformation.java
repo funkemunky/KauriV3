@@ -3,10 +3,8 @@ package dev.brighten.ac.data.info;
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.ProtocolVersion;
-import dev.brighten.ac.utils.BlockUtils;
-import dev.brighten.ac.utils.Materials;
-import dev.brighten.ac.utils.MiscUtils;
-import dev.brighten.ac.utils.XMaterial;
+import dev.brighten.ac.packet.wrapper.objects.EnumParticle;
+import dev.brighten.ac.utils.*;
 import dev.brighten.ac.utils.math.IntVector;
 import dev.brighten.ac.utils.world.BlockData;
 import dev.brighten.ac.utils.world.CollisionBox;
@@ -15,7 +13,6 @@ import dev.brighten.ac.utils.world.types.SimpleCollisionBox;
 import me.hydro.emulator.util.mcp.MathHelper;
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.World;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 
@@ -105,7 +102,6 @@ public class BlockInformation {
         synchronized (aboveCollisions) {
             aboveCollisions.clear();
         }
-        final World world = player.getBukkitPlayer().getWorld();
         int it = 12 * 12;
 
         int xstart = Math.min(startX, endX), xend = Math.max(startX, endX);
@@ -152,6 +148,15 @@ public class BlockInformation {
 
                                     return count + 1;
                                 });
+                            }
+
+                            if(player.isBoxDebug()) {
+                                Anticheat.INSTANCE.getScheduler().execute(() ->
+                                        blockBox.downCast().forEach(sc ->
+                                                Helper.drawCuboid(sc,
+                                                        EnumParticle.FLAME,
+                                                        Collections.singletonList(player.getBukkitPlayer()
+                                                        ))));
                             }
 
                             if(blockBox.isCollided(normalBox)) {

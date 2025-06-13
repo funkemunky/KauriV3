@@ -21,7 +21,7 @@ import org.bukkit.util.Vector;
  * This check is designed to detect an attack through solid blocks, which would be impossible under normal
  * circumstances.
  */
-@CheckData(name = "KillAura (Trace)", checkId = "katrace", type = CheckType.KILLAURA, maxVersion = ProtocolVersion.V1_21_4)
+@CheckData(name = "KillAura (Trace)", checkId = "katrace", type = CheckType.KILLAURA, maxVersion = ProtocolVersion.V1_21_5)
 public class KATrace extends Check {
 
     public KATrace(APlayer player) {
@@ -37,7 +37,7 @@ public class KATrace extends Check {
             return;
 
         // If the player isn't looking at the target, then a raytrace check wouldn't work.
-        if(player.getMovement().getLookingAtBoxes().size() == 0) {
+        if(player.getMovement().getLookingAtBoxes().isEmpty()) {
             debug("No boxes to look at!");
             buffer = 0;
             return;

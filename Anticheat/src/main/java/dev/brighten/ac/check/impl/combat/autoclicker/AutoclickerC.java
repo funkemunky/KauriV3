@@ -12,7 +12,7 @@ import dev.brighten.ac.utils.objects.evicting.EvictingList;
 
 import java.util.List;
 
-@CheckData(name = "Autoclicker (C)", checkId = "autoclickerc", type = CheckType.AUTOCLICKER, maxVersion = ProtocolVersion.V1_21_4)
+@CheckData(name = "Autoclicker (C)", checkId = "autoclickerc", type = CheckType.AUTOCLICKER, maxVersion = ProtocolVersion.V1_21_5)
 public class AutoclickerC extends Check {
 
     public AutoclickerC(APlayer player) {

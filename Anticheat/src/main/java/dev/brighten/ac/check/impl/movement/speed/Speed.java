@@ -14,7 +14,7 @@ import dev.brighten.ac.utils.XMaterial;
 import dev.brighten.ac.utils.annotation.Bind;
 import org.bukkit.potion.PotionEffectType;
 
-@CheckData(name = "Speed", checkId = "speeda", type = CheckType.MOVEMENT, maxVersion = ProtocolVersion.V1_21_4)
+@CheckData(name = "Speed", checkId = "speeda", type = CheckType.MOVEMENT, maxVersion = ProtocolVersion.V1_21_5)
 public class Speed extends Check {
 
     private double ldxz = .12f;
@@ -34,20 +34,20 @@ public class Speed extends Check {
             TagsBuilder tags = new TagsBuilder();
             float moveFactor = player.getBukkitPlayer().getWalkSpeed() / 2f;
 
-            moveFactor+= moveFactor * 0.30000001192092896D;
+            moveFactor+= (float) (moveFactor * 0.30000001192092896D);
 
             if(player.getPotionHandler().hasPotionEffect(PotionEffectType.SPEED))
-                moveFactor += (PlayerUtils.getPotionEffectLevel(player.getBukkitPlayer(), PotionEffectType.SPEED)
-                        * (0.200000000298023224D)) * moveFactor;
+                moveFactor += (float) ((PlayerUtils.getPotionEffectLevel(player.getBukkitPlayer(), PotionEffectType.SPEED)
+                                        * (0.200000000298023224D)) * moveFactor);
 
             if(player.getPotionHandler().hasPotionEffect(PotionEffectType.SLOW))
-                moveFactor += (PlayerUtils.getPotionEffectLevel(player.getBukkitPlayer(), PotionEffectType.SLOW)
-                        * (-0.15000000596046448D)) * moveFactor;
+                moveFactor += (float) ((PlayerUtils.getPotionEffectLevel(player.getBukkitPlayer(), PotionEffectType.SLOW)
+                                        * (-0.15000000596046448D)) * moveFactor);
 
             if (player.getMovement().getFrom().isOnGround()) {
                 tags.addTag("ground");
                 drag *= 0.91f;
-                moveFactor *= 0.16277136 / (drag * drag * drag);
+                moveFactor *= 0.16277136f / (drag * drag * drag);
 
                 if (player.getMovement().isJumped()) {
                     tags.addTag("jumped");
@@ -67,24 +67,24 @@ public class Speed extends Check {
 
                 if(player.getInfo().lastLiquid.getResetStreak() < 3) {
                     tags.addTag("water-enter");
-                    moveFactor*= 1.35;
+                    moveFactor*= 1.35f;
                 }
             } else if(player.getInfo().lastLiquid.isNotPassed(3)) {
-                moveFactor*= 1.35;
+                moveFactor*= 1.35f;
                 tags.addTag("water-leave");
             }
 
             if(player.getMovement().getLastTeleport().isNotPassed(6)
                     || player.getInfo().lastRespawn.isNotPassed(6)) {
                 tags.addTag("teleport");
-                moveFactor+= 0.1;
+                moveFactor+= 0.1f;
                 moveFactor*= 5;
             }
 
             //In 1.9+, entity collisions add acceleration to their movement.
             if(player.getInfo().lastEntityCollision.isNotPassed(2)) {
                 tags.addTag("entity-collision");
-                moveFactor+= 0.05;
+                moveFactor+= 0.05f;
             }
 
             //Pistons have the ability to move players 1 whole block
@@ -97,14 +97,14 @@ public class Speed extends Check {
                     //Ensuring they aren't just entering or leaving web
                     && player.getInfo().lastWeb.getResetStreak() > 1) {
                 tags.addTag("web");
-                moveFactor*= 0.4;
+                moveFactor*= 0.4f;
             }
 
             if(player.getBlockInfo().onSoulSand && player.getMovement().getFrom().isOnGround()
                     //Ensuring the player is actually standing on the block and recieving slow
                     && packet.getY() % (1) == 0.875) {
                 tags.addTag("soulsand");
-                moveFactor*= 0.88;
+                moveFactor*= 0.88f;
             }
 
             double ratio = (player.getMovement().getDeltaXZ() - ldxz) / moveFactor * 100;

@@ -10,7 +10,7 @@ import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInWindowClick;
 import dev.brighten.ac.utils.annotation.Bind;
 
-@CheckData(name = "Inventory (ClickMove)", checkId = "inventoryc", type = CheckType.INVENTORY, maxVersion = ProtocolVersion.V1_21_4)
+@CheckData(name = "Inventory (ClickMove)", checkId = "inventoryc", type = CheckType.INVENTORY, maxVersion = ProtocolVersion.V1_21_5)
 public class InventoryClickMove extends Check {
     public InventoryClickMove(APlayer player) {
         super(player);

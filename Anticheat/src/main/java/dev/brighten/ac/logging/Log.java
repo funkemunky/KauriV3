@@ -1,41 +1,34 @@
 package dev.brighten.ac.logging;
 
-import dev.brighten.ac.utils.json.JSONException;
-import dev.brighten.ac.utils.json.JSONObject;
 import lombok.*;
+import org.dizitart.no2.collection.NitriteId;
+import org.dizitart.no2.index.IndexType;
 import org.dizitart.no2.repository.annotations.Entity;
 import org.dizitart.no2.repository.annotations.Id;
+import org.dizitart.no2.repository.annotations.Index;
 
+import java.io.Serializable;
 import java.util.UUID;
 
-@Entity
+@Entity(value = "logs",
+indices = {
+        @Index(fields = {"uuid"}, type = IndexType.NON_UNIQUE),
+        @Index(fields = {"uuid", "checkId"}, type = IndexType.NON_UNIQUE),
+        @Index(fields = {"time"}, type = IndexType.NON_UNIQUE),
+        @Index(fields = {"uuid", "checkId", "time"}, type = IndexType.NON_UNIQUE)
+})
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Log {
+public class Log implements Serializable {
     @Id
-    private long id;
+    private NitriteId id;
     public UUID uuid;
     private float vl;
     private long time;
     private String data;
     private String checkId;
-
-    public String toJson() {
-        JSONObject object = new JSONObject();
-
-        try {
-            object.put("uuid", uuid.toString());
-            object.put("vl", vl);
-            object.put("time", time);
-            object.put("data", data);
-            object.put("checkId", checkId);
-
-            return object.toString();
-        } catch (JSONException e) {
-            throw new RuntimeException(e);
-        }
-    }
+    private String checkName;
 }

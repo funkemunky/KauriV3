@@ -10,7 +10,7 @@ import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
 import dev.brighten.ac.utils.annotation.Bind;
 import org.bukkit.util.Vector;
 
-@CheckData(name = "Velocity (Vertical)", checkId = "velocitya", type = CheckType.MOVEMENT, maxVersion = ProtocolVersion.V1_21_4)
+@CheckData(name = "Velocity (Vertical)", checkId = "velocitya", type = CheckType.MOVEMENT, maxVersion = ProtocolVersion.V1_21_5)
 public class VelocityA extends Check {
 
     private Vector currentVelocity = null;
@@ -49,7 +49,7 @@ public class VelocityA extends Check {
                 if(++buffer > 15) {
                     flag("pct=%.1f%% buffer=%.1f", pct, buffer);
                 }
-            } else if(buffer > 0) buffer-= 0.5;
+            } else if(buffer > 0) buffer-= 0.5F;
 
             debug("pct=%.1f%% buffer=%.1f dy=%.4f vy=%.4f", pct, buffer,
                     player.getMovement().getDeltaY(), currentVelocity.getY());

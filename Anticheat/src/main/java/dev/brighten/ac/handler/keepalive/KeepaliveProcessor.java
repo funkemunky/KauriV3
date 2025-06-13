@@ -1,7 +1,5 @@
 package dev.brighten.ac.handler.keepalive;
 
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.handler.HandlerAbstract;
@@ -10,21 +8,21 @@ import dev.brighten.ac.utils.BukkitRunnable;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.shorts.Short2ObjectArrayMap;
 import org.bukkit.scheduler.BukkitTask;
 
+import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 public class KeepaliveProcessor implements BukkitRunnable {
 
     private BukkitTask task;
 
-    public KeepAlive currentKeepalive = new KeepAlive(0, (short) 0);
-    public int tick;
+    public KeepAlive currentKeepalive = new KeepAlive((short) 0);
+    public short tick;
     public int totalPlayers, laggyPlayers;
 
-    public final Cache<Short, KeepAlive> keepAlives = CacheBuilder.newBuilder().concurrencyLevel(4)
-            .expireAfterWrite(15, TimeUnit.SECONDS).build();
+    public final Map<Short, KeepAlive> keepAlives = new Short2ObjectArrayMap<>();
 
     final Int2ObjectMap<Short> lastResponses = Int2ObjectMaps.synchronize(new Int2ObjectOpenHashMap<>());
 
@@ -34,12 +32,14 @@ public class KeepaliveProcessor implements BukkitRunnable {
     @Override
     public void run(BukkitTask task) {
         tick++;
+
+        if(tick > Short.MAX_VALUE - 2) {
+            tick = 0;
+            keepAlives.clear();
+        }
         synchronized (keepAlives) {
-            short id = (short) (tick > Short.MAX_VALUE ? tick % Short.MAX_VALUE : tick);
 
-            //Ensuring we don't have any duplicate IDS
-
-            currentKeepalive = new KeepAlive(tick, id);
+            currentKeepalive = new KeepAlive(tick);
             keepAlives.put(currentKeepalive.id, currentKeepalive);
         }
 
@@ -66,12 +66,8 @@ public class KeepaliveProcessor implements BukkitRunnable {
         }
     }
 
-    public Optional<KeepAlive> getKeepByTick(int tick) {
-        return keepAlives.asMap().values().stream().filter(ka -> ka.start == tick).findFirst();
-    }
-
     public Optional<KeepAlive> getKeepById(short id) {
-        return Optional.ofNullable(keepAlives.getIfPresent(id));
+        return Optional.ofNullable(keepAlives.getOrDefault(id, null));
     }
 
     public Optional<KeepAlive> getResponse(APlayer data) {

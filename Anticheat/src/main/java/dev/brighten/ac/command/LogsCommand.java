@@ -8,6 +8,7 @@ import dev.brighten.ac.check.CheckSettings;
 import dev.brighten.ac.gui.Logs;
 import dev.brighten.ac.logging.Log;
 import dev.brighten.ac.utils.Color;
+import dev.brighten.ac.utils.MojangAPI;
 import dev.brighten.ac.utils.Pastebin;
 import dev.brighten.ac.utils.Priority;
 import dev.brighten.ac.utils.annotation.Init;
@@ -15,14 +16,16 @@ import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.sql.Timestamp;
-import java.time.format.DateTimeFormatter;
+import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 
 @Init(priority = Priority.LOW)
 @CommandAlias("kauri|anticheat|ac")
@@ -34,125 +37,61 @@ public class LogsCommand extends BaseCommand {
     @CommandCompletion("@players @checkIds")
     @CommandPermission("anticheat.command.logs")
     @Description("Get player logs")
-    public void onLogs(CommandSender sender, @Single String playername,
+    public void onLogs(Player sender, @Single String playername,
                        @Single @Optional @Default("none") String check, @Single @Optional @Default("5000") int limit) {
-        UUID uuid = Bukkit.getOfflinePlayer(playername).getUniqueId();
+        UUID uuid = MojangAPI.getUUID(playername).orElse(null);
 
-        sender.sendMessage(Color.Red + "Getting logs for " + playername + "...");
+        if(uuid == null) {
+            sender.sendMessage(Color.Red + String.format("There is no player with the name \"%s\"", playername));
+            return;
+        }
+
+        sender.sendMessage(Color.Red + "Getting logs for " + playername + " with UUID " + uuid + " and check " + check + " with limit " + limit + "...");
 
         Anticheat.INSTANCE.getRunUtils().taskAsync(() -> {
-            if(sender instanceof Player) {
-                if(check.equals("none")) {
-                    Logs logs = new Logs(uuid);
+            Logs logs;
+            if(check.equals("none")) {
+                logs = new Logs(uuid);
 
-                    logs.showMenu((Player) sender);
-                } else {
-                    Logs logs = new Logs(uuid, check);
-
-                    logs.showMenu((Player) sender);
-                }
             } else {
-                List<String> logs = new ArrayList<>();
+                logs = new Logs(uuid, check);
 
-                if(check.equals("none")) {
-                    Anticheat.INSTANCE.getLogManager().getLogs(uuid, limit, logsList -> {
-                        logsList.forEach(log -> {
-                            logs.add("[" + new Timestamp(log.getTime()).toLocalDateTime()
-                                    .format(DateTimeFormatter.ISO_DATE_TIME) + "] funkemunky failed "
-                                    + Anticheat.INSTANCE.getCheckManager().getIdToName().get(log.getCheckId()) + "(VL: "
-                                    + log.getVl() + ") {" + log.getData() + "}");
-                        });
-                        if(logs.isEmpty()) {
-                            sender.sendMessage(Color.Gray + "There are no logs for player \"" + playername + "\"");
-                        } else {
-                            String url = null;
-                            try {
-                                url = Pastebin.makePaste(String.join("\n", logs), playername + "'s Logs",
-                                        Pastebin.Privacy.UNLISTED);
-
-                                sender.sendMessage(Color.Green + "Logs for " + playername + ": " + Color.White + url);
-                            } catch (UnsupportedEncodingException e) {
-                                throw new RuntimeException(e);
-                            }
-                        }
-                    });
-                } else {
-                    Anticheat.INSTANCE.getLogManager().getLogs(uuid, check, limit, logsList -> {
-                        logsList.forEach(log -> {
-                            logs.add("[" + new Timestamp(log.getTime()).toLocalDateTime()
-                                    .format(DateTimeFormatter.ISO_DATE_TIME) + "] funkemunky failed "
-                                    + Anticheat.INSTANCE.getCheckManager().getIdToName().get(log.getCheckId())
-                                    + "(VL: " + log.getVl() + ") {" + log.getData() + "}");
-                        });
-                        if(logs.isEmpty()) {
-                            sender.sendMessage(Color.Gray + " does not have any violations for check \"" + check + "\"");
-                        } else {
-                            String url = null;
-                            try {
-                                url = Pastebin.makePaste(String.join("\n", logs), playername + "'s Logs",
-                                        Pastebin.Privacy.UNLISTED);
-
-                                sender.sendMessage(Color.Green + "Logs for " + playername + ": " + Color.White + url);
-                            } catch (UnsupportedEncodingException e) {
-                                throw new RuntimeException(e);
-                            }
-                        }
-                    });
-                }
             }
+            logs.showMenu(sender);
         });
     }
 
     @Subcommand("logs paste")
     @CommandPermission("kauri.command.logs")
-    @Syntax("[player]")
-    @CommandCompletion("@players")
+    @Syntax("[player] [check|none]")
+    @CommandCompletion("@players @checkIds")
     @Description("View logs via Pastebin")
-    public void onLogsPasteBin(CommandSender sender, String[] args) {
+    public void onLogsPasteBin(CommandSender sender,
+                               @Single String playerName,
+                               @Single @Optional @Default("none") String check,
+                               String[] args) {
         if(args.length == 0) {
-            sender.sendMessage(Color.Red + "Usage: /kauri logs web <player>");
+            sender.sendMessage(Color.Red + "Usage: /kauri logs paste <player>");
             return;
         }
 
-        String playername = args[0];
+        UUID uuid = MojangAPI.getUUID(playerName).orElse(null);
 
-        UUID uuid = Bukkit.getOfflinePlayer(playername).getUniqueId();
+        if(uuid == null) {
+            sender.sendMessage(Color.Red + String.format("There is no player with the name \"%s\"", playerName));
+            return;
+        }
 
-        sender.sendMessage(Color.Red + "Getting logs for " + playername + "...");
+        sender.sendMessage(Color.Red + "Getting logs for " + playerName + "...");
 
-        Anticheat.INSTANCE.getRunUtils().taskAsync(() -> {
-            if(sender instanceof Player) {
-                Logs logs = new Logs(uuid);
-
-                logs.showMenu((Player) sender);
-            } else {
-                List<String> logs = new ArrayList<>();
-
-                Anticheat.INSTANCE.getLogManager().getLogs(uuid, logsList -> {
-                    logsList.forEach(log -> {
-                        logs.add("[" + new Timestamp(log.getTime()).toLocalDateTime()
-                                .format(DateTimeFormatter.ISO_DATE_TIME) + "] funkemunky failed "
-                                + Anticheat.INSTANCE.getCheckManager().getIdToName().get(log.getCheckId()) + "(VL: "
-                                + log.getVl() + ") {" + log.getData() + "}");
-                    });
-                    if(logs.isEmpty()) {
-                        sender.sendMessage(Color.Gray + "There are no logs for player \"" + playername + "\"");
-                    } else {
-                        String url;
-                        try {
-                            url = Pastebin.makePaste(String.join("\n", logs), playername + "'s Logs",
-                                    Pastebin.Privacy.UNLISTED);
-
-                            sender.sendMessage(Color.Green + "Logs for " + playername + ": " + Color.White + url);
-                        } catch (UnsupportedEncodingException e) {
-                            throw new RuntimeException(e);
-                        }
-                    }
-                });
-            }
-        });
+        if(check.equals("none")) {
+            runPastebin(sender, uuid, playerName, null);
+        } else {
+            runPastebin(sender, uuid, playerName, check);
+        }
     }
 
+    @SuppressWarnings("deprecation")
     @Subcommand("logs web")
     @CommandPermission("kauri.command.logs")
     @Syntax("[player]")
@@ -175,7 +114,37 @@ public class LogsCommand extends BaseCommand {
             runWebLog(sender, player);
         }
     }
+    private final SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
+    private void runPastebin(CommandSender sender, UUID uuid, String name, @Nullable String checkId) {
+        Consumer<List<Log>> logHandle = logs -> {
+            String body = logs.stream().map(log -> String.format("[%s] (%s; vl=%.2f): %s", timeToDate(log.getTime()),
+                            log.getCheckName(), log.getVl(), log.getData()))
+                    .collect(Collectors.joining("\n"));
+            String title = String.format("%s's Anticheat Logs at %s", name, format.format(new Date()));
+            try {
+                var pastebin = Pastebin.makePaste(body, title, Pastebin.Privacy.UNLISTED);
+
+                sender.sendMessage(String.format(Color.Green + "Logs for %s: %s", name, Color.White + pastebin));
+            } catch (UnsupportedEncodingException e) {
+                sender.sendMessage(Color.Red + "There was an error trying to make the pasted link. Check console.");
+                Anticheat.INSTANCE.getLogger().log(Level.SEVERE, "Anticheat Logs could not be made", e);
+            }
+        };
+
+        if(checkId != null) {
+            Anticheat.INSTANCE.getLogManager().getLogs(uuid, checkId, 100000, 0, logHandle);
+        } else {
+            Anticheat.INSTANCE.getLogManager().getLogs(uuid, 100000, 0, logHandle);
+        }
+    }
+
+
+    private String timeToDate(long timeStamp) {
+        return format.format(new Date(timeStamp));
+    }
+
+    @SuppressWarnings("unchecked")
     private void runWebLog(CommandSender sender, OfflinePlayer target) {
         //val logs = Kauri.INSTANCE.loggerManager.getLogs(target.getUniqueId());
         Anticheat.INSTANCE.getLogManager().getLogs(target.getUniqueId(), 100000, 0, logs -> {
@@ -198,13 +167,10 @@ public class LogsCommand extends BaseCommand {
             if (!violations.isEmpty()) {
                 for (String key : violations.keySet()) {
                     if (Anticheat.INSTANCE.getCheckManager().isCheck(key)) {
-                        var checkClass = Anticheat.INSTANCE.getCheckManager().getCheckClasses()
-                                .get(Anticheat.INSTANCE.getCheckManager().getIdToName().get(key))
-                                .getCheckClass().getParent();
-
-
                         CheckSettings checkData = Anticheat.INSTANCE.getCheckManager()
-                                .getCheckSettings(checkClass);
+                                .getCheckSettings(Anticheat.INSTANCE.getCheckManager().getCheckClasses()
+                                .get(Anticheat.INSTANCE.getCheckManager().getIdToName().get(key))
+                                        .getCheckClass().getParent());
                         int vl = violations.get(key), maxVL = checkData.getPunishVl();
                         boolean developer = false;
 
@@ -230,7 +196,7 @@ public class LogsCommand extends BaseCommand {
 
                     finalURL = finalURL.replace("%id%", readAll(reader));
                 } catch (IOException e) {
-                    Anticheat.INSTANCE.getLogger().log(Level.WARNING, "Failed to get logs for " + target.getName(), e);
+                    Anticheat.INSTANCE.getLogger().log(Level.SEVERE, "Anticheat Logs could not be made", e);
                 }
 
                 sender.sendMessage(Color.translate("&aView the log here&7: &f" + finalURL));

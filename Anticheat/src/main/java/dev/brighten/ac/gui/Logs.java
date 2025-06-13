@@ -98,10 +98,10 @@ public class Logs extends PagedMenu {
 
         getFixedItems().put(getMenuDimension().getSize() - 5, button);
         for (Log log : logs) {
-            if(allowedLogs.size() > 0 && !allowedLogs.contains(log.getCheckId())) continue;
+            if(!allowedLogs.isEmpty() && !allowedLogs.contains(log.getCheckId())) continue;
 
             ItemBuilder builder = new ItemBuilder(XMaterial.PAPER.parseMaterial()).amount(1)
-                    .name(Color.Gold + log.getCheckId());
+                    .name(Color.Gold + log.getCheckName());
 
             String[] split = MiscUtils.splitIntoLine(log.getData(), 45);
             List<String> lore = new ArrayList<>(Arrays.asList("&eVL: &f" + log.getVl(),

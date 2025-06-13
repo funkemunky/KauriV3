@@ -33,7 +33,7 @@ public class PacketHandler {
                 WPacketPlayInTransaction packet = (WPacketPlayInTransaction) packetObject;
 
                 if (packet.getId() == 0) {
-                    if (Anticheat.INSTANCE.getKeepaliveProcessor().keepAlives.getIfPresent(packet.getAction()) != null) {
+                    if (Anticheat.INSTANCE.getKeepaliveProcessor().keepAlives.get(packet.getAction()) != null) {
                         Anticheat.INSTANCE.getKeepaliveProcessor().addResponse(player, packet.getAction());
 
                         val optional = Anticheat.INSTANCE.getKeepaliveProcessor().getResponse(player);
@@ -44,14 +44,14 @@ public class PacketHandler {
                             player.addPlayerTick();
 
                             player.getLagInfo().setLastTransPing(player.getLagInfo().getTransPing());
-                            player.getLagInfo().setTransPing(current - ka.start);
+                            player.getLagInfo().setTransPing(current - ka.id);
 
                             if (player.getPlayerVersion().isOrAbove(ProtocolVersion.V1_9)
                                     && player.getMovement().getLastFlying().isPassed(1)) {
                                 player.getMovement().runPositionHackFix();
                             }
 
-                            if (player.instantTransaction.size() > 0) {
+                            if (!player.instantTransaction.isEmpty()) {
                                 synchronized (player.instantTransaction) {
                                     Deque<Short> toRemove = new LinkedList<>();
                                     player.instantTransaction.forEach((key, tuple) -> {
@@ -61,7 +61,7 @@ public class PacketHandler {
                                             toRemove.add(key);
                                         }
                                     });
-                                    Short key = null;
+                                    Short key;
                                     while ((key = toRemove.poll()) != null) {
                                         player.instantTransaction.remove(key);
                                     }
@@ -73,14 +73,13 @@ public class PacketHandler {
                                 player.getLagInfo().getLastPingDrop().reset();
                             }
 
-                            ka.getReceived(player.getBukkitPlayer().getUniqueId()).ifPresent(r -> {
-                                r.receivedStamp = timestamp;
-                            });
+                            ka.getReceived(player.getBukkitPlayer().getUniqueId())
+                                    .ifPresent(r -> r.receivedStamp = timestamp);
 
                             synchronized (player.keepAliveStamps) {
                                 List<NormalAction> toRemove = new ArrayList<>();
                                 for (NormalAction action : player.keepAliveStamps) {
-                                    if (action.stamp > ka.start) continue;
+                                    if (action.stamp > ka.id) continue;
 
                                     action.action.accept(ka);
                                     toRemove.add(action);
@@ -246,11 +245,10 @@ public class PacketHandler {
 
                     long serverTime = serial.readLong();
                     long clientReceivedTime = serial.readLong();
-                    long currentTime = timestamp;
 
                     long serverPing = clientReceivedTime - serverTime;
-                    long clientToServer = currentTime - clientReceivedTime;
-                    long totalFeedback = currentTime - serverTime;
+                    long clientToServer = timestamp - clientReceivedTime;
+                    long totalFeedback = timestamp - serverTime;
 
                     player.getBukkitPlayer().sendMessage(String.format("total: %sms client-server: %sms server-client: %sms", totalFeedback, clientToServer, serverPing));
                 }
@@ -369,9 +367,11 @@ public class PacketHandler {
 
         if(player.sniffing) {
             if(type != PacketType.UNKNOWN) {
-                player.sniffedPackets.add("[" + Anticheat.INSTANCE.getKeepaliveProcessor().tick + "] " + type.name() + ": " + packetObject.toString());
+                player.sniffedPackets.add("[" + Anticheat.INSTANCE.getKeepaliveProcessor().tick + "] " + type.name()
+                        + ": " + packetObject.toString());
             } else {
-                player.sniffedPackets.add("[" + Anticheat.INSTANCE.getKeepaliveProcessor().tick + "] (UNKNOWN) " + packetObject.getClass().getSimpleName() + ": " + packetObject);
+                player.sniffedPackets.add("[" + Anticheat.INSTANCE.getKeepaliveProcessor().tick + "] (UNKNOWN) "
+                        + packetObject.getClass().getSimpleName() + ": " + packetObject);
             }
         }
 
