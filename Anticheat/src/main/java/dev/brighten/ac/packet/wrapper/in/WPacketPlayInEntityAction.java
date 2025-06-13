@@ -21,7 +21,7 @@ public class WPacketPlayInEntityAction extends WPacket {
         return null;
     }
 
-    public static enum EnumPlayerAction {
+    public enum EnumPlayerAction {
         START_SNEAKING,
         STOP_SNEAKING,
         STOP_SLEEPING,
@@ -30,7 +30,7 @@ public class WPacketPlayInEntityAction extends WPacket {
         RIDING_JUMP,
         OPEN_INVENTORY;
 
-        private EnumPlayerAction() {
+        EnumPlayerAction() {
         }
     }
 

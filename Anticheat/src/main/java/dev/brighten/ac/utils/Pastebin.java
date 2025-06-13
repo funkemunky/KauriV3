@@ -1,30 +1,20 @@
 package dev.brighten.ac.utils;
 
-
-import org.bukkit.Bukkit;
+import dev.brighten.ac.Anticheat;
+import lombok.Getter;
 
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.logging.Level;
 
 public class Pastebin {
     static String pasteURL = "https://funkemunky.cc/pastebin/make";
 
     public Pastebin() {
 
-    }
-
-    public static String nonce() {
-        Object player = Bukkit.getPlayer("");
-
-        player = new Object();
-
-        return "%%__NONCE__%%";
-    }
-
-    public static String userId() {
-        return "%%__USER__%%";
     }
 
     static String checkResponse(String response) {
@@ -36,27 +26,14 @@ public class Pastebin {
 
     static public String makePaste(String body, String name, Privacy privacy)
             throws UnsupportedEncodingException {
-        String content = URLEncoder.encode(body, "UTF-8");
-        String title = URLEncoder.encode(name + " report", "UTF-8");
+        String content = URLEncoder.encode(body, StandardCharsets.UTF_8);
+        String title = URLEncoder.encode(name + " report", StandardCharsets.UTF_8);
         String data = "body=" + content + "&name=" + title + "&privacy=" + privacy.name();
         String response = Pastebin.page(Pastebin.pasteURL, data);
 
         if(response == null) return "";
         String check = Pastebin.checkResponse(response);
-        if (!check.equals("")) {
-            return check;
-        }
-        return response;
-    }
-
-    static public String makePaste(String body, String name, Privacy privacy, String expire)
-            throws UnsupportedEncodingException {
-        String content = URLEncoder.encode(body, "UTF-8");
-        String title = URLEncoder.encode(name + " report", "UTF-8");
-        String data = "body=" + content + "&name=" + title + "&privacy=" + privacy.name() + "&expire=" + expire;
-        String response = Pastebin.page(Pastebin.pasteURL, data);
-        String check = Pastebin.checkResponse(response);
-        if (!check.equals("")) {
+        if (!check.isEmpty()) {
             return check;
         }
         return response;
@@ -91,7 +68,7 @@ public class Pastebin {
             InputStream is = connection.getInputStream();
             BufferedReader rd = new BufferedReader(new InputStreamReader(is));
             String line;
-            StringBuffer response = new StringBuffer();
+            StringBuilder response = new StringBuilder();
             while ((line = rd.readLine()) != null) {
                 response.append(line);
             }
@@ -99,7 +76,7 @@ public class Pastebin {
             return response.toString();
 
         } catch (Exception e) {
-            e.printStackTrace();
+            Anticheat.INSTANCE.getLogger().log(Level.SEVERE, "Failed to upload paste", e);
             return null;
 
         } finally {
@@ -110,6 +87,7 @@ public class Pastebin {
         }
     }
 
+    @Getter
     public enum Privacy {
         PUBLIC(0), UNLISTED(1), PRIVATE(2);
 
@@ -119,8 +97,5 @@ public class Pastebin {
             this.privacy = privacy;
         }
 
-        public int getPrivacy() {
-            return privacy;
-        }
     }
 }

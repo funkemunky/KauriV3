@@ -24,6 +24,6 @@ public class WPacketPlayInClientCommand extends WPacket {
     public enum WrappedEnumClientCommand {
         PERFORM_RESPAWN,
         REQUEST_STATS,
-        OPEN_INVENTORY_ACHIEVEMENT;
+        OPEN_INVENTORY_ACHIEVEMENT
     }
 }

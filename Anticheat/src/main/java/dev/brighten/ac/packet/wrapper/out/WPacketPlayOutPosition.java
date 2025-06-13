@@ -37,9 +37,9 @@ public class WPacketPlayOutPosition extends WPacket {
         Y_ROT(3),
         X_ROT(4);
 
-        private int f;
+        private final int f;
 
-        private EnumPlayerTeleportFlags(int var3) {
+        EnumPlayerTeleportFlags(int var3) {
             this.f = var3;
         }
 

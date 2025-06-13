@@ -104,13 +104,13 @@ public final class LibraryLoader {
         }
 
         if (!saveLocation.exists()) {
-            throw new RuntimeException("Unable to download dependency: " + d.toString());
+            throw new RuntimeException("Unable to download dependency: " + d);
         }
 
         try {
             URL_INJECTOR.get().addURL(saveLocation.toURI().toURL());
         } catch (Exception e) {
-            throw new RuntimeException("Unable to load dependency: " + saveLocation.toString(), e);
+            throw new RuntimeException("Unable to load dependency: " + saveLocation, e);
         }
 
         Anticheat.INSTANCE.info("Loaded dependency '" + name + "' successfully.");
@@ -167,8 +167,7 @@ public final class LibraryLoader {
         @Override
         public boolean equals(Object o) {
             if (o == this) return true;
-            if (!(o instanceof Dependency)) return false;
-            final Dependency other = (Dependency) o;
+            if (!(o instanceof Dependency other)) return false;
             return this.getGroupId().equals(other.getGroupId()) &&
                     this.getArtifactId().equals(other.getArtifactId()) &&
                     this.getVersion().equals(other.getVersion()) &&

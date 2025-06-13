@@ -337,7 +337,7 @@ public class XML {
             return JSONObject.NULL;
         }
         if (string.equals("0")) {
-            return new Integer(0);
+            return Integer.valueOf(0);
         }
 
 // If it might be a number, try converting it. If that doesn't work,
@@ -357,9 +357,9 @@ public class XML {
                 if (string.indexOf('.') >= 0) {
                     return Double.valueOf(string);
                 } else if (string.indexOf('e') < 0 && string.indexOf('E') < 0) {
-                    Long myLong = new Long(string);
+                    Long myLong = Long.valueOf(string);
                     if (myLong.longValue() == myLong.intValue()) {
-                        return new Integer(myLong.intValue());
+                        return Integer.valueOf(myLong.intValue());
                     } else {
                         return myLong;
                     }

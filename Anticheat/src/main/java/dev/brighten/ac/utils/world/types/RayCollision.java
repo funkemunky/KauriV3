@@ -100,8 +100,7 @@ public class RayCollision implements CollisionBox {
     public boolean isIntersected(CollisionBox other) {
         if(other instanceof RayCollision) {
             return false; //not supported yet
-        } else if(other instanceof SimpleCollisionBox) {
-            SimpleCollisionBox box = (SimpleCollisionBox) other;
+        } else if(other instanceof SimpleCollisionBox box) {
 
             return intersect(this, box);
         } else {

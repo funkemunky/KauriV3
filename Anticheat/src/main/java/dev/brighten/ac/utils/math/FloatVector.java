@@ -9,18 +9,14 @@ import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.util.Vector;
 
+import java.util.Objects;
+
+@Setter
+@Getter
 @AllArgsConstructor
 @NoArgsConstructor
 public class FloatVector implements Cloneable {
-    @Getter
-    @Setter
     private float x, y, z;
-
-    public FloatVector(Location location) {
-        this.x = MathHelper.floor_double(location.getX());
-        this.y = MathHelper.floor_double(location.getY());
-        this.z = MathHelper.floor_double(location.getZ());
-    }
 
     public FloatVector clone() {
         try {
@@ -56,18 +52,12 @@ public class FloatVector implements Cloneable {
 
     @Override
     public boolean equals(Object o) {
-        if(!(o instanceof FloatVector)) return false;
-
-        FloatVector FloatVector = (FloatVector) o;
-        return x == FloatVector.x && y == FloatVector.y && z == FloatVector.z;
+        if (!(o instanceof FloatVector that)) return false;
+        return Float.compare(x, that.x) == 0 && Float.compare(y, that.y) == 0 && Float.compare(z, that.z) == 0;
     }
 
     @Override
     public int hashCode() {
-        int hash = 7;
-        hash = 79 * hash + (Float.floatToIntBits(this.x) ^ Float.floatToIntBits(this.x) >>> 16);
-        hash = 79 * hash + (Float.floatToIntBits(this.y) ^ Float.floatToIntBits(this.y) >>> 16);
-        hash = 79 * hash + (Float.floatToIntBits(this.z) ^ Float.floatToIntBits(this.z) >>> 16);
-        return hash;
+        return Objects.hash(x, y, z);
     }
 }

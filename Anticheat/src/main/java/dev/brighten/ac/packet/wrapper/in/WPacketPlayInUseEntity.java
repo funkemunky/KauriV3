@@ -26,10 +26,6 @@ public class WPacketPlayInUseEntity extends WPacket {
         return null;
     }
 
-    public enum EnumHand {
-        MAIN_HAND, OFF_HAND;
-    }
-
     public Entity getEntity(World world) {
         for (Entity entity : world.getEntities()) {
             if(entity.getEntityId() == entityId) {
@@ -39,13 +35,13 @@ public class WPacketPlayInUseEntity extends WPacket {
         return null;
     }
 
+    @Getter
     public enum EnumEntityUseAction {
         INTERACT("INTERACT"),
         ATTACK("ATTACK"),
         INTERACT_AT("INTERACT_AT");
 
-        @Getter
-        private String name;
+        private final String name;
 
         EnumEntityUseAction(String name) {
             this.name = name;

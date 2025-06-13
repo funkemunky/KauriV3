@@ -19,8 +19,8 @@ import java.util.concurrent.ThreadLocalRandom;
 
 @Getter
 public class FakeMob {
-    private int entityId;
-    private EntityType type;
+    private final int entityId;
+    private final EntityType type;
 
     private List<APlayer> watching = Collections.emptyList();
 

@@ -12,5 +12,5 @@ import java.util.UUID;
 class ListenerEntry {
     private final EventPriority priority;
     private final PacketListener listener;
-    private long id = UUID.randomUUID().getMostSignificantBits();
+    private final long id = UUID.randomUUID().getMostSignificantBits();
 }

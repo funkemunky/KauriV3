@@ -57,14 +57,14 @@ public enum EnumParticle {
     private static final Map<Integer, EnumParticle> U = Maps.newHashMap();
     private static final String[] V;
 
-    private EnumParticle(String var3, int var4, boolean var5, int var6) {
+    EnumParticle(String var3, int var4, boolean var5, int var6) {
         this.Q = var3;
         this.R = var4;
         this.S = var5;
         this.T = var6;
     }
 
-    private EnumParticle(String var3, int var4, boolean var5) {
+    EnumParticle(String var3, int var4, boolean var5) {
         this(var3, var4, var5, 0);
     }
 
@@ -93,7 +93,7 @@ public enum EnumParticle {
     }
 
     public static EnumParticle a(int var0) {
-        return (EnumParticle)U.get(var0);
+        return U.get(var0);
     }
 
     static {

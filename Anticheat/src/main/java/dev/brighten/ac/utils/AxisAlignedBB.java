@@ -24,15 +24,6 @@ public class AxisAlignedBB {
         this.maxZ = Math.max(d2, d5);
     }
 
-    public AxisAlignedBB(BoundingBox box) {
-        this.minX = box.minX;
-        this.minY = box.minY;
-        this.minZ = box.minZ;
-        this.maxX = box.maxX;
-        this.maxY = box.maxY;
-        this.maxZ = box.maxZ;
-    }
-
     public AxisAlignedBB(SimpleCollisionBox box) {
         this.minX = box.minX;
         this.minY = box.minY;

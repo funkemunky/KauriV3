@@ -47,7 +47,7 @@ public enum WrappedEnumDirection {
     private final IntVector m;
     public static WrappedClass enumDirection;
 
-    private WrappedEnumDirection(int order, int offset, String direction, WrappedEnumDirection.EnumAxisDirection axisDirection, WrappedEnumDirection.EnumAxis axis, IntVector offsetPosition) {
+    WrappedEnumDirection(int order, int offset, String direction, WrappedEnumDirection.EnumAxisDirection axisDirection, WrappedEnumDirection.EnumAxis axis, IntVector offsetPosition) {
         this.i = offset;
         this.h = order;
         this.j = direction;
@@ -135,7 +135,7 @@ public enum WrappedEnumDirection {
         return (T) enumDirection.getEnum(name());
     }
 
-    public static enum EnumDirectionLimit {
+    public enum EnumDirectionLimit {
         HORIZONTAL,
         VERTICAL;
 
@@ -144,14 +144,14 @@ public enum WrappedEnumDirection {
         }
     }
 
-    public static enum EnumAxisDirection {
+    public enum EnumAxisDirection {
         POSITIVE(1, "Towards positive"),
         NEGATIVE(-1, "Towards negative");
 
         private final int c;
         private final String d;
 
-        private EnumAxisDirection(int var3, String var4) {
+        EnumAxisDirection(int var3, String var4) {
             this.c = var3;
             this.d = var4;
         }
@@ -165,7 +165,7 @@ public enum WrappedEnumDirection {
         }
     }
 
-    public static enum EnumAxis {
+    public enum EnumAxis {
         X("x", WrappedEnumDirection.EnumDirectionLimit.HORIZONTAL),
         Y("y", WrappedEnumDirection.EnumDirectionLimit.VERTICAL),
         Z("z", WrappedEnumDirection.EnumDirectionLimit.HORIZONTAL);
@@ -185,7 +185,7 @@ public enum WrappedEnumDirection {
         private final String e;
         private final WrappedEnumDirection.EnumDirectionLimit f;
 
-        private EnumAxis(String var3, WrappedEnumDirection.EnumDirectionLimit var4) {
+        EnumAxis(String var3, WrappedEnumDirection.EnumDirectionLimit var4) {
             this.e = var3;
             this.f = var4;
         }

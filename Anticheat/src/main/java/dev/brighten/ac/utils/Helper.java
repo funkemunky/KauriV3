@@ -237,7 +237,7 @@ public class Helper {
     }
 
     public static SimpleCollisionBox getEntityCollision(Entity entity) {
-        return new SimpleCollisionBox((Object) MinecraftReflection.getEntityBoundingBox(entity));
+        return new SimpleCollisionBox(MinecraftReflection.getEntityBoundingBox(entity));
     }
 
     public static List<SimpleCollisionBox> getCollisions(APlayer player, SimpleCollisionBox collisionBox, int mask) {
@@ -269,7 +269,7 @@ public class Helper {
                 if (!BlockUtils.isEntityCollidable(entity)) continue;
 
                 SimpleCollisionBox entityCollisionBox =
-                        new SimpleCollisionBox((Object) MinecraftReflection.getEntityBoundingBox(entity));
+                        new SimpleCollisionBox(MinecraftReflection.getEntityBoundingBox(entity));
 
                 if (entityCollisionBox.isIntersected(collisionBox))
                     entityCollisionBox.downCast(collisionBoxes);

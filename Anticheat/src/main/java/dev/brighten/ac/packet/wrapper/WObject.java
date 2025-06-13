@@ -3,10 +3,10 @@ package dev.brighten.ac.packet.wrapper;
 import dev.brighten.ac.utils.reflections.types.WrappedField;
 import lombok.Getter;
 
+@Getter
 public abstract class WObject {
 
-    @Getter
-    private Object vanillaObject;
+    private final Object vanillaObject;
     public WObject(Object object) {
         this.vanillaObject = object;
         processVanilla();
