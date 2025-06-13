@@ -39,7 +39,6 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.HandlerList;
 import org.bukkit.plugin.java.JavaPlugin;
-import protocolsupport.injector.ServerInjector;
 
 import javax.annotation.Nonnull;
 import java.io.File;
@@ -204,6 +203,7 @@ public class Anticheat extends JavaPlugin {
 
         Bukkit.getOnlinePlayers().forEach(HandlerAbstract.getHandler()::add);
     }
+
     public void onDisable() {
         scheduler.shutdownNow();
 
