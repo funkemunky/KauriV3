@@ -76,7 +76,6 @@ public class Anticheat extends JavaPlugin {
     private FakeEntityTracker fakeTracker;
     private int currentTick;
     private final Deque<Runnable> onTickEnd = new LinkedList<>();
-    private ServerInjector injector;
     //Lag Information
     private Timer lastTickLag;
     private long lastTick;
@@ -201,13 +200,6 @@ public class Anticheat extends JavaPlugin {
         alog(Color.Green + "Loading WorldInfo system...");
         Bukkit.getWorlds().forEach(w -> worldInfoMap.put(w.getUID(), new WorldInfo(w)));
 
-        injector = new ServerInjector();
-        try {
-            injector.inject();
-        } catch (Exception e) {
-            Anticheat.INSTANCE.getLogger().log(Level.SEVERE, "Anticheat injector failed", e);
-        }
-
         Bukkit.getOnlinePlayers().forEach(HandlerAbstract.getHandler()::add);
     }
 
@@ -247,13 +239,6 @@ public class Anticheat extends JavaPlugin {
         fakeTracker.despawnAll();
 
         CheckHandler.TO_HOOK.clear();
-
-        try {
-            injector.eject();
-            injector = null;
-        } catch (Exception e) {
-            getLogger().log(Level.SEVERE, "Could not eject server!", e);
-        }
 
         fakeTracker.despawnAll();
 
