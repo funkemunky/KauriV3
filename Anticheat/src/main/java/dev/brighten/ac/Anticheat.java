@@ -73,6 +73,7 @@ public class Anticheat extends JavaPlugin {
     private LoggerManager logManager;
     private CommandPropertiesManager commandPropertiesManager;
     private RunUtils runUtils;
+    private ServerInjector serverInjector;
 
     private FakeEntityTracker fakeTracker;
     private int currentTick;
@@ -180,6 +181,9 @@ public class Anticheat extends JavaPlugin {
             getAnticheatConfig().set("database.password", UUID.randomUUID().toString());
         }
 
+        serverInjector = new ServerInjector();
+        serverInjector.inject();
+
 
         this.keepaliveProcessor = new KeepaliveProcessor();
         this.fakeTracker = new FakeEntityTracker();
@@ -220,6 +224,12 @@ public class Anticheat extends JavaPlugin {
         }
         commandManager.getScheduler().cancelLocaleTask();
         commandPropertiesManager = null;
+
+        try {
+            serverInjector.eject();
+        } catch (Exception e) {
+            getLogger().log(Level.SEVERE, "Anticheat Server Injector failed to eject", e);
+        }
 
         getLogger().info("Disabling the rest of Kauri...");
 
