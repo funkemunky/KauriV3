@@ -39,6 +39,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.HandlerList;
 import org.bukkit.plugin.java.JavaPlugin;
+import protocolsupport.injector.ServerInjector;
 
 import javax.annotation.Nonnull;
 import java.io.File;
@@ -76,6 +77,7 @@ public class Anticheat extends JavaPlugin {
     private FakeEntityTracker fakeTracker;
     private int currentTick;
     private Deque<Runnable> onTickEnd = new LinkedList<>();
+    private ServerInjector injector;
     //Lag Information
     private Timer lastTickLag;
     private long lastTick;
@@ -153,7 +155,7 @@ public class Anticheat extends JavaPlugin {
                             .orElse(null);
                 }
                 else if(!c.isOptional()) throw new InvalidCommandArgument(MessageKeys.NOT_ALLOWED_ON_CONSOLE,
-                        false);
+                        false, new String[0]);
                 else return null;
             }
         });
@@ -223,6 +225,13 @@ public class Anticheat extends JavaPlugin {
         CheckHandler.TO_HOOK.clear();
         BBRevealHandler.INSTANCE = null;
 
+        try {
+            injector.eject();
+            injector = null;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
         fakeTracker.despawnAll();
         fakeTracker = null;
 
@@ -237,6 +246,7 @@ public class Anticheat extends JavaPlugin {
         packetProcessor = null;
 
         packetHandler = null;
+        injector = null;
 
         onTickEnd.clear();
         onTickEnd = null;
