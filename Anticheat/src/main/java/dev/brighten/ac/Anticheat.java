@@ -210,6 +210,7 @@ public class Anticheat extends JavaPlugin {
 
         Bukkit.getOnlinePlayers().forEach(HandlerAbstract.getHandler()::add);
     }
+
     public void onDisable() {
         scheduler.shutdownNow();
 
