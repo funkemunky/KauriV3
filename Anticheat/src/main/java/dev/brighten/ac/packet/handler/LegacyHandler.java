@@ -21,6 +21,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
 
 //TODO Make this feature-parody with ModernHandler
 public class LegacyHandler extends HandlerAbstract {
@@ -48,7 +49,9 @@ public class LegacyHandler extends HandlerAbstract {
                 } else uninjectedChannels.add(channel);
             }
         } catch(IllegalArgumentException e)  {
-            e.printStackTrace();
+            Anticheat.INSTANCE.getLogger().log(Level.WARNING, "Failed to add packet handler for player " + player.getName(), e);
+        } catch (Exception e) {
+            Anticheat.INSTANCE.getLogger().log(Level.SEVERE, "Unexpected error while adding packet handler for player " + player.getName(), e);
         }
     }
 
@@ -107,28 +110,38 @@ public class LegacyHandler extends HandlerAbstract {
 
         @Override
         public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-            String name = msg.getClass().getName();
-            int index = name.lastIndexOf(".");
-            String packetName = name.substring(index + 1);
 
-            Object packet = Anticheat.INSTANCE.getPacketProcessor().call(player, msg, PacketType
-                    .getByPacketId(packetName).orElse(PacketType.UNKNOWN));
+            try {
+                String name = msg.getClass().getName();
+                int index = name.lastIndexOf(".");
+                String packetName = name.substring(index + 1);
+                Object packet = Anticheat.INSTANCE.getPacketProcessor().call(player, msg, PacketType
+                        .getByPacketId(packetName).orElse(PacketType.UNKNOWN));
 
-            if(packet != null) {
-                super.channelRead(ctx, packet);
+                if(packet != null) {
+                    super.channelRead(ctx, packet);
+                }
+            } catch (Throwable throwable) {
+                Anticheat.INSTANCE.getLogger().log(Level.WARNING, "Error on channel read for player " + player.getName(), throwable);
+                super.channelRead(ctx, msg);
             }
         }
 
         @Override
         public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
-            String name = msg.getClass().getName();
-            int index = name.lastIndexOf(".");
-            String packetName = name.substring(index + 1);
-            Object packet = Anticheat.INSTANCE.getPacketProcessor().call(player, msg, PacketType
-                    .getByPacketId(packetName).orElse(PacketType.UNKNOWN));
+            try {
+                String name = msg.getClass().getName();
+                int index = name.lastIndexOf(".");
+                String packetName = name.substring(index + 1);
+                Object packet = Anticheat.INSTANCE.getPacketProcessor().call(player, msg, PacketType
+                        .getByPacketId(packetName).orElse(PacketType.UNKNOWN));
 
-            if(packet != null) {
-                super.write(ctx, packet, promise);
+                if(packet != null) {
+                    super.write(ctx, packet, promise);
+                }
+            } catch (Throwable throwable) {
+                Anticheat.INSTANCE.getLogger().log(Level.WARNING, "Error on channel write for player " + player.getName(), throwable);
+                super.write(ctx, msg, promise);
             }
         }
     }

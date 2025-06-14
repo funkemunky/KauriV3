@@ -214,37 +214,43 @@ public class ModernHandler extends HandlerAbstract {
                 return;
             }
 
-            PacketType type = HandlerAbstract.getPacketType(msg);
+            try {
+                PacketType type = HandlerAbstract.getPacketType(msg);
 
-            if(type == PacketType.LOGIN_START) {
-                PacketLoginInStart packet = (PacketLoginInStart) msg;
+                if(type == PacketType.LOGIN_START) {
+                    PacketLoginInStart packet = (PacketLoginInStart) msg;
 
-                channelCache.put(packet.a().getName(), ctx.channel());
-            } else if(type == PacketType.LOGIN_HANDSHAKE) {
-                WPacketHandshakingInSetProtocol packet = (WPacketHandshakingInSetProtocol) PacketType.processType(type, msg);
+                    channelCache.put(packet.a().getName(), ctx.channel());
+                } else if(type == PacketType.LOGIN_HANDSHAKE) {
+                    WPacketHandshakingInSetProtocol packet = (WPacketHandshakingInSetProtocol) PacketType.processType(type, msg);
 
-                if(packet.getProtocol() == WPacketHandshakingInSetProtocol.EnumProtocol.LOGIN) {
-                    protocolLookup.put(ctx.channel(), packet.getVersionNumber());
-                }
-            }
-
-            if(player != null && Anticheat.INSTANCE.getPacketProcessor() != null) {
-                try {
-                    Object returnedObject = Anticheat.INSTANCE.getPacketProcessor().call(player, msg,
-                            type);
-
-                    if (returnedObject != null) {
-                        super.channelRead(ctx, returnedObject);
+                    if(packet.getProtocol() == WPacketHandshakingInSetProtocol.EnumProtocol.LOGIN) {
+                        protocolLookup.put(ctx.channel(), packet.getVersionNumber());
                     }
-                } catch (Throwable throwable) {
-                    Anticheat.INSTANCE.getLogger().log(Level.SEVERE, "Cannot call packet " + msg, throwable);
+                }
+
+                if(player != null && Anticheat.INSTANCE.getPacketProcessor() != null) {
                     try {
-                        super.channelRead(ctx, msg);
-                    } catch (Exception e) {
-                        Anticheat.INSTANCE.getLogger().log(Level.SEVERE, "Cannot call packet " + msg, e);
+                        Object returnedObject = Anticheat.INSTANCE.getPacketProcessor().call(player, msg,
+                                type);
+
+                        if (returnedObject != null) {
+                            super.channelRead(ctx, returnedObject);
+                        }
+                    } catch (Throwable throwable) {
+                        Anticheat.INSTANCE.getLogger().log(Level.SEVERE, "Cannot call packet " + msg, throwable);
+                        try {
+                            super.channelRead(ctx, msg);
+                        } catch (Exception e) {
+                            Anticheat.INSTANCE.getLogger().log(Level.SEVERE, "Cannot call packet " + msg, e);
+                        }
                     }
+                } else {
+                    super.channelRead(ctx, msg);
                 }
-            } else {
+            } catch (Throwable t) {
+                Anticheat.INSTANCE.getLogger().log(Level.SEVERE, "Error on channel read for player: "
+                        + player.getName(), t);
                 super.channelRead(ctx, msg);
             }
         }
@@ -257,19 +263,25 @@ public class ModernHandler extends HandlerAbstract {
                 return;
             }
 
-            if(player != null) {
-                try {
-                    Object returnedObject = Anticheat.INSTANCE.getPacketProcessor().call(player, msg,
-                            HandlerAbstract.getPacketType(msg));
+            try {
+                if(player != null) {
+                    try {
+                        Object returnedObject = Anticheat.INSTANCE.getPacketProcessor().call(player, msg,
+                                HandlerAbstract.getPacketType(msg));
 
-                    if (returnedObject != null) {
-                        super.write(ctx, returnedObject, promise);
+                        if (returnedObject != null) {
+                            super.write(ctx, returnedObject, promise);
+                        }
+                    } catch(Throwable throwable) {
+                        Anticheat.INSTANCE.getLogger().log(Level.SEVERE, "Cannot call packet " + msg, throwable);
+                        super.write(ctx, msg, promise);
                     }
-                } catch(Throwable throwable) {
-                    Anticheat.INSTANCE.getLogger().log(Level.SEVERE, "Cannot call packet " + msg, throwable);
-                    super.write(ctx, msg, promise);
-                }
-            } else super.write(ctx, msg, promise);
+                } else super.write(ctx, msg, promise);
+            } catch (Throwable t) {
+                Anticheat.INSTANCE.getLogger().log(Level.SEVERE, "Error on channel write for player: "
+                        + (player != null ? player.getName() : "Unknown"), t);
+                super.write(ctx, msg, promise);
+            }
         }
     }
 }

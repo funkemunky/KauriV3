@@ -45,7 +45,7 @@ public class JoinListener implements Listener {
 
             APlayer player = op.get();
 
-            if(player.isSendingPackets() || !player.isInitialized()) return;
+            if(!player.isInitialized()) return;
 
             if(event.getType().equals(PacketType.CLIENT_TRANSACTION)) {
                 if(!player.getPacketQueue().isEmpty()) {
@@ -68,6 +68,7 @@ public class JoinListener implements Listener {
                                 player.getPacketQueue().add(event.getPacket());
                             }
                             event.setCancelled(true);
+                            player.getBukkitPlayer().sendMessage("§cPlease wait a moment before sending packets again.");
                         }
                     }
                 }
