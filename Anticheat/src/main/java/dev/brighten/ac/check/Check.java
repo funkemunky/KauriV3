@@ -71,6 +71,8 @@ public class Check implements ECheck {
     }
 
     public void cancel() {
+        if(!cancellable) return;
+
         CancelResult result = CancelResult.builder().cancelled(false).build();
 
         for (AnticheatEvent event : AnticheatAPI.INSTANCE.getAllEvents()) {

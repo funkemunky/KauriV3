@@ -61,13 +61,12 @@ public class Prediction extends Check {
             if(totalMotion < 9E-4 || (mx * mx + my * my + mz * mz) < 9E-4) {
                 lastSkipPos.reset();
             }
-            boolean zeroThree = lastSkipPos.isNotPassed(2);
+            boolean zeroThree = lastSkipPos.isNotPassed(4);
             boolean collided = player.EMULATOR.getTags().contains("x-collided")
                     || player.EMULATOR.getTags().contains("z-collided");
 
             boolean badOffset = offset > (player.getMovement().getDeltaXZ() == 0
-                    && lastSkipPos.isNotPassed(4 )
-                    ? (zeroThree ? 0.2 : 0.03) : (zeroThree ? 0.05 : (collided ? 0.01 : 0.003)));
+                    ? (zeroThree ? 0.2 : 0.03) : (zeroThree ? 0.03 : (collided ? 0.01 : 0.003)));
 
             if(badOffset) {
                 debug("[%s] dx=%.6f px=%.6f dz=%.6f pz=%.6f dy=%.6f py=%.6f", zeroThree, player.getMovement().getDeltaX(),
@@ -80,16 +79,14 @@ public class Prediction extends Check {
                     buffer++;
                 }
 
-                if(++buffer > 5) {
-                    if(player.getPlayerVersion().isBelow(ProtocolVersion.V1_20_1)) {
-                        flag("%s", offset);
-                    }
+                if(++buffer > 2) {
+                    flag("%s", offset);
                     correctMovement(loc);
                     buffer = 4;
                 }
             } else if(buffer > 0) buffer-= 0.05f;
-            debug((badOffset ? Color.Red : "") + "offset=%s f=%s s=%s dy=%.4f dpy=%.4f x=%s px=%s [%s] tags=[%s]",
-                    offset, forward, strafe, player.getMovement().getDeltaY(),
+            debug((badOffset ? Color.Red : "") + "offset=%s skip_pos=%s f=%s s=%s dy=%.4f dpy=%.4f x=%s px=%s [%s] tags=[%s]",
+                    offset, lastSkipPos.getPassed(), forward, strafe, player.getMovement().getDeltaY(),
                     py, player.getMovement().getTo().getX(), predicted.getX(), totalMotion, tags);
         }
     };
