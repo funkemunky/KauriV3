@@ -33,7 +33,7 @@
         <dependency>
             <groupId>me.hydro</groupId>
             <artifactId>emulator</artifactId>
-            <version>1.2-neo</version>
+            <version>1.2.1-neo</version>
             <scope>compile</scope>
         </dependency>
         <dependency>

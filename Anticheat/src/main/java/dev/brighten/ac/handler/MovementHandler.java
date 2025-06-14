@@ -212,6 +212,27 @@ public class MovementHandler {
                                                 result.getTags().add("velocity");
                                             }
 
+
+                                            if(fastMath == FastMathType.FAST_LEGACY) {
+                                                result.getTags().add("fast_legacy");
+                                            } else if(fastMath == FastMathType.VANILLA) {
+                                                result.getTags().add("vanilla");
+                                            } else if(fastMath == FastMathType.FAST_NEW) {
+                                                result.getTags().add("fast_new");
+                                            }
+
+                                            if(forward > 0) {
+                                                result.getTags().add("w-key");
+                                            } else if(forward < 0) {
+                                                result.getTags().add("s-key");
+                                            }
+
+                                            if(strafe > 0) {
+                                                result.getTags().add("d-key");
+                                            } else if(strafe < 0) {
+                                                result.getTags().add("a-key");
+                                            }
+
                                             if (minimum == null || minimum.getOffset() > result.getOffset()) {
                                                 minimum = result;
 

@@ -230,7 +230,7 @@ public class Check implements ECheck {
     }
 
     public void punish() {
-        if(!punishable || player.getCheckHandler().getLastPunish().isNotPassed(20)) return;
+        if (!punishable || player.getCheckHandler().getLastPunish().isNotPassed(20)) return;
 
         player.getCheckHandler().getLastPunish().reset();
 
@@ -240,10 +240,10 @@ public class Check implements ECheck {
         PunishResult result = PunishResult.builder().cancelled(false).commands(commands).build();
 
         for (AnticheatEvent event : AnticheatAPI.INSTANCE.getAllEvents()) {
-            result = event.onPunish(player.getBukkitPlayer(),this,  commands, result.isCancelled());
+            result = event.onPunish(player.getBukkitPlayer(), this, commands, result.isCancelled());
         }
         PunishResult finalResult = result;
-        if(finalResult != null && finalResult.getCommands() != null && !finalResult.isCancelled()) {
+        if (finalResult != null && finalResult.getCommands() != null && !finalResult.isCancelled()) {
             Anticheat.INSTANCE.getRunUtils().task(() -> {
                 for (String punishmentCommand : finalResult.getCommands()) {
                     Bukkit.dispatchCommand(Bukkit.getConsoleSender(), punishmentCommand);

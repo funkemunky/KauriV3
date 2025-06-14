@@ -197,6 +197,10 @@ public class CheckHandler {
 
     }
 
+    private void handleCheckLoading(Check check) {
+
+    }
+
     public void callEvent(Event event) {
         if(!player.isInitialized()) {
             return;

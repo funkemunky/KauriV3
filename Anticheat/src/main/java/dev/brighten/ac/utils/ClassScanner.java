@@ -40,6 +40,10 @@ public class ClassScanner {
     private final PathMatcher CLASS_FILE = create("glob:*.class");
     private final PathMatcher ARCHIVE = create("glob:*.{jar}");
 
+    public void initializeScanner(Class<? extends Plugin> mainClass, Plugin plugin, ClassLoader loader) {
+        initializeScanner(mainClass, plugin, loader, scanFile(null, mainClass));
+    }
+
     public void initializeScanner(Class<? extends Plugin> mainClass, Plugin plugin, ClassLoader loader, Set<String> names) {
         names.stream()
                 .map(name -> {
@@ -139,6 +143,117 @@ public class ClassScanner {
     public  Set<String> scanFile(Class<? extends Annotation> annotationClass) {
         return scanFile(annotationClass, new URL[]{Anticheat.class.getProtectionDomain().getCodeSource().getLocation()});
     }
+
+    public  Set<String> scanFile(String file, Class<?> clazz) {
+        return scanFile(file, new URL[]{clazz.getProtectionDomain().getCodeSource().getLocation()});
+    }
+
+    public  Set<String> scanFile(String file, URL[] urls) {
+        Set<URI> sources =  new HashSet<>();
+        Set<String> plugins =  new HashSet<>();
+
+
+        for (URL url : urls) {
+            if (!url.getProtocol().equals("file")) {
+                continue;
+            }
+
+            URI source;
+            try {
+                source = url.toURI();
+            } catch (URISyntaxException e) {
+                continue;
+            }
+
+            if (sources.add(source)) {
+                scanPath(file, Paths.get(source), plugins);
+            }
+        }
+
+        return plugins;
+    }
+
+    private  void scanPath(String file, Path path, Set<String> plugins) {
+        if (Files.exists(path)) {
+            if (Files.isDirectory(path)) {
+                scanDirectory(file, path, plugins);
+            } else {
+                scanZip(file, path, plugins);
+            }
+        }
+    }
+
+    private  void scanDirectory(String file, Path dir, final Set<String> plugins) {
+        try {
+            Files.walkFileTree(dir, newHashSet(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE,
+                    new SimpleFileVisitor<>() {
+                        @Override
+                        public @NotNull FileVisitResult visitFile(Path path, @NotNull BasicFileAttributes attrs) throws IOException {
+                            if (CLASS_FILE.matches(path.getFileName())) {
+                                try (InputStream in = Files.newInputStream(path)) {
+                                    String plugin = findPlugin(file, in);
+                                    if (plugin != null) {
+                                        plugins.add(plugin);
+                                    }
+                                }
+                            }
+
+                            return FileVisitResult.CONTINUE;
+                        }
+                    });
+        } catch (IOException e) {
+            Anticheat.INSTANCE.getLogger().log(Level.SEVERE, "Failed to scan dir: " + dir, e);
+        }
+    }
+
+    private  void scanZip(String file, Path path, Set<String> plugins) {
+        if (!ARCHIVE.matches(path.getFileName())) {
+            return;
+        }
+
+        try (ZipFile zip = new ZipFile(path.toFile())) {
+            Enumeration<? extends ZipEntry> entries = zip.entries();
+            while (entries.hasMoreElements()) {
+                ZipEntry entry = entries.nextElement();
+                if (entry.isDirectory() || !entry.getName().endsWith(".class")) {
+                    continue;
+                }
+
+                try (InputStream in = zip.getInputStream(entry)) {
+                    String plugin = findPlugin(file, in);
+                    if (plugin != null) {
+                        plugins.add(plugin);
+                    }
+                }
+            }
+        } catch (IOException e) {
+            Anticheat.INSTANCE.getLogger().log(Level.SEVERE, "Failed to scan zip: " + path + "/" + file, e);
+        }
+    }
+
+    public  String findPlugin(String file, InputStream in) {
+        try {
+            ClassReader reader = new ClassReader(in);
+            ClassNode classNode = new ClassNode();
+            reader.accept(classNode, ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
+            String className = classNode.name.replace('/', '.');
+            if (classNode.visibleAnnotations != null) {
+                for (AnnotationNode node : classNode.visibleAnnotations) {
+                    if ((file == null && node.desc
+                            .equals("L" + Init.class.getName().replace(".", "/") + ";"))
+                            || (file != null && node.desc
+                            .equals("L" + file.replace(".", "/") + ";")))
+                        return className;
+                }
+            }
+            if (classNode.superName != null && (classNode.superName.equals(file))) return className;
+        } catch (Exception e) {
+            Anticheat.INSTANCE.getLogger().log(Level.SEVERE, "Failed to find plugin: " + file, e);
+        }
+        return null;
+    }
+
+
 
     public  Set<String> scanFile(Class<? extends Annotation> annotationClass, URL[] urls) {
         Set<URI> sources =  new HashSet<>();
