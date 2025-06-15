@@ -56,7 +56,7 @@ public class LoggerManager {
     }
 
     public void insertLog(APlayer player, CheckData checkData, float vl, long time, String data) {
-        var writeResult = logRepo.insert(Log.builder()
+        logRepo.insert(Log.builder()
                 .uuid(player.getUuid())
                 .checkId(checkData.checkId())
                 .checkName(checkData.name())
@@ -64,12 +64,6 @@ public class LoggerManager {
                 .data(data)
                 .time(time)
                 .build());
-
-        try {
-            Anticheat.INSTANCE.getLogger().info("Inserted log: " + writeResult.getAffectedCount());
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
     }
 
     public void getLogs(UUID uuid, int limit, Consumer<List<Log>> logConsumer) {
