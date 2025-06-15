@@ -60,15 +60,13 @@ public class JoinListener implements Listener {
                 }
             } else {
                 switch (event.getType()) {
-                    case ENTITY, ENTITY_DESTROY, ENTITY_HEAD_ROTATION, ENTITY_MOVE, ENTITY_MOVELOOK, ENTITY_LOOK,
-                            BLOCK_CHANGE, MULTI_BLOCK_CHANGE, MAP_CHUNK -> {
+                    case ENTITY, ENTITY_DESTROY, ENTITY_HEAD_ROTATION, ENTITY_MOVE, ENTITY_MOVELOOK, ENTITY_LOOK -> {
                         if (player.getLagInfo().getLastClientTransaction().isPassed(200L)
                                 && player.getCreation().isPassed(6000L)) {
                             synchronized (player.getPacketQueue()) {
                                 player.getPacketQueue().add(event.getPacket());
                             }
                             event.setCancelled(true);
-                            player.getBukkitPlayer().sendMessage("§cPlease wait a moment before sending packets again.");
                         }
                     }
                 }
