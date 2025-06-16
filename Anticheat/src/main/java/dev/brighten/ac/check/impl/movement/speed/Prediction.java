@@ -46,8 +46,8 @@ public class Prediction extends Check {
             }
 
             double offset = player.EMULATOR.getOffset();
-            int forward = player.EMULATOR.getInput().getForward();
-            int strafe = player.EMULATOR.getInput().getStrafing();
+            float forward = player.EMULATOR.getInput().getForward();
+            float strafe = player.EMULATOR.getInput().getStrafing();
             String tags = String.join(", ", player.EMULATOR.getTags());
             Vector predicted = player.getMovement().getPredicted();
             

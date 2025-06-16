@@ -83,7 +83,7 @@ public class MovementHandler {
     private final Timer lastCinematic = new TickTimer(2);
     private final Timer lastReset = new TickTimer(2);
     private final EvictingList<Integer> sensitivitySamples = new EvictingList<>(50);
-
+    private boolean modernMovement = false;
     public MovementHandler(APlayer player) {
         this.player = player;
 
@@ -101,11 +101,14 @@ public class MovementHandler {
 
         // Setting from as same location as to
         from.setLoc(to);
+
+        modernMovement = ProtocolVersion.getGameVersion().isOrAbove(ProtocolVersion.V1_21_5);
     }
 
     private final boolean[] IS_OR_NOT = new boolean[]{true, false};
     private final boolean[] ALWAYS_FALSE = new boolean[1];
     private final int[] FULL_RANGE = new int[]{-1, 0, 1};
+
 
     public void runEmulation(KLocation to, boolean isZeroThree) {
         /*
@@ -178,6 +181,7 @@ public class MovementHandler {
                                                     .strafing(strafe)
                                                     .sprinting(sprinting)
                                                     .usingItem(usingItem)
+                                                    .modernMovement(modernMovement)
                                                     .hitSlowdown(hitSlow)
                                                     .aiMoveSpeed(player.getBukkitPlayer().getWalkSpeed() / 2)
                                                     .fastMathType(fastMath)
@@ -293,7 +297,7 @@ public class MovementHandler {
                     FastMathType.FAST_LEGACY,
                     FastMathType.VANILLA};
         } else {
-            return new FastMathType[]{FastMathType.VANILLA, FastMathType.FAST_NEW};
+            return new FastMathType[]{FastMathType.VANILLA, FastMathType.FAST_NEW, FastMathType.MODERN_VANILLA};
         }
     }
 
@@ -311,7 +315,7 @@ public class MovementHandler {
     }
 
     private boolean[] getJumpingIterations() {
-        return airTicks > 2 ? IS_OR_NOT : ALWAYS_FALSE;
+        return IS_OR_NOT;
     }
 
 

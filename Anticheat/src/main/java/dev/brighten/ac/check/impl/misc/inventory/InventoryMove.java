@@ -23,8 +23,8 @@ public class InventoryMove extends Check {
         if(player.getInfo().isGeneralCancel() || player.EMULATOR.getInput() == null) return;
 
         // Running inventory check
-        final int STRAFING = player.EMULATOR.getInput().getStrafing();
-        final int FORWARD = player.EMULATOR.getInput().getForward();
+        final float STRAFING = player.EMULATOR.getInput().getStrafing();
+        final float FORWARD = player.EMULATOR.getInput().getForward();
 
         if((STRAFING != 0 || FORWARD != 0)
                 && (player.getInfo().isInventoryOpen())) {
