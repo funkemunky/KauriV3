@@ -6,7 +6,7 @@
     <parent>
         <groupId>dev.brighten.ac</groupId>
         <artifactId>EnterpriseAnticheat</artifactId>
-        <version>1.0-SNAPSHOT</version>
+        <version>3.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>Compat</artifactId>
