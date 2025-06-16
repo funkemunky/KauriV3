@@ -20,10 +20,6 @@
 
     <repositories>
         <repository>
-            <id>maven-central</id>
-            <url>https://nexus.funkemunky.cc/repository/maven-central/</url>
-        </repository>
-        <repository>
             <id>viaversion-repo</id>
             <url>https://repo.viaversion.com</url>
         </repository>
@@ -50,6 +46,10 @@
         <repository>
             <id>codemc-snapshots</id>
             <url>https://repo.codemc.io/repository/maven-snapshots/</url>
+        </repository>
+        <repository>
+            <id>maven-central</id>
+            <url>https://nexus.funkemunky.cc/repository/maven-central/</url>
         </repository>
     </repositories>
 
@@ -140,7 +140,7 @@
         <dependency>
             <groupId>org.dizitart</groupId>
             <artifactId>nitrite-jackson-mapper</artifactId>
-            <version>4.3.0</version>
+            <version>4.2.2</version>
             <scope>compile</scope>
         </dependency>
         <dependency>

@@ -188,7 +188,8 @@ public class ClassScanner {
             Files.walkFileTree(dir, newHashSet(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE,
                     new SimpleFileVisitor<>() {
                         @Override
-                        public @NotNull FileVisitResult visitFile(Path path, @NotNull BasicFileAttributes attrs) throws IOException {
+                        public @NotNull FileVisitResult visitFile(@NotNull Path path,
+                                                                  @NotNull BasicFileAttributes attrs) throws IOException {
                             if (CLASS_FILE.matches(path.getFileName())) {
                                 try (InputStream in = Files.newInputStream(path)) {
                                     String plugin = findPlugin(file, in);
@@ -247,7 +248,12 @@ public class ClassScanner {
                 }
             }
             if (classNode.superName != null && (classNode.superName.equals(file))) return className;
-        } catch (Exception e) {
+        } catch (IllegalArgumentException e) {
+            if(!e.getMessage().contains("Unsupported")) {
+                Anticheat.INSTANCE.getLogger().log(Level.SEVERE, "Failed to scan: " + file, e);
+            }
+        }
+        catch (Exception e) {
             Anticheat.INSTANCE.getLogger().log(Level.SEVERE, "Failed to find plugin: " + file, e);
         }
         return null;
@@ -328,6 +334,10 @@ public class ClassScanner {
                         return className;
                 }
             }
+        } catch (IllegalArgumentException e) {
+            if(!e.getMessage().contains("Unsupported")) {
+                Anticheat.INSTANCE.getLogger().log(Level.SEVERE, "Failed to scan: " + in.toString(), e);
+            }
         } catch (Exception e) {
             Anticheat.INSTANCE.getLogger().log(Level.SEVERE, "Failed to scan: " + in.toString(), e);
         }
@@ -343,7 +353,7 @@ public class ClassScanner {
             Enumeration<? extends ZipEntry> entries = zip.entries();
             while (entries.hasMoreElements()) {
                 ZipEntry entry = entries.nextElement();
-                if (entry.isDirectory() || !entry.getName().endsWith(".class")) {
+                if (entry.isDirectory() || !entry.getName().endsWith(".class") || entry.getName().contains("META-INF")) {
                     continue;
                 }
 
@@ -353,6 +363,10 @@ public class ClassScanner {
                         plugins.add(plugin);
                     }
                 }
+            }
+        } catch (IllegalArgumentException e) {
+            if(!e.getMessage().contains("Unsupported")) {
+                Anticheat.INSTANCE.getLogger().log(Level.SEVERE, "Failed to scan: " + path, e);
             }
         } catch (IOException e) {
             Anticheat.INSTANCE.getLogger().log(Level.SEVERE, "Failed to scan directory " + path, e);
