@@ -4,14 +4,12 @@ import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
 import dev.brighten.ac.packet.wrapper.out.WPacketPlayOutEntityVelocity;
 import dev.brighten.ac.packet.wrapper.out.WPacketPlayOutExplosion;
+import dev.brighten.ac.utils.Tuple;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.bukkit.util.Vector;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Consumer;
 
 @RequiredArgsConstructor
@@ -19,7 +17,7 @@ public class VelocityHandler {
 
     private final APlayer PLAYER;
 
-    private final Map<Vector, Boolean> VELOCITY_MAP = new HashMap<>();
+    private final List<Tuple<Vector, Boolean>> VELOCITY_MAP = new LinkedList<>();
     private final Set<Consumer<Vector>> VELOCITY_TASKS = new HashSet<>();
 
     
@@ -32,27 +30,38 @@ public class VelocityHandler {
     public void onPre(WPacketPlayOutEntityVelocity packet) {
         if(packet.getEntityId() != PLAYER.getBukkitPlayer().getEntityId()) return;
 
-        VELOCITY_MAP.put(new Vector(packet.getDeltaX(), packet.getDeltaY(), packet.getDeltaZ()), false);
+        VELOCITY_MAP.add(new Tuple<>(new Vector(packet.getDeltaX(), packet.getDeltaY(), packet.getDeltaZ()), false));
     }
 
     public void onPre(WPacketPlayOutExplosion packet) {
-        VELOCITY_MAP.put(packet.getEntityPush().toBukkitVector(), false);
+        VELOCITY_MAP.add(new Tuple<>(packet.getEntityPush().toBukkitVector(), false));
     }
 
     public void onPost(WPacketPlayOutEntityVelocity packet) {
         if(packet.getEntityId() != PLAYER.getBukkitPlayer().getEntityId()) return;
 
-        VELOCITY_MAP.computeIfPresent(new Vector(packet.getDeltaX(), packet.getDeltaY(), packet.getDeltaZ()),
-                (velocity, queuedToRemove) -> true);
+        for (Tuple<Vector, Boolean> set : VELOCITY_MAP) {
+            if(set.two) continue;
+            if(set.one.equals(new Vector(packet.getDeltaX(), packet.getDeltaY(), packet.getDeltaZ()))) {
+                set.two = true;
+            }
+        }
     }
 
     public void onPost(WPacketPlayOutExplosion packet) {
-        VELOCITY_MAP.computeIfPresent(packet.getEntityPush().toBukkitVector(),
-                (velocity, queuedToRemove) -> true);
+        for (Tuple<Vector, Boolean> set : VELOCITY_MAP) {
+            if(set.two) continue;
+
+            if(set.one.equals(packet.getEntityPush().toBukkitVector())) {
+                set.two = true;
+            }
+        }
     }
 
-    public Set<Vector> getPossibleVectors() {
-        return VELOCITY_MAP.keySet();
+    public List<Vector> getPossibleVectors() {
+        return VELOCITY_MAP.stream()
+                .map(set -> set.one)
+                .toList();
     }
 
     public void onAccurateVelocity(Consumer<Vector> task) {
@@ -60,16 +69,16 @@ public class VelocityHandler {
     }
 
     public void onFlyingPost(WPacketPlayInFlying packet) {
-        val iterator = VELOCITY_MAP.entrySet().iterator();
+        val iterator = VELOCITY_MAP.iterator();
         while(iterator.hasNext()) {
             val value = iterator.next();
 
             // Velocity definitely occurred, run task.
-            if(Math.abs(value.getKey().getY() - packet.getY()) < 1E-6) {
-                VELOCITY_TASKS.forEach(vel -> vel.accept(value.getKey()));
+            if(Math.abs(value.one.getY() - packet.getY()) < 1E-6) {
+                VELOCITY_TASKS.forEach(vel -> vel.accept(value.one));
             }
 
-            if(value.getValue())
+            if(value.two)
                 iterator.remove();
         }
     }

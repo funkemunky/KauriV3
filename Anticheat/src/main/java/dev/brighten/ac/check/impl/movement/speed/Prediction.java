@@ -29,12 +29,15 @@ public class Prediction extends Check {
     @Bind
     WAction<WPacketPlayInFlying> flying = packet -> {
         if(!packet.isMoved()) {
+            lastSkipPos.reset();
             if(++notMoveTicks > 2) {
+
                 return;
             }
         } else notMoveTicks = 0;
         check: {
             if(player.getBlockInfo().onClimbable
+                    || !player.getMovement().getPosLocs().isEmpty()
                     || player.getInfo().lastLiquid.isNotPassed(2)
                     || player.getInfo().isGeneralCancel()) break check;
 
@@ -66,12 +69,12 @@ public class Prediction extends Check {
                     || player.EMULATOR.getTags().contains("z-collided");
 
             boolean badOffset = offset > (player.getMovement().getDeltaXZ() == 0
-                    ? (zeroThree ? 0.2 : 0.03) : (zeroThree ? 0.03 : (collided ? 0.01 : 0.003)));
+                    ? (zeroThree ? 0.24 : 0.03) : (zeroThree ? 0.03 : (collided ? 0.01 : 0.003)));
 
             if(badOffset) {
-                debug("[%s] dx=%.6f px=%.6f dz=%.6f pz=%.6f dy=%.6f py=%.6f", zeroThree, player.getMovement().getDeltaX(),
+                debug("[%s] dx=%.6f px=%.6f dz=%.6f pz=%.6f dy=%.6f py=%.6f velocities=%s", zeroThree, player.getMovement().getDeltaX(),
                         px, player.getMovement().getDeltaZ(), pz,
-                        player.getMovement().getDeltaY(), py);
+                        player.getMovement().getDeltaY(), py, player.getVelocityHandler().getPossibleVectors().size());
                 KLocation loc = player.getMovement().getFrom().getLoc().clone()
                         .add(px, py, pz);
 

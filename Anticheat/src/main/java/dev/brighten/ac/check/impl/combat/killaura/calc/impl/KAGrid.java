@@ -19,7 +19,7 @@ public class KAGrid extends Check implements RotationCheck {
         super(player);
     }
 
-    private final List<Double> offsetGrid = new EvictingList<>(50);
+    private final List<Double> offsetGrid = new EvictingList<>(100);
 
     @Override
     public void runCheck(Tuple<EntityLocation, EntityLocation> locs, double[] std, double[] offset, float[] rot) {

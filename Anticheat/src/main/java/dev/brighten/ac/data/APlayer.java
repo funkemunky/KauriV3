@@ -273,6 +273,10 @@ public class APlayer {
     }
 
     public void runInstantAction(Consumer<InstantAction> runnable) {
+        runInstantAction(runnable, false);
+    }
+
+    public void runInstantAction(Consumer<InstantAction> runnable, boolean runPost) {
         short startId = (short) ThreadLocalRandom.current().nextInt(Short.MIN_VALUE, Short.MAX_VALUE),
                 endId = (short)(startId + 1);
 
@@ -291,16 +295,18 @@ public class APlayer {
 
         HandlerAbstract.getHandler().sendPacketSilently(this, new PacketPlayOutTransaction(0, startId, false));
 
-        short finalEndId = endId, finalStartId = startId;
-        Anticheat.INSTANCE.onTickEnd(() -> {
-            InstantAction endAction = new InstantAction(finalStartId, finalEndId, true);
-            synchronized (instantTransaction) {
-                instantTransaction.put(finalEndId, new Tuple<>(endAction, runnable));
-            }
+        if(runPost) {
+            short finalEndId = endId, finalStartId = startId;
+            Anticheat.INSTANCE.onTickEnd(() -> {
+                InstantAction endAction = new InstantAction(finalStartId, finalEndId, true);
+                synchronized (instantTransaction) {
+                    instantTransaction.put(finalEndId, new Tuple<>(endAction, runnable));
+                }
 
-            HandlerAbstract.getHandler()
-                    .sendPacketSilently(this, new PacketPlayOutTransaction(0, finalEndId, false));
-        });
+                HandlerAbstract.getHandler()
+                        .sendPacketSilently(this, new PacketPlayOutTransaction(0, finalEndId, false));
+            });
+        }
     }
 
     public double getEyeHeight() {

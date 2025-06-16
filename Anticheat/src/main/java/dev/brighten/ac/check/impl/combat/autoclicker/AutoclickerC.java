@@ -21,7 +21,7 @@ public class AutoclickerC extends Check {
 
     private int lastPlace;
     private float buffer;
-    private final List<Integer> tickDeltas = new EvictingList<>(15);
+    private final List<Integer> tickDeltas = new EvictingList<>(30);
 
     @Bind
     WAction<WPacketPlayInArmAnimation> action = (packet) -> {

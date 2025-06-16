@@ -103,7 +103,7 @@ public class EntityLocationHandler {
         Optional<Entity> op = Anticheat.INSTANCE.getWorldInfo(data.getBukkitPlayer().getWorld())
                 .getEntity(packet.getId());
 
-        if(!op.isPresent()) return;
+        if(op.isEmpty()) return;
 
         Entity entity = op.get();
 
@@ -143,7 +143,7 @@ public class EntityLocationHandler {
         Optional<Entity> op = Anticheat.INSTANCE.getWorldInfo(data.getBukkitPlayer().getWorld())
                 .getEntity(packet.getEntityId());
 
-        if(!op.isPresent()) return;
+        if(op.isEmpty()) return;
 
         Entity entity = op.get();
 
@@ -213,7 +213,7 @@ public class EntityLocationHandler {
                 if(!ia.isEnd()) {
                     action.run();
                 } else entityLocationMap.get(entity.getUniqueId()).two = null;
-            });
+            }, true);
         } else {
             data.runKeepaliveAction(keepalive -> action.run());
             data.runKeepaliveAction(keepalive ->

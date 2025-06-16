@@ -106,7 +106,7 @@ public class PacketHandler {
                     } else if (player.getInfo().getPossibleCapabilities().size() > 1) {
                         player.getInfo().getPossibleCapabilities().clear();
                     }
-                });
+                }, true);
             }
             case FLYING -> {
                 WPacketPlayInFlying packet = (WPacketPlayInFlying) packetObject;
@@ -166,21 +166,19 @@ public class PacketHandler {
                 player.getInfo().getVelocityHistory().add(velocity);
                 player.getInfo().setDoingVelocity(true);
 
-                player.runInstantAction(ka -> {
-                    if (!ka.isEnd()) {
-                        player.getVelocityHandler().onPre(packet);
-                    } else player.getVelocityHandler().onPost(packet);
-                    if (ka.isEnd() && player.getInfo().getVelocityHistory().contains(velocity)) {
+                player.runInstantAction(ka -> player.getVelocityHandler().onPre(packet));
+                player.runKeepaliveAction(ka -> {
+                    if (player.getInfo().getVelocityHistory().contains(velocity))
+                        player.getOnVelocityTasks().forEach(task -> task.accept(velocity));
+
+                    player.getVelocityHandler().onPost(packet);
+                    if (player.getInfo().getVelocityHistory().contains(velocity)) {
                         player.getInfo().setDoingVelocity(false);
                         player.getInfo().getVelocity().reset();
                         synchronized (player.getInfo().getVelocityHistory()) {
                             player.getInfo().getVelocityHistory().remove(velocity);
                         }
                     }
-                });
-                player.runKeepaliveAction(ka -> {
-                    if (player.getInfo().getVelocityHistory().contains(velocity))
-                        player.getOnVelocityTasks().forEach(task -> task.accept(velocity));
                 }, 1);
             }
             case VELOCITY -> {
@@ -191,21 +189,19 @@ public class PacketHandler {
                     player.getInfo().getVelocityHistory().add(velocity);
                     player.getInfo().setDoingVelocity(true);
 
-                    player.runInstantAction(ka -> {
-                        if (!ka.isEnd()) {
-                            player.getVelocityHandler().onPre(packet);
-                        } else player.getVelocityHandler().onPost(packet);
-                        if (ka.isEnd() && player.getInfo().getVelocityHistory().contains(velocity)) {
+                    player.runInstantAction(ia -> player.getVelocityHandler().onPre(packet));
+                    player.runKeepaliveAction(ka -> {
+                        if (player.getInfo().getVelocityHistory().contains(velocity))
+                            player.getOnVelocityTasks().forEach(task -> task.accept(velocity));
+
+                        player.getVelocityHandler().onPost(packet);
+                        if (player.getInfo().getVelocityHistory().contains(velocity)) {
                             player.getInfo().setDoingVelocity(false);
                             player.getInfo().getVelocity().reset();
                             synchronized (player.getInfo().getVelocityHistory()) {
                                 player.getInfo().getVelocityHistory().remove(velocity);
                             }
                         }
-                    });
-                    player.runKeepaliveAction(ka -> {
-                        if (player.getInfo().getVelocityHistory().contains(velocity))
-                            player.getOnVelocityTasks().forEach(task -> task.accept(velocity));
                     }, 1);
                 }
             }

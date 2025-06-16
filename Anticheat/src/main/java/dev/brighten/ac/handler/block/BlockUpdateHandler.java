@@ -187,7 +187,7 @@ public class BlockUpdateHandler {
                 chunk.updateBlock(pos, new WrappedBlock(pos.toLocation(player.getBukkitPlayer().getWorld()),
                         packet.getMaterial(), packet.getBlockData()));
             }
-        });
+        }, true);
     }
 
     /**
@@ -218,19 +218,13 @@ public class BlockUpdateHandler {
      * @param chunkUpdate Wrapped PacketPlayOutMapChunk
      */
     public void runUpdate(WPacketPlayOutMapChunk chunkUpdate) {
-        player.runInstantAction(k -> {
-            if(!k.isEnd()) {
-                updateChunk(chunkUpdate.getChunk());
-            }
-        });
+        player.runInstantAction(k -> updateChunk(chunkUpdate.getChunk()));
     }
 
     public void runUpdate(WPacketPlayOutMapChunkBulk chunkBulk) {
         player.runInstantAction(k -> {
-            if(!k.isEnd()) {
-                for (Chunk chunkUpdate : chunkBulk.getChunks()) {
-                    updateChunk(chunkUpdate);
-                }
+            for (Chunk chunkUpdate : chunkBulk.getChunks()) {
+                updateChunk(chunkUpdate);
             }
         });
     }

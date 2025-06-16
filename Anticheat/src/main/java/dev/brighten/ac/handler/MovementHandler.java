@@ -52,7 +52,7 @@ public class MovementHandler {
     @Getter
     private int moveTicks;
     @Getter
-    private final List<KLocation> posLocs = new ArrayList<>();
+    private final List<KLocation> posLocs = Collections.synchronizedList(new ArrayList<>());
     @Getter
     private final List<CollisionBox> lookingAtBoxes = new ArrayList<>();
     @Getter
@@ -141,7 +141,7 @@ public class MovementHandler {
 
         IterationResult minimum = null;
         iteration: {
-            for (KLocation posLoc : posLocs) {
+            for (KLocation posLoc : new ArrayList<>(posLocs)) {
                 // Resetting to prevent lag issues.
 
                 IterationResult result = player.EMULATOR
@@ -188,7 +188,7 @@ public class MovementHandler {
                                                     .lastReportedBoundingBox(from.getBox().toNeo())
                                                     .effectSpeed(EFFECTS[0])
                                                     .effectSlow(EFFECTS[1])
-                                                    .waitingForTeleport(posLocs.size() > 0)
+                                                    .waitingForTeleport(!posLocs.isEmpty())
                                                     .effectJump(EFFECTS[2]).build();
 
                                             boolean isVelocity = false;
@@ -337,13 +337,13 @@ public class MovementHandler {
 
         updateLocations(packet);
 
+        runEmulation(to.getLoc(), false);
+
         checkForTeleports(packet);
 
         if (packet.isMoved()) {
             player.getBlockInfo().runCollisionCheck();
         }
-
-        runEmulation(to.getLoc(), false);
 
         if (moveTicks > 0) {
 
@@ -412,7 +412,7 @@ public class MovementHandler {
                 lookingAtBoxes.addAll(collision
                         .boxesOnRay(player.getBukkitPlayer().getWorld(),
                                 player.getBukkitPlayer().getGameMode().equals(GameMode.CREATIVE) ? 6.0 : 5.0));
-                lookingAtBlock = lookingAtBoxes.size() > 0;
+                lookingAtBlock = !lookingAtBoxes.isEmpty();
             }
 
             if (lastTeleport.isPassed(1)) {
@@ -611,7 +611,6 @@ it
         double y = Math.abs(pitchAcelleration - this.lastPitchAcelleration);
 
         // Deltas between last X & Y
-        double deltaX = Math.abs(x - this.lastX);
         double deltaY = Math.abs(y - this.lastY);
 
         // Pitch delta change
@@ -671,14 +670,6 @@ it
         return deltaPitch / (calc * .15f);
     }
 
-    public float getExperimentalDelta(float deltaAngle) {
-        float sens = player.getMovement().sensitivityMcp;
-        float f = sens * 0.6f + .2f;
-        float calc = f * f * f * 8;
-
-        return deltaAngle / (calc * .15f);
-    }
-
     public double[] getEyeHeights() {
         if (player.getPlayerVersion().isOrAbove(ProtocolVersion.V1_14)) {
             return new double[]{0.4f, 1.27f, 1.62f};
@@ -700,10 +691,6 @@ it
         return MathHelper.floor_float(sensitivity / .5f * 100);
     }
 
-    public float percentToSens(int percent) {
-        return percent * .0070422534f;
-    }
-
     public float getSensitivityFromYawGCD(float gcd) {
         return ((float) Math.cbrt(yawToF2(gcd) / 8f) - .2f) / .6f;
     }
@@ -712,26 +699,9 @@ it
         return ((float) Math.cbrt(pitchToF3(gcd) / 8f) - .2f) / .6f;
     }
 
-    private float getF1FromYaw(float gcd) {
-        float f = getFFromYaw(gcd);
-
-        return f * f * f * 8;
-    }
-
-    private float getFFromYaw(float gcd) {
-        float sens = getSensitivityFromYawGCD(gcd);
-        return sens * .6f + .2f;
-    }
-
     private float getFFromPitch(float gcd) {
         float sens = getSensitivityFromPitchGCD(gcd);
         return sens * .6f + .2f;
-    }
-
-    private float getF1FromPitch(float gcd) {
-        float f = getFFromPitch(gcd);
-
-        return (float) Math.pow(f, 3) * 8;
     }
 
     private float yawToF2(float yawDelta) {
@@ -744,7 +714,6 @@ it
     }
 
     public void addPosition(WPacketPlayOutPosition packet) {
-        int i = 0;
         final KLocation loc = new KLocation(packet.getX(), packet.getY(), packet.getZ(),
                 packet.getYaw(), packet.getPitch());
         if (packet.getFlags().contains(WPacketPlayOutPosition.EnumPlayerTeleportFlags.X)) {
@@ -773,7 +742,7 @@ it
             synchronized (posLocs) {
                 posLocs.remove(loc);
             }
-        }, 2);
+        }, 10);
         synchronized (posLocs) {
             posLocs.add(loc);
         }
@@ -818,12 +787,11 @@ it
                         from.setLoc(this.to);
                         iterator.remove();
                         break;
-                    } else {
                     }
                 }
 
                 //Ensuring the list doesn't overflow with old locations, a potential crash exploit.
-                if (teleportsToConfirm == 0 && posLocs.size() > 0) {
+                if (teleportsToConfirm == 0 && !posLocs.isEmpty()) {
                     posLocs.clear();
                 }
             }
