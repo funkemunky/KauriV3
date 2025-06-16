@@ -30,6 +30,7 @@ import dev.brighten.ac.utils.timer.Timer;
 import dev.brighten.ac.utils.timer.impl.MillisTimer;
 import dev.brighten.ac.utils.world.types.RayCollision;
 import dev.brighten.ac.utils.world.types.SimpleCollisionBox;
+import it.unimi.dsi.fastutil.shorts.Short2ObjectLinkedOpenHashMap;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.val;
@@ -95,8 +96,9 @@ public class APlayer {
 
     public int hitsToCancel;
 
-    public final Map<Short, Tuple<InstantAction, Consumer<InstantAction>>> instantTransaction = new HashMap<>();
-    public final List<NormalAction> keepAliveStamps = new ArrayList<>();
+    public final Map<Short, Tuple<InstantAction, Consumer<InstantAction>>> instantTransaction = Collections
+            .synchronizedMap(new Short2ObjectLinkedOpenHashMap<>());
+    public final List<NormalAction> keepAliveStamps = Collections.synchronizedList(new LinkedList<>());
     public final List<String> sniffedPackets = new CopyOnWriteArrayList<>();
     public boolean sniffing;
 
@@ -291,9 +293,9 @@ public class APlayer {
         InstantAction startAction = new InstantAction(startId, endId, false);
         synchronized (instantTransaction) {
             instantTransaction.put(startId, new Tuple<>(startAction, runnable));
+            HandlerAbstract.getHandler().sendPacketSilently(this, new PacketPlayOutTransaction(0, startId, false));
         }
 
-        HandlerAbstract.getHandler().sendPacketSilently(this, new PacketPlayOutTransaction(0, startId, false));
 
         if(runPost) {
             short finalEndId = endId, finalStartId = startId;
@@ -301,10 +303,9 @@ public class APlayer {
                 InstantAction endAction = new InstantAction(finalStartId, finalEndId, true);
                 synchronized (instantTransaction) {
                     instantTransaction.put(finalEndId, new Tuple<>(endAction, runnable));
+                    HandlerAbstract.getHandler()
+                            .sendPacketSilently(this, new PacketPlayOutTransaction(0, finalEndId, false));
                 }
-
-                HandlerAbstract.getHandler()
-                        .sendPacketSilently(this, new PacketPlayOutTransaction(0, finalEndId, false));
             });
         }
     }

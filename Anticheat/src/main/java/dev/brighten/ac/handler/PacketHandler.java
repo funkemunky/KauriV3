@@ -53,17 +53,22 @@ public class PacketHandler {
 
                             if (!player.instantTransaction.isEmpty()) {
                                 synchronized (player.instantTransaction) {
-                                    Deque<Short> toRemove = new LinkedList<>();
-                                    player.instantTransaction.forEach((key, tuple) -> {
+                                    var iterator = player.instantTransaction.keySet().iterator();
+
+                                    while(iterator.hasNext()) {
+                                        Short key = iterator.next();
+
+                                        if (key > ka.id) {
+                                            continue;
+                                        }
+
+                                        var tuple = player.instantTransaction.get(key);
+
                                         if ((timestamp - tuple.one.getStamp())
                                                 > player.getLagInfo().getTransPing() * 52L + 750L) {
                                             tuple.two.accept(tuple.one);
-                                            toRemove.add(key);
+                                            iterator.remove();
                                         }
-                                    });
-                                    Short key;
-                                    while ((key = toRemove.poll()) != null) {
-                                        player.instantTransaction.remove(key);
                                     }
                                 }
                             }
@@ -77,16 +82,15 @@ public class PacketHandler {
                                     .ifPresent(r -> r.receivedStamp = timestamp);
 
                             synchronized (player.keepAliveStamps) {
-                                List<NormalAction> toRemove = new ArrayList<>();
-                                for (NormalAction action : player.keepAliveStamps) {
+                                var it = player.keepAliveStamps.iterator();
+
+                                while(it.hasNext()) {
+                                    NormalAction action = it.next();
                                     if (action.stamp > ka.id) continue;
 
                                     action.action.accept(ka);
-                                    toRemove.add(action);
+                                    it.remove();
                                 }
-
-                                toRemove.forEach(player.keepAliveStamps::remove);
-                                toRemove.clear();
                             }
                         });
                         player.getLagInfo().getLastClientTransaction().reset();

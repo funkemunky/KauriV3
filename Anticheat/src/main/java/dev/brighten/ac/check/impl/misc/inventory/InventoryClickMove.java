@@ -39,7 +39,9 @@ public class InventoryClickMove extends Check {
         if(player.getInfo().lastLiquid.isNotPassed(3)
                 || player.getMovement().getLastTeleport().isNotPassed(2)
                 || player.getInfo().climbTimer.isNotPassed(2)
-                || player.getInfo().velocity.isNotPassed(2)
+                || player.getInfo().isDoingVelocity()
+                || !player.getVelocityHandler().getPossibleVectors().isEmpty()
+                || player.getInfo().velocity.isNotPassed(7)
                 || player.getBlockInfo().pistonNear) {
             return;
         }

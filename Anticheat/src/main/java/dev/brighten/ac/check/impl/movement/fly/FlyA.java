@@ -137,7 +137,7 @@ public class FlyA extends Check {
 
         // These are all things that can cause potential issues.
         if(player.getInfo().isGeneralCancel()
-                || player.getMovement().getTeleportsToConfirm() > 0
+                || !player.getMovement().getPosLocs().isEmpty()
                 || player.getInfo().isOnLadder()
                 || player.getInfo().climbTimer.isNotPassed(2)
                 || player.getBlockInfo().inWeb

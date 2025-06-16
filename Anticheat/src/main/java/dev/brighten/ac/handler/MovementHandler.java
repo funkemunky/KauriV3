@@ -78,7 +78,7 @@ public class MovementHandler {
     @Getter
     private int sensXPercent, sensYPercent, airTicks, groundTicks;
     private int ticks;
-    private double lastX, lastY, lastLastY, lastYawAcelleration, lastPitchAcelleration;
+    private double lastY, lastLastY, lastYawAcelleration, lastPitchAcelleration;
     @Getter
     private final Timer lastCinematic = new TickTimer(2);
     private final Timer lastReset = new TickTimer(2);
@@ -306,11 +306,12 @@ public class MovementHandler {
     }
 
     private boolean[] getUsingItemIterations(int forward, int strafe) {
-        return forward == 0 && strafe == 0 ? ALWAYS_FALSE : IS_OR_NOT;
+        return (forward == 0 && strafe == 0 ||
+                !BlockUtils.isUsable(player.getBukkitPlayer().getItemInHand().getType())) ? ALWAYS_FALSE : IS_OR_NOT;
     }
 
     private boolean[] getJumpingIterations() {
-        return IS_OR_NOT;
+        return airTicks > 2 ? IS_OR_NOT : ALWAYS_FALSE;
     }
 
 
@@ -560,6 +561,9 @@ it
     // generate a method that processes velocityHistory and compares to current deltaY.
     private void processVelocity() {
         //Iterate through player.getInfo().getVelocityHistory() and compare to current deltaY.
+        if(player.getInfo().isDoingVelocity()) {
+            player.getInfo().getVelocity().reset();
+        }
         synchronized (player.getInfo().getVelocityHistory()) {
             val iterator = player.getInfo().getVelocityHistory().iterator();
             while (iterator.hasNext()) {
@@ -567,7 +571,7 @@ it
 
                 if (Math.abs(velocity.getY() - getDeltaY()) < 0.01) {
                     player.getInfo().getVelocity().reset();
-                    player.getInfo().setDoingVelocity(false);
+                    player.getInfo().setDoingVelocity(player.getVelocityHandler().getPossibleVectors().isEmpty());
                     player.getOnVelocityTasks().forEach(vectorConsumer -> vectorConsumer.accept(velocity));
                     iterator.remove();
                     break;
@@ -630,7 +634,6 @@ it
         }
 
         this.lastLastY = deltaY;
-        this.lastX = x;
         this.lastY = y;
 
         this.lastYawAcelleration = yawAcelleration;
@@ -699,11 +702,6 @@ it
         return ((float) Math.cbrt(pitchToF3(gcd) / 8f) - .2f) / .6f;
     }
 
-    private float getFFromPitch(float gcd) {
-        float sens = getSensitivityFromPitchGCD(gcd);
-        return sens * .6f + .2f;
-    }
-
     private float yawToF2(float yawDelta) {
         return yawDelta / .15f;
     }
@@ -742,7 +740,7 @@ it
             synchronized (posLocs) {
                 posLocs.remove(loc);
             }
-        }, 10);
+        }, 2);
         synchronized (posLocs) {
             posLocs.add(loc);
         }
