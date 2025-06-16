@@ -13,9 +13,9 @@ import dev.brighten.ac.utils.annotation.Bind;
 import dev.brighten.ac.utils.timer.Timer;
 import dev.brighten.ac.utils.timer.impl.TickTimer;
 
-@CheckData(name = "Aim (A)", checkId = "aima", type = CheckType.COMBAT, maxVersion = ProtocolVersion.V1_21_5)
-public class AimA extends Check {
-    public AimA(APlayer player) {
+@CheckData(name = "Aim (GCD)", checkId = "aimgcd", type = CheckType.COMBAT, maxVersion = ProtocolVersion.V1_21_5)
+public class AimGCD extends Check {
+    public AimGCD(APlayer player) {
         super(player);
     }
 
