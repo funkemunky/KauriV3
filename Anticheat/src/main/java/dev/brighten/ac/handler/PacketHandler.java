@@ -8,11 +8,12 @@ import com.github.retrooper.packetevents.protocol.player.InteractionHand;
 import com.github.retrooper.packetevents.util.Vector3i;
 import com.github.retrooper.packetevents.wrapper.PacketWrapper;
 import com.github.retrooper.packetevents.wrapper.play.client.*;
-import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerAbilities;
+import com.github.retrooper.packetevents.wrapper.play.server.*;
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.data.obj.NormalAction;
 import dev.brighten.ac.handler.entity.FakeMob;
+import dev.brighten.ac.packet.PlayerCapabilities;
 import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.packet.TransactionClientWrapper;
 import dev.brighten.ac.utils.BlockUtils;
@@ -266,6 +267,48 @@ public class PacketHandler {
 
         if(event.getPacketType().equals(PacketType.Play.Server.PLAYER_ABILITIES)) {
             WrapperPlayServerPlayerAbilities packet = new WrapperPlayServerPlayerAbilities(event);
+
+            wrapped = packet;
+
+            player.getInfo().getLastAbilities().reset();
+
+
+            player.runInstantAction(ia -> {
+                if (!ia.isEnd()) {
+                    player.getInfo().getPossibleCapabilities().add(new PlayerCapabilities(packet));
+                } else if (player.getInfo().getPossibleCapabilities().size() > 1) {
+                    player.getInfo().getPossibleCapabilities().clear();
+                }
+            }, true);
+        } else if(event.getPacketType() == PacketType.Play.Server.BLOCK_CHANGE) {
+            WrapperPlayServerBlockChange packet = new WrapperPlayServerBlockChange(event);
+
+            wrapped = packet;
+
+            player.getBlockUpdateHandler().runUpdate(packet);
+        } else if(event.getPacketType() == PacketType.Play.Server.MULTI_BLOCK_CHANGE) {
+            WrapperPlayServerMultiBlockChange packet = new WrapperPlayServerMultiBlockChange(event);
+
+            wrapped = packet;
+
+            player.getBlockUpdateHandler().runUpdate(packet);
+        } else if(event.getPacketType() == PacketType.Play.Server.CHUNK_DATA) {
+            WrapperPlayServerChunkData packet = new WrapperPlayServerChunkData(event);
+
+            wrapped = packet;
+
+            player.getBlockUpdateHandler().runUpdate(packet);
+        } else if(event.getPacketType() == PacketType.Play.Server.MAP_CHUNK_BULK) {
+            WrapperPlayServerChunkDataBulk packet = new WrapperPlayServerChunkDataBulk(event);
+
+            wrapped = packet;
+
+            player.getBlockUpdateHandler().runUpdate(packet);
+        } else if(event.getPacketType() == PacketType.Play.Server.ENTITY_EFFECT) {
+            WrapperPlayServerEntityEffect packet = new WrapperPlayServerEntityEffect(event);
+
+            wrapped = packet;
+            player.getPotionHandler().onPotionEffect(packet);
         }
     }
 
@@ -273,44 +316,6 @@ public class PacketHandler {
         long timestamp = System.currentTimeMillis();
 
         switch (type) {
-            case SERVER_ABILITIES -> {
-                WPacketPlayOutAbilities packet = (WPacketPlayOutAbilities) packetObject;
-
-                player.getInfo().getLastAbilities().reset();
-
-                player.runInstantAction(ia -> {
-                    if (!ia.isEnd()) {
-                        player.getInfo().getPossibleCapabilities().add(packet.getCapabilities());
-                    } else if (player.getInfo().getPossibleCapabilities().size() > 1) {
-                        player.getInfo().getPossibleCapabilities().clear();
-                    }
-                }, true);
-            }
-            case BLOCK_CHANGE -> {
-                WPacketPlayOutBlockChange packet = (WPacketPlayOutBlockChange) packetObject;
-
-                player.getBlockUpdateHandler().runUpdate(packet);
-            }
-            case MULTI_BLOCK_CHANGE -> {
-                WPacketPlayOutMultiBlockChange packet = (WPacketPlayOutMultiBlockChange) packetObject;
-
-                player.getBlockUpdateHandler().runUpdate(packet);
-            }
-            case MAP_CHUNK -> {
-                WPacketPlayOutMapChunk packet = (WPacketPlayOutMapChunk) packetObject;
-
-                player.getBlockUpdateHandler().runUpdate(packet);
-            }
-            case MAP_CHUNK_BULK -> {
-                WPacketPlayOutMapChunkBulk packet = (WPacketPlayOutMapChunkBulk) packetObject;
-
-                player.getBlockUpdateHandler().runUpdate(packet);
-            }
-            case ENTITY_EFFECT -> {
-                WPacketPlayOutEntityEffect packet = (WPacketPlayOutEntityEffect) packetObject;
-
-                player.getPotionHandler().onPotionEffect(packet);
-            }
             case EXPLOSION -> {
                 WPacketPlayOutExplosion packet = (WPacketPlayOutExplosion) packetObject;
 

@@ -1,5 +1,6 @@
 package dev.brighten.ac.data;
 
+import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.api.spigot.impl.LegacyPlayer;
 import dev.brighten.ac.api.spigot.impl.ModernPlayer;
@@ -89,6 +90,8 @@ public class APlayer {
     @Getter
     //TODO Actually grab real player version once finished implementing version grabber from Atlas
     private ProtocolVersion playerVersion = ProtocolVersion.UNKNOWN;
+    @Getter
+    private ClientVersion clientVersion = ClientVersion.UNKNOWN;
 
     private Object playerConnection;
 
@@ -123,6 +126,7 @@ public class APlayer {
         this.bukkitPlayer = player;
         this.uuid = player.getUniqueId();
         this.playerConnection = MinecraftReflection.getPlayerConnection(player);
+        this.clientVersion = ClientVersion.getById(Protocol.getProtocol().getPlayerVersion(player));
 
         Anticheat.INSTANCE.getLogger().info("Constructored " + player.getName());
         load();

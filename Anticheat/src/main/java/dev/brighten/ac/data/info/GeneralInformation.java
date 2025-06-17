@@ -1,6 +1,6 @@
 package dev.brighten.ac.data.info;
 
-import dev.brighten.ac.packet.wrapper.objects.PlayerCapabilities;
+import dev.brighten.ac.packet.PlayerCapabilities;
 import dev.brighten.ac.utils.KLocation;
 import dev.brighten.ac.utils.PastLocation;
 import dev.brighten.ac.utils.math.RollingAverage;

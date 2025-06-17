@@ -1,19 +1,18 @@
 package dev.brighten.ac.handler.block;
 
+import com.fasterxml.jackson.databind.introspect.Annotated;
+import com.github.retrooper.packetevents.PacketEvents;
+import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import com.github.retrooper.packetevents.protocol.player.DiggingAction;
+import com.github.retrooper.packetevents.protocol.world.chunk.BaseChunk;
+import com.github.retrooper.packetevents.protocol.world.chunk.Column;
+import com.github.retrooper.packetevents.protocol.world.chunk.TileEntity;
+import com.github.retrooper.packetevents.protocol.world.states.WrappedBlockState;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerBlockPlacement;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerDigging;
+import com.github.retrooper.packetevents.wrapper.play.server.*;
 import dev.brighten.ac.data.APlayer;
-import dev.brighten.ac.packet.wrapper.in.WPacketPlayInBlockDig;
-import dev.brighten.ac.packet.wrapper.in.WPacketPlayInBlockPlace;
-import dev.brighten.ac.packet.wrapper.out.WPacketPlayOutBlockChange;
-import dev.brighten.ac.packet.wrapper.out.WPacketPlayOutMapChunk;
-import dev.brighten.ac.packet.wrapper.out.WPacketPlayOutMapChunkBulk;
-import dev.brighten.ac.packet.wrapper.out.WPacketPlayOutMultiBlockChange;
-import dev.brighten.ac.utils.BlockUtils;
-import dev.brighten.ac.utils.LongHash;
-import dev.brighten.ac.utils.Materials;
-import dev.brighten.ac.utils.XMaterial;
+import dev.brighten.ac.utils.*;
 import dev.brighten.ac.utils.math.IntVector;
 import dev.brighten.ac.utils.world.types.RayCollision;
 import io.github.retrooper.packetevents.util.SpigotConversionUtil;
@@ -24,12 +23,10 @@ import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 
-import java.util.Optional;
-
 @SuppressWarnings("unused")
 @RequiredArgsConstructor
 public class BlockUpdateHandler {
-    private final Long2ObjectOpenHashMap<Chunk> chunks = new Long2ObjectOpenHashMap<>(1000);
+    private final Long2ObjectOpenHashMap<Column> chunks = new Long2ObjectOpenHashMap<>(1000);
 
     private final APlayer player;
 
@@ -77,10 +74,21 @@ public class BlockUpdateHandler {
 
 
         if(place.getItemStack().isPresent()) {
-            Chunk chunk = getChunk(pos.getX() >> 4, pos.getZ() >> 4);
+            Column col = getChunk(pos.getX() >> 4, pos.getZ() >> 4);
 
-            chunk.updateBlock(pos, new WrappedBlock(pos.toLocation(player.getBukkitPlayer().getWorld()),
-                    SpigotConversionUtil.toBukkitItemMaterial(place.getItemStack().get().getType()), (byte) 0));
+            int x = pos.getX();
+            int y = pos.getY();
+            int z = pos.getZ();
+
+            if(pos.getY() < 0 || (y >> 4) > col.getChunks().length) {
+                return;
+            }
+
+
+            BaseChunk chunk = col.getChunks()[y >> 4];
+
+            chunk.set(x & 15, y & 15, z & 15,
+                    WrappedBlockState.getDefaultState(place.getItemStack().get().getType().getPlacedType()));
         }
     }
 
@@ -90,23 +98,21 @@ public class BlockUpdateHandler {
      * @param z z coordinate
      * @return the chunk at the specified coordinates
      */
-    public Chunk getChunk(int x, int z) {
+    public Column getChunk(int x, int z) {
         synchronized (chunks) {
             long hash = LongHash.toLong(x, z);
-            Chunk chunk = chunks.get(hash);
+            Column chunk = chunks.get(hash);
 
             // If the chunk is null, create a new one
             if(chunk == null) {
-                chunk = new Chunk(x, z);
-
-                chunks.put(hash, chunk);
+                return null;
             }
 
             return chunk;
         }
     }
 
-    private void updateChunk(Chunk chunk) {
+    private void updateChunk(Column chunk) {
         synchronized (chunks) {
             chunks.put(LongHash.toLong(chunk.getX(), chunk.getZ()), chunk);
         }
@@ -121,6 +127,11 @@ public class BlockUpdateHandler {
         return getBlock(location.getBlockX(), location.getBlockY(), location.getBlockZ());
     }
 
+    private int minHeight = 0;
+    private static final ClientVersion blockVersion = PacketEvents.getAPI().getServerManager().getVersion().toClientVersion();
+
+    private static final WrappedBlockState airBlockState = WrappedBlockState.getByGlobalId(blockVersion, 0);
+
     /**
      * Get a block at the specified coordinates
      * @param x x coordinate
@@ -129,13 +140,24 @@ public class BlockUpdateHandler {
      * @return the block at the specified coordinates
      */
     public WrappedBlock getBlock(int x, int y, int z) {
-        Chunk chunk = getChunk(x >> 4, z >> 4);
+        Column col = getChunk(x >> 4, z >> 4);
 
-        Optional<WrappedBlock> blockOptional = chunk.getBlockAt(x, y, z);
+        y -= minHeight;
 
-        return blockOptional.orElseGet(() -> new WrappedBlock(new IntVector(x, y, z)
-                .toLocation(player.getBukkitPlayer().getWorld()), Material.AIR, (byte) 0));
+        if(col == null) {
+            return new WrappedBlock(new IntVector(x, y, z),
+                    Material.AIR,
+                    airBlockState);
+        }
+        BaseChunk chunk = col.getChunks()[y >> 4];
+
+        WrappedBlockState state = chunk.get(blockVersion, x & 15, y & 15, z & 15);
+        return new WrappedBlock(new IntVector(x, y, z),
+                SpigotConversionUtil.toBukkitMaterialData(state).getItemType(),
+                state);
     }
+
+
 
     /**
      * Get a block at the specified coordinates
@@ -170,10 +192,16 @@ public class BlockUpdateHandler {
                 return;
             }
 
-            Chunk chunk = getChunk(pos.getX() >> 4, pos.getZ() >> 4);
+            Column col = getChunk(pos.getX() >> 4, pos.getZ() >> 4);
 
-            chunk.updateBlock(pos, new WrappedBlock(pos.toLocation(player.getBukkitPlayer().getWorld()),
-                    Material.AIR, (byte) 0));
+            if(pos.getY() < 0 || (pos.getY() >> 4) > col.getChunks().length) {
+                return;
+            }
+
+
+            BaseChunk chunk = col.getChunks()[pos.getY() >> 4];
+
+            chunk.set(pos.getX() & 15, pos.getY() & 15, pos.getY() & 15, airBlockState);
         }
     }
 
@@ -181,41 +209,46 @@ public class BlockUpdateHandler {
      * Keep track of block updates since the Bukkit API will be a bit behind.
      * @param packet Wrapped PacketPlayOutBlockChange
      */
-    public void runUpdate(WPacketPlayOutBlockChange packet) {
+    public void runUpdate(WrapperPlayServerBlockChange packet) {
         player.getInfo().lastBlockUpdate.reset();
 
             // Updating block information
-        player.runInstantAction(k -> {
-            if (k.isEnd()) {
-                IntVector pos = packet.getBlockLocation();
+        player.runKeepaliveAction(k -> {
+            IntVector pos = new IntVector(packet.getBlockPosition());
 
-                Chunk chunk = getChunk(pos.getX() >> 4, pos.getZ() >> 4);
+            Column col = getChunk(pos.getX() >> 4, pos.getZ() >> 4);
 
-                chunk.updateBlock(pos, new WrappedBlock(pos.toLocation(player.getBukkitPlayer().getWorld()),
-                        packet.getMaterial(), packet.getBlockData()));
+            if(pos.getY() < 0 || (pos.getY() >> 4) > col.getChunks().length) {
+                return;
             }
-        }, true);
+
+            BaseChunk chunk = col.getChunks()[pos.getY() >> 4];
+
+            chunk.set(pos.getX() & 15, pos.getY() & 15, pos.getZ() & 15,
+                    packet.getBlockState());
+        });
     }
 
     /**
      * Keep track of block updates since the Bukkit API will be a bit behind.
      * @param packet Wrapped PacketPlayOutMultiBlockChange
      */
-    public void runUpdate(WPacketPlayOutMultiBlockChange packet) {
+    public void runUpdate(WrapperPlayServerMultiBlockChange packet) {
         player.getInfo().lastBlockUpdate.reset();
-        player.runInstantAction(k -> {
-            if (k.isEnd()) {
-                for (WPacketPlayOutMultiBlockChange.BlockChange info : packet.getChanges()) {
-                    WrappedBlock block = new WrappedBlock(info.getLocation()
-                            .toLocation(player.getBukkitPlayer().getWorld()),
-                            info.getMaterial(), info.getData());
+        player.runKeepaliveAction(k -> {
+            for (WrapperPlayServerMultiBlockChange.EncodedBlock info : packet.getBlocks()) {
 
-                    IntVector pos = info.getLocation();
+                WrappedBlockState blockState = info.getBlockState(player.getClientVersion());
+                Column col = getChunk(info.getX() >> 4, info.getZ() >> 4);
 
-                    Chunk chunk = getChunk(pos.getX() >> 4, pos.getZ() >> 4);
-
-                    chunk.updateBlock(pos, block);
+                if(info.getY() < 0 || (info.getY() >> 4) > col.getChunks().length) {
+                    continue;
                 }
+
+                BaseChunk chunk = col.getChunks()[info.getY() >> 4];
+
+                chunk.set(info.getX() & 15, info.getY() & 15, info.getZ() & 15,
+                        blockState);
             }
         });
     }
@@ -224,14 +257,21 @@ public class BlockUpdateHandler {
      * Keep track of block updates since the Bukkit API will be a bit behind.
      * @param chunkUpdate Wrapped PacketPlayOutMapChunk
      */
-    public void runUpdate(WPacketPlayOutMapChunk chunkUpdate) {
-        player.runInstantAction(k -> updateChunk(chunkUpdate.getChunk()));
+    public void runUpdate(WrapperPlayServerChunkData chunkUpdate) {
+        player.runKeepaliveAction(k -> updateChunk(chunkUpdate.getColumn()));
     }
 
-    public void runUpdate(WPacketPlayOutMapChunkBulk chunkBulk) {
-        player.runInstantAction(k -> {
-            for (Chunk chunkUpdate : chunkBulk.getChunks()) {
-                updateChunk(chunkUpdate);
+    public void runUpdate(WrapperPlayServerChunkDataBulk chunkBulk) {
+        player.runKeepaliveAction(k -> {
+            for (int index = 0; index < chunkBulk.getChunks().length; index++) {
+                BaseChunk[] chunks = chunkBulk.getChunks()[index];
+
+                int x = chunkBulk.getX()[index];
+                int z = chunkBulk.getZ()[index];
+
+                Column column = new Column(x, z, true, chunks, new TileEntity[0], chunkBulk.getBiomeData()[index]);
+
+                updateChunk(column);
             }
         });
     }
