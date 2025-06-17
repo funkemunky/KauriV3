@@ -20,7 +20,7 @@ public class PacketListener implements com.github.retrooper.packetevents.event.P
 
         op.ifPresent(player -> {
             // Process the APlayer instance
-            Anticheat.INSTANCE.getPacketHandler().process(player, event);
+            Anticheat.INSTANCE.getPacketHandler().processReceive(player, event);
         });
 
     }
@@ -28,5 +28,15 @@ public class PacketListener implements com.github.retrooper.packetevents.event.P
     @Override
     public void onPacketSend(PacketSendEvent event) {
         // Handle packet send events here
+
+        User user = event.getUser();
+
+        Optional<APlayer> op = Anticheat.INSTANCE.getPlayerRegistry().getPlayer(user.getUUID());
+
+
+        op.ifPresent(player -> {
+            // Process the APlayer instance
+            Anticheat.INSTANCE.getPacketHandler().processSend(player, event);
+        });
     }
 }

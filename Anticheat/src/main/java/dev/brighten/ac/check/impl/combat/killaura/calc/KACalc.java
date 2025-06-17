@@ -1,12 +1,12 @@
 package dev.brighten.ac.check.impl.combat.killaura.calc;
 
+import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerFlying;
 import dev.brighten.ac.check.Hook;
 import dev.brighten.ac.check.KListener;
 import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.check.impl.combat.killaura.calc.impl.KAGrid;
 import dev.brighten.ac.check.impl.combat.killaura.calc.impl.KAZero;
 import dev.brighten.ac.data.APlayer;
-import dev.brighten.ac.packet.wrapper.in.WrapperPlayClientPlayerFlying;
 import dev.brighten.ac.utils.EntityLocation;
 import dev.brighten.ac.utils.KLocation;
 import dev.brighten.ac.utils.MathUtils;

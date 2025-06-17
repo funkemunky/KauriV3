@@ -1,5 +1,8 @@
 package dev.brighten.ac.check.impl.combat.autoclicker;
 
+import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientAnimation;
+import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerBlockPlacement;
+import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerFlying;
 import dev.brighten.ac.api.check.CheckType;
 import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
@@ -7,12 +10,10 @@ import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.check.WTimedAction;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.ProtocolVersion;
-import dev.brighten.ac.packet.wrapper.in.WPacketPlayInArmAnimation;
-import dev.brighten.ac.packet.wrapper.in.WPacketPlayInBlockPlace;
-import dev.brighten.ac.packet.wrapper.in.WrapperPlayClientPlayerFlying;
 import dev.brighten.ac.utils.BlockUtils;
 import dev.brighten.ac.utils.annotation.Bind;
 import dev.brighten.ac.utils.math.cond.MaxDouble;
+import io.github.retrooper.packetevents.util.SpigotConversionUtil;
 
 @CheckData(name = "Autoclicker (D)", checkId = "autoclickerd", type = CheckType.AUTOCLICKER, punishVl = 15,
         maxVersion = ProtocolVersion.V1_8_9)
@@ -28,7 +29,7 @@ public class AutoClickerD extends Check {
     private final MaxDouble verbose = new MaxDouble(40);
 
     @Bind
-    WTimedAction<WPacketPlayInArmAnimation> animation = (packet, timeStamp) -> {
+    WTimedAction<WrapperPlayClientAnimation> animation = (packet, timeStamp) -> {
         if(player.getInfo().isBreakingBlock()) return;
 
         cps = 1000D / (timeStamp - lastArm);
@@ -54,8 +55,12 @@ public class AutoClickerD extends Check {
         }
     };
 
-    WAction<WPacketPlayInBlockPlace> place = packet -> {
-        if(packet.getItemStack() == null || !BlockUtils.isSword(packet.getItemStack().getType())) return;
+    WAction<WrapperPlayClientPlayerBlockPlacement> place = packet -> {
+        if(packet.getItemStack().isEmpty()
+                || !BlockUtils.isSword(SpigotConversionUtil
+                .toBukkitItemMaterial(packet.getItemStack().get().getType())))
+            return;
+
         blocked = true;
     };
 }

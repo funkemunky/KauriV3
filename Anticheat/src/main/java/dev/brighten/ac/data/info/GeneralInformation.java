@@ -1,5 +1,6 @@
 package dev.brighten.ac.data.info;
 
+import com.github.retrooper.packetevents.util.Vector3d;
 import dev.brighten.ac.packet.PlayerCapabilities;
 import dev.brighten.ac.utils.KLocation;
 import dev.brighten.ac.utils.PastLocation;
@@ -43,7 +44,7 @@ public class GeneralInformation {
     public KLocation lastKnownGoodPosition;
     public long lastArmSwing;
     public RollingAverage cps = new RollingAverage(10);
-    public List<Vector> velocityHistory = Collections.synchronizedList(new EvictingList<>(5));
+    public List<Vector3d> velocityHistory = Collections.synchronizedList(new EvictingList<>(5));
     public List<PlayerCapabilities> possibleCapabilities = new ArrayList<>();
     private int clientGroundTicks, clientAirTicks;
 }

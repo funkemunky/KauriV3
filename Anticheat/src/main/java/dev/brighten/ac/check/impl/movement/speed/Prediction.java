@@ -28,7 +28,7 @@ public class Prediction extends Check {
 
     @Bind
     WAction<WrapperPlayClientPlayerFlying> flying = packet -> {
-        if(!packet.isMoved()) {
+        if(!packet.hasPositionChanged()) {
             lastSkipPos.reset();
             if(++notMoveTicks > 2) {
 

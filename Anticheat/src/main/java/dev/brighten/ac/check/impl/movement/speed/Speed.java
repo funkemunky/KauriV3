@@ -26,7 +26,7 @@ public class Speed extends Check {
         if(player.getMovement().isExcuseNextFlying()) return;
         checkProccesing:
         {
-            if (!packet.isMoved())
+            if (!packet.hasPositionChanged())
                 break checkProccesing;
 
             float drag = friction;

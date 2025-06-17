@@ -18,7 +18,7 @@ public class FlyD extends Check {
 
     @Bind
     WAction<WrapperPlayClientPlayerFlying> flyingPacket = packet -> {
-        if(!packet.isMoved() || player.getMovement().getMoveTicks() <= 2
+        if(!packet.hasPositionChanged() || player.getMovement().getMoveTicks() <= 2
                 || player.getBlockInfo().miscNear || player.getBlockInfo().onSlab
                 || player.getBlockInfo().fenceBelow || player.getBlockInfo().fenceNear
                 || player.getBlockInfo().onStairs || player.getInfo().isGeneralCancel()) return;

@@ -1,6 +1,8 @@
 package dev.brighten.ac.utils.world.types;
 
-import dev.brighten.ac.packet.wrapper.objects.EnumParticle;
+import com.github.retrooper.packetevents.protocol.particle.Particle;
+import com.github.retrooper.packetevents.protocol.particle.type.ParticleType;
+import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.utils.Helper;
 import dev.brighten.ac.utils.KLocation;
 import dev.brighten.ac.utils.reflections.impl.MinecraftReflection;
@@ -194,7 +196,7 @@ public class SimpleCollisionBox implements CollisionBox {
     }
 
     @Override
-    public void draw(EnumParticle particle, Player... players) {
+    public void draw(ParticleType<?> particle, APlayer... players) {
         Helper.drawCuboid(copy().expand(0.025), particle, Arrays.asList(players));
     }
 

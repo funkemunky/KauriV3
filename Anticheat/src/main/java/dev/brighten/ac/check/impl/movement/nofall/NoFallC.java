@@ -20,7 +20,7 @@ public class NoFallC extends Check {
 
     @Bind
     WAction<WrapperPlayClientPlayerFlying> flying = packet -> {
-        if(!packet.isMoved())
+        if(!packet.hasPositionChanged())
             return;
 
         if(player.getInfo().isGeneralCancel() || player.getMovement().getLastTeleport().isNotPassed(1)) {

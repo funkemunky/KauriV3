@@ -1,6 +1,12 @@
 package dev.brighten.ac.data;
 
+import com.github.retrooper.packetevents.protocol.entity.type.EntityType;
+import com.github.retrooper.packetevents.protocol.entity.type.EntityTypes;
 import com.github.retrooper.packetevents.protocol.player.ClientVersion;
+import com.github.retrooper.packetevents.protocol.player.User;
+import com.github.retrooper.packetevents.util.Vector3d;
+import com.github.retrooper.packetevents.wrapper.PacketWrapper;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPing;
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.api.spigot.impl.LegacyPlayer;
 import dev.brighten.ac.api.spigot.impl.ModernPlayer;
@@ -21,9 +27,6 @@ import dev.brighten.ac.handler.keepalive.KeepAlive;
 import dev.brighten.ac.handler.protocolsupport.Protocol;
 import dev.brighten.ac.messages.Messages;
 import dev.brighten.ac.packet.ProtocolVersion;
-import dev.brighten.ac.packet.handler.HandlerAbstract;
-import dev.brighten.ac.packet.wrapper.WPacket;
-import dev.brighten.ac.packet.wrapper.objects.WrappedWatchableObject;
 import dev.brighten.ac.utils.*;
 import dev.brighten.ac.utils.objects.evicting.EvictingList;
 import dev.brighten.ac.utils.reflections.impl.MinecraftReflection;
@@ -41,12 +44,9 @@ import me.hydro.emulator.collision.impl.*;
 import me.hydro.emulator.object.input.DataSupplier;
 import me.hydro.emulator.util.mcp.AxisAlignedBB;
 import me.hydro.emulator.util.mcp.BlockPos;
-import net.minecraft.server.v1_8_R3.PacketPlayOutTransaction;
 import org.bukkit.Achievement;
 import org.bukkit.Location;
-import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
-import org.bukkit.util.Vector;
 
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -111,7 +111,7 @@ public class APlayer {
     @Getter
     private final Deque<Object> packetQueue = new LinkedList<>();
     @Getter
-    private final List<Consumer<Vector>> onVelocityTasks = new ArrayList<>();
+    private final List<Consumer<Vector3d>> onVelocityTasks = new ArrayList<>();
     public final EvictingList<Tuple<KLocation, Double>> pastLocations = new EvictingList<>(20);
     @Getter
     private FakeMob mob;
@@ -122,6 +122,8 @@ public class APlayer {
     @Getter
     private boolean initialized = false;
 
+    private User packetEventsUser;
+
     public APlayer(Player player) {
         this.bukkitPlayer = player;
         this.uuid = player.getUniqueId();
@@ -129,6 +131,8 @@ public class APlayer {
         this.clientVersion = ClientVersion.getById(Protocol.getProtocol().getPlayerVersion(player));
 
         Anticheat.INSTANCE.getLogger().info("Constructored " + player.getName());
+
+        packetEventsUser = Anticheat.INSTANCE.getPacketEventsAPI().getPlayerManager().getUser(player);
         load();
     }
 
@@ -233,7 +237,7 @@ public class APlayer {
     }
 
     private void generateEntities() {
-        mob = new FakeMob(EntityType.MAGMA_CUBE);
+        mob = new FakeMob(EntityTypes.MAGMA_CUBE);
 
         KLocation origin = getMovement().getTo().getLoc().clone().add(0, 1.7, 0);
 
@@ -241,9 +245,10 @@ public class APlayer {
 
         Location loc1 = coll.collisionPoint(2).toLocation(getBukkitPlayer().getWorld());
 
+        //TODO I did Collections.singletonList(
+        //                        new WrappedWatchableObject(0, 16, (byte) 1))), and have no idea why so if it breaks please fix
         mob.spawn(true, loc1,
-                new ArrayList<>(Collections.singletonList(
-                        new WrappedWatchableObject(0, 16, (byte) 1))), this);
+                new ArrayList<>(), this);
     }
 
     protected void unload() {
@@ -274,7 +279,7 @@ public class APlayer {
 
     }
 
-    public void onVelocity(Consumer<Vector> runnable) {
+    public void onVelocity(Consumer<Vector3d> runnable) {
         onVelocityTasks.add(runnable);
     }
 
@@ -297,7 +302,7 @@ public class APlayer {
         InstantAction startAction = new InstantAction(startId, endId, false);
         synchronized (instantTransaction) {
             instantTransaction.put(startId, new Tuple<>(startAction, runnable));
-            HandlerAbstract.getHandler().sendPacketSilently(this, new PacketPlayOutTransaction(0, startId, false));
+            sendPacketSilently(new WrapperPlayServerPing(startId));
         }
 
 
@@ -307,8 +312,7 @@ public class APlayer {
                 InstantAction endAction = new InstantAction(finalStartId, finalEndId, true);
                 synchronized (instantTransaction) {
                     instantTransaction.put(finalEndId, new Tuple<>(endAction, runnable));
-                    HandlerAbstract.getHandler()
-                            .sendPacketSilently(this, new PacketPlayOutTransaction(0, finalEndId, false));
+                    sendPacketSilently(new WrapperPlayServerPing(finalEndId));
                 }
             });
         }
@@ -337,14 +341,22 @@ public class APlayer {
     public void sendPacketSilently(Object packet) {
         if(sniffing) {
             sniffedPackets.add("(Silent) [" +  Anticheat.INSTANCE.getKeepaliveProcessor().tick + "] "
-                    + (packet instanceof WPacket ? ((WPacket)packet).getPacketType()
-                    : HandlerAbstract.getPacketType(packet)) + ": " + packet);
+                    + packet.toString());
         }
-        HandlerAbstract.getHandler().sendPacketSilently(this, packet);
+
+        if(packet instanceof PacketWrapper<?> wrapper) {
+            packetEventsUser.sendPacketSilently(wrapper);
+        } else {
+            packetEventsUser.sendPacketSilently(packet);
+        }
     }
 
     public void sendPacket(Object packet) {
-        HandlerAbstract.getHandler().sendPacket(this, packet);
+        if(packet instanceof PacketWrapper<?> wrapper) {
+            packetEventsUser.sendPacket(wrapper);
+        } else {
+            packetEventsUser.sendPacket(packet);
+        }
     }
 
     @Override

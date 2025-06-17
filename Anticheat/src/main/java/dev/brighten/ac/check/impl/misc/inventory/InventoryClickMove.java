@@ -25,10 +25,10 @@ public class InventoryClickMove extends Check {
     @Bind
     WAction<WrapperPlayClientPlayerFlying> flying = packet -> {
         // If the player isn't sending any rotational or positional updates, then we don't need to check them.
-        if((!packet.isMoved()
+        if((!packet.hasPositionChanged()
                 || player.getPlayerTick() < 10 // Can false flag on join
                 || (player.getMovement().getDeltaX() == 0 && player.getMovement().getDeltaZ() == 0))
-                && !packet.isLooked()) return;
+                && !packet.hasRotationChanged()) return;
 
         // The player is not moving, therefore we do not check when they last clicked since this behavior
         // is legitimate.

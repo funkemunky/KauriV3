@@ -1,12 +1,12 @@
 package dev.brighten.ac.check.impl.combat.killaura;
 
+import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientInteractEntity;
 import dev.brighten.ac.api.check.CheckType;
 import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.ProtocolVersion;
-import dev.brighten.ac.packet.wrapper.in.WPacketPlayInUseEntity;
 import dev.brighten.ac.utils.KLocation;
 import dev.brighten.ac.utils.annotation.Bind;
 import dev.brighten.ac.utils.world.CollisionBox;
@@ -31,9 +31,9 @@ public class KATrace extends Check {
     private int buffer;
 
     @Bind
-    WAction<WPacketPlayInUseEntity> useEntity = packet -> {
+    WAction<WrapperPlayClientInteractEntity> useEntity = packet -> {
         if(player.getInfo().getTarget() == null
-                || packet.getAction() != WPacketPlayInUseEntity.EnumEntityUseAction.ATTACK)
+                || packet.getAction() != WrapperPlayClientInteractEntity.InteractAction.ATTACK)
             return;
 
         // If the player isn't looking at the target, then a raytrace check wouldn't work.

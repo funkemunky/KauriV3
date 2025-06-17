@@ -1,12 +1,13 @@
 package dev.brighten.ac.check.impl.movement.fly;
 
+import com.github.retrooper.packetevents.util.Vector3d;
+import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerFlying;
 import dev.brighten.ac.api.check.CheckType;
 import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.ProtocolVersion;
-import dev.brighten.ac.packet.wrapper.in.WrapperPlayClientPlayerFlying;
 import dev.brighten.ac.utils.Color;
 import dev.brighten.ac.utils.Helper;
 import dev.brighten.ac.utils.MathUtils;
@@ -16,7 +17,6 @@ import dev.brighten.ac.utils.timer.Timer;
 import dev.brighten.ac.utils.timer.impl.MillisTimer;
 import dev.brighten.ac.utils.timer.impl.TickTimer;
 import dev.brighten.ac.utils.world.types.SimpleCollisionBox;
-import org.bukkit.util.Vector;
 
 import java.util.List;
 
@@ -34,7 +34,7 @@ public class FlyA extends Check {
 
     @Bind
     WAction<WrapperPlayClientPlayerFlying> flying = packet -> {
-        if(!packet.isMoved() || (player.getMovement().getDeltaXZ() == 0
+        if(!packet.hasPositionChanged()|| (player.getMovement().getDeltaXZ() == 0
                 && player.getMovement().getDeltaY() == 0)) {
             return;
         }
@@ -102,7 +102,7 @@ public class FlyA extends Check {
         }
 
         // Accounting for the potential vertical velocity
-        for (Vector possibleVector : player.getVelocityHandler().getPossibleVectors()) {
+        for (Vector3d possibleVector : player.getVelocityHandler().getPossibleVectors()) {
             double deltaVelocity = MathUtils.getDelta(possibleVector.getY(), player.getMovement().getDeltaY());
 
             if(deltaVelocity < MathUtils.getDelta(predicted, player.getMovement().getDeltaY())) {

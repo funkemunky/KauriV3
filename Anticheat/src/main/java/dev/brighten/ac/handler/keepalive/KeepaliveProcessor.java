@@ -2,8 +2,6 @@ package dev.brighten.ac.handler.keepalive;
 
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.data.APlayer;
-import dev.brighten.ac.packet.handler.HandlerAbstract;
-import dev.brighten.ac.packet.wrapper.out.WPacketPlayOutTransaction;
 import dev.brighten.ac.utils.BukkitRunnable;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;

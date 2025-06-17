@@ -1,14 +1,13 @@
 package dev.brighten.ac.check;
 
+import com.github.retrooper.packetevents.wrapper.PacketWrapper;
 import dev.brighten.ac.data.APlayer;
-import dev.brighten.ac.packet.wrapper.WPacket;
 import dev.brighten.ac.utils.Tuple;
 import dev.brighten.ac.utils.annotation.Bind;
 import dev.brighten.ac.utils.reflections.types.WrappedClass;
 import dev.brighten.ac.utils.reflections.types.WrappedConstructor;
 import dev.brighten.ac.utils.reflections.types.WrappedField;
 import lombok.Getter;
-import net.minecraft.server.v1_8_R3.Packet;
 import org.bukkit.Bukkit;
 import org.bukkit.event.Event;
 
@@ -53,8 +52,7 @@ public class CheckStatic {
                 continue;
             }
 
-            if(!Packet.class.isAssignableFrom((Class<?>) type)
-                    && !WPacket.class.isAssignableFrom((Class<?>) type)
+            if(!PacketWrapper.class.isAssignableFrom((Class<?>) type)
                     && !Event.class.isAssignableFrom((Class<?>) type)) {
                 Bukkit.getLogger().warning("Type " + ((Class<?>) type).getSimpleName() + " is not a valid type for field "
                         + field.getField().getName() + " in class " + checkClass.getClass().getSimpleName());

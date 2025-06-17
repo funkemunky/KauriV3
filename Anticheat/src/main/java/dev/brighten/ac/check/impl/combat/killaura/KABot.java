@@ -1,13 +1,13 @@
 package dev.brighten.ac.check.impl.combat.killaura;
 
+import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientAnimation;
+import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientInteractEntity;
 import dev.brighten.ac.api.check.CheckType;
 import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.ProtocolVersion;
-import dev.brighten.ac.packet.wrapper.in.WPacketPlayInArmAnimation;
-import dev.brighten.ac.packet.wrapper.in.WPacketPlayInUseEntity;
 import dev.brighten.ac.utils.annotation.Bind;
 import lombok.val;
 
@@ -24,13 +24,13 @@ public class KABot extends Check {
     private float buffer2;
 
     @Bind
-    WAction<WPacketPlayInArmAnimation> arm =  packet -> {
+    WAction<WrapperPlayClientAnimation> arm = packet -> {
         // We want to go ahead and lower the buffer every time they miss the bot to help prevent false positives
         if(buffer2 > 0) buffer2-= 0.25f;
     };
 
     @Bind
-    WAction<WPacketPlayInUseEntity> packet = packet -> {
+    WAction<WrapperPlayClientInteractEntity> packet = packet -> {
         val optional = player.getEntityLocationHandler().getFakeMob(packet.getEntityId());
 
         if(optional.isPresent()

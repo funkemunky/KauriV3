@@ -16,7 +16,7 @@ public class FlyC extends Check {
 
     @Bind
     WAction<WrapperPlayClientPlayerFlying> flying = packet -> {
-        if(!packet.isMoved()
+        if(!packet.hasPositionChanged()
                 || player.getInfo().blockAbove.isNotPassed(4)
                 || player.getInfo().climbTimer.isNotPassed(2)
                 || packet.isOnGround()

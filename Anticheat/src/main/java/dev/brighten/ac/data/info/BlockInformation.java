@@ -1,9 +1,9 @@
 package dev.brighten.ac.data.info;
 
+import com.github.retrooper.packetevents.protocol.particle.type.ParticleTypes;
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.ProtocolVersion;
-import dev.brighten.ac.packet.wrapper.objects.EnumParticle;
 import dev.brighten.ac.utils.*;
 import dev.brighten.ac.utils.math.IntVector;
 import dev.brighten.ac.utils.world.BlockData;
@@ -154,9 +154,8 @@ public class BlockInformation {
                                 Anticheat.INSTANCE.getScheduler().execute(() ->
                                         blockBox.downCast().forEach(sc ->
                                                 Helper.drawCuboid(sc,
-                                                        EnumParticle.FLAME,
-                                                        Collections.singletonList(player.getBukkitPlayer()
-                                                        ))));
+                                                        ParticleTypes.FLAME,
+                                                        Collections.singletonList(player))));
                             }
 
                             if(blockBox.isCollided(normalBox)) {

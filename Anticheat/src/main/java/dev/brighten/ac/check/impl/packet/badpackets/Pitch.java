@@ -16,7 +16,7 @@ public class Pitch extends Check {
 
     @Bind
     WAction<WrapperPlayClientPlayerFlying> flying = packet -> {
-        if(packet.isLooked() && Math.abs(packet.getPitch()) > 90) {
+        if(packet.hasRotationChanged() && Math.abs(packet.getPitch()) > 90) {
             flag("pitch=%.2f", Math.abs(packet.getPitch()));
         }
     };

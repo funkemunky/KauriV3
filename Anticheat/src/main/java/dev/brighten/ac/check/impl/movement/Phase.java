@@ -58,12 +58,12 @@ public class Phase extends Check {
 
     @Bind
     WCancellable<WrapperPlayClientPlayerFlying> packet = (packet) -> {
-        if(packet.isMoved() && ticks < 3) {
+        if(packet.hasPositionChanged() && ticks < 3) {
             ticks++;
             return false;
         }
 
-        if(!packet.isMoved() || player.getCreation().isNotPassed(800L)
+        if(!packet.hasPositionChanged() || player.getCreation().isNotPassed(800L)
                 || player.getInfo().lastRespawn.isNotPassed(10)
                 || player.getInfo().isCreative() || player.getInfo().isCanFly()) {
             return false;

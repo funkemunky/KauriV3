@@ -1,13 +1,14 @@
 package dev.brighten.ac.check.impl.combat;
 
+import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientInteractEntity;
+import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerFlying;
+import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.api.check.CheckType;
 import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.ProtocolVersion;
-import dev.brighten.ac.packet.wrapper.in.WrapperPlayClientPlayerFlying;
-import dev.brighten.ac.packet.wrapper.in.WPacketPlayInUseEntity;
 import dev.brighten.ac.utils.*;
 import dev.brighten.ac.utils.annotation.Bind;
 import dev.brighten.ac.utils.timer.Timer;
@@ -38,12 +39,14 @@ public class Hitbox extends Check {
     }
 
     @Bind
-    WAction<WPacketPlayInUseEntity> useEntity = packet -> {
-        Entity entity = packet.getEntity(player.getBukkitPlayer().getWorld());
-        if(entity == null) return;
-        if(packet.getAction() == WPacketPlayInUseEntity.EnumEntityUseAction.ATTACK
-                && allowedEntityTypes.contains(entity.getType())) {
-            attacks.add(new Tuple<>(packet.getEntity(player.getBukkitPlayer().getWorld()),
+    WAction<WrapperPlayClientInteractEntity> useEntity = packet -> {
+
+        Optional<Entity> entity = Anticheat.INSTANCE.getWorldInfo(player.getBukkitPlayer().getWorld()).getEntity(packet.getEntityId());
+        if(entity.isEmpty()) return;
+
+        if(packet.getAction() == WrapperPlayClientInteractEntity.InteractAction.ATTACK
+                && allowedEntityTypes.contains(entity.get().getType())) {
+            attacks.add(new Tuple<>(entity.get(),
                     player.getMovement().getTo().getLoc().clone()));
         }
     };
@@ -187,7 +190,7 @@ public class Hitbox extends Check {
                 debug("Missed!");
             }
         }
-        if(packet.isMoved())
+        if(packet.hasPositionChanged())
             lastPosition.reset();
     };
 

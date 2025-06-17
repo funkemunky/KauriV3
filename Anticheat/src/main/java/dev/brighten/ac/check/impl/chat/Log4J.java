@@ -1,11 +1,11 @@
 package dev.brighten.ac.check.impl.chat;
 
+import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientChatMessage;
 import dev.brighten.ac.api.check.CheckType;
 import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.WCancellable;
 import dev.brighten.ac.data.APlayer;
-import dev.brighten.ac.packet.wrapper.in.WPacketPlayInChat;
 import dev.brighten.ac.utils.annotation.Bind;
 
 import java.util.regex.Matcher;
@@ -21,7 +21,7 @@ public class Log4J extends Check {
     private final Pattern pattern = Pattern.compile("\\$\\{.*}");
 
     @Bind
-    WCancellable<WPacketPlayInChat> chatPacket = packet -> {
+    WCancellable<WrapperPlayClientChatMessage> chatPacket = packet -> {
         Matcher matcher = pattern.matcher(packet.getMessage());
         if(matcher.matches()) {
             flag("Tried to use JNDI exploit");

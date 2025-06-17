@@ -1,7 +1,8 @@
 package dev.brighten.ac.utils.world.types;
 
+import com.github.retrooper.packetevents.protocol.particle.type.ParticleType;
+import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.ProtocolVersion;
-import dev.brighten.ac.packet.wrapper.objects.EnumParticle;
 import dev.brighten.ac.utils.BlockUtils;
 import dev.brighten.ac.utils.Helper;
 import dev.brighten.ac.utils.Materials;
@@ -15,7 +16,6 @@ import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.LivingEntity;
-import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
 
 import java.util.ArrayList;
@@ -135,7 +135,7 @@ public class RayCollision implements CollisionBox {
     }
 
     @Override
-    public void draw(EnumParticle particle, Player... players) {
+    public void draw(ParticleType<?> particle, APlayer... players) {
         Helper.drawRay(this, 3, particle, Arrays.asList(players));
     }
 

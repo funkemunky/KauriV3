@@ -1,10 +1,14 @@
 package dev.brighten.ac.utils;
 
+import com.github.retrooper.packetevents.protocol.particle.Particle;
+import com.github.retrooper.packetevents.protocol.particle.data.ParticleData;
+import com.github.retrooper.packetevents.protocol.particle.type.ParticleType;
+import com.github.retrooper.packetevents.protocol.particle.type.ParticleTypes;
+import com.github.retrooper.packetevents.util.Vector3d;
+import com.github.retrooper.packetevents.util.Vector3f;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerParticle;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.ProtocolVersion;
-import dev.brighten.ac.packet.handler.HandlerAbstract;
-import dev.brighten.ac.packet.wrapper.objects.EnumParticle;
-import dev.brighten.ac.packet.wrapper.out.WPacketPlayOutWorldParticles;
 import dev.brighten.ac.utils.math.IntVector;
 import dev.brighten.ac.utils.reflections.impl.MinecraftReflection;
 import dev.brighten.ac.utils.world.BlockData;
@@ -15,7 +19,6 @@ import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
-import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
 
 import java.util.*;
@@ -37,31 +40,23 @@ public class Helper {
         return vector;
     }
 
-    public static void drawRay(RayCollision collision, double distance, EnumParticle particle, Collection<? extends Player> players) {
+    public static void drawRay(RayCollision collision, double distance, ParticleType<?> particle, Collection<? extends APlayer> players) {
         for (double i = 0; i < distance; i += 0.2) {
             float fx = (float) (collision.originX + (collision.directionX * i));
             float fy = (float) (collision.originY + (collision.directionY * i));
             float fz = (float) (collision.originZ + (collision.directionZ * i));
 
-            WPacketPlayOutWorldParticles packet = WPacketPlayOutWorldParticles.builder()
-                    .particle(particle)
-                    .x(fx)
-                    .y(fy)
-                    .z(fz)
-                    .offsetX(0)
-                    .offsetY(0)
-                    .offsetZ(0)
-                    .speed(0)
-                    .amount(1)
-                    .longD(true)
-                    .data(new int[0])
-                    .build();
-            players.forEach(p -> HandlerAbstract.getHandler().sendPacketSilently(p, packet));
+            WrapperPlayServerParticle packet = new WrapperPlayServerParticle(new Particle<>(particle), false,
+                    new Vector3d(fx, fy, fz), new Vector3f(0, 0, 0),  0f, 1);
+
+            for (APlayer p : players) {
+                p.sendPacketSilently(packet);
+            }
         }
     }
 
 
-    public static void drawCuboid(SimpleCollisionBox box, EnumParticle particle, Collection<? extends Player> players) {
+    public static void drawCuboid(SimpleCollisionBox box, ParticleType<?> particle, Collection<? extends APlayer> players) {
         Step.GenericStepper<Float> x = Step.step((float) box.minX, 0.241F, (float) box.maxX);
         Step.GenericStepper<Float> y = Step.step((float) box.minY, 0.241F, (float) box.maxY);
         Step.GenericStepper<Float> z = Step.step((float) box.minZ, 0.241F, (float) box.maxZ);
@@ -99,24 +94,11 @@ public class Helper {
                         }
                     } while (check < 2);
 
-                    WPacketPlayOutWorldParticles packet = WPacketPlayOutWorldParticles.builder()
-                            .particle(particle)
-                            .x(fx)
-                            .y(fy)
-                            .z(fz)
-                            .offsetX(0)
-                            .offsetY(0)
-                            .offsetZ(0)
-                            .speed(0)
-                            .amount(1)
-                            .data(new int[0])
-                            .build();
+                    WrapperPlayServerParticle packet = new WrapperPlayServerParticle(new Particle<>(particle), false,
+                            new Vector3d(fx, fy, fz), new Vector3f(0, 0, 0),  0f, 1);
 
-                    Iterator<? extends Player> var14 = players.iterator();
-
-                    while (var14.hasNext()) {
-                        Player p = var14.next();
-                        HandlerAbstract.getHandler().sendPacketSilently(p, packet);
+                    for (APlayer p : players) {
+                        p.sendPacketSilently(packet);
                     }
                 }
             }
@@ -124,26 +106,13 @@ public class Helper {
 
     }
 
-    public static void drawPoint(Vector point, EnumParticle particle, Collection<? extends Player> players) {
-        WPacketPlayOutWorldParticles packet = WPacketPlayOutWorldParticles.builder()
-                .particle(particle)
-                .x((float) point.getX())
-                .y((float) point.getY())
-                .z((float) point.getZ())
-                .offsetX(0)
-                .offsetY(0)
-                .offsetZ(0)
-                .speed(0)
-                .amount(1)
-                .data(new int[0])
-                .build();
-        Iterator<? extends Player> var4 = players.iterator();
+    public static void drawPoint(Vector3d point, ParticleType<?> particle, Collection<? extends APlayer> players) {
+        WrapperPlayServerParticle packet = new WrapperPlayServerParticle(new Particle<>(particle), false,
+                point, new Vector3f(0, 0, 0),  0f, 1);
 
-        while (var4.hasNext()) {
-            Player p = var4.next();
-            HandlerAbstract.getHandler().sendPacketSilently(p, packet);
+        for (APlayer p : players) {
+            p.sendPacketSilently(packet);
         }
-
     }
 
     public static Block getBlockAt(World world, int x, int y, int z) {

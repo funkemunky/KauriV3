@@ -1,12 +1,12 @@
 package dev.brighten.ac.check.impl.combat.aim;
 
+import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerFlying;
 import dev.brighten.ac.api.check.CheckType;
 import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.ProtocolVersion;
-import dev.brighten.ac.packet.wrapper.in.WrapperPlayClientPlayerFlying;
 import dev.brighten.ac.utils.MathUtils;
 import dev.brighten.ac.utils.annotation.Bind;
 
@@ -21,7 +21,7 @@ public class AimSnap extends Check {
 
     @Bind
     WAction<WrapperPlayClientPlayerFlying> flying = packet -> {
-        if(!packet.isLooked()) return;
+        if(!packet.hasRotationChanged()) return;
 
         float deltaYaw = MathUtils.getAngleDelta(player.getMovement().getTo().getYaw(),
                 player.getMovement().getFrom().getYaw());

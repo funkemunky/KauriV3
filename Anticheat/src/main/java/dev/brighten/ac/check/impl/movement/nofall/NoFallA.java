@@ -19,7 +19,7 @@ public class NoFallA extends Check {
 
     @Bind
     WAction<WrapperPlayClientPlayerFlying> flying = packet -> {
-        if(!packet.isMoved()
+        if(!packet.hasPositionChanged()
                 || player.getInfo().isGeneralCancel()
                 || (player.getMovement().getDeltaXZ() == 0 && player.getMovement().getDeltaY() == 0)
                 || player.getBlockInfo().inLiquid

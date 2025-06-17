@@ -3,10 +3,7 @@ package dev.brighten.ac.handler;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerFlying;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityEffect;
 import dev.brighten.ac.data.APlayer;
-import dev.brighten.ac.packet.wrapper.in.WrapperPlayClientPlayerFlying;
-import dev.brighten.ac.packet.wrapper.out.WPacketPlayOutEntityEffect;
 import io.github.retrooper.packetevents.util.SpigotConversionUtil;
-import lombok.val;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 

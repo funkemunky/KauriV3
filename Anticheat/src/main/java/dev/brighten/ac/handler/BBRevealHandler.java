@@ -1,8 +1,8 @@
 package dev.brighten.ac.handler;
 
+import com.github.retrooper.packetevents.protocol.particle.type.ParticleTypes;
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.data.APlayer;
-import dev.brighten.ac.packet.wrapper.objects.EnumParticle;
 import dev.brighten.ac.utils.ItemBuilder;
 import dev.brighten.ac.utils.Materials;
 import dev.brighten.ac.utils.annotation.Init;
@@ -11,7 +11,6 @@ import dev.brighten.ac.utils.world.BlockData;
 import dev.brighten.ac.utils.world.EntityData;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.ComponentBuilder;
-import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
@@ -112,11 +111,11 @@ public class BBRevealHandler implements Listener {
                     var blockBox = BlockData.getData(block.getType())
                             .getBox(player.get(), blockLoc, player.get().getPlayerVersion());
 
-                    blockBox.draw(EnumParticle.FLAME, player.get().getBukkitPlayer());
+                    blockBox.draw(ParticleTypes.FLAME, new APlayer[]{player.get()});
                 });
             });
             entitiesToShow.forEach(e -> EntityData.getEntityBox(e.getLocation(), e)
-                    .draw(EnumParticle.FLAME, Bukkit.getOnlinePlayers().toArray(new Player[0])));
+                    .draw(ParticleTypes.FLAME, Anticheat.INSTANCE.getPlayerRegistry().aplayerMap.values().toArray(APlayer[]::new)));
         }, 3000, 250, TimeUnit.MILLISECONDS);
     }
 

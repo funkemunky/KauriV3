@@ -1,14 +1,15 @@
 package dev.brighten.ac.handler;
 
+import com.github.retrooper.packetevents.protocol.teleport.RelativeFlag;
+import com.github.retrooper.packetevents.util.Vector3d;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerFlying;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerPositionAndLook;
 import com.google.common.collect.Sets;
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.compat.CompatHandler;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.data.obj.CMove;
 import dev.brighten.ac.packet.ProtocolVersion;
-import dev.brighten.ac.packet.wrapper.in.WrapperPlayClientPlayerFlying;
-import dev.brighten.ac.packet.wrapper.out.WPacketPlayOutPosition;
 import dev.brighten.ac.utils.*;
 import dev.brighten.ac.utils.objects.evicting.EvictingList;
 import dev.brighten.ac.utils.timer.Timer;
@@ -161,7 +162,7 @@ public class MovementHandler {
                 }
             }
 
-            List<org.bukkit.util.Vector> possibleVelocity = new ArrayList<>();
+            List<Vector3d> possibleVelocity = new ArrayList<>();
 
             possibleVelocity.add(null);
             possibleVelocity.addAll(player.getVelocityHandler().getPossibleVectors());
@@ -175,7 +176,7 @@ public class MovementHandler {
                             for (boolean usingItem : getUsingItemIterations(forward, strafe)) {
                                 for (boolean hitSlow : getHitSlowIterations()) {
                                     for (FastMathType fastMath : getFastMathIterations(forward, strafe)) {
-                                        for(org.bukkit.util.Vector possibleVector : possibleVelocity) {
+                                        for(Vector3d possibleVector : possibleVelocity) {
                                             IterationInput input = IterationInput.builder()
                                                     .jumping(jumping)
                                                     .forward(forward)
@@ -325,9 +326,9 @@ public class MovementHandler {
         player.getPotionHandler().onFlying(packet);
 
         excuseNextFlying = packet.hasPositionChanged() && packet.hasRotationChanged()
-                && packet.getX() == to.getX()
-                && packet.getY() == to.getY()
-                && packet.getZ() == to.getZ()
+                && packet.getLocation().getX() == to.getX()
+                && packet.getLocation().getY() == to.getY()
+                && packet.getLocation().getZ() == to.getZ()
                 && player.getPlayerVersion().isOrAbove(ProtocolVersion.V1_17);
 
         checkMovement = MovementUtils.checkMovement(player.getPlayerConnection());
@@ -650,18 +651,15 @@ it
         sentPositionUpdate = false;
     }
 
-    private final Set<WPacketPlayOutPosition.EnumPlayerTeleportFlags>
-            relFlags = Sets.newHashSet(WPacketPlayOutPosition.EnumPlayerTeleportFlags.X,
-            WPacketPlayOutPosition.EnumPlayerTeleportFlags.Y,
-            WPacketPlayOutPosition.EnumPlayerTeleportFlags.Z,
-            WPacketPlayOutPosition.EnumPlayerTeleportFlags.X_ROT,
-            WPacketPlayOutPosition.EnumPlayerTeleportFlags.Y_ROT);
+    private final RelativeFlag relFlags = RelativeFlag.X.and(RelativeFlag.Y)
+            .and(RelativeFlag.Z).and(RelativeFlag.YAW).and(RelativeFlag.PITCH);
 
     public void runPositionHackFix() {
         if (sentPositionUpdate) return;
 
-        player.sendPacket(WPacketPlayOutPosition.builder().x(0).y(0).z(0).yaw(0).pitch(0).flags(relFlags)
-                .build());
+        player.sendPacket(new WrapperPlayServerPlayerPositionAndLook(0, 0, 0,0,0,
+                relFlags.getMask(), 0, false));
+
         sentPositionUpdate = true;
     }
 
@@ -716,22 +714,23 @@ it
         return (pitchDelta / b0) / .15f;
     }
 
-    public void addPosition(WPacketPlayOutPosition packet) {
+    public void addPosition(WrapperPlayServerPlayerPositionAndLook packet) {
         final KLocation loc = new KLocation(packet.getX(), packet.getY(), packet.getZ(),
                 packet.getYaw(), packet.getPitch());
-        if (packet.getFlags().contains(WPacketPlayOutPosition.EnumPlayerTeleportFlags.X)) {
+
+        if (packet.getRelativeFlags().has(RelativeFlag.X)) {
             loc.add(player.getMovement().getTo().getLoc().getX(), 0 ,0);
         }
-        if (packet.getFlags().contains(WPacketPlayOutPosition.EnumPlayerTeleportFlags.Y)) {
+        if (packet.getRelativeFlags().has(RelativeFlag.Y)) {
             loc.add(0, player.getMovement().getTo().getLoc().getY() ,0);
         }
-        if (packet.getFlags().contains(WPacketPlayOutPosition.EnumPlayerTeleportFlags.Z)) {
+        if (packet.getRelativeFlags().has(RelativeFlag.Z)) {
             loc.add(0, 0, player.getMovement().getTo().getLoc().getZ());
         }
-        if (packet.getFlags().contains(WPacketPlayOutPosition.EnumPlayerTeleportFlags.X_ROT)) {
+        if (packet.getRelativeFlags().has(RelativeFlag.YAW)) {
             loc.setPitch(loc.getPitch() + player.getMovement().getTo().getLoc().getPitch());
         }
-        if (packet.getFlags().contains(WPacketPlayOutPosition.EnumPlayerTeleportFlags.Y_ROT)) {
+        if (packet.getRelativeFlags().has(RelativeFlag.PITCH)) {
             loc.setYaw(loc.getYaw() + player.getMovement().getTo().getLoc().getYaw());
         }
 
@@ -782,7 +781,9 @@ it
                 while (iterator.hasNext()) {
                     KLocation posLoc = iterator.next();
 
-                    KLocation to = new KLocation(packet.getX(), packet.getY(), packet.getZ());
+                    KLocation to = new KLocation(packet.getLocation().getX(),
+                            packet.getLocation().getY(),
+                            packet.getLocation().getZ());
                     double distance = MathUtils.getDistanceWithoutRoot(to, posLoc);
 
                     if (distance < 1E-9) {
@@ -809,13 +810,13 @@ it
     private void setTo(WrapperPlayClientPlayerFlying packet) {
         to.setWorld(player.getBukkitPlayer().getWorld());
         if (packet.hasPositionChanged()) {
-            to.getLoc().setX(packet.getX());
-            to.getLoc().setY(packet.getY());
-            to.getLoc().setZ(packet.getZ());
+            to.getLoc().setX(packet.getLocation().getX());
+            to.getLoc().setY(packet.getLocation().getY());
+            to.getLoc().setZ(packet.getLocation().getZ());
         }
         if (packet.hasRotationChanged()) {
-            to.getLoc().setYaw(packet.getYaw());
-            to.getLoc().setPitch(packet.getPitch());
+            to.getLoc().setYaw(packet.getLocation().getYaw());
+            to.getLoc().setPitch(packet.getLocation().getPitch());
         }
         to.setBox(new SimpleCollisionBox(to.getLoc(), 0.6, 1.8));
         to.setOnGround(packet.isOnGround());
