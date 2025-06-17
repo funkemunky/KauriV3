@@ -1,7 +1,7 @@
 package dev.brighten.ac.handler;
 
 import dev.brighten.ac.data.APlayer;
-import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
+import dev.brighten.ac.packet.wrapper.in.WrapperPlayClientPlayerFlying;
 import dev.brighten.ac.packet.wrapper.out.WPacketPlayOutEntityVelocity;
 import dev.brighten.ac.packet.wrapper.out.WPacketPlayOutExplosion;
 import dev.brighten.ac.utils.Tuple;
@@ -68,7 +68,7 @@ public class VelocityHandler {
         VELOCITY_TASKS.add(task);
     }
 
-    public void onFlyingPost(WPacketPlayInFlying packet) {
+    public void onFlyingPost(WrapperPlayClientPlayerFlying packet) {
         val iterator = VELOCITY_MAP.iterator();
         while(iterator.hasNext()) {
             val value = iterator.next();

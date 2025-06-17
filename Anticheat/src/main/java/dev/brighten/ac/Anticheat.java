@@ -1,6 +1,7 @@
 package dev.brighten.ac;
 
 import co.aikar.commands.*;
+import com.github.retrooper.packetevents.PacketEventsAPI;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import dev.brighten.ac.api.AnticheatAPI;
 import dev.brighten.ac.check.Check;
@@ -18,8 +19,6 @@ import dev.brighten.ac.handler.entity.FakeEntityTracker;
 import dev.brighten.ac.handler.keepalive.KeepaliveProcessor;
 import dev.brighten.ac.handler.keepalive.actions.ActionManager;
 import dev.brighten.ac.logging.LoggerManager;
-import dev.brighten.ac.packet.handler.HandlerAbstract;
-import dev.brighten.ac.packet.listener.PacketProcessor;
 import dev.brighten.ac.utils.*;
 import dev.brighten.ac.utils.annotation.ConfigSetting;
 import dev.brighten.ac.utils.annotation.Init;
@@ -30,6 +29,7 @@ import dev.brighten.ac.utils.math.RollingAverageDouble;
 import dev.brighten.ac.utils.timer.Timer;
 import dev.brighten.ac.utils.timer.impl.TickTimer;
 import dev.brighten.ac.utils.world.WorldInfo;
+import io.github.retrooper.packetevents.factory.spigot.SpigotPacketEventsBuilder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.PackagePrivate;
@@ -62,7 +62,6 @@ public class Anticheat extends JavaPlugin {
     public static Anticheat INSTANCE;
 
     private ScheduledExecutorService scheduler;
-    private PacketProcessor packetProcessor;
     private BukkitCommandManager commandManager;
     private ActionManager actionManager;
     private CheckManager checkManager;
@@ -73,6 +72,7 @@ public class Anticheat extends JavaPlugin {
     private CommandPropertiesManager commandPropertiesManager;
     private RunUtils runUtils;
     private ServerInjector serverInjector;
+    private PacketEventsAPI<?> packetEventsAPI;
 
     private FakeEntityTracker fakeTracker;
     private int currentTick;
@@ -109,6 +109,8 @@ public class Anticheat extends JavaPlugin {
                 .build());
 
         loadConfig();
+
+        packetEventsAPI = SpigotPacketEventsBuilder.build(this);
 
         commandManager = new BukkitCommandManager(this);
         commandManager.enableUnstableAPI("help");
@@ -166,8 +168,6 @@ public class Anticheat extends JavaPlugin {
         commandPropertiesManager = new CommandPropertiesManager(commandManager, getDataFolder(),
                 getResource("command-messages.properties"));
 
-        packetProcessor = new PacketProcessor();
-
         new AnticheatAPI();
 
         new ClassScanner().initializeScanner(getClass(), this,
@@ -188,7 +188,6 @@ public class Anticheat extends JavaPlugin {
         this.fakeTracker = new FakeEntityTracker();
         this.checkManager = new CheckManager();
         this.playerRegistry = new PlayerRegistry();
-        HandlerAbstract.init();
         Bukkit.getOnlinePlayers().forEach(playerRegistry::generate);
         this.packetHandler = new PacketHandler();
         logManager = new LoggerManager();
@@ -203,8 +202,6 @@ public class Anticheat extends JavaPlugin {
 
         alog(Color.Green + "Loading WorldInfo system...");
         Bukkit.getWorlds().forEach(w -> worldInfoMap.put(w.getUID(), new WorldInfo(w)));
-
-        Bukkit.getOnlinePlayers().forEach(HandlerAbstract.getHandler()::add);
     }
 
     public void onDisable() {
@@ -254,16 +251,10 @@ public class Anticheat extends JavaPlugin {
 
         worldInfoMap.clear();
 
-
-
         // Unregistering packet listeners for players
-        HandlerAbstract.getHandler().shutdown();
         HandlerList.unregisterAll(this);
-        packetProcessor.shutdown();
-
 
         onTickEnd.clear();
-
 
         AnticheatAPI.INSTANCE.shutdown();
 

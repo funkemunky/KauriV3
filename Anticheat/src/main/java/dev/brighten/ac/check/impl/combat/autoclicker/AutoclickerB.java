@@ -6,7 +6,7 @@ import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.WTimedAction;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInArmAnimation;
-import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
+import dev.brighten.ac.packet.wrapper.in.WrapperPlayClientPlayerFlying;
 import dev.brighten.ac.utils.annotation.Bind;
 
 @CheckData(name = "Autoclicker (B)", checkId = "autoclickerb", type = CheckType.AUTOCLICKER)
@@ -19,7 +19,7 @@ public class AutoclickerB extends Check {
     private int buffer;
 
     @Bind
-    WTimedAction<WPacketPlayInFlying> flyingPacket = (packet, timestamp) -> {
+    WTimedAction<WrapperPlayClientPlayerFlying> flyingPacket = (packet, timestamp) -> {
         if(player.getMovement().getLastTeleport().isPassed(1))
             lastFlying = timestamp;
     };

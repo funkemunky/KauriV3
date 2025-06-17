@@ -6,7 +6,7 @@ import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.ProtocolVersion;
-import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
+import dev.brighten.ac.packet.wrapper.in.WrapperPlayClientPlayerFlying;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInUseEntity;
 import dev.brighten.ac.utils.*;
 import dev.brighten.ac.utils.annotation.Bind;
@@ -52,7 +52,7 @@ public class Hitbox extends Check {
     //Aka figure out how to minimize the amount of previous locations needed to process to keep network
     //stability. like shortening the amount stored, or removing older ones.
     @Bind
-    WAction<WPacketPlayInFlying> onFlying = packet -> {
+    WAction<WrapperPlayClientPlayerFlying> onFlying = packet -> {
         if(player.getInfo().isCreative() || player.getInfo().isInVehicle()) {
             attacks.clear();
             return;

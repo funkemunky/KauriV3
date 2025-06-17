@@ -6,7 +6,7 @@ import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.WTimedAction;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInBlockPlace;
-import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
+import dev.brighten.ac.packet.wrapper.in.WrapperPlayClientPlayerFlying;
 import dev.brighten.ac.utils.KLocation;
 import dev.brighten.ac.utils.annotation.Bind;
 
@@ -22,7 +22,7 @@ public class BlockC extends Check {
     }
 
     @Bind
-    WTimedAction<WPacketPlayInFlying> flying = (packet, timestamp) -> {
+    WTimedAction<WrapperPlayClientPlayerFlying> flying = (packet, timestamp) -> {
         if(player.getInfo().isCreative() || player.getMovement().isExcuseNextFlying()) return;
         if(place) {
             long delta = timestamp - lastPlace;

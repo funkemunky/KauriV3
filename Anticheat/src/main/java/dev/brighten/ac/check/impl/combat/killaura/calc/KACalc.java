@@ -6,7 +6,7 @@ import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.check.impl.combat.killaura.calc.impl.KAGrid;
 import dev.brighten.ac.check.impl.combat.killaura.calc.impl.KAZero;
 import dev.brighten.ac.data.APlayer;
-import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
+import dev.brighten.ac.packet.wrapper.in.WrapperPlayClientPlayerFlying;
 import dev.brighten.ac.utils.EntityLocation;
 import dev.brighten.ac.utils.KLocation;
 import dev.brighten.ac.utils.MathUtils;
@@ -28,7 +28,7 @@ public class KACalc extends KListener {
             PITCH_OFFSET = new EvictingList<>(10);
 
     @Bind
-    WAction<WPacketPlayInFlying> flying = packet -> {
+    WAction<WrapperPlayClientPlayerFlying> flying = packet -> {
         if(player.getInfo().getTarget() == null || player.getInfo().lastAttack.isPassed(40)) return;
         Optional<Tuple<EntityLocation, EntityLocation>> optional = player.getEntityLocationHandler()
                 .getEntityLocation(player.getInfo().getTarget());

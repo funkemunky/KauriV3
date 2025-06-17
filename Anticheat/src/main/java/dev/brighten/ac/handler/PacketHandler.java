@@ -1,104 +1,278 @@
 package dev.brighten.ac.handler;
 
+import com.github.retrooper.packetevents.event.PacketReceiveEvent;
+import com.github.retrooper.packetevents.event.PacketSendEvent;
+import com.github.retrooper.packetevents.protocol.item.ItemStack;
+import com.github.retrooper.packetevents.protocol.packettype.PacketType;
+import com.github.retrooper.packetevents.protocol.player.InteractionHand;
+import com.github.retrooper.packetevents.util.Vector3i;
+import com.github.retrooper.packetevents.wrapper.PacketWrapper;
+import com.github.retrooper.packetevents.wrapper.play.client.*;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerAbilities;
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.data.obj.NormalAction;
 import dev.brighten.ac.handler.entity.FakeMob;
 import dev.brighten.ac.packet.ProtocolVersion;
-import dev.brighten.ac.packet.wrapper.PacketType;
-import dev.brighten.ac.packet.wrapper.in.*;
-import dev.brighten.ac.packet.wrapper.out.*;
+import dev.brighten.ac.packet.TransactionClientWrapper;
 import dev.brighten.ac.utils.BlockUtils;
 import dev.brighten.ac.utils.KLocation;
 import dev.brighten.ac.utils.MovementUtils;
 import dev.brighten.ac.utils.math.IntVector;
+import io.github.retrooper.packetevents.util.SpigotConversionUtil;
 import lombok.val;
 import net.minecraft.server.v1_8_R3.PacketDataSerializer;
 import net.minecraft.server.v1_8_R3.PacketPlayInCustomPayload;
 import net.minecraft.server.v1_8_R3.PacketPlayInSteerVehicle;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
-import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.Vector;
 
 import java.util.*;
 
 public class PacketHandler {
 
+    public boolean processReceive(APlayer player, PacketReceiveEvent event) {
+        long timestamp = System.currentTimeMillis();
+        Object wrapped;
+        if (event.getPacketType().equals(PacketType.Play.Client.PONG)
+                || event.getPacketType().equals(PacketType.Play.Client.WINDOW_CONFIRMATION)) {
+            TransactionClientWrapper packet = new TransactionClientWrapper(event);
+
+            wrapped = packet;
+
+            if(packet.getId() == 0) {
+                if (Anticheat.INSTANCE.getKeepaliveProcessor().keepAlives.get((short)packet.getAction()) != null) {
+                    Anticheat.INSTANCE.getKeepaliveProcessor().addResponse(player, (short)packet.getAction());
+
+                    val optional = Anticheat.INSTANCE.getKeepaliveProcessor().getResponse(player);
+
+                    int current = Anticheat.INSTANCE.getKeepaliveProcessor().tick;
+
+                    optional.ifPresent(ka -> {
+                        player.addPlayerTick();
+
+                        player.getLagInfo().setLastTransPing(player.getLagInfo().getTransPing());
+                        player.getLagInfo().setTransPing(current - ka.id);
+
+                        if (player.getPlayerVersion().isOrAbove(ProtocolVersion.V1_9)
+                                && player.getMovement().getLastFlying().isPassed(1)) {
+                            player.getMovement().runPositionHackFix();
+                        }
+
+                        if (!player.instantTransaction.isEmpty()) {
+                            synchronized (player.instantTransaction) {
+                                var iterator = player.instantTransaction.keySet().iterator();
+
+                                while(iterator.hasNext()) {
+                                    Short key = iterator.next();
+
+                                    if (key > ka.id) {
+                                        continue;
+                                    }
+
+                                    var tuple = player.instantTransaction.get(key);
+
+                                    if ((timestamp - tuple.one.getStamp())
+                                            > player.getLagInfo().getTransPing() * 52L + 750L) {
+                                        tuple.two.accept(tuple.one);
+                                        iterator.remove();
+                                    }
+                                }
+                            }
+                        }
+
+                        if (Math.abs(player.getLagInfo().getLastTransPing()
+                                - player.getLagInfo().getTransPing()) > 1) {
+                            player.getLagInfo().getLastPingDrop().reset();
+                        }
+
+                        ka.getReceived(player.getBukkitPlayer().getUniqueId())
+                                .ifPresent(r -> r.receivedStamp = timestamp);
+
+                        synchronized (player.keepAliveStamps) {
+                            var it = player.keepAliveStamps.iterator();
+
+                            while(it.hasNext()) {
+                                NormalAction action = it.next();
+                                if (action.stamp > ka.id) continue;
+
+                                action.action.accept(ka);
+                                it.remove();
+                            }
+                        }
+                    });
+                    player.getLagInfo().getLastClientTransaction().reset();
+                }
+                Optional.ofNullable(player.instantTransaction.remove(packet.getAction()))
+                        .ifPresent(t -> t.two.accept(t.one));
+            }
+        } else if(event.getPacketType().equals(PacketType.Play.Client.PLAYER_POSITION_AND_ROTATION)
+                || event.getPacketType().equals(PacketType.Play.Client.PLAYER_POSITION)
+                || event.getPacketType().equals(PacketType.Play.Client.PLAYER_ROTATION)
+                || event.getPacketType().equals(PacketType.Play.Client.PLAYER_FLYING)) {
+            WrapperPlayClientPlayerFlying packet = new WrapperPlayClientPlayerPosition(event);
+            wrapped = packet;
+            if (player.getMovement().isExcuseNextFlying()) {
+                player.getMovement().setExcuseNextFlying(false);
+                return false;
+            }
+
+            if (timestamp - player.getLagInfo().getLastFlying() <= 15) {
+                player.getLagInfo().getLastPacketDrop().reset();
+            }
+
+            player.getLagInfo().setLastFlying(timestamp);
+
+            player.getEntityLocationHandler().onFlying();
+
+            if (player.getPlayerVersion().isOrAbove(ProtocolVersion.V1_17)
+                    && packet.hasPositionChanged() && packet.hasRotationChanged()
+                    && MovementUtils.isSameLocation(new KLocation(
+                            packet.getLocation().getX(),
+                            packet.getLocation().getY(),
+                            packet.getLocation().getZ()),
+                    player.getMovement().getTo().getLoc())) {
+                player.getMovement().setExcuseNextFlying(true);
+            }
+
+            player.getMovement().process(packet);
+        } else if(event.getPacketType().equals(PacketType.Play.Client.STEER_VEHICLE)) {
+            WrapperPlayClientSteerVehicle packet = new WrapperPlayClientSteerVehicle(event);
+
+            wrapped = packet;
+
+            // Check for isUnmount()
+            if (player.getBukkitPlayer().isInsideVehicle() && packet.isUnmount()) {
+                player.getInfo().getVehicleSwitch().reset();
+                player.getInfo().setInVehicle(false);
+            }
+        } else if(event.getPacketType().equals(PacketType.Play.Client.ENTITY_ACTION)) {
+            WrapperPlayClientEntityAction packet = new WrapperPlayClientEntityAction(event);
+
+            wrapped = packet;
+
+            switch (packet.getAction()) {
+                case START_SNEAKING: {
+                    player.getInfo().setSneaking(true);
+                    break;
+                }
+                case STOP_SNEAKING: {
+                    player.getInfo().setSneaking(false);
+                    break;
+                }
+                case START_SPRINTING: {
+                    player.getInfo().setSprinting(true);
+                    break;
+                }
+                case STOP_SPRINTING: {
+                    player.getInfo().setSprinting(false);
+                    break;
+                }
+            }
+        } else if(event.getPacketType().equals(PacketType.Play.Client.INTERACT_ENTITY)) {
+            WrapperPlayClientInteractEntity packet = new WrapperPlayClientInteractEntity(event);
+
+            wrapped = packet;
+
+            FakeMob mob = Anticheat.INSTANCE.getFakeTracker().getEntityById(packet.getEntityId());
+
+            if (packet.getAction() == WrapperPlayClientInteractEntity.InteractAction.ATTACK) {
+                if (mob != null) {
+                    player.getEntityLocationHandler().getTargetOfFakeMob(mob.getEntityId())
+                            .ifPresent(targetId -> {
+                                player.getEntityLocationHandler().removeFakeMob(targetId);
+                                player.getInfo().lastFakeBotHit.reset();
+                            });
+                    if (player.getMob().getEntityId() == packet.getEntityId()) {
+                        player.getInfo().botAttack.reset();
+                    }
+                } else {
+                    Optional<Entity> target = Anticheat.INSTANCE.getWorldInfo(player.getBukkitPlayer().getWorld()).getEntity(packet.getEntityId());
+
+                    if(target.isPresent() && target.get() instanceof LivingEntity entity) {
+                        if (player.getInfo().lastFakeBotHit.isPassed(400) && Math.random() > 0.9) {
+                            player.getEntityLocationHandler().canCreateMob.add(entity.getEntityId());
+                        }
+                        player.getInfo().setTarget(entity);
+                    }
+                }
+                player.getInfo().lastAttack.reset();
+            }
+        } else if(event.getPacketType().equals(PacketType.Play.Client.ANIMATION)) {
+            WrapperPlayClientAnimation packet = new WrapperPlayClientAnimation(event);
+
+            wrapped = packet;
+
+            if(packet.getHand() == InteractionHand.MAIN_HAND) {
+                long delta = timestamp - player.getInfo().lastArmSwing;
+
+                player.getInfo().cps.add(1000D / delta, timestamp);
+                player.getInfo().lastArmSwing = timestamp;
+            }
+        } else if(event.getPacketType().equals(PacketType.Play.Client.PLAYER_BLOCK_PLACEMENT)) {
+            WrapperPlayClientPlayerBlockPlacement packet = new WrapperPlayClientPlayerBlockPlacement(event);
+
+            wrapped = packet;
+            Vector3i pos = packet.getBlockPosition();
+            Optional<ItemStack> stack = packet.getItemStack();
+
+            player.getInfo().getLastBlockPlace().reset();
+
+            // Used item
+            if (pos.getX() == -1 && (pos.getY() == 255 | pos.getY() == -1) && pos.getZ() == -1
+                    && stack.isPresent()
+                    && BlockUtils.isUsable(SpigotConversionUtil.toBukkitItemMaterial(stack.get().getType()))) {
+                player.getInfo().getLastUseItem().reset();
+            }
+
+            player.getBlockUpdateHandler().onPlace(packet);
+        } else if(event.getPacketType().equals(PacketType.Play.Client.PLAYER_DIGGING)) {
+            WrapperPlayClientPlayerDigging packet = new WrapperPlayClientPlayerDigging(event);
+
+            wrapped = packet;
+
+            player.getInfo().getLastBlockDig().reset();
+            player.getBlockUpdateHandler().onDig(packet);
+        } else if(event.getPacketType().equals(PacketType.Play.Client.CLIENT_STATUS)) {
+            WrapperPlayClientClientStatus packet = new WrapperPlayClientClientStatus(event);
+
+            wrapped = packet;
+
+            if (packet.getAction() == WrapperPlayClientClientStatus.Action.OPEN_INVENTORY_ACHIEVEMENT) {
+                player.getInfo().setInventoryOpen(true);
+                player.getInfo().lastInventoryOpen.reset();
+                return true;
+            }
+        } else if(event.getPacketType().equals(PacketType.Play.Client.CLOSE_WINDOW)) {
+            wrapped = new WrapperPlayClientCloseWindow(event);
+            player.getInfo().setInventoryOpen(false);
+        } else {
+            wrapped = new PacketWrapper<>(event);
+        }
+
+        if(player.sniffing) {
+            player.sniffedPackets.add("[" + Anticheat.INSTANCE.getKeepaliveProcessor().tick + "] " + event.getPacketType().getName()
+                    + ": " + wrapped);
+        }
+
+        return player.getCheckHandler().callSyncPacket(wrapped, timestamp);
+    }
+
+    public boolean processSend(APlayer player, PacketSendEvent event) {
+        long timestamp = System.currentTimeMillis();
+
+        Object wrapped;
+
+        if(event.getPacketType().equals(PacketType.Play.Server.PLAYER_ABILITIES)) {
+            WrapperPlayServerPlayerAbilities packet = new WrapperPlayServerPlayerAbilities(event);
+        }
+    }
+
     public boolean process(APlayer player, PacketType type, Object packetObject) {
         long timestamp = System.currentTimeMillis();
 
         switch (type) {
-            case CLIENT_TRANSACTION -> {
-                WPacketPlayInTransaction packet = (WPacketPlayInTransaction) packetObject;
-
-                if (packet.getId() == 0) {
-                    if (Anticheat.INSTANCE.getKeepaliveProcessor().keepAlives.get(packet.getAction()) != null) {
-                        Anticheat.INSTANCE.getKeepaliveProcessor().addResponse(player, packet.getAction());
-
-                        val optional = Anticheat.INSTANCE.getKeepaliveProcessor().getResponse(player);
-
-                        int current = Anticheat.INSTANCE.getKeepaliveProcessor().tick;
-
-                        optional.ifPresent(ka -> {
-                            player.addPlayerTick();
-
-                            player.getLagInfo().setLastTransPing(player.getLagInfo().getTransPing());
-                            player.getLagInfo().setTransPing(current - ka.id);
-
-                            if (player.getPlayerVersion().isOrAbove(ProtocolVersion.V1_9)
-                                    && player.getMovement().getLastFlying().isPassed(1)) {
-                                player.getMovement().runPositionHackFix();
-                            }
-
-                            if (!player.instantTransaction.isEmpty()) {
-                                synchronized (player.instantTransaction) {
-                                    var iterator = player.instantTransaction.keySet().iterator();
-
-                                    while(iterator.hasNext()) {
-                                        Short key = iterator.next();
-
-                                        if (key > ka.id) {
-                                            continue;
-                                        }
-
-                                        var tuple = player.instantTransaction.get(key);
-
-                                        if ((timestamp - tuple.one.getStamp())
-                                                > player.getLagInfo().getTransPing() * 52L + 750L) {
-                                            tuple.two.accept(tuple.one);
-                                            iterator.remove();
-                                        }
-                                    }
-                                }
-                            }
-
-                            if (Math.abs(player.getLagInfo().getLastTransPing()
-                                    - player.getLagInfo().getTransPing()) > 1) {
-                                player.getLagInfo().getLastPingDrop().reset();
-                            }
-
-                            ka.getReceived(player.getBukkitPlayer().getUniqueId())
-                                    .ifPresent(r -> r.receivedStamp = timestamp);
-
-                            synchronized (player.keepAliveStamps) {
-                                var it = player.keepAliveStamps.iterator();
-
-                                while(it.hasNext()) {
-                                    NormalAction action = it.next();
-                                    if (action.stamp > ka.id) continue;
-
-                                    action.action.accept(ka);
-                                    it.remove();
-                                }
-                            }
-                        });
-                        player.getLagInfo().getLastClientTransaction().reset();
-                    }
-                    Optional.ofNullable(player.instantTransaction.remove(packet.getAction()))
-                            .ifPresent(t -> t.two.accept(t.one));
-                }
-            }
             case SERVER_ABILITIES -> {
                 WPacketPlayOutAbilities packet = (WPacketPlayOutAbilities) packetObject;
 
@@ -111,31 +285,6 @@ public class PacketHandler {
                         player.getInfo().getPossibleCapabilities().clear();
                     }
                 }, true);
-            }
-            case FLYING -> {
-                WPacketPlayInFlying packet = (WPacketPlayInFlying) packetObject;
-
-                if (player.getMovement().isExcuseNextFlying()) {
-                    player.getMovement().setExcuseNextFlying(false);
-                    return false;
-                }
-
-                if (timestamp - player.getLagInfo().getLastFlying() <= 15) {
-                    player.getLagInfo().getLastPacketDrop().reset();
-                }
-
-                player.getLagInfo().setLastFlying(timestamp);
-
-                player.getEntityLocationHandler().onFlying();
-
-                if (player.getPlayerVersion().isOrAbove(ProtocolVersion.V1_17)
-                        && packet.isMoved() && packet.isLooked()
-                        && MovementUtils.isSameLocation(new KLocation(packet.getX(), packet.getY(), packet.getZ()),
-                        player.getMovement().getTo().getLoc())) {
-                    player.getMovement().setExcuseNextFlying(true);
-                }
-
-                player.getMovement().process(packet);
             }
             case BLOCK_CHANGE -> {
                 WPacketPlayOutBlockChange packet = (WPacketPlayOutBlockChange) packetObject;
@@ -227,16 +376,6 @@ public class PacketHandler {
                     player.getInfo().getVehicleSwitch().reset();
                 }
             }
-            case STEER_VEHICLE -> {
-                PacketPlayInSteerVehicle packet = (PacketPlayInSteerVehicle) packetObject;
-
-                // Check for isUnmount()
-                if (player.getBukkitPlayer().isInsideVehicle() && packet.d()) {
-                    player.getInfo().getVehicleSwitch().reset();
-                    player.getInfo().setInVehicle(false);
-                }
-
-            }
             case CLIENT_PAYLOAD -> {
                 PacketPlayInCustomPayload packet = (PacketPlayInCustomPayload) packetObject;
 
@@ -258,28 +397,6 @@ public class PacketHandler {
 
                 player.getEntityLocationHandler().onEntityDestroy(packet);
             }
-            case ENTITY_ACTION -> {
-                WPacketPlayInEntityAction packet = (WPacketPlayInEntityAction) packetObject;
-
-                switch (packet.getAction()) {
-                    case START_SNEAKING: {
-                        player.getInfo().setSneaking(true);
-                        break;
-                    }
-                    case STOP_SNEAKING: {
-                        player.getInfo().setSneaking(false);
-                        break;
-                    }
-                    case START_SPRINTING: {
-                        player.getInfo().setSprinting(true);
-                        break;
-                    }
-                    case STOP_SPRINTING: {
-                        player.getInfo().setSprinting(false);
-                        break;
-                    }
-                }
-            }
             case ENTITY_TELEPORT -> {
                 WPacketPlayOutEntityTeleport packet = (WPacketPlayOutEntityTeleport) packetObject;
 
@@ -290,74 +407,7 @@ public class PacketHandler {
 
                 player.getEntityLocationHandler().onRelPosition(packet);
             }
-            case USE_ENTITY -> {
-                WPacketPlayInUseEntity packet = (WPacketPlayInUseEntity) packetObject;
 
-                FakeMob mob = Anticheat.INSTANCE.getFakeTracker().getEntityById(packet.getEntityId());
-
-                if (packet.getAction() == WPacketPlayInUseEntity.EnumEntityUseAction.ATTACK) {
-                    if (mob != null) {
-                        player.getEntityLocationHandler().getTargetOfFakeMob(mob.getEntityId())
-                                .ifPresent(targetId -> {
-                                    player.getEntityLocationHandler().removeFakeMob(targetId);
-                                    player.getInfo().lastFakeBotHit.reset();
-                                });
-                        if (player.getMob().getEntityId() == packet.getEntityId()) {
-                            player.getInfo().botAttack.reset();
-                        }
-                    } else {
-                        Entity target = packet.getEntity(player.getBukkitPlayer().getWorld());
-
-                        if (target instanceof LivingEntity) {
-                            if (player.getInfo().lastFakeBotHit.isPassed(400) && Math.random() > 0.9) {
-                                player.getEntityLocationHandler().canCreateMob.add(target.getEntityId());
-                            }
-                            player.getInfo().setTarget((LivingEntity) target);
-                        }
-                    }
-                    player.getInfo().lastAttack.reset();
-                }
-            }
-            case ARM_ANIMATION -> {
-                long delta = timestamp - player.getInfo().lastArmSwing;
-
-                player.getInfo().cps.add(1000D / delta, timestamp);
-                player.getInfo().lastArmSwing = timestamp;
-            }
-            case BLOCK_PLACE -> {
-                WPacketPlayInBlockPlace packet = (WPacketPlayInBlockPlace) packetObject;
-
-                IntVector pos = packet.getBlockPos();
-                ItemStack stack = packet.getItemStack();
-
-                player.getInfo().getLastBlockPlace().reset();
-
-                // Used item
-                if (pos.getX() == -1 && (pos.getY() == 255 | pos.getY() == -1) && pos.getZ() == -1
-                        && stack != null
-                        && BlockUtils.isUsable(stack.getType())) {
-                    player.getInfo().getLastUseItem().reset();
-                }
-
-                player.getBlockUpdateHandler().onPlace(packet);
-            }
-            case BLOCK_DIG -> {
-                WPacketPlayInBlockDig packet = (WPacketPlayInBlockDig) packetObject;
-
-                player.getInfo().getLastBlockDig().reset();
-                player.getBlockUpdateHandler().onDig(packet);
-            }
-            case CLIENT_COMMAND -> {
-                WPacketPlayInClientCommand packet = (WPacketPlayInClientCommand) packetObject;
-
-                if (packet.getCommand() == WPacketPlayInClientCommand.WrappedEnumClientCommand
-                        .OPEN_INVENTORY_ACHIEVEMENT) {
-                    player.getInfo().setInventoryOpen(true);
-                    player.getInfo().lastInventoryOpen.reset();
-                    return true;
-                }
-            }
-            case CLIENT_CLOSE_WINDOW -> player.getInfo().setInventoryOpen(false);
             case SERVER_CLOSE_WINDOW -> player.runKeepaliveAction(ka -> player.getInfo().setInventoryOpen(false));
             case SERVER_OPEN_WINDOW -> player.runKeepaliveAction(ka -> {
                 player.getInfo().setInventoryOpen(true);
@@ -379,7 +429,7 @@ public class PacketHandler {
 
         // Post flying settings
         if(type.equals(PacketType.FLYING)) {
-            player.getVelocityHandler().onFlyingPost((WPacketPlayInFlying)packetObject);
+            player.getVelocityHandler().onFlyingPost((WrapperPlayClientPlayerFlying)packetObject);
             player.getInfo().lsneaking = player.getInfo().sneaking;
         }
 

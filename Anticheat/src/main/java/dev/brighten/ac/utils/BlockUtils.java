@@ -1,8 +1,10 @@
 package dev.brighten.ac.utils;
 
+import com.github.retrooper.packetevents.protocol.item.type.ItemType;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.handler.block.WrappedBlock;
 import dev.brighten.ac.utils.math.IntVector;
+import io.github.retrooper.packetevents.util.SpigotConversionUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -45,6 +47,10 @@ public class BlockUtils {
 
     public static XMaterial getXMaterial(Material material) {
         return matchMaterial.get(material);
+    }
+
+    public static XMaterial getXMaterial(ItemType itemType) {
+        return matchMaterial.get(SpigotConversionUtil.toBukkitItemMaterial(itemType));
     }
 
     @Deprecated

@@ -6,7 +6,7 @@ import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.ProtocolVersion;
-import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
+import dev.brighten.ac.packet.wrapper.in.WrapperPlayClientPlayerFlying;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInWindowClick;
 import dev.brighten.ac.utils.annotation.Bind;
 
@@ -23,7 +23,7 @@ public class InventoryClickMove extends Check {
     WAction<WPacketPlayInWindowClick> windowClick = packet -> lastWindowClick = player.getPlayerTick();
 
     @Bind
-    WAction<WPacketPlayInFlying> flying = packet -> {
+    WAction<WrapperPlayClientPlayerFlying> flying = packet -> {
         // If the player isn't sending any rotational or positional updates, then we don't need to check them.
         if((!packet.isMoved()
                 || player.getPlayerTick() < 10 // Can false flag on join

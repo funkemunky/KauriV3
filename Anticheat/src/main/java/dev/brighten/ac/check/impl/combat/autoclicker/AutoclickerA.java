@@ -7,7 +7,7 @@ import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInArmAnimation;
-import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
+import dev.brighten.ac.packet.wrapper.in.WrapperPlayClientPlayerFlying;
 import dev.brighten.ac.utils.annotation.Bind;
 
 @CheckData(name = "AutoClicker (A)", checkId = "autoclickera", type = CheckType.AUTOCLICKER, maxVersion = ProtocolVersion.V1_8_9)
@@ -19,7 +19,7 @@ public class AutoclickerA extends Check {
     private int flyingTicks, cps;
 
     @Bind
-    WAction<WPacketPlayInFlying> flying = (packet) -> {
+    WAction<WrapperPlayClientPlayerFlying> flying = (packet) -> {
         flyingTicks++;
         if(flyingTicks >= 20) {
             if(cps > 22) {

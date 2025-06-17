@@ -5,7 +5,7 @@ import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.WTimedAction;
 import dev.brighten.ac.data.APlayer;
-import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
+import dev.brighten.ac.packet.wrapper.in.WrapperPlayClientPlayerFlying;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInUseEntity;
 import dev.brighten.ac.utils.annotation.Bind;
 
@@ -32,7 +32,7 @@ public class UseEntity extends Check {
     };
 
     @Bind
-    WTimedAction<WPacketPlayInFlying> flying = (packet, timestamp) -> {
+    WTimedAction<WrapperPlayClientPlayerFlying> flying = (packet, timestamp) -> {
         if(player.getMovement().getLastTeleport().isPassed(0))
             lastFlying = timestamp;
     };

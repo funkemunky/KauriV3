@@ -6,7 +6,7 @@ import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.WTimedAction;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInBlockPlace;
-import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
+import dev.brighten.ac.packet.wrapper.in.WrapperPlayClientPlayerFlying;
 import dev.brighten.ac.utils.annotation.Bind;
 
 @CheckData(name = "Order (Place)", checkId = "order_place", type = CheckType.ORDER, punishVl = 4)
@@ -31,7 +31,7 @@ public class Place extends Check {
     };
 
     @Bind
-    WTimedAction<WPacketPlayInFlying> flying = (packet, timestamp) -> {
+    WTimedAction<WrapperPlayClientPlayerFlying> flying = (packet, timestamp) -> {
         if(player.getMovement().getLastTeleport().isPassed(1))
             lastFlying = timestamp;
     };

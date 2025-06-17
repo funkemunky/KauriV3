@@ -6,7 +6,7 @@ import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.ProtocolVersion;
-import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
+import dev.brighten.ac.packet.wrapper.in.WrapperPlayClientPlayerFlying;
 import dev.brighten.ac.utils.Color;
 import dev.brighten.ac.utils.MathUtils;
 import dev.brighten.ac.utils.annotation.Bind;
@@ -23,7 +23,7 @@ public class AimGCD extends Check {
     protected Timer lastGrid = new TickTimer(3);
 
     @Bind
-    WAction<WPacketPlayInFlying> onFlying = (packet) -> {
+    WAction<WrapperPlayClientPlayerFlying> onFlying = (packet) -> {
         if(!packet.isLooked()) return;
 
         if(player.getMovement().getYawGcdList().size() < 40) {

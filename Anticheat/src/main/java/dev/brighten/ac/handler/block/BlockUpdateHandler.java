@@ -1,5 +1,8 @@
 package dev.brighten.ac.handler.block;
 
+import com.github.retrooper.packetevents.protocol.player.DiggingAction;
+import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerBlockPlacement;
+import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerDigging;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInBlockDig;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInBlockPlace;
@@ -13,6 +16,7 @@ import dev.brighten.ac.utils.Materials;
 import dev.brighten.ac.utils.XMaterial;
 import dev.brighten.ac.utils.math.IntVector;
 import dev.brighten.ac.utils.world.types.RayCollision;
+import io.github.retrooper.packetevents.util.SpigotConversionUtil;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.Location;
@@ -43,13 +47,14 @@ public class BlockUpdateHandler {
      *
      * @param place wrapped PacketPlayInBlockPlace
      */
-    public void onPlace(WPacketPlayInBlockPlace place) {
+    public void onPlace(WrapperPlayClientPlayerBlockPlacement place) {
         player.getInfo().lastBlockUpdate.reset();
         // Could not possibly be a block placement as it's not a block a player is holding.
-        IntVector pos = place.getBlockPos().clone();
+        IntVector pos = new IntVector(place.getBlockPosition());
 
         // Some dumbass shit I have to do because Minecraft with Lilypads
-        if (place.getItemStack() != null && BlockUtils.getXMaterial(place.getItemStack().getType()).equals(XMaterial.LILY_PAD)) {
+        if (place.getItemStack().isPresent()
+                && BlockUtils.getXMaterial(place.getItemStack().get().getType()).equals(XMaterial.LILY_PAD)) {
             RayCollision rayCollision = new RayCollision(player.getBukkitPlayer().getEyeLocation().toVector(),
                     player.getBukkitPlayer().getLocation().getDirection());
             Block block = rayCollision.getClosestBlockOfType(player.getBukkitPlayer().getWorld(), Materials.LIQUID, 5);
@@ -63,18 +68,20 @@ public class BlockUpdateHandler {
         else if (pos.getX() == -1 && (pos.getY() == 255 || pos.getY() == -1) && pos.getZ() == -1) {
             return;
         } else {
-            pos.setX(pos.getX() + place.getDirection().getAdjacentX());
-            pos.setY(pos.getY() + place.getDirection().getAdjacentY());
-            pos.setZ(pos.getZ() + place.getDirection().getAdjacentZ());
+            pos.setX(pos.getX() + place.getFace().getModX());
+            pos.setY(pos.getY() + place.getFace().getModY());
+            pos.setZ(pos.getZ() + place.getFace().getModZ());
         }
 
         player.getInfo().getLastPlace().reset();
 
 
-        Chunk chunk = getChunk(pos.getX() >> 4, pos.getZ() >> 4);
+        if(place.getItemStack().isPresent()) {
+            Chunk chunk = getChunk(pos.getX() >> 4, pos.getZ() >> 4);
 
-        chunk.updateBlock(pos, new WrappedBlock(pos.toLocation(player.getBukkitPlayer().getWorld()),
-                place.getItemStack().getType(), (byte) 0));
+            chunk.updateBlock(pos, new WrappedBlock(pos.toLocation(player.getBukkitPlayer().getWorld()),
+                    SpigotConversionUtil.toBukkitItemMaterial(place.getItemStack().get().getType()), (byte) 0));
+        }
     }
 
     /**
@@ -153,11 +160,11 @@ public class BlockUpdateHandler {
      *
      * @param dig Wrapped PacketPlayInBlockDig
      */
-    public void onDig(WPacketPlayInBlockDig dig) {
+    public void onDig(WrapperPlayClientPlayerDigging dig) {
         player.getInfo().lastBlockUpdate.reset();
-        if (dig.getDigType() == WPacketPlayInBlockDig.EnumPlayerDigType.STOP_DESTROY_BLOCK) {
+        if (dig.getAction() == DiggingAction.FINISHED_DIGGING) {
 
-            IntVector pos = dig.getBlockPos().clone();
+            IntVector pos = new IntVector(dig.getBlockPosition());
 
             if (pos.getX() == -1 && (pos.getY() == 255 || pos.getY() == -1) && pos.getZ() == -1) {
                 return;

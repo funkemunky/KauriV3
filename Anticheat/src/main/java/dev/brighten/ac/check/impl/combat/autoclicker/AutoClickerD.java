@@ -9,7 +9,7 @@ import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInArmAnimation;
 import dev.brighten.ac.packet.wrapper.in.WPacketPlayInBlockPlace;
-import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
+import dev.brighten.ac.packet.wrapper.in.WrapperPlayClientPlayerFlying;
 import dev.brighten.ac.utils.BlockUtils;
 import dev.brighten.ac.utils.annotation.Bind;
 import dev.brighten.ac.utils.math.cond.MaxDouble;
@@ -37,7 +37,7 @@ public class AutoClickerD extends Check {
     };
 
     @Bind
-    WAction<WPacketPlayInFlying> flying = packet -> {
+    WAction<WrapperPlayClientPlayerFlying> flying = packet -> {
         if(blocked) {
             if(armTicks > 0) {
                 if(armTicks == 1 && cps > 3) {

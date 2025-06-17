@@ -1,12 +1,13 @@
 package dev.brighten.ac.handler;
 
+import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerFlying;
 import com.google.common.collect.Sets;
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.compat.CompatHandler;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.data.obj.CMove;
 import dev.brighten.ac.packet.ProtocolVersion;
-import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
+import dev.brighten.ac.packet.wrapper.in.WrapperPlayClientPlayerFlying;
 import dev.brighten.ac.packet.wrapper.out.WPacketPlayOutPosition;
 import dev.brighten.ac.utils.*;
 import dev.brighten.ac.utils.objects.evicting.EvictingList;
@@ -319,11 +320,11 @@ public class MovementHandler {
     }
 
 
-    public void process(WPacketPlayInFlying packet) {
+    public void process(WrapperPlayClientPlayerFlying packet) {
 
         player.getPotionHandler().onFlying(packet);
 
-        excuseNextFlying = packet.isMoved() && packet.isLooked()
+        excuseNextFlying = packet.hasPositionChanged() && packet.hasRotationChanged()
                 && packet.getX() == to.getX()
                 && packet.getY() == to.getY()
                 && packet.getZ() == to.getZ()
@@ -333,7 +334,7 @@ public class MovementHandler {
 
         if (checkMovement) {
             moveTicks++;
-            if (!packet.isMoved()) moveTicks = 1;
+            if (!packet.hasPositionChanged()) moveTicks = 1;
         } else moveTicks = 0;
 
         if(excuseNextFlying) {
@@ -346,7 +347,7 @@ public class MovementHandler {
 
         checkForTeleports(packet);
 
-        if (packet.isMoved()) {
+        if (packet.hasPositionChanged()) {
             player.getBlockInfo().runCollisionCheck();
         }
 
@@ -359,14 +360,14 @@ public class MovementHandler {
                     .getBlockAsync(to.getLoc().toLocation(player.getBukkitPlayer().getWorld())
                             .subtract(0, 1, 0)));
 
-            if (packet.isMoved()) {
+            if (packet.hasPositionChanged()) {
                 // Updating player bounding box
                 player.getInfo().getLastMove().reset();
 
                 player.getInfo().setOnLadder(MovementUtils.isOnLadder(player));
             }
 
-            if (packet.isMoved() && !lastTeleport.isNotPassed(2) && !player.getInfo().isCreative()
+            if (packet.hasPositionChanged() && !lastTeleport.isNotPassed(2) && !player.getInfo().isCreative()
                     && !player.getInfo().isCanFly()) {
 
                 synchronized (player.pastLocations) { //To prevent ConcurrentModificationExceptions
@@ -385,7 +386,7 @@ public class MovementHandler {
         if (player.getBlockInfo().onSlime) player.getInfo().slimeTimer.reset();
         if (player.getBlockInfo().onClimbable) player.getInfo().climbTimer.reset();
 
-        if (packet.isLooked()) {
+        if (packet.hasRotationChanged()) {
             process();
             float deltaYaw = Math.abs(this.deltaYaw), lastDeltaYaw = Math.abs(this.lDeltaYaw);
             final double differenceYaw = Math.abs(this.deltaYaw - lastDeltaYaw);
@@ -584,8 +585,8 @@ it
         }
     }
 
-    private void processBotMove(WPacketPlayInFlying packet) {
-        if (packet.isMoved() || packet.isLooked()) {
+    private void processBotMove(WrapperPlayClientPlayerFlying packet) {
+        if (packet.hasPositionChanged() || packet.hasRotationChanged()) {
             KLocation origin = to.getLoc().clone().add(0, 1.7, 0);
 
             final double MULTIPLIER = Math.max(-0.5, Math.min(-1, -1 / (Math.abs(deltaYaw) * 0.25)));
@@ -771,8 +772,8 @@ it
         //doingTeleport = inventoryOpen  = false;
     }
 
-    private void checkForTeleports(WPacketPlayInFlying packet) {
-        if (packet.isMoved() && packet.isLooked() && !packet.isOnGround()) {
+    private void checkForTeleports(WrapperPlayClientPlayerFlying packet) {
+        if (packet.hasPositionChanged() && packet.hasRotationChanged() && !packet.isOnGround()) {
             synchronized (posLocs) {
                 Iterator<KLocation> iterator = posLocs.iterator();
 
@@ -803,16 +804,16 @@ it
     /**
      * Setting the to and from to current location only if the player either moved or looked.
      *
-     * @param packet WPacketPlayInFlyingh
+     * @param packet WrapperPlayClientPlayerFlyingh
      */
-    private void setTo(WPacketPlayInFlying packet) {
+    private void setTo(WrapperPlayClientPlayerFlying packet) {
         to.setWorld(player.getBukkitPlayer().getWorld());
-        if (packet.isMoved()) {
+        if (packet.hasPositionChanged()) {
             to.getLoc().setX(packet.getX());
             to.getLoc().setY(packet.getY());
             to.getLoc().setZ(packet.getZ());
         }
-        if (packet.isLooked()) {
+        if (packet.hasRotationChanged()) {
             to.getLoc().setYaw(packet.getYaw());
             to.getLoc().setPitch(packet.getPitch());
         }
@@ -824,9 +825,9 @@ it
      * If from location is null, update to loc after to is set, otherwise, update to before from.
      * Updates the location of player and its general delta
      *
-     * @param packet WPacketPlayInFlying
+     * @param packet WrapperPlayClientPlayerFlying
      */
-    private void updateLocations(WPacketPlayInFlying packet) {
+    private void updateLocations(WrapperPlayClientPlayerFlying packet) {
         if (to.getBox().max().lengthSquared() == 0) { //Needs initializing
             setTo(packet);
             from.setLoc(to);

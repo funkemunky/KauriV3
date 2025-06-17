@@ -7,7 +7,7 @@ import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.check.WCancellable;
 import dev.brighten.ac.data.APlayer;
-import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
+import dev.brighten.ac.packet.wrapper.in.WrapperPlayClientPlayerFlying;
 import dev.brighten.ac.packet.wrapper.out.WPacketPlayOutPosition;
 import dev.brighten.ac.utils.Helper;
 import dev.brighten.ac.utils.KLocation;
@@ -57,7 +57,7 @@ public class Phase extends Check {
     };
 
     @Bind
-    WCancellable<WPacketPlayInFlying> packet = (packet) -> {
+    WCancellable<WrapperPlayClientPlayerFlying> packet = (packet) -> {
         if(packet.isMoved() && ticks < 3) {
             ticks++;
             return false;

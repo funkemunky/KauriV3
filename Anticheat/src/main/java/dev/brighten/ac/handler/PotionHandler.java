@@ -1,7 +1,8 @@
 package dev.brighten.ac.handler;
 
+import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerFlying;
 import dev.brighten.ac.data.APlayer;
-import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
+import dev.brighten.ac.packet.wrapper.in.WrapperPlayClientPlayerFlying;
 import dev.brighten.ac.packet.wrapper.out.WPacketPlayOutEntityEffect;
 import lombok.val;
 import org.bukkit.potion.PotionEffect;
@@ -22,7 +23,7 @@ public class PotionHandler {
         potionEffects.addAll(data.getBukkitPlayer().getActivePotionEffects());
     }
 
-    public void onFlying(WPacketPlayInFlying packet) {
+    public void onFlying(WrapperPlayClientPlayerFlying packet) {
         for (PotionEffect effect : potionEffects) {
             if(data.getBukkitPlayer().hasPotionEffect(effect.getType())) continue;
 
