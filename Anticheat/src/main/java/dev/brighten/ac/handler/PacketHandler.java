@@ -18,7 +18,6 @@ import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.data.obj.NormalAction;
 import dev.brighten.ac.handler.entity.FakeMob;
 import dev.brighten.ac.packet.PlayerCapabilities;
-import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import dev.brighten.ac.packet.TransactionClientWrapper;
 import dev.brighten.ac.packet.WPacketPlayOutEntity;
 import dev.brighten.ac.utils.BlockUtils;
@@ -43,8 +42,8 @@ public class PacketHandler {
             wrapped = packet;
 
             if(packet.getId() == 0) {
-                if (Anticheat.INSTANCE.getKeepaliveProcessor().keepAlives.get((short)packet.getAction()) != null) {
-                    Anticheat.INSTANCE.getKeepaliveProcessor().addResponse(player, (short)packet.getAction());
+                if (Anticheat.INSTANCE.getKeepaliveProcessor().keepAlives.get(packet.getAction()) != null) {
+                    Anticheat.INSTANCE.getKeepaliveProcessor().addResponse(player, packet.getAction());
 
                     val optional = Anticheat.INSTANCE.getKeepaliveProcessor().getResponse(player);
 
@@ -56,7 +55,7 @@ public class PacketHandler {
                         player.getLagInfo().setLastTransPing(player.getLagInfo().getTransPing());
                         player.getLagInfo().setTransPing(current - ka.id);
 
-                        if (player.getPlayerVersion().isNewerThanOrEquals(ServerVersion.V_1_9)
+                        if (player.getPlayerVersion().isNewerThanOrEquals(ClientVersion.V_1_9)
                                 && player.getMovement().getLastFlying().isPassed(1)) {
                             player.getMovement().runPositionHackFix();
                         }
@@ -112,7 +111,7 @@ public class PacketHandler {
                 || event.getPacketType().equals(PacketType.Play.Client.PLAYER_POSITION)
                 || event.getPacketType().equals(PacketType.Play.Client.PLAYER_ROTATION)
                 || event.getPacketType().equals(PacketType.Play.Client.PLAYER_FLYING)) {
-            WrapperPlayClientPlayerFlying packet = new WrapperPlayClientPlayerPosition(event);
+            WrapperPlayClientPlayerFlying packet = new WrapperPlayClientPlayerFlying(event);
             wrapped = packet;
             if (player.getMovement().isExcuseNextFlying()) {
                 player.getMovement().setExcuseNextFlying(false);
@@ -127,7 +126,7 @@ public class PacketHandler {
 
             player.getEntityLocationHandler().onFlying();
 
-            if (player.getPlayerVersion().isNewerThanOrEquals(ServerVersion.V_1_17)
+            if (player.getPlayerVersion().isNewerThanOrEquals(ClientVersion.V_1_17)
                     && packet.hasPositionChanged() && packet.hasRotationChanged()
                     && MovementUtils.isSameLocation(new KLocation(
                             packet.getLocation().getX(),
@@ -243,7 +242,7 @@ public class PacketHandler {
             if (packet.getAction() == WrapperPlayClientClientStatus.Action.OPEN_INVENTORY_ACHIEVEMENT) {
                 player.getInfo().setInventoryOpen(true);
                 player.getInfo().lastInventoryOpen.reset();
-                return true;
+                return false;
             }
         } else if(event.getPacketType().equals(PacketType.Play.Client.CLOSE_WINDOW)) {
             wrapped = new WrapperPlayClientCloseWindow(event);
@@ -375,7 +374,7 @@ public class PacketHandler {
             }
         } else if(event.getPacketType() == PacketType.Play.Server.RESPAWN) {
             wrapped = new WrapperPlayServerRespawn(event);
-            if(player.getClientVersion().isOlderThan(ClientVersion.V_1_14)) {
+            if(player.getPlayerVersion().isOlderThan(ClientVersion.V_1_14)) {
                 player.runKeepaliveAction(k -> player.getBukkitPlayer().setSprinting(false), 1);
             } else {
                 player.runKeepaliveAction(ka -> player.getInfo().lastRespawn.reset());

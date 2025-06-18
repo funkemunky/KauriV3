@@ -21,7 +21,7 @@ public class HealthSpoof extends Check {
         super(player);
     }
 
-    @Bind
+    /*@Bind
     WCancellable<WrapperPlayServerEntityMetadata> event = packet -> {
         if(packet.getEntityId() == player.getBukkitPlayer().getEntityId()) return false;
 
@@ -43,5 +43,5 @@ public class HealthSpoof extends Check {
             return true;
         }
         return false;
-    };
+    };*/
 }

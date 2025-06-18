@@ -1,20 +1,17 @@
 package dev.brighten.ac.utils;
 
-import com.github.retrooper.packetevents.protocol.player.ClientVersion;
-import dev.brighten.ac.utils.reflections.impl.CraftReflection;
-import dev.brighten.ac.utils.reflections.impl.MinecraftReflection;
+import com.github.retrooper.packetevents.PacketEvents;
+import com.github.retrooper.packetevents.manager.server.ServerVersion;
+import com.github.retrooper.packetevents.protocol.world.states.type.StateType;
+import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.utils.reflections.types.WrappedClass;
-import dev.brighten.ac.utils.reflections.types.WrappedField;
 import dev.brighten.ac.utils.world.types.SimpleCollisionBox;
-import dev.brighten.ac.utils.wrapper.Wrapper;
 import me.hydro.emulator.util.mcp.MathHelper;
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.World;
-import org.bukkit.block.Block;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
@@ -49,7 +46,8 @@ public class MiscUtils {
             e.printStackTrace();
         }
     }
-    public static boolean isInMaterialBB(World world, SimpleCollisionBox entityBox, XMaterial xmaterial) {
+
+    public static boolean isInMaterialBB(APlayer player, SimpleCollisionBox entityBox, int bitmask) {
         int startX = MathHelper.floor_double(entityBox.minX);
         int startY = MathHelper.floor_double(entityBox.minY);
         int startZ = MathHelper.floor_double(entityBox.minZ);
@@ -60,31 +58,7 @@ public class MiscUtils {
         for(int x = startX ; x < endX ; x++) {
             for(int y = startY ; y < endY ; y++) {
                 for(int z = startZ ; z < endZ ; z++) {
-                    Location loc = new Location(world, x, y, z);
-                    Optional<Block> op = BlockUtils.getBlockAsync(loc);
-
-                    if(op.isPresent()) {
-                        if(BlockUtils.getXMaterial(op.get().getType()).equals(xmaterial))
-                            return true;
-                    }
-                }
-            }
-        }
-        return false;
-    }
-
-    public static boolean isInMaterialBB(World world, SimpleCollisionBox entityBox, int bitmask) {
-        int startX = MathHelper.floor_double(entityBox.minX);
-        int startY = MathHelper.floor_double(entityBox.minY);
-        int startZ = MathHelper.floor_double(entityBox.minZ);
-        int endX = MathHelper.floor_double(entityBox.maxX + 1D);
-        int endY = MathHelper.floor_double(entityBox.maxY + 1D);
-        int endZ = MathHelper.floor_double(entityBox.maxZ + 1D);
-
-        for(int x = startX ; x < endX ; x++) {
-            for(int y = startY ; y < endY ; y++) {
-                for(int z = startZ ; z < endZ ; z++) {
-                    Material type = Wrapper.getInstance().getType(world, x, y, z);
+                    StateType type = player.getBlockUpdateHandler().getBlock(x, y, z).getType();
 
                     if(Materials.checkFlag(type, bitmask))
                         return true;
@@ -111,35 +85,6 @@ public class MiscUtils {
         if(player instanceof Player) {
             ((Player)player).spigot().sendMessage(TextComponent.fromLegacyText(toSend));
         } else player.sendMessage(toSend);
-    }
-
-    private static final WrappedField ticksField;
-
-    static {
-        switch (PacketEvents.getAPI().getServerManager().getVersion()) {
-            case V1_19: {
-                ticksField = MinecraftReflection.minecraftServer
-                        .getFieldByName("S");
-                break;
-            }
-            case V1_18_2:
-            case V1_18:
-            case V1_17_1:
-            case V1_17: {
-                ticksField = MinecraftReflection.minecraftServer.getFieldByName("V");
-                break;
-            }
-            default: {
-                ticksField = MinecraftReflection.minecraftServer.getFieldByName("ticks");
-                break;
-            }
-        }
-    }
-    private static Object minecraftServer = null;
-    //TODO Make this use the new abstraction system.
-    public static int currentTick() {
-        if(minecraftServer == null) minecraftServer = CraftReflection.getMinecraftServer();
-        return ticksField.get(minecraftServer);
     }
 
 
@@ -256,6 +201,10 @@ public class MiscUtils {
                     .getMethod("matchMaterial", String.class, boolean.class)
                     .invoke(null, material, material.contains("LEGACY_"));
         } return Material.getMaterial(material.replace("LEGACY_", ""));
+    }
+
+    public static Material match(StateType type) {
+        return match(type.getName());
     }
 
     public static <T> List<T> combine(List<T> one, List<T> two) {

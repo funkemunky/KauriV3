@@ -1,6 +1,9 @@
 package dev.brighten.ac.utils;
 
 import com.github.retrooper.packetevents.protocol.item.type.ItemType;
+import com.github.retrooper.packetevents.protocol.player.ClientVersion;
+import com.github.retrooper.packetevents.protocol.world.states.type.StateType;
+import com.github.retrooper.packetevents.protocol.world.states.type.StateTypes;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.handler.block.WrappedBlock;
 import dev.brighten.ac.utils.math.IntVector;
@@ -94,26 +97,7 @@ public class BlockUtils {
         return getBlockAsync(block.getLocation().clone().add(modX, modY, modZ));
     }
 
-    @SuppressWarnings("deprecation")
-    public static Optional<WrappedBlock> getWrappedBlock(APlayer player, Location location) {
-        if(player == null) {
-            return getBlockAsync(location.clone())
-                    .map(b -> new WrappedBlock(new IntVector(b.getLocation()), b.getType(),
-                            SpigotConversionUtil.fromBukkitMaterialData(b.getType().getNewData(b.getData()))));
-        }
-
-        return Optional.of(player.getBlockUpdateHandler()
-                .getBlock(new IntVector(location.getBlockX(), location.getBlockY(), location.getBlockZ())));
-    }
-
-    @SuppressWarnings("deprecation")
     public static Optional<WrappedBlock> getRelative(APlayer player, IntVector location, int modX, int modY, int modZ) {
-        if(player == null) {
-            return getBlockAsync(location.clone().add(modX, modY, modZ).toLocation(player.getBukkitPlayer().getWorld()))
-                    .map(b -> new WrappedBlock(new IntVector(b.getLocation()), b.getType(),
-                            SpigotConversionUtil.fromBukkitMaterialData(b.getType().getNewData(b.getData()))));
-        }
-
         return Optional.of(player.getBlockUpdateHandler()
                 .getRelative(new IntVector(location.getX(), location.getY(), location.getZ()),
                         modX, modY, modZ));
@@ -154,6 +138,25 @@ public class BlockUtils {
             case BLUE_ICE -> 0.989f;
             default -> 0.6f;
         };
+    }
+    public static float getMaterialFriction(APlayer player, StateType material) {
+        float friction = 0.6f;
+
+        if (material == StateTypes.ICE) friction = 0.98f;
+        if (material == StateTypes.SLIME_BLOCK && player.getPlayerVersion().isNewerThanOrEquals(ClientVersion.V_1_8))
+            friction = 0.8f;
+        // ViaVersion honey block replacement
+        if (material == StateTypes.HONEY_BLOCK && player.getPlayerVersion().isOlderThan(ClientVersion.V_1_15))
+            friction = 0.8f;
+        if (material == StateTypes.PACKED_ICE) friction = 0.98f;
+        if (material == StateTypes.FROSTED_ICE) friction = 0.98f;
+        if (material == StateTypes.BLUE_ICE) {
+            friction = 0.98f;
+            if (player.getPlayerVersion().isNewerThanOrEquals(ClientVersion.V_1_13))
+                friction = 0.989f;
+        }
+
+        return friction;
     }
 
     public static boolean isUsable(Material material) {

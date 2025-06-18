@@ -17,16 +17,6 @@ public class JoinListener implements Listener {
 
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST)
-    public void onJoin(PlayerLoginEvent event) {
-
-        if(event.getResult() != PlayerLoginEvent.Result.ALLOWED) {
-            return;
-        }
-        APlayer player = Anticheat.INSTANCE.getPlayerRegistry().generate(event.getPlayer());
-
-        player.getCheckHandler().callEvent(event);
-    }
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
         Anticheat.INSTANCE.getPlayerRegistry().unregister(event.getPlayer().getUniqueId());

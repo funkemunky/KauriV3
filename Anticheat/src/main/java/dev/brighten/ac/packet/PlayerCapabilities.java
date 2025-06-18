@@ -1,7 +1,9 @@
 package dev.brighten.ac.packet;
 
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerAbilities;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
+@AllArgsConstructor
 @Builder
 public class PlayerCapabilities {
     public boolean isInvulnerable;

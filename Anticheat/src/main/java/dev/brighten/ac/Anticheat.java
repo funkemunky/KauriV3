@@ -1,6 +1,7 @@
 package dev.brighten.ac;
 
 import co.aikar.commands.*;
+import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.PacketEventsAPI;
 import com.github.retrooper.packetevents.event.PacketListenerPriority;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -56,9 +57,6 @@ import java.util.stream.Collectors;
 @Getter
 @NoArgsConstructor
 @Init
-@MavenLibrary(groupId = "it.unimi.dsi", artifactId = "fastutil", version = "8.5.11", repo = @Repository(url = "https://repo1.maven.org/maven2"))
-@MavenLibrary(groupId = "org.ow2.asm", artifactId = "asm", version = "9.4", repo = @Repository(url = "https://repo1.maven.org/maven2"))
-@MavenLibrary(groupId = "org.ow2.asm", artifactId = "asm-tree", version = "9.4", repo = @Repository(url = "https://repo1.maven.org/maven2"))
 public class Anticheat extends JavaPlugin {
 
     public static Anticheat INSTANCE;
@@ -74,7 +72,6 @@ public class Anticheat extends JavaPlugin {
     private CommandPropertiesManager commandPropertiesManager;
     private RunUtils runUtils;
     private ServerInjector serverInjector;
-    private PacketEventsAPI<?> packetEventsAPI;
 
     private FakeEntityTracker fakeTracker;
     private int currentTick;
@@ -97,10 +94,19 @@ public class Anticheat extends JavaPlugin {
 
     private PacketListener packetListener;
 
+    @Override
+    public void onLoad() {
+        PacketEvents.setAPI(SpigotPacketEventsBuilder.build(this));
+        PacketEvents.getAPI().load();
+    }
+
     @SuppressWarnings("deprecation")
     public void onEnable() {
         INSTANCE = this;
+        PacketEvents.getAPI().init();
+
         new LibraryLoader().loadAll(getClass());
+
 
         runUtils = new RunUtils();
 
@@ -114,14 +120,8 @@ public class Anticheat extends JavaPlugin {
 
         loadConfig();
 
-        packetEventsAPI = SpigotPacketEventsBuilder.build(this);
-
-        packetEventsAPI.getEventManager().registerListener(packetListener = new PacketListener(), PacketListenerPriority.MONITOR);
-
         commandManager = new BukkitCommandManager(this);
         commandManager.enableUnstableAPI("help");
-
-        runTpsTask();
 
         Anticheat.INSTANCE.getCommandManager()
                 .getCommandCompletions().registerCompletion("@checks", (c) -> Anticheat.INSTANCE.getCheckManager().getCheckClasses().keySet()
@@ -189,25 +189,25 @@ public class Anticheat extends JavaPlugin {
         serverInjector = new ServerInjector();
         serverInjector.inject();
 
-
-        this.keepaliveProcessor = new KeepaliveProcessor();
         this.fakeTracker = new FakeEntityTracker();
         this.checkManager = new CheckManager();
         this.playerRegistry = new PlayerRegistry();
+
+        this.keepaliveProcessor = new KeepaliveProcessor();
+        keepaliveProcessor.start();
+
         Bukkit.getOnlinePlayers().forEach(playerRegistry::generate);
         this.packetHandler = new PacketHandler();
         logManager = new LoggerManager();
         this.actionManager = new ActionManager();
 
-        Bukkit.getOnlinePlayers().forEach(player -> player.kickPlayer("Server restarting..."));
-
-
-        keepaliveProcessor.start();
-
         logManager.init();
 
         alog(Color.Green + "Loading WorldInfo system...");
         Bukkit.getWorlds().forEach(w -> worldInfoMap.put(w.getUID(), new WorldInfo(w)));
+
+        runTpsTask();
+        PacketEvents.getAPI().getEventManager().registerListener(packetListener = new PacketListener(), PacketListenerPriority.MONITOR);
     }
 
     public void onDisable() {
@@ -240,6 +240,8 @@ public class Anticheat extends JavaPlugin {
         Check.debugInstances.clear();
         checkManager.getCheckSettings().clear();
         checkManager.getIdToName().clear();
+
+        PacketEvents.getAPI().terminate();
 
         keepaliveProcessor.stop();
         keepaliveProcessor.keepAlives.clear();

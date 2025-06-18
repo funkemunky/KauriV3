@@ -1,5 +1,7 @@
 package dev.brighten.ac.utils.math;
 
+import com.github.retrooper.packetevents.PacketEvents;
+import com.github.retrooper.packetevents.manager.server.ServerVersion;
 import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import dev.brighten.ac.utils.world.types.SimpleCollisionBox;
 import org.bukkit.Effect;
@@ -132,7 +134,8 @@ public class RayTrace {
     //debug / effects
     public void highlight(World world, double blocksAway, double accuracy) {
         for (Vector position : traverse(blocksAway, accuracy)) {
-            world.playEffect(position.toLocation(world), (PacketEvents.getAPI().getServerManager().getVersion().isNewerThanOrEquals(ServerVersion.V_1_13) ? Effect.SMOKE : Effect.valueOf("COLOURED_DUST")), 0);
+            world.playEffect(position.toLocation(world), (PacketEvents.getAPI().getServerManager().getVersion()
+                    .isNewerThanOrEquals(ServerVersion.V_1_13) ? Effect.SMOKE : Effect.valueOf("COLOURED_DUST")), 0);
         }
     }
 

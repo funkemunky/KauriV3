@@ -1,6 +1,7 @@
 package dev.brighten.ac.utils.world.blocks;
 
 import com.github.retrooper.packetevents.protocol.player.ClientVersion;
+import com.github.retrooper.packetevents.protocol.world.BlockFace;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.handler.block.WrappedBlock;
 import dev.brighten.ac.utils.BlockUtils;
@@ -11,7 +12,6 @@ import dev.brighten.ac.utils.world.types.CollisionFactory;
 import dev.brighten.ac.utils.world.types.ComplexCollisionBox;
 import dev.brighten.ac.utils.world.types.SimpleCollisionBox;
 import org.bukkit.Material;
-import org.bukkit.block.BlockFace;
 
 import java.util.Optional;
 
@@ -57,7 +57,7 @@ public class DynamicPane implements CollisionFactory {
         if(Materials.checkFlag(target, Materials.STAIRS)) {
             if (v.isOlderThan(ClientVersion.V_1_12)) return false;
 
-            return dir(fenceBlock.getMaterialData().getData()).getOppositeFace() == direction;
+            return fenceBlock.getBlockState().getFacing().getOppositeFace() == direction;
         }  else return isPane(target) || (target.isSolid() && !target.isTransparent());
     }
 
@@ -66,15 +66,6 @@ public class DynamicPane implements CollisionFactory {
 
         return mat == XMaterial.IRON_BARS || mat.name().contains("PANE")
                 || mat.name().contains("THIN");
-    }
-
-    private static BlockFace dir(byte data) {
-        return switch (data & 3) {
-            case 1 -> BlockFace.WEST;
-            case 2 -> BlockFace.SOUTH;
-            case 3 -> BlockFace.NORTH;
-            default -> BlockFace.EAST;
-        };
     }
 
 }

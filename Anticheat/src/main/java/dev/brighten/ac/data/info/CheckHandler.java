@@ -113,7 +113,7 @@ public class CheckHandler {
             CheckData data = checkClass.getCheckClass().getAnnotation(CheckData.class);
 
             //Version checks
-            if(player.getPlayerVersion().isAbove(data.maxVersion()) || player.getPlayerVersion().isBelow(data.minVersion())) {
+            if(player.getPlayerVersion().isNewerThan(data.maxVersion()) || player.getPlayerVersion().isOlderThan(data.minVersion())) {
                 Anticheat.INSTANCE.alog("Player " + player.getBukkitPlayer().getName() +
                         " is not on the right version for check " + data.name()
                         + " (version: " + player.getPlayerVersion().name() + ")");

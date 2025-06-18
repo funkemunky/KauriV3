@@ -1,14 +1,14 @@
 package dev.brighten.ac.utils;
 
+import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.protocol.particle.Particle;
-import com.github.retrooper.packetevents.protocol.particle.data.ParticleData;
 import com.github.retrooper.packetevents.protocol.particle.type.ParticleType;
-import com.github.retrooper.packetevents.protocol.particle.type.ParticleTypes;
+import com.github.retrooper.packetevents.protocol.world.states.type.StateType;
+import com.github.retrooper.packetevents.protocol.world.states.type.StateTypes;
 import com.github.retrooper.packetevents.util.Vector3d;
 import com.github.retrooper.packetevents.util.Vector3f;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerParticle;
 import dev.brighten.ac.data.APlayer;
-import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import dev.brighten.ac.utils.math.IntVector;
 import dev.brighten.ac.utils.reflections.impl.MinecraftReflection;
 import dev.brighten.ac.utils.world.BlockData;
@@ -27,7 +27,7 @@ import java.util.stream.IntStream;
 
 /**
  * @author DeprecatedLuke
- * Taken from https://github.com/DeprecatedLuke/fireflyx/blob/master/src/main/java/com/ngxdev/anticheat/utils/Helper.java
+ * Taken from <a href="https://github.com/DeprecatedLuke/fireflyx/blob/master/src/main/java/com/ngxdev/anticheat/utils/Helper.java">...</a>
  */
 public class Helper {
 
@@ -60,16 +60,14 @@ public class Helper {
         Step.GenericStepper<Float> x = Step.step((float) box.minX, 0.241F, (float) box.maxX);
         Step.GenericStepper<Float> y = Step.step((float) box.minY, 0.241F, (float) box.maxY);
         Step.GenericStepper<Float> z = Step.step((float) box.minZ, 0.241F, (float) box.maxZ);
-        Iterator var6 = x.iterator();
 
-        while (var6.hasNext()) {
-            float fx = (Float) var6.next();
-            Iterator var8 = y.iterator();
+        for (float fx : x) {
+            Iterator<Float> var8 = y.iterator();
 
             label61:
             while (var8.hasNext()) {
                 float fy = (Float) var8.next();
-                Iterator var10 = z.iterator();
+                Iterator<Float> var10 = z.iterator();
 
                 while (true) {
                     float fz;
@@ -79,7 +77,7 @@ public class Helper {
                             continue label61;
                         }
 
-                        fz = (Float) var10.next();
+                        fz = var10.next();
                         check = 0;
                         if (x.first() || x.last()) {
                             ++check;
@@ -95,7 +93,7 @@ public class Helper {
                     } while (check < 2);
 
                     WrapperPlayServerParticle packet = new WrapperPlayServerParticle(new Particle<>(particle), false,
-                            new Vector3d(fx, fy, fz), new Vector3f(0, 0, 0),  0f, 1);
+                            new Vector3d(fx, fy, fz), new Vector3f(0, 0, 0), 0f, 1);
 
                     for (APlayer p : players) {
                         p.sendPacketSilently(packet);
@@ -148,12 +146,6 @@ public class Helper {
         return null;
     }
 
-    public static List<Block> blockCollisions(List<Block> blocks, CollisionBox box) {
-        return blocks.stream()
-                .filter(b -> BlockData.getData(b.getType()).getBox(b, PacketEvents.getAPI().getServerManager().getVersion()).isCollided(box))
-                .collect(Collectors.toCollection(LinkedList::new));
-    }
-
     public static boolean isCollided(SimpleCollisionBox toCheck, CollisionBox other) {
         List<SimpleCollisionBox> downcasted = new ArrayList<>();
 
@@ -164,41 +156,10 @@ public class Helper {
                 && box.minZ <= toCheck.maxZ);
     }
 
-    public static List<Block> blockCollisions(List<Block> blocks, CollisionBox box, int material) {
-        return blocks.stream().filter(b -> Materials.checkFlag(b.getType(), material))
-                .filter(b -> BlockData.getData(b.getType()).getBox(b, PacketEvents.getAPI().getServerManager().getVersion()).isCollided(box))
-                .collect(Collectors.toCollection(LinkedList::new));
-    }
-
 
     public static <C extends CollisionBox> List<C> collisions(List<C> boxes, CollisionBox box) {
         return boxes.stream().filter(b -> b.isCollided(box))
                 .collect(Collectors.toCollection(LinkedList::new));
-    }
-
-    public static List<SimpleCollisionBox> getCollisions(World world, SimpleCollisionBox collisionBox, int mask) {
-        int x1 = (int) Math.floor(collisionBox.minX);
-        int y1 = (int) Math.floor(collisionBox.minY);
-        int z1 = (int) Math.floor(collisionBox.minZ);
-        int x2 = (int) Math.floor(collisionBox.maxX + 1);
-        int y2 = (int) Math.floor(collisionBox.maxY + 1);
-        int z2 = (int) Math.floor(collisionBox.maxZ + 1);
-        List<SimpleCollisionBox> collisionBoxes = new ArrayList<>();
-        Block block;
-        for (int x = x1; x < x2; ++x)
-            for (int y = y1 - 1; y < y2; ++y)
-                for (int z = z1; z < z2; ++z)
-                    if ((block = getBlockAt(world, x, y, z)) != null
-                            && BlockUtils.getXMaterial(block.getType()) != XMaterial.AIR)
-                        if (Materials.checkFlag(block.getType(), mask)) {
-                            CollisionBox box = BlockData.getData(block.getType())
-                                    .getBox(block, PacketEvents.getAPI().getServerManager().getVersion());
-
-                            if (box.isIntersected(collisionBox)) {
-                                box.downCast(collisionBoxes);
-                            }
-                        }
-        return collisionBoxes;
     }
 
     public static List<SimpleCollisionBox> getCollisions(APlayer player, SimpleCollisionBox collisionBox) {
@@ -210,28 +171,7 @@ public class Helper {
     }
 
     public static List<SimpleCollisionBox> getCollisions(APlayer player, SimpleCollisionBox collisionBox, int mask) {
-        int x1 = (int) Math.floor(collisionBox.minX);
-        int y1 = (int) Math.floor(collisionBox.minY);
-        int z1 = (int) Math.floor(collisionBox.minZ);
-        int x2 = (int) Math.floor(collisionBox.maxX + 1);
-        int y2 = (int) Math.floor(collisionBox.maxY + 1);
-        int z2 = (int) Math.floor(collisionBox.maxZ + 1);
-        List<SimpleCollisionBox> collisionBoxes = new ArrayList<>();
-        for (int x = x1; x < x2; ++x)
-            for (int y = y1 - 1; y < y2; ++y)
-                for (int z = z1; z < z2; ++z) {
-                    IntVector vec = new IntVector(x, y, z);
-                    Material type = player.getBlockUpdateHandler().getBlock(vec).getType();
-
-                    if (type != Material.AIR && Materials.checkFlag(type, mask)) {
-                        CollisionBox box = BlockData.getData(type)
-                                .getBox(player, vec, PacketEvents.getAPI().getServerManager().getVersion());
-
-                        if (box.isIntersected(collisionBox)) {
-                            box.downCast(collisionBoxes);
-                        }
-                    }
-                }
+        List<SimpleCollisionBox> collisionBoxes = getCollisionsNoEntities(player, collisionBox, mask);
 
         if(player != null) {
             for (Entity entity : player.getInfo().getNearbyEntities()) {
@@ -266,11 +206,11 @@ public class Helper {
             for (int y = y1 - 1; y < y2; ++y)
                 for (int z = z1; z < z2; ++z) {
                     IntVector vec = new IntVector(x, y, z);
-                    Material type = player.getBlockUpdateHandler().getBlock(vec).getType();
+                    StateType type = player.getBlockUpdateHandler().getBlock(vec).getType();
 
-                    if (type != Material.AIR && Materials.checkFlag(type, mask)) {
+                    if (type != StateTypes.AIR && Materials.checkFlag(type, mask)) {
                         CollisionBox box = BlockData.getData(type)
-                                .getBox(player, vec, PacketEvents.getAPI().getServerManager().getVersion());
+                                .getBox(player, vec, PacketEvents.getAPI().getServerManager().getVersion().toClientVersion());
 
                         if (box.isIntersected(collisionBox)) {
                             for (SimpleCollisionBox simpleCollisionBox : box.downCast()) {
@@ -300,7 +240,7 @@ public class Helper {
 
                     if (type != Material.AIR && Materials.checkFlag(type, mask)) {
                         CollisionBox box = BlockData.getData(type)
-                                .getBox(player, vec, PacketEvents.getAPI().getServerManager().getVersion());
+                                .getBox(player, vec, PacketEvents.getAPI().getServerManager().getVersion().toClientVersion());
 
                         if (box.isIntersected(collisionBox)) {
                             box.downCast(collisionBoxes);
@@ -355,18 +295,18 @@ public class Helper {
     }
 
     public static List<CollisionBox> toCollisions(List<Block> blocks) {
-        return blocks.stream().map(b -> BlockData.getData(b.getType()).getBox(b, PacketEvents.getAPI().getServerManager().getVersion()))
+        return blocks.stream().map(b -> BlockData.getData(b.getType()).getBox(b, PacketEvents.getAPI().getServerManager().getVersion().toClientVersion()))
                 .collect(Collectors.toCollection(LinkedList::new));
     }
 
     public static List<SimpleCollisionBox> toCollisionsDowncasted(List<Block> blocks) {
         List<SimpleCollisionBox> collisions = new LinkedList<>();
         blocks.forEach(b -> BlockData.getData(b.getType())
-                .getBox(b, PacketEvents.getAPI().getServerManager().getVersion()).downCast(collisions));
+                .getBox(b, PacketEvents.getAPI().getServerManager().getVersion().toClientVersion()).downCast(collisions));
         return collisions;
     }
 
     public static CollisionBox toCollisions(Block b) {
-        return BlockData.getData(b.getType()).getBox(b, PacketEvents.getAPI().getServerManager().getVersion());
+        return BlockData.getData(b.getType()).getBox(b, PacketEvents.getAPI().getServerManager().getVersion().toClientVersion());
     }
 }

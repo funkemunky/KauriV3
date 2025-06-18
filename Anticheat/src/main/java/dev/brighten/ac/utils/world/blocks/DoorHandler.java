@@ -1,160 +1,102 @@
 package dev.brighten.ac.utils.world.blocks;
 
+import com.github.retrooper.packetevents.PacketEvents;
+import com.github.retrooper.packetevents.manager.server.ServerVersion;
 import com.github.retrooper.packetevents.protocol.player.ClientVersion;
+import com.github.retrooper.packetevents.protocol.world.BlockFace;
+import com.github.retrooper.packetevents.protocol.world.states.WrappedBlockState;
+import com.github.retrooper.packetevents.protocol.world.states.enums.Half;
+import com.github.retrooper.packetevents.protocol.world.states.enums.Hinge;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.handler.block.WrappedBlock;
-import com.github.retrooper.packetevents.protocol.player.ClientVersion;
-import dev.brighten.ac.utils.BlockUtils;
+import dev.brighten.ac.utils.math.IntVector;
 import dev.brighten.ac.utils.world.CollisionBox;
 import dev.brighten.ac.utils.world.types.CollisionFactory;
+import dev.brighten.ac.utils.world.types.HexCollisionBox;
 import dev.brighten.ac.utils.world.types.NoCollisionBox;
-import dev.brighten.ac.utils.world.types.SimpleCollisionBox;
-import org.bukkit.block.BlockFace;
-import org.bukkit.material.Door;
 
-import java.util.Optional;
-
+// https://github.com/GrimAnticheat/Grim/blob/5de34f52f3a8a71f9b1304f528c1f1601dadf5b4/common/src/main/java/ac/grim/grimac/utils/collisions/blocks/DoorHandler.java
 public class DoorHandler implements CollisionFactory {
+    protected static final CollisionBox SOUTH_AABB =
+            new HexCollisionBox(0.0D, 0.0D, 0.0D, 16.0D, 16.0D, 3.0D);
+    protected static final CollisionBox NORTH_AABB =
+            new HexCollisionBox(0.0D, 0.0D, 13.0D, 16.0D, 16.0D, 16.0D);
+    protected static final CollisionBox WEST_AABB =
+            new HexCollisionBox(13.0D, 0.0D, 0.0D, 16.0D, 16.0D, 16.0D);
+    protected static final CollisionBox EAST_AABB =
+            new HexCollisionBox(0.0D, 0.0D, 0.0D, 3.0D, 16.0D, 16.0D);
+
     @Override
     public CollisionBox fetch(ClientVersion version, APlayer player, WrappedBlock b) {
-        if(PacketEvents.getAPI().getServerManager().getVersion().isBelow(ClientVersion.V_1_13)) {
-            Door state = new Door(b.getType(), b.getMaterialData().getData());
-            byte data = state.getData();
-            if (( data & 0b01000 ) != 0) {
-                Optional<WrappedBlock> rel = BlockUtils.getRelative(player, b.getLocation(), BlockFace.DOWN);
+        return switch (fetchDirection(player, version, b)) {
+            case NORTH -> NORTH_AABB.copy();
+            case SOUTH -> SOUTH_AABB.copy();
+            case EAST -> EAST_AABB.copy();
+            case WEST -> WEST_AABB.copy();
+            default -> NoCollisionBox.INSTANCE;
+        };
+    }
 
-                if(rel.isPresent() && BlockUtils.isDoor(rel.get().getType())) {
-                    data = rel.get().getMaterialData().getData();
-                } else return NoCollisionBox.INSTANCE;
-            } else {
-                Optional<WrappedBlock> rel = BlockUtils.getRelative(player, b.getLocation(), BlockFace.UP);
+    public BlockFace fetchDirection(APlayer player, ClientVersion version, WrappedBlock door) {
+        BlockFace facingDirection;
+        boolean isClosed;
+        boolean isRightHinge;
 
-                if(rel.isPresent() && BlockUtils.isDoor(rel.get().getType())) {
-                    state = new Door(rel.get().getType(), rel.get().getMaterialData().getData());
-                } else return NoCollisionBox.INSTANCE;
-            }
+        // 1.12 stores block data for the top door in the bottom block data
+        // ViaVersion can't send 1.12 clients the 1.13 complete data
+        // For 1.13, ViaVersion should just use the 1.12 block data
+        // I hate legacy versions... this is so messy
+        //TODO: This needs to be updated to support corrupted door collision
+        if (PacketEvents.getAPI().getServerManager().getVersion().isOlderThanOrEquals(ServerVersion.V_1_12_2)
+                || version.isOlderThanOrEquals(ClientVersion.V_1_12_2)) {
+            if (door.getBlockState().getHalf() == Half.LOWER) {
+                IntVector aboveVec = door.getLocation().clone();
 
-            SimpleCollisionBox box;
-            float offset = 0.1875F;
-            int direction = (data & 0b11);
-            boolean open = (data & 0b100) != 0;
-            boolean hinge = (state.getData() & 1) == 1;
+                aboveVec.setY(aboveVec.getY() + 1);
+                WrappedBlockState above = player.getBlockUpdateHandler().getBlock(aboveVec).getBlockState();
 
+                facingDirection = door.getBlockState().getFacing();
+                isClosed = !door.getBlockState().isOpen();
 
-            if (direction == 0) {
-                if (open) {
-                    if (!hinge) {
-                        box = new SimpleCollisionBox(0.0F, 0.0F, 0.0F, 1.0F, 1.0F, offset);
-                    } else {
-                        box = new SimpleCollisionBox(0.0F, 0.0F, 1.0F - offset, 1.0F, 1.0F, 1.0F);
-                    }
+                // Doors have to be the same material in 1.12 for their block data to be connected together
+                // For example, if you somehow manage to get a jungle top with an oak bottom, the data isn't shared
+                if (above.getType() == door.getBlockState().getType()) {
+                    isRightHinge = above.getHinge() == Hinge.RIGHT;
                 } else {
-                    box = new SimpleCollisionBox(0.0F, 0.0F, 0.0F, offset, 1.0F, 1.0F);
-                }
-            } else if (direction == 1) {
-                if (open) {
-                    if (!hinge) {
-                        box = new SimpleCollisionBox(1.0F - offset, 0.0F, 0.0F, 1.0F, 1.0F, 1.0F);
-                    } else {
-                        box = new SimpleCollisionBox(0.0F, 0.0F, 0.0F, offset, 1.0F, 1.0F);
-                    }
-                } else {
-                    box = new SimpleCollisionBox(0.0F, 0.0F, 0.0F, 1.0F, 1.0F, offset);
-                }
-            } else if (direction == 2) {
-                if (open) {
-                    if (!hinge) {
-                        box = new SimpleCollisionBox(0.0F, 0.0F, 1.0F - offset, 1.0F, 1.0F, 1.0F);
-                    } else {
-                        box = new SimpleCollisionBox(0.0F, 0.0F, 0.0F, 1.0F, 1.0F, offset);
-                    }
-                } else {
-                    box = new SimpleCollisionBox(1.0F - offset, 0.0F, 0.0F, 1.0F, 1.0F, 1.0F);
+                    // Default missing value
+                    isRightHinge = false;
                 }
             } else {
-                if (open) {
-                    if (!hinge) {
-                        box = new SimpleCollisionBox(0.0F, 0.0F, 0.0F, offset, 1.0F, 1.0F);
-                    } else {
-                        box = new SimpleCollisionBox(1.0F - offset, 0.0F, 0.0F, 1.0F, 1.0F, 1.0F);
-                    }
+                IntVector belowVec = door.getLocation().clone();
+
+                belowVec.setY(belowVec.getY() - 1);
+                WrappedBlockState below = player.getBlockUpdateHandler().getBlock(belowVec).getBlockState();
+
+                if (below.getType() == door.getBlockState().getType() && below.getHalf() == Half.LOWER) {
+                    isClosed = !below.isOpen();
+                    facingDirection = below.getFacing();
+                    isRightHinge = door.getBlockState().getHinge() == Hinge.RIGHT;
                 } else {
-                    box = new SimpleCollisionBox(0.0F, 0.0F, 1.0F - offset, 1.0F, 1.0F, 1.0F);
+                    facingDirection = BlockFace.EAST;
+                    isClosed = true;
+                    isRightHinge = false;
                 }
             }
-//        if (state.isTopHalf())
-//            box.offset(0,1,0);
-            return box;
         } else {
-            WrappedBlock blockTwo;
-            Door door = (Door) b.getMaterialData();
-            if (door.isTopHalf()) {
-                Optional<WrappedBlock> rel = BlockUtils.getRelative(player, b.getLocation(), BlockFace.DOWN);
-
-                if (rel.isPresent() && BlockUtils.isDoor(rel.get().getType())) {
-                    blockTwo = rel.get();
-                } else {
-                    return NoCollisionBox.INSTANCE;
-                }
-            } else if (PacketEvents.getAPI().getServerManager().getVersion().isBelow(ClientVersion.V_1_13)) {
-                Optional<WrappedBlock> rel = BlockUtils.getRelative(player, b.getLocation(), BlockFace.UP);
-
-                if (rel.isPresent() && BlockUtils.isDoor(rel.get().getType())) {
-                    blockTwo = rel.get();
-                } else {
-                    return NoCollisionBox.INSTANCE;
-                }
-            } else blockTwo = b;
-
-            SimpleCollisionBox box;
-            float offset = 0.1875F;
-            int direction = door.getFacing().ordinal();
-            boolean open = door.isOpen();
-            boolean hinge = ((Door) blockTwo.getMaterialData()).getHinge();
-            if (direction == 0) {
-                if (open) {
-                    if (!hinge) {
-                        box = new SimpleCollisionBox(0.0F, 0.0F, 0.0F, 1.0F, 1.0F, offset);
-                    } else {
-                        box = new SimpleCollisionBox(0.0F, 0.0F, 1.0F - offset, 1.0F, 1.0F, 1.0F);
-                    }
-                } else {
-                    box = new SimpleCollisionBox(0.0F, 0.0F, 0.0F, offset, 1.0F, 1.0F);
-                }
-            } else if (direction == 1) {
-                if (open) {
-                    if (!hinge) {
-                        box = new SimpleCollisionBox(1.0F - offset, 0.0F, 0.0F, 1.0F, 1.0F, 1.0F);
-                    } else {
-                        box = new SimpleCollisionBox(0.0F, 0.0F, 0.0F, offset, 1.0F, 1.0F);
-                    }
-                } else {
-                    box = new SimpleCollisionBox(0.0F, 0.0F, 0.0F, 1.0F, 1.0F, offset);
-                }
-            } else if (direction == 2) {
-                if (open) {
-                    if (!hinge) {
-                        box = new SimpleCollisionBox(0.0F, 0.0F, 1.0F - offset, 1.0F, 1.0F, 1.0F);
-                    } else {
-                        box = new SimpleCollisionBox(0.0F, 0.0F, 0.0F, 1.0F, 1.0F, offset);
-                    }
-                } else {
-                    box = new SimpleCollisionBox(1.0F - offset, 0.0F, 0.0F, 1.0F, 1.0F, 1.0F);
-                }
-            } else {
-                if (open) {
-                    if (!hinge) {
-                        box = new SimpleCollisionBox(0.0F, 0.0F, 0.0F, offset, 1.0F, 1.0F);
-                    } else {
-                        box = new SimpleCollisionBox(1.0F - offset, 0.0F, 0.0F, 1.0F, 1.0F, 1.0F);
-                    }
-                } else {
-                    box = new SimpleCollisionBox(0.0F, 0.0F, 1.0F - offset, 1.0F, 1.0F, 1.0F);
-                }
-            }
-//        if (state.isTopHalf())
-//            box.offset(0,1,0);
-            return box;
+            facingDirection = door.getBlockState().getFacing();
+            isClosed = !door.getBlockState().isOpen();
+            isRightHinge = door.getBlockState().getHinge() == Hinge.RIGHT;
         }
+
+        return switch (facingDirection) {
+            case SOUTH ->
+                    isClosed ? BlockFace.SOUTH : (isRightHinge ? BlockFace.EAST : BlockFace.WEST);
+            case WEST ->
+                    isClosed ? BlockFace.WEST : (isRightHinge ? BlockFace.SOUTH : BlockFace.NORTH);
+            case NORTH ->
+                    isClosed ? BlockFace.NORTH : (isRightHinge ? BlockFace.WEST : BlockFace.EAST);
+            default ->
+                    isClosed ? BlockFace.EAST : (isRightHinge ? BlockFace.NORTH : BlockFace.SOUTH);
+        };
     }
 }

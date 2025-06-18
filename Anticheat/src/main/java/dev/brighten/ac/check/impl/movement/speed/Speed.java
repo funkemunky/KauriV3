@@ -62,7 +62,7 @@ public class Speed extends Check {
             if(player.getBlockInfo().inWater) {
                 tags.addTag("water");
 
-                drag = player.getPlayerVersion().isNewerThanOrEquals(ServerVersion.V_1_13) ? 0.9f : 0.8f;
+                drag = player.getPlayerVersion().isNewerThanOrEquals(ClientVersion.V_1_13) ? 0.9f : 0.8f;
                 moveFactor = 0.034f;
 
                 if(player.getInfo().lastLiquid.getResetStreak() < 3) {

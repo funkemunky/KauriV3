@@ -1,6 +1,9 @@
 package dev.brighten.ac.data.info;
 
+import com.github.retrooper.packetevents.manager.server.ServerVersion;
 import com.github.retrooper.packetevents.protocol.particle.type.ParticleTypes;
+import com.github.retrooper.packetevents.protocol.world.states.type.StateType;
+import com.github.retrooper.packetevents.protocol.world.states.type.StateTypes;
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.data.APlayer;
 import com.github.retrooper.packetevents.protocol.player.ClientVersion;
@@ -10,6 +13,7 @@ import dev.brighten.ac.utils.world.BlockData;
 import dev.brighten.ac.utils.world.CollisionBox;
 import dev.brighten.ac.utils.world.EntityData;
 import dev.brighten.ac.utils.world.types.SimpleCollisionBox;
+import io.github.retrooper.packetevents.util.SpigotConversionUtil;
 import me.hydro.emulator.util.mcp.MathHelper;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -28,11 +32,7 @@ public class BlockInformation {
             belowCollisions = Collections.synchronizedList(new ArrayList<>());
     public final List<CollisionBox> entityCollisionBoxes = new ArrayList<>();
     //Caching material
-    private final Material cobweb = XMaterial.COBWEB.parseMaterial(),
-            rosebush = XMaterial.ROSE_BUSH.parseMaterial(),
-            scaffolding = XMaterial.SCAFFOLDING.parseMaterial(),
-            honey = XMaterial.HONEY_BLOCK.parseMaterial();
-    public final Map<Material, Integer> collisionMaterialCount = new EnumMap<>(Material.class);
+    public final Map<StateType, Integer> collisionMaterialCount = new HashMap<>();
 
     public BlockInformation(APlayer objectData) {
         this.player = objectData;
@@ -90,8 +90,8 @@ public class BlockInformation {
 
         SimpleCollisionBox normalBox = player.getMovement().getTo().getBox().copy();
 
-        inWater = MiscUtils.isInMaterialBB(player.getBukkitPlayer().getWorld(), waterBox, Materials.WATER);
-        inLava = MiscUtils.isInMaterialBB(player.getBukkitPlayer().getWorld(), lavaBox, Materials.LAVA);
+        inWater = MiscUtils.isInMaterialBB(player, waterBox, Materials.WATER);
+        inLava = MiscUtils.isInMaterialBB(player, lavaBox, Materials.LAVA);
         inLiquid = inWater || inLava;
 
         player.getInfo().setWorldLoaded(true);
@@ -130,10 +130,10 @@ public class BlockInformation {
                             break loop;
                         }
 
-                        final Material type =
+                        final StateType type =
                                 player.getBlockUpdateHandler().getBlock(new IntVector(x, y, z)).getType();
 
-                        if (type != Material.AIR) {
+                        if (type != StateTypes.AIR) {
 
                             IntVector vec = new IntVector(x, y, z);
                             CollisionBox blockBox = BlockData.getData(type)
@@ -159,13 +159,13 @@ public class BlockInformation {
                             }
 
                             if(blockBox.isCollided(normalBox)) {
-                                if(type.equals(cobweb))
+                                if(type.equals(StateTypes.COBWEB))
                                     inWeb = true;
-                                else if(type.equals(scaffolding)) inScaffolding = true;
-                                else if(type.equals(honey)) inHoney = true;
+                                else if(type.equals(StateTypes.SCAFFOLDING)) inScaffolding = true;
+                                else if(type.equals(StateTypes.HONEY_BLOCK)) inHoney = true;
                             }
 
-                            if(type.equals(rosebush))
+                            if(type.equals(StateTypes.ROSE_BUSH))
                                 roseBush = true;
 
                             if(normalBox.copy().offset(0, 0.6f, 0).isCollided(blockBox))
@@ -189,16 +189,16 @@ public class BlockInformation {
                                 }
                             }
 
-                            if(Materials.checkFlag(type, Materials.COLLIDABLE)) {
+                            if(Materials.checkFlag(SpigotConversionUtil.toBukkitMaterialData(type.createBlockState(player.getPlayerVersion())).getItemType(), Materials.COLLIDABLE)) {
                                 SimpleCollisionBox groundBox = newBox(0.6, 0.1)
                                         .expandMax(0, -0.5, 0);
 
-                                if(Materials.checkFlag(type, Materials.FENCE)
-                                        || Materials.checkFlag(type, Materials.WALL)) {
+                                if(Materials.checkFlag(SpigotConversionUtil.toBukkitMaterialData(type.createBlockState(player.getPlayerVersion())).getItemType(), Materials.FENCE)
+                                        || Materials.checkFlag(SpigotConversionUtil.toBukkitMaterialData(type.createBlockState(player.getPlayerVersion())).getItemType(), Materials.WALL)) {
                                     fenceBelow = true;
                                 }
 
-                                XMaterial blockMaterial = BlockUtils.getXMaterial(type);
+                                XMaterial blockMaterial = XMaterial.matchXMaterial(SpigotConversionUtil.toBukkitMaterialData(type.createBlockState(player.getPlayerVersion())).getItemType());
 
                                 if(newBox(1.4, 0).expandMin(0, -1, 0)
                                         .expand(0.3,0,0.3)
@@ -249,8 +249,8 @@ public class BlockInformation {
                                         }
                                 }
                                 if(player.getMovement().getDeltaY() > 0
-                                        && player.getPlayerVersion().isBelow(ClientVersion.V_1_14)
-                                        && Materials.checkFlag(type, Materials.LADDER)
+                                        && player.getPlayerVersion().isOlderThan(ClientVersion.V_1_14)
+                                        && Materials.checkFlag(SpigotConversionUtil.toBukkitMaterialData(type.createBlockState(player.getPlayerVersion())).getItemType(), Materials.LADDER)
                                         && normalBox.copy().expand(0.2f, 0, 0.2f)
                                         .isCollided(blockBox)) {
                                     onClimbable = true;
@@ -271,13 +271,13 @@ public class BlockInformation {
                                 }
 
                                 if(groundBox.copy().expand(0.5, 0.3, 0.5).isCollided(blockBox)) {
-                                    if(Materials.checkFlag(type, Materials.SLABS))
+                                    if(Materials.checkFlag(SpigotConversionUtil.toBukkitMaterialData(type.createBlockState(player.getPlayerVersion())).getItemType(), Materials.SLABS))
                                         onSlab = true;
                                     else
-                                    if(Materials.checkFlag(type, Materials.STAIRS))
+                                    if(Materials.checkFlag(SpigotConversionUtil.toBukkitMaterialData(type.createBlockState(player.getPlayerVersion())).getItemType(), Materials.STAIRS))
                                         onStairs = true;
-                                    else if(Materials.checkFlag(type, Materials.FENCE)
-                                            || Materials.checkFlag(type, Materials.WALL)) {
+                                    else if(Materials.checkFlag(SpigotConversionUtil.toBukkitMaterialData(type.createBlockState(player.getPlayerVersion())).getItemType(), Materials.FENCE)
+                                            || Materials.checkFlag(SpigotConversionUtil.toBukkitMaterialData(type.createBlockState(player.getPlayerVersion())).getItemType(), Materials.WALL)) {
                                         fenceNear = true;
                                     } else if(blockMaterial != null)
                                         switch(blockMaterial) {
@@ -323,16 +323,9 @@ public class BlockInformation {
                                         }
                                 }
                             } else if(blockBox.isCollided(normalBox)) {
-                                XMaterial blockMaterial = BlockUtils.getXMaterial(type);
-
-                                if(blockMaterial != null)
-                                    switch(blockMaterial) {
-                                        case END_PORTAL:
-                                        case NETHER_PORTAL: {
-                                            inPortal = true;
-                                            break;
-                                        }
-                                    }
+                                if(type == StateTypes.END_PORTAL || type == StateTypes.END_PORTAL_FRAME || type == StateTypes.NETHER_PORTAL) {
+                                    inPortal = true;
+                                }
                             }
                         }
                     }
@@ -372,7 +365,7 @@ public class BlockInformation {
         //Bukkit.broadcastMessage("chigga5");
         onHalfBlock = onSlab || onStairs || miscNear || bedNear;
 
-        if((player.getMovement().getDeltaY() <= 0 || player.getPlayerVersion().isNewerThanOrEquals(ServerVersion.V_1_14))
+        if((player.getMovement().getDeltaY() <= 0 || player.getPlayerVersion().isNewerThanOrEquals(ClientVersion.V_1_14))
                 && !onClimbable) {
             onClimbable = player.getInfo().getBlockOnTo().isPresent()
                     && BlockUtils.isClimbableBlock(player.getInfo().getBlockOnTo().get());

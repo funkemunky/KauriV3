@@ -1,6 +1,9 @@
 package dev.brighten.ac.data;
 
-import com.github.retrooper.packetevents.protocol.entity.type.EntityType;
+import com.github.retrooper.packetevents.PacketEvents;
+import com.github.retrooper.packetevents.manager.server.ServerVersion;
+import com.github.retrooper.packetevents.protocol.entity.data.EntityData;
+import com.github.retrooper.packetevents.protocol.entity.data.EntityDataTypes;
 import com.github.retrooper.packetevents.protocol.entity.type.EntityTypes;
 import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import com.github.retrooper.packetevents.protocol.player.User;
@@ -25,10 +28,9 @@ import dev.brighten.ac.handler.block.BlockUpdateHandler;
 import dev.brighten.ac.handler.entity.FakeMob;
 import dev.brighten.ac.handler.keepalive.KeepAlive;
 import dev.brighten.ac.messages.Messages;
-import com.github.retrooper.packetevents.protocol.player.ClientVersion;
+import dev.brighten.ac.packet.TransactionServerWrapper;
 import dev.brighten.ac.utils.*;
 import dev.brighten.ac.utils.objects.evicting.EvictingList;
-import dev.brighten.ac.utils.reflections.impl.MinecraftReflection;
 import dev.brighten.ac.utils.timer.Timer;
 import dev.brighten.ac.utils.timer.impl.MillisTimer;
 import dev.brighten.ac.utils.world.types.RayCollision;
@@ -43,7 +45,6 @@ import me.hydro.emulator.collision.impl.*;
 import me.hydro.emulator.object.input.DataSupplier;
 import me.hydro.emulator.util.mcp.AxisAlignedBB;
 import me.hydro.emulator.util.mcp.BlockPos;
-import org.bukkit.Achievement;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
@@ -86,13 +87,6 @@ public class APlayer {
     private int playerTick;
     @Getter
     private final Timer creation = new MillisTimer();
-    @Getter
-    //TODO Actually grab real player version once finished implementing version grabber from Atlas
-    private ClientVersion playerVersion = ClientVersion.UNKNOWN;
-    @Getter
-    private ClientVersion clientVersion = ClientVersion.UNKNOWN;
-
-    private Object playerConnection;
 
     public Emulator EMULATOR;
 
@@ -121,22 +115,17 @@ public class APlayer {
     @Getter
     private boolean initialized = false;
 
-    private User packetEventsUser;
-
     public APlayer(Player player) {
         this.bukkitPlayer = player;
         this.uuid = player.getUniqueId();
-        packetEventsUser = Anticheat.INSTANCE.getPacketEventsAPI().getPlayerManager().getUser(player);
-        this.playerConnection = MinecraftReflection.getPlayerConnection(player);
-        this.clientVersion = packetEventsUser.getClientVersion();
 
         Anticheat.INSTANCE.getLogger().info("Constructored " + player.getName());
-
 
         load();
     }
 
     private void load() {
+        Anticheat.INSTANCE.getLogger().info("Loading " + getBukkitPlayer().getName());
         this.movement = new MovementHandler(this);
         this.potionHandler = new PotionHandler(this);
         this.velocityHandler = new VelocityHandler(this);
@@ -149,82 +138,73 @@ public class APlayer {
 
         creation.reset();
 
-        Anticheat.INSTANCE.getLogger().info("Loading " + getBukkitPlayer().getName());
-
         // Grabbing the protocol version of the player.
-        Anticheat.INSTANCE.getScheduler().schedule(() -> {
-            Anticheat.INSTANCE.getLogger().info("Attempting Getting player version for " + getBukkitPlayer().getName());
-            int numVersion = clientVersion.getClientVersion();
+        Anticheat.INSTANCE.getLogger().info("Attempting Getting player version for " + getBukkitPlayer().getName());
 
-            playerVersion = ClientVersion.getVersion(numVersion);
+        Anticheat.INSTANCE.getRunUtils().task(() -> checkHandler.initChecks());
 
-            Anticheat.INSTANCE.getRunUtils().task(() -> checkHandler.initChecks());
+        if(PacketEvents.getAPI().getServerManager().getVersion().isOlderThan(ServerVersion.V_1_9)) {
+            this.wrappedPlayer = new LegacyPlayer(getBukkitPlayer());
+        } else this.wrappedPlayer = new ModernPlayer(getBukkitPlayer());
 
-            if(PacketEvents.getAPI().getServerManager().getVersion().isBelow(ClientVersion.V_1_9)) {
-                this.wrappedPlayer = new LegacyPlayer(getBukkitPlayer());
-            } else this.wrappedPlayer = new ModernPlayer(getBukkitPlayer());
+        EMULATOR = new Emulator(new DataSupplier() {
+            @Override
+            public List<AxisAlignedBB> getCollidingBoxes(AxisAlignedBB bb) {
+                SimpleCollisionBox sbc = new SimpleCollisionBox(bb.minX, bb.minY, bb.minZ, bb.maxX, bb.maxY, bb.maxZ);
 
-            EMULATOR = new Emulator(new DataSupplier() {
-                @Override
-                public List<AxisAlignedBB> getCollidingBoxes(AxisAlignedBB bb) {
-                    SimpleCollisionBox sbc = new SimpleCollisionBox(bb.minX, bb.minY, bb.minZ, bb.maxX, bb.maxY, bb.maxZ);
-
-                    // Greater than 20? We want to truncate to prevent huge processing cost
-                    if(sbc.min().distanceSquared(sbc.max()) > 400) {
-                        sbc.maxX = sbc.minX + Math.min(sbc.maxX - sbc.minX, 20);
-                        sbc.maxY = sbc.minY + Math.max(sbc.maxY - sbc.minY, 20);
-                        sbc.maxZ = sbc.minZ + Math.max(sbc.maxZ - sbc.minZ, 20);
-                    }
-
-                    List<AxisAlignedBB> axisAlignedBBs = new ArrayList<>();
-
-                    for (SimpleCollisionBox bb2 : Helper.getCollisions(APlayer.this,
-                            sbc,
-                            Materials.COLLIDABLE)) {
-                       axisAlignedBBs
-                               .add(new AxisAlignedBB(bb2.minX, bb2.minY, bb2.minZ, bb2.maxX, bb2.maxY, bb2.maxZ));
-                    }
-
-                    return axisAlignedBBs;
+                // Greater than 20? We want to truncate to prevent huge processing cost
+                if(sbc.min().distanceSquared(sbc.max()) > 400) {
+                    sbc.maxX = sbc.minX + Math.min(sbc.maxX - sbc.minX, 20);
+                    sbc.maxY = sbc.minY + Math.max(sbc.maxY - sbc.minY, 20);
+                    sbc.maxZ = sbc.minZ + Math.max(sbc.maxZ - sbc.minZ, 20);
                 }
 
-                @Override
-                public Block getBlockAt(BlockPos blockPos) {
-                    //Optional<org.bukkit.block.Block>
-                    val block = BlockUtils.getBlockAsync(
-                            new Location(getBukkitPlayer().getWorld(), blockPos.getX(), blockPos.getY(), blockPos.getZ()));
+                List<AxisAlignedBB> axisAlignedBBs = new ArrayList<>();
 
-                    if (block.isPresent()) {
-                        XMaterial xmaterial = XMaterial.matchXMaterial(block.get().getType());
+                for (SimpleCollisionBox bb2 : Helper.getCollisions(APlayer.this,
+                        sbc,
+                        Materials.COLLIDABLE)) {
+                    axisAlignedBBs
+                            .add(new AxisAlignedBB(bb2.minX, bb2.minY, bb2.minZ, bb2.maxX, bb2.maxY, bb2.maxZ));
+                }
 
-                        switch (xmaterial) {
-                            case SLIME_BLOCK: {
-                                return new BlockSlime();
-                            }
-                            case SOUL_SAND: {
-                                return new BlockSoulSand();
-                            }
-                            case COBWEB: {
-                                return new BlockWeb();
-                            }
-                            case ICE:
-                            case PACKED_ICE:
-                            case FROSTED_ICE: {
-                                return new BlockIce();
-                            }
-                            case BLUE_ICE: {
-                                return new BlockBlueIce();
-                            }
+                return axisAlignedBBs;
+            }
+
+            @Override
+            public Block getBlockAt(BlockPos blockPos) {
+                //Optional<org.bukkit.block.Block>
+                val block = BlockUtils.getBlockAsync(
+                        new Location(getBukkitPlayer().getWorld(), blockPos.getX(), blockPos.getY(), blockPos.getZ()));
+
+                if (block.isPresent()) {
+                    XMaterial xmaterial = XMaterial.matchXMaterial(block.get().getType());
+
+                    switch (xmaterial) {
+                        case SLIME_BLOCK: {
+                            return new BlockSlime();
+                        }
+                        case SOUL_SAND: {
+                            return new BlockSoulSand();
+                        }
+                        case COBWEB: {
+                            return new BlockWeb();
+                        }
+                        case ICE:
+                        case PACKED_ICE:
+                        case FROSTED_ICE: {
+                            return new BlockIce();
+                        }
+                        case BLUE_ICE: {
+                            return new BlockBlueIce();
                         }
                     }
-                    return new Block();
                 }
-            }, playerVersion.getVersion());
-            initialized = true;
-        }, 100L, TimeUnit.MILLISECONDS);
+                return new Block();
+            }
+        }, getPlayerVersion().getProtocolVersion());
 
-        // Removing inventory achievement
-        getBukkitPlayer().removeAchievement(Achievement.OPEN_INVENTORY);
+        generateEntities();
 
         // Enabling alerts for players on join if they have the permissions to
         if(getBukkitPlayer().hasPermission("anticheat.command.alerts")
@@ -232,8 +212,6 @@ public class APlayer {
             Check.alertsEnabled.add(getUuid());
             getBukkitPlayer().spigot().sendMessage(Messages.ALERTS_ON);
         }
-
-        generateEntities();
     }
 
     private void generateEntities() {
@@ -245,10 +223,10 @@ public class APlayer {
 
         Location loc1 = coll.collisionPoint(2).toLocation(getBukkitPlayer().getWorld());
 
-        //TODO I did Collections.singletonList(
-        //                        new WrappedWatchableObject(0, 16, (byte) 1))), and have no idea why so if it breaks please fix
-        mob.spawn(true, loc1,
-                new ArrayList<>(), this);
+        List<EntityData<?>> dataList = new ArrayList<>();
+
+        dataList.add(new EntityData<>(7, EntityDataTypes.INT, 1));
+        mob.spawn(true, loc1, dataList, this);
     }
 
     protected void unload() {
@@ -256,15 +234,9 @@ public class APlayer {
         this.lagInfo = null;
         this.movement = null;
         this.checkHandler.shutdown();
-        mob.despawn();
-    }
-
-    public Object getPlayerConnection() {
-        if(this.playerConnection == null) {
-            this.playerConnection = MinecraftReflection.getPlayerConnection(bukkitPlayer);
+        if(mob != null) {
+            mob.despawn();
         }
-
-        return this.playerConnection;
     }
 
 
@@ -283,10 +255,6 @@ public class APlayer {
         onVelocityTasks.add(runnable);
     }
 
-    public void runInstantAction(Consumer<InstantAction> runnable) {
-        runInstantAction(runnable, false);
-    }
-
     public void runInstantAction(Consumer<InstantAction> runnable, boolean runPost) {
         short startId = (short) ThreadLocalRandom.current().nextInt(Short.MIN_VALUE, Short.MAX_VALUE),
                 endId = (short)(startId + 1);
@@ -302,7 +270,7 @@ public class APlayer {
         InstantAction startAction = new InstantAction(startId, endId, false);
         synchronized (instantTransaction) {
             instantTransaction.put(startId, new Tuple<>(startAction, runnable));
-            sendPacketSilently(new WrapperPlayServerPing(startId));
+            sendPacketSilently(new TransactionServerWrapper(startId, 0).getWrapper(getPlayerVersion()));
         }
 
 
@@ -312,7 +280,7 @@ public class APlayer {
                 InstantAction endAction = new InstantAction(finalStartId, finalEndId, true);
                 synchronized (instantTransaction) {
                     instantTransaction.put(finalEndId, new Tuple<>(endAction, runnable));
-                    sendPacketSilently(new WrapperPlayServerPing(finalEndId));
+                    sendPacketSilently(new TransactionServerWrapper(finalEndId, 0).getWrapper(getPlayerVersion()));
                 }
             });
         }
@@ -338,25 +306,23 @@ public class APlayer {
         playerTick++;
     }
 
-    public void sendPacketSilently(Object packet) {
+    public void sendPacketSilently(PacketWrapper<?> packet) {
         if(sniffing) {
             sniffedPackets.add("(Silent) [" +  Anticheat.INSTANCE.getKeepaliveProcessor().tick + "] "
                     + packet.toString());
         }
 
-        if(packet instanceof PacketWrapper<?> wrapper) {
-            packetEventsUser.sendPacketSilently(wrapper);
-        } else {
-            packetEventsUser.sendPacketSilently(packet);
-        }
+        User user = PacketEvents.getAPI().getPlayerManager().getUser(bukkitPlayer);
+        user.sendPacketSilently(packet);
     }
 
-    public void sendPacket(Object packet) {
-        if(packet instanceof PacketWrapper<?> wrapper) {
-            packetEventsUser.sendPacket(wrapper);
-        } else {
-            packetEventsUser.sendPacket(packet);
-        }
+    public void sendPacket(PacketWrapper<?> packet) {
+        User user = PacketEvents.getAPI().getPlayerManager().getUser(bukkitPlayer);
+        user.sendPacket(packet);
+    }
+
+    public ClientVersion getPlayerVersion() {
+        return PacketEvents.getAPI().getPlayerManager().getClientVersion(bukkitPlayer);
     }
 
     @Override

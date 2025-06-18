@@ -16,9 +16,9 @@ public class DynamicRod implements CollisionFactory {
 
     @Override
     public CollisionBox fetch(ClientVersion version, APlayer player, WrappedBlock b) {
-        return switch (b.getMaterialData().getData()) {
-            case 2, 3 -> NS.copy();
-            case 4, 5 -> EW.copy();
+        return switch (b.getBlockState().getFacing()) {
+            case NORTH, SOUTH-> NS.copy();
+            case EAST, WEST -> EW.copy();
             default -> UD.copy();
         };
     }

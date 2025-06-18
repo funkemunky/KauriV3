@@ -1,10 +1,11 @@
 package dev.brighten.ac.handler;
 
+import com.github.retrooper.packetevents.PacketEvents;
+import com.github.retrooper.packetevents.manager.server.ServerVersion;
 import com.github.retrooper.packetevents.protocol.teleport.RelativeFlag;
 import com.github.retrooper.packetevents.util.Vector3d;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerFlying;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerPositionAndLook;
-import com.google.common.collect.Sets;
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.compat.CompatHandler;
 import dev.brighten.ac.data.APlayer;
@@ -294,7 +295,7 @@ public class MovementHandler {
             return new FastMathType[]{FastMathType.FAST_LEGACY};
         }
 
-        if (player.getPlayerVersion().isBelow(ClientVersion.V_1_16)) {
+        if (player.getPlayerVersion().isOlderThan(ClientVersion.V_1_16)) {
             return new FastMathType[]{
                     FastMathType.FAST_LEGACY,
                     FastMathType.VANILLA};
@@ -329,10 +330,10 @@ public class MovementHandler {
                 && packet.getLocation().getX() == to.getX()
                 && packet.getLocation().getY() == to.getY()
                 && packet.getLocation().getZ() == to.getZ()
-                && player.getPlayerVersion().isNewerThanOrEquals(ServerVersion.V_1_17);
+                && player.getPlayerVersion().isNewerThanOrEquals(ClientVersion.V_1_17);
 
-        checkMovement = MovementUtils.checkMovement(player.getPlayerConnection());
-
+        checkMovement = teleportsToConfirm == 0 && posLocs.isEmpty();
+        
         if (checkMovement) {
             moveTicks++;
             if (!packet.hasPositionChanged()) moveTicks = 1;
@@ -410,14 +411,14 @@ public class MovementHandler {
             val origin = this.to.getLoc().clone();
 
             origin.add(0, player.getInfo().isSneaking()
-                    ? (player.getPlayerVersion().isBelow(ClientVersion.V_1_14) ? 1.54 : 1.27f) : 1.62, 0);
+                    ? (player.getPlayerVersion().isOlderThan(ClientVersion.V_1_14) ? 1.54 : 1.27f) : 1.62, 0);
 
             RayCollision collision = new RayCollision(origin.toVector(), MathUtils.getDirection(origin));
 
             synchronized (lookingAtBoxes) {
                 lookingAtBoxes.clear();
                 lookingAtBoxes.addAll(collision
-                        .boxesOnRay(player.getBukkitPlayer().getWorld(),
+                        .boxesOnRay(player,
                                 player.getBukkitPlayer().getGameMode().equals(GameMode.CREATIVE) ? 6.0 : 5.0));
                 lookingAtBlock = !lookingAtBoxes.isEmpty();
             }
@@ -587,6 +588,7 @@ it
     }
 
     private void processBotMove(WrapperPlayClientPlayerFlying packet) {
+        if(player.getMob() == null) return;
         if (packet.hasPositionChanged() || packet.hasRotationChanged()) {
             KLocation origin = to.getLoc().clone().add(0, 1.7, 0);
 
@@ -677,9 +679,9 @@ it
     }
 
     public double[] getEyeHeights() {
-        if (player.getPlayerVersion().isNewerThanOrEquals(ServerVersion.V_1_14)) {
+        if (player.getPlayerVersion().isNewerThanOrEquals(ClientVersion.V_1_14)) {
             return new double[]{0.4f, 1.27f, 1.62f};
-        } else if (player.getPlayerVersion().isNewerThanOrEquals(ServerVersion.V_1_9)) {
+        } else if (player.getPlayerVersion().isNewerThanOrEquals(ClientVersion.V_1_9)) {
             return new double[]{0.4f, 1.54f, 1.62f};
         } else return new double[]{1.54f, 1.62f};
     }

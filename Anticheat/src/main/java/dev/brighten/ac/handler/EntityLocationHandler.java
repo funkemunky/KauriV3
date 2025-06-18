@@ -113,7 +113,9 @@ public class EntityLocationHandler {
 
         Entity entity = op.get();
 
-        if(!allowedEntityTypes.contains(SpigotConversionUtil.fromBukkitEntityType(entity.getType()))) return;
+        var type = SpigotConversionUtil.fromBukkitEntityType(entity.getType());
+
+        if(type == null || !allowedEntityTypes.contains(type)) return;
 
         val tuple = entityLocationMap.computeIfAbsent(entity.getUniqueId(),
                 key -> {
@@ -169,7 +171,7 @@ public class EntityLocationHandler {
         tuple.two = tuple.one.clone();
 
         runAction(entity, () -> {
-            if(data.getPlayerVersion().isNewerThanOrEquals(ServerVersion.V_1_9)) {
+            if(data.getPlayerVersion().isNewerThanOrEquals(ClientVersion.V_1_9)) {
                 if (!(Math.abs(eloc.x - packet.getPosition().getX()) >= 0.03125D)
                         && !(Math.abs(eloc.y - packet.getPosition().getY()) >= 0.015625D)
                         && !(Math.abs(eloc.z - packet.getPosition().getZ()) >= 0.03125D)) {

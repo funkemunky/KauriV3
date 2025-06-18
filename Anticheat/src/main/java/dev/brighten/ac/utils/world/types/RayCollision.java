@@ -1,8 +1,12 @@
 package dev.brighten.ac.utils.world.types;
 
+import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.protocol.particle.type.ParticleType;
+import com.github.retrooper.packetevents.protocol.world.states.type.StateType;
+import com.github.retrooper.packetevents.protocol.world.states.type.StateTypes;
 import dev.brighten.ac.data.APlayer;
 import com.github.retrooper.packetevents.protocol.player.ClientVersion;
+import dev.brighten.ac.handler.block.WrappedBlock;
 import dev.brighten.ac.utils.BlockUtils;
 import dev.brighten.ac.utils.Helper;
 import dev.brighten.ac.utils.Materials;
@@ -10,6 +14,7 @@ import dev.brighten.ac.utils.Tuple;
 import dev.brighten.ac.utils.math.RayTrace;
 import dev.brighten.ac.utils.world.BlockData;
 import dev.brighten.ac.utils.world.CollisionBox;
+import me.hydro.emulator.util.mcp.MathHelper;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -139,30 +144,28 @@ public class RayCollision implements CollisionBox {
         Helper.drawRay(this, 3, particle, Arrays.asList(players));
     }
 
-    public List<CollisionBox> boxesOnRay(World world, double distance) {
+    public List<CollisionBox> boxesOnRay(APlayer world, double distance) {
         int amount = Math.round((float) (distance / 0.5));
 
         Location[] locs = new Location[Math.max(2, amount)]; //We do a max to prevent NegativeArraySizeException.
         List<CollisionBox> boxes = new ArrayList<>();
         boolean primaryThread = Bukkit.isPrimaryThread();
-        ClientVersion version = PacketEvents.getAPI().getServerManager().getVersion();
+        ClientVersion version = PacketEvents.getAPI().getServerManager().getVersion().toClientVersion();
 
         for (int i = 0; i < locs.length; i++) {
             double ix = i / 2d;
 
-            double fx = (originX + (directionX * ix));
-            double fy = (originY + (directionY * ix));
-            double fz = (originZ + (directionZ * ix));
+            int fx = MathHelper.floor_double(originX + (directionX * ix));
+            int fy = MathHelper.floor_double(originY + (directionY * ix));
+            int fz = MathHelper.floor_double(originZ + (directionZ * ix));
 
-            Location loc = new Location(world, fx, fy, fz);
-
-            Block block = primaryThread ? loc.getBlock() : BlockUtils.getBlock(loc);
+            WrappedBlock block = world.getBlockUpdateHandler().getBlock(fx, fy, fz);
 
             if (block == null) continue;
 
-            final Material type = block.getType();
+            final StateType type = block.getType();
 
-            if (!Materials.checkFlag(type, Materials.COLLIDABLE)) continue;
+            if (!type.isBlocking()) continue;
 
             CollisionBox box = BlockData.getData(type).getBox(block, version);
 
@@ -174,29 +177,27 @@ public class RayCollision implements CollisionBox {
         return boxes;
     }
 
-    public Block getClosestBlockOfType(World world, int bitmask, double distance) {
+    public WrappedBlock getClosestBlockOfType(APlayer world, int bitmask, double distance) {
         int amount = Math.round((float) (distance / 0.5));
 
         Location[] locs = new Location[Math.max(2, amount)]; //We do a max to prevent NegativeArraySizeException.
         boolean primaryThread = Bukkit.isPrimaryThread();
-        ClientVersion version = PacketEvents.getAPI().getServerManager().getVersion();
+        ClientVersion version = PacketEvents.getAPI().getServerManager().getVersion().toClientVersion();
 
         for (int i = 0; i < locs.length; i++) {
             double ix = i / 2d;
 
-            double fx = (originX + (directionX * ix));
-            double fy = (originY + (directionY * ix));
-            double fz = (originZ + (directionZ * ix));
+            int fx = MathHelper.floor_double(originX + (directionX * ix));
+            int fy = MathHelper.floor_double(originY + (directionY * ix));
+            int fz = MathHelper.floor_double(originZ + (directionZ * ix));
 
-            Location loc = new Location(world, fx, fy, fz);
-
-            Block block = primaryThread ? loc.getBlock() : BlockUtils.getBlock(loc);
+            WrappedBlock block = world.getBlockUpdateHandler().getBlock(fx, fy, fz);
 
             if (block == null) continue;
 
-            final Material type = block.getType();
+            final StateType type = block.getType();
 
-            if (!Materials.checkFlag(type, bitmask)) continue;
+            if (!type.isBlocking()) continue;
 
             CollisionBox box = BlockData.getData(type).getBox(block, version);
 

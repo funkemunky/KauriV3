@@ -84,7 +84,7 @@ public class Hitbox extends Check {
 
             List<SimpleCollisionBox> boxes = new ArrayList<>();
             double expand = 0.005;
-            if(player.getPlayerVersion().isBelow(ClientVersion.V_1_9)) {
+            if(player.getPlayerVersion().isOlderThan(ClientVersion.V_1_9)) {
                 expand+= 0.1;
             }
 

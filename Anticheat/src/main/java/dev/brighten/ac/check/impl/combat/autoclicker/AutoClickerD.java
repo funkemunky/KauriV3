@@ -16,7 +16,7 @@ import dev.brighten.ac.utils.math.cond.MaxDouble;
 import io.github.retrooper.packetevents.util.SpigotConversionUtil;
 
 @CheckData(name = "Autoclicker (D)", checkId = "autoclickerd", type = CheckType.AUTOCLICKER, punishVl = 15,
-        maxVersion = ClientVersion.V_1_8_9)
+        maxVersion = ClientVersion.V_1_8)
 public class AutoClickerD extends Check {
     public AutoClickerD(APlayer player) {
         super(player);

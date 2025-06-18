@@ -91,8 +91,8 @@ public class FlyA extends Check {
         }
 
         // Vanilla wrapping the deltaY to 0 if it's less than a certain amount.
-        if(player.getPlayerVersion().isBelow(ClientVersion.V_1_21_1)) {
-            if(player.getPlayerVersion().isBelow(ClientVersion.V_1_9)) {
+        if(player.getPlayerVersion().isOlderThan(ClientVersion.V_1_21)) {
+            if(player.getPlayerVersion().isOlderThan(ClientVersion.V_1_9)) {
                 if(Math.abs(predicted) < 0.005)
                     predicted = 0;
             } else if(Math.abs(predicted) < 0.003) {

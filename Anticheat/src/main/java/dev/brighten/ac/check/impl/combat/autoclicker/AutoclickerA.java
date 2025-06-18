@@ -11,7 +11,7 @@ import dev.brighten.ac.data.APlayer;
 import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import dev.brighten.ac.utils.annotation.Bind;
 
-@CheckData(name = "AutoClicker (A)", checkId = "autoclickera", type = CheckType.AUTOCLICKER, maxVersion = ClientVersion.V_1_8_9)
+@CheckData(name = "AutoClicker (A)", checkId = "autoclickera", type = CheckType.AUTOCLICKER, maxVersion = ClientVersion.V_1_8)
 public class AutoclickerA extends Check {
     public AutoclickerA(APlayer player) {
         super(player);

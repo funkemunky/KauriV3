@@ -3,6 +3,7 @@ package dev.brighten.ac.handler.keepalive;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPing;
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.data.APlayer;
+import dev.brighten.ac.packet.TransactionServerWrapper;
 import dev.brighten.ac.utils.BukkitRunnable;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
@@ -58,9 +59,9 @@ public class KeepaliveProcessor implements BukkitRunnable {
                         .getNearbyEntities(2 + dh, 3 + dy, 2 + dh);
             }
 
-            WrapperPlayServerPing transaction = new WrapperPlayServerPing(currentKeepalive.id);
+            TransactionServerWrapper transaction = new TransactionServerWrapper(currentKeepalive.id, 0);
 
-            value.sendPacketSilently(transaction);
+            value.sendPacketSilently(transaction.getWrapper(value.getPlayerVersion()));
         }
     }
 

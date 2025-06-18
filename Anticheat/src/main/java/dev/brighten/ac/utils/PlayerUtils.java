@@ -1,6 +1,7 @@
 package dev.brighten.ac.utils;
 
-import com.github.retrooper.packetevents.protocol.player.ClientVersion;
+import com.github.retrooper.packetevents.PacketEvents;
+import com.github.retrooper.packetevents.manager.server.ServerVersion;
 import lombok.val;
 import org.bukkit.Location;
 import org.bukkit.enchantments.Enchantment;
@@ -49,7 +50,7 @@ public class PlayerUtils {
     }
 
     public static boolean isGliding(Player p) {
-        if (PacketEvents.getAPI().getServerManager().getVersion().isBelow(ClientVersion.V_1_9)) return false;
+        if (PacketEvents.getAPI().getServerManager().getVersion().isOlderThan(ServerVersion.V_1_9)) return false;
 
         boolean isGliding = false;
         try {
