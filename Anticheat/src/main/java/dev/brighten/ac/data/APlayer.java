@@ -24,9 +24,8 @@ import dev.brighten.ac.handler.VelocityHandler;
 import dev.brighten.ac.handler.block.BlockUpdateHandler;
 import dev.brighten.ac.handler.entity.FakeMob;
 import dev.brighten.ac.handler.keepalive.KeepAlive;
-import dev.brighten.ac.handler.protocolsupport.Protocol;
 import dev.brighten.ac.messages.Messages;
-import dev.brighten.ac.packet.ProtocolVersion;
+import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import dev.brighten.ac.utils.*;
 import dev.brighten.ac.utils.objects.evicting.EvictingList;
 import dev.brighten.ac.utils.reflections.impl.MinecraftReflection;
@@ -89,7 +88,7 @@ public class APlayer {
     private final Timer creation = new MillisTimer();
     @Getter
     //TODO Actually grab real player version once finished implementing version grabber from Atlas
-    private ProtocolVersion playerVersion = ProtocolVersion.UNKNOWN;
+    private ClientVersion playerVersion = ClientVersion.UNKNOWN;
     @Getter
     private ClientVersion clientVersion = ClientVersion.UNKNOWN;
 
@@ -127,12 +126,13 @@ public class APlayer {
     public APlayer(Player player) {
         this.bukkitPlayer = player;
         this.uuid = player.getUniqueId();
+        packetEventsUser = Anticheat.INSTANCE.getPacketEventsAPI().getPlayerManager().getUser(player);
         this.playerConnection = MinecraftReflection.getPlayerConnection(player);
-        this.clientVersion = ClientVersion.getById(Protocol.getProtocol().getPlayerVersion(player));
+        this.clientVersion = packetEventsUser.getClientVersion();
 
         Anticheat.INSTANCE.getLogger().info("Constructored " + player.getName());
 
-        packetEventsUser = Anticheat.INSTANCE.getPacketEventsAPI().getPlayerManager().getUser(player);
+
         load();
     }
 
@@ -154,13 +154,13 @@ public class APlayer {
         // Grabbing the protocol version of the player.
         Anticheat.INSTANCE.getScheduler().schedule(() -> {
             Anticheat.INSTANCE.getLogger().info("Attempting Getting player version for " + getBukkitPlayer().getName());
-            int numVersion = Protocol.getProtocol().getPlayerVersion(getBukkitPlayer());
+            int numVersion = clientVersion.getClientVersion();
 
-            playerVersion = ProtocolVersion.getVersion(numVersion);
+            playerVersion = ClientVersion.getVersion(numVersion);
 
             Anticheat.INSTANCE.getRunUtils().task(() -> checkHandler.initChecks());
 
-            if(ProtocolVersion.getGameVersion().isBelow(ProtocolVersion.V1_9)) {
+            if(PacketEvents.getAPI().getServerManager().getVersion().isBelow(ClientVersion.V_1_9)) {
                 this.wrappedPlayer = new LegacyPlayer(getBukkitPlayer());
             } else this.wrappedPlayer = new ModernPlayer(getBukkitPlayer());
 
@@ -319,7 +319,7 @@ public class APlayer {
     }
 
     public double getEyeHeight() {
-        if(ProtocolVersion.getGameVersion().isOrAbove(ProtocolVersion.V1_14)) {
+        if(PacketEvents.getAPI().getServerManager().getVersion().isNewerThanOrEquals(ServerVersion.V_1_14)) {
             return getInfo().sneaking ? 1.27f : 1.62f;
         } else {
             return getInfo().sneaking ? 1.54f : 1.62f;
@@ -327,7 +327,7 @@ public class APlayer {
     }
 
     public double getPreviousEyeHeight() {
-        if(ProtocolVersion.getGameVersion().isOrAbove(ProtocolVersion.V1_14)) {
+        if(PacketEvents.getAPI().getServerManager().getVersion().isNewerThanOrEquals(ServerVersion.V_1_14)) {
             return getInfo().lsneaking ? 1.27f : 1.62f;
         } else {
             return getInfo().lsneaking ? 1.54f : 1.62f;

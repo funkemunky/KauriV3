@@ -2,7 +2,7 @@ package dev.brighten.ac.utils.world.types;
 
 import com.github.retrooper.packetevents.protocol.particle.type.ParticleType;
 import dev.brighten.ac.data.APlayer;
-import dev.brighten.ac.packet.ProtocolVersion;
+import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import dev.brighten.ac.utils.BlockUtils;
 import dev.brighten.ac.utils.Helper;
 import dev.brighten.ac.utils.Materials;
@@ -145,7 +145,7 @@ public class RayCollision implements CollisionBox {
         Location[] locs = new Location[Math.max(2, amount)]; //We do a max to prevent NegativeArraySizeException.
         List<CollisionBox> boxes = new ArrayList<>();
         boolean primaryThread = Bukkit.isPrimaryThread();
-        ProtocolVersion version = ProtocolVersion.getGameVersion();
+        ClientVersion version = PacketEvents.getAPI().getServerManager().getVersion();
 
         for (int i = 0; i < locs.length; i++) {
             double ix = i / 2d;
@@ -179,7 +179,7 @@ public class RayCollision implements CollisionBox {
 
         Location[] locs = new Location[Math.max(2, amount)]; //We do a max to prevent NegativeArraySizeException.
         boolean primaryThread = Bukkit.isPrimaryThread();
-        ProtocolVersion version = ProtocolVersion.getGameVersion();
+        ClientVersion version = PacketEvents.getAPI().getServerManager().getVersion();
 
         for (int i = 0; i < locs.length; i++) {
             double ix = i / 2d;

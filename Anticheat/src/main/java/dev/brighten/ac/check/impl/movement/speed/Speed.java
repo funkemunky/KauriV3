@@ -6,7 +6,7 @@ import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.data.APlayer;
-import dev.brighten.ac.packet.ProtocolVersion;
+import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import dev.brighten.ac.utils.BlockUtils;
 import dev.brighten.ac.utils.PlayerUtils;
 import dev.brighten.ac.utils.TagsBuilder;
@@ -14,7 +14,7 @@ import dev.brighten.ac.utils.XMaterial;
 import dev.brighten.ac.utils.annotation.Bind;
 import org.bukkit.potion.PotionEffectType;
 
-@CheckData(name = "Speed", checkId = "speeda", type = CheckType.MOVEMENT, maxVersion = ProtocolVersion.V1_21_5)
+@CheckData(name = "Speed", checkId = "speeda", type = CheckType.MOVEMENT, maxVersion = ClientVersion.V_1_21_5)
 public class Speed extends Check {
 
     private double ldxz = .12f;
@@ -62,7 +62,7 @@ public class Speed extends Check {
             if(player.getBlockInfo().inWater) {
                 tags.addTag("water");
 
-                drag = player.getPlayerVersion().isOrAbove(ProtocolVersion.V1_13) ? 0.9f : 0.8f;
+                drag = player.getPlayerVersion().isNewerThanOrEquals(ServerVersion.V_1_13) ? 0.9f : 0.8f;
                 moveFactor = 0.034f;
 
                 if(player.getInfo().lastLiquid.getResetStreak() < 3) {

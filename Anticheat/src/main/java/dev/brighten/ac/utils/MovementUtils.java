@@ -1,7 +1,7 @@
 package dev.brighten.ac.utils;
 
 import dev.brighten.ac.data.APlayer;
-import dev.brighten.ac.packet.ProtocolVersion;
+import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import dev.brighten.ac.utils.reflections.impl.MinecraftReflection;
 import dev.brighten.ac.utils.reflections.types.WrappedField;
 import dev.brighten.ac.utils.world.BlockData;
@@ -54,12 +54,12 @@ public class MovementUtils {
         }
     }
 
-    private static final WrappedField checkMovement = ProtocolVersion.getGameVersion().isBelow(ProtocolVersion.V1_9)
+    private static final WrappedField checkMovement = PacketEvents.getAPI().getServerManager().getVersion().isBelow(ClientVersion.V_1_9)
             ? MinecraftReflection.playerConnection.getFieldByName("checkMovement")
-            : MinecraftReflection.playerConnection.getFieldByName(ProtocolVersion.getGameVersion()
-            .isOrAbove(ProtocolVersion.V1_17) ? "y" : "teleportPos");
+            : MinecraftReflection.playerConnection.getFieldByName(PacketEvents.getAPI().getServerManager().getVersion()
+            .isNewerThanOrEquals(ServerVersion.V_1_17) ? "y" : "teleportPos");
     public static boolean checkMovement(Object playerConnection) {
-        if(ProtocolVersion.getGameVersion().isBelow(ProtocolVersion.V1_9)) {
+        if(PacketEvents.getAPI().getServerManager().getVersion().isBelow(ClientVersion.V_1_9)) {
             return checkMovement.get(playerConnection);
         } else return (checkMovement.get(playerConnection) == null);
     }
@@ -107,7 +107,7 @@ public class MovementUtils {
             if(Materials.checkFlag(block.get().getType(), Materials.SOLID)
                     && Materials.checkFlag(block.get().getType(), Materials.LIQUID)) {
                 CollisionBox box = BlockData.getData(block.get().getType())
-                        .getBox(block.get(), ProtocolVersion.getGameVersion());
+                        .getBox(block.get(), PacketEvents.getAPI().getServerManager().getVersion());
 
                 if(box instanceof SimpleCollisionBox sbox) {
 
@@ -143,7 +143,7 @@ public class MovementUtils {
             if(Materials.checkFlag(block.get().getType(), Materials.SOLID)
                     || Materials.checkFlag(block.get().getType(), Materials.LIQUID)) {
                 CollisionBox box = BlockData.getData(block.get().getType())
-                        .getBox(block.get(), ProtocolVersion.getGameVersion());
+                        .getBox(block.get(), PacketEvents.getAPI().getServerManager().getVersion());
 
                 if(box instanceof SimpleCollisionBox sbox) {
 
@@ -165,13 +165,13 @@ public class MovementUtils {
     }
 
     public static float getTotalHeight(float initial) {
-        return getTotalHeight(ProtocolVersion.V1_8_9, initial);
+        return getTotalHeight(ClientVersion.V_1_8_9, initial);
     }
 
-    public static float getTotalHeight(ProtocolVersion version, float initial) {
+    public static float getTotalHeight(ClientVersion version, float initial) {
         float nextCalc = initial, total = initial;
         int count = 0;
-        while ((nextCalc = (nextCalc - 0.08f) * 0.98f) > (version.isOrBelow(ProtocolVersion.V1_8_9) ?  0.005 : 0)) {
+        while ((nextCalc = (nextCalc - 0.08f) * 0.98f) > (version.isOrBelow(ClientVersion.V_1_8_9) ?  0.005 : 0)) {
             total+= nextCalc;
             if(count++ > 15) {
                 return total * 4;
@@ -183,7 +183,7 @@ public class MovementUtils {
 
     static {
         try {
-            if(ProtocolVersion.getGameVersion().isOrAbove(ProtocolVersion.V1_8)) {
+            if(PacketEvents.getAPI().getServerManager().getVersion().isNewerThanOrEquals(ServerVersion.V_1_8)) {
                 DEPTH = Enchantment.getByName("DEPTH_STRIDER");
             }
 

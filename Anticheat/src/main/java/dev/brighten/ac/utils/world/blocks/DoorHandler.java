@@ -1,8 +1,9 @@
 package dev.brighten.ac.utils.world.blocks;
 
+import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.handler.block.WrappedBlock;
-import dev.brighten.ac.packet.ProtocolVersion;
+import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import dev.brighten.ac.utils.BlockUtils;
 import dev.brighten.ac.utils.world.CollisionBox;
 import dev.brighten.ac.utils.world.types.CollisionFactory;
@@ -15,21 +16,21 @@ import java.util.Optional;
 
 public class DoorHandler implements CollisionFactory {
     @Override
-    public CollisionBox fetch(ProtocolVersion version, APlayer player, WrappedBlock b) {
-        if(ProtocolVersion.getGameVersion().isBelow(ProtocolVersion.V1_13)) {
-            Door state = new Door(b.getType(), b.getData());
+    public CollisionBox fetch(ClientVersion version, APlayer player, WrappedBlock b) {
+        if(PacketEvents.getAPI().getServerManager().getVersion().isBelow(ClientVersion.V_1_13)) {
+            Door state = new Door(b.getType(), b.getMaterialData().getData());
             byte data = state.getData();
             if (( data & 0b01000 ) != 0) {
                 Optional<WrappedBlock> rel = BlockUtils.getRelative(player, b.getLocation(), BlockFace.DOWN);
 
                 if(rel.isPresent() && BlockUtils.isDoor(rel.get().getType())) {
-                    data = rel.get().getData();
+                    data = rel.get().getMaterialData().getData();
                 } else return NoCollisionBox.INSTANCE;
             } else {
                 Optional<WrappedBlock> rel = BlockUtils.getRelative(player, b.getLocation(), BlockFace.UP);
 
                 if(rel.isPresent() && BlockUtils.isDoor(rel.get().getType())) {
-                    state = new Door(rel.get().getType(), rel.get().getData());
+                    state = new Door(rel.get().getType(), rel.get().getMaterialData().getData());
                 } else return NoCollisionBox.INSTANCE;
             }
 
@@ -86,7 +87,7 @@ public class DoorHandler implements CollisionFactory {
             return box;
         } else {
             WrappedBlock blockTwo;
-            Door door = (Door) b.getType().getNewData(b.getData());
+            Door door = (Door) b.getMaterialData();
             if (door.isTopHalf()) {
                 Optional<WrappedBlock> rel = BlockUtils.getRelative(player, b.getLocation(), BlockFace.DOWN);
 
@@ -95,7 +96,7 @@ public class DoorHandler implements CollisionFactory {
                 } else {
                     return NoCollisionBox.INSTANCE;
                 }
-            } else if (ProtocolVersion.getGameVersion().isBelow(ProtocolVersion.V1_13)) {
+            } else if (PacketEvents.getAPI().getServerManager().getVersion().isBelow(ClientVersion.V_1_13)) {
                 Optional<WrappedBlock> rel = BlockUtils.getRelative(player, b.getLocation(), BlockFace.UP);
 
                 if (rel.isPresent() && BlockUtils.isDoor(rel.get().getType())) {
@@ -109,7 +110,7 @@ public class DoorHandler implements CollisionFactory {
             float offset = 0.1875F;
             int direction = door.getFacing().ordinal();
             boolean open = door.isOpen();
-            boolean hinge = ((Door) blockTwo.getType().getNewData(b.getData())).getHinge();
+            boolean hinge = ((Door) blockTwo.getMaterialData()).getHinge();
             if (direction == 0) {
                 if (open) {
                     if (!hinge) {

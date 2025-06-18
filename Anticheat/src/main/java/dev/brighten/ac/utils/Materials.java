@@ -1,6 +1,6 @@
 package dev.brighten.ac.utils;
 
-import dev.brighten.ac.packet.ProtocolVersion;
+import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import dev.brighten.ac.utils.wrapper.Wrapper;
 import org.bukkit.Material;
 
@@ -66,10 +66,10 @@ public class Materials {
         MATERIAL_FLAGS[XMaterial.ANVIL.parseMaterial().ordinal()] |= SOLID;
         MATERIAL_FLAGS[XMaterial.LILY_PAD.parseMaterial().ordinal()] |= SOLID;
 
-        if(ProtocolVersion.getGameVersion().isOrAbove(ProtocolVersion.V1_8)) {
+        if(PacketEvents.getAPI().getServerManager().getVersion().isNewerThanOrEquals(ServerVersion.V_1_8)) {
             MATERIAL_FLAGS[XMaterial.SLIME_BLOCK.parseMaterial().ordinal()] |= SOLID;
 
-            if(ProtocolVersion.getGameVersion().isOrAbove(ProtocolVersion.V1_14)) {
+            if(PacketEvents.getAPI().getServerManager().getVersion().isNewerThanOrEquals(ServerVersion.V_1_14)) {
                 MATERIAL_FLAGS[XMaterial.SCAFFOLDING.parseMaterial().ordinal()] |= SOLID;
             }
         }

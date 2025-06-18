@@ -1,6 +1,6 @@
 package dev.brighten.ac.utils;
 
-import dev.brighten.ac.packet.ProtocolVersion;
+import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import dev.brighten.ac.utils.reflections.impl.CraftReflection;
 import dev.brighten.ac.utils.reflections.impl.MinecraftReflection;
 import dev.brighten.ac.utils.reflections.types.WrappedClass;
@@ -116,7 +116,7 @@ public class MiscUtils {
     private static final WrappedField ticksField;
 
     static {
-        switch (ProtocolVersion.getGameVersion()) {
+        switch (PacketEvents.getAPI().getServerManager().getVersion()) {
             case V1_19: {
                 ticksField = MinecraftReflection.minecraftServer
                         .getFieldByName("S");
@@ -251,7 +251,7 @@ public class MiscUtils {
 
     private static final WrappedClass materialClass = new WrappedClass(Material.class);
     public static Material match(String material) {
-        if(ProtocolVersion.getGameVersion().isOrAbove(ProtocolVersion.V1_13)) {
+        if(PacketEvents.getAPI().getServerManager().getVersion().isNewerThanOrEquals(ServerVersion.V_1_13)) {
             return materialClass
                     .getMethod("matchMaterial", String.class, boolean.class)
                     .invoke(null, material, material.contains("LEGACY_"));

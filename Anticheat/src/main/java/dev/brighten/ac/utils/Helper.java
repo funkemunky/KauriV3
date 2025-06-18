@@ -8,7 +8,7 @@ import com.github.retrooper.packetevents.util.Vector3d;
 import com.github.retrooper.packetevents.util.Vector3f;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerParticle;
 import dev.brighten.ac.data.APlayer;
-import dev.brighten.ac.packet.ProtocolVersion;
+import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import dev.brighten.ac.utils.math.IntVector;
 import dev.brighten.ac.utils.reflections.impl.MinecraftReflection;
 import dev.brighten.ac.utils.world.BlockData;
@@ -150,7 +150,7 @@ public class Helper {
 
     public static List<Block> blockCollisions(List<Block> blocks, CollisionBox box) {
         return blocks.stream()
-                .filter(b -> BlockData.getData(b.getType()).getBox(b, ProtocolVersion.getGameVersion()).isCollided(box))
+                .filter(b -> BlockData.getData(b.getType()).getBox(b, PacketEvents.getAPI().getServerManager().getVersion()).isCollided(box))
                 .collect(Collectors.toCollection(LinkedList::new));
     }
 
@@ -166,7 +166,7 @@ public class Helper {
 
     public static List<Block> blockCollisions(List<Block> blocks, CollisionBox box, int material) {
         return blocks.stream().filter(b -> Materials.checkFlag(b.getType(), material))
-                .filter(b -> BlockData.getData(b.getType()).getBox(b, ProtocolVersion.getGameVersion()).isCollided(box))
+                .filter(b -> BlockData.getData(b.getType()).getBox(b, PacketEvents.getAPI().getServerManager().getVersion()).isCollided(box))
                 .collect(Collectors.toCollection(LinkedList::new));
     }
 
@@ -192,7 +192,7 @@ public class Helper {
                             && BlockUtils.getXMaterial(block.getType()) != XMaterial.AIR)
                         if (Materials.checkFlag(block.getType(), mask)) {
                             CollisionBox box = BlockData.getData(block.getType())
-                                    .getBox(block, ProtocolVersion.getGameVersion());
+                                    .getBox(block, PacketEvents.getAPI().getServerManager().getVersion());
 
                             if (box.isIntersected(collisionBox)) {
                                 box.downCast(collisionBoxes);
@@ -225,7 +225,7 @@ public class Helper {
 
                     if (type != Material.AIR && Materials.checkFlag(type, mask)) {
                         CollisionBox box = BlockData.getData(type)
-                                .getBox(player, vec, ProtocolVersion.getGameVersion());
+                                .getBox(player, vec, PacketEvents.getAPI().getServerManager().getVersion());
 
                         if (box.isIntersected(collisionBox)) {
                             box.downCast(collisionBoxes);
@@ -270,7 +270,7 @@ public class Helper {
 
                     if (type != Material.AIR && Materials.checkFlag(type, mask)) {
                         CollisionBox box = BlockData.getData(type)
-                                .getBox(player, vec, ProtocolVersion.getGameVersion());
+                                .getBox(player, vec, PacketEvents.getAPI().getServerManager().getVersion());
 
                         if (box.isIntersected(collisionBox)) {
                             for (SimpleCollisionBox simpleCollisionBox : box.downCast()) {
@@ -300,7 +300,7 @@ public class Helper {
 
                     if (type != Material.AIR && Materials.checkFlag(type, mask)) {
                         CollisionBox box = BlockData.getData(type)
-                                .getBox(player, vec, ProtocolVersion.getGameVersion());
+                                .getBox(player, vec, PacketEvents.getAPI().getServerManager().getVersion());
 
                         if (box.isIntersected(collisionBox)) {
                             box.downCast(collisionBoxes);
@@ -355,18 +355,18 @@ public class Helper {
     }
 
     public static List<CollisionBox> toCollisions(List<Block> blocks) {
-        return blocks.stream().map(b -> BlockData.getData(b.getType()).getBox(b, ProtocolVersion.getGameVersion()))
+        return blocks.stream().map(b -> BlockData.getData(b.getType()).getBox(b, PacketEvents.getAPI().getServerManager().getVersion()))
                 .collect(Collectors.toCollection(LinkedList::new));
     }
 
     public static List<SimpleCollisionBox> toCollisionsDowncasted(List<Block> blocks) {
         List<SimpleCollisionBox> collisions = new LinkedList<>();
         blocks.forEach(b -> BlockData.getData(b.getType())
-                .getBox(b, ProtocolVersion.getGameVersion()).downCast(collisions));
+                .getBox(b, PacketEvents.getAPI().getServerManager().getVersion()).downCast(collisions));
         return collisions;
     }
 
     public static CollisionBox toCollisions(Block b) {
-        return BlockData.getData(b.getType()).getBox(b, ProtocolVersion.getGameVersion());
+        return BlockData.getData(b.getType()).getBox(b, PacketEvents.getAPI().getServerManager().getVersion());
     }
 }

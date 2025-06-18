@@ -17,6 +17,10 @@ public class WPacketPlayOutEntity {
     private float yaw, pitch;
     private PacketWrapper<?> packet;
 
+    public WPacketPlayOutEntity() {
+
+    }
+
     public WPacketPlayOutEntity(WrapperPlayServerEntityRelativeMoveAndRotation packet) {
         this.id = packet.getEntityId();
         this.x = packet.getDeltaX();

@@ -11,7 +11,7 @@ import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.check.WTimedAction;
 import dev.brighten.ac.data.APlayer;
-import dev.brighten.ac.packet.ProtocolVersion;
+import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import dev.brighten.ac.utils.annotation.Bind;
 import dev.brighten.ac.utils.timer.impl.TickTimer;
 
@@ -31,7 +31,7 @@ public class Timer extends Check {
 
     @Bind
     WAction<WrapperPlayClientPlayerBlockPlacement> blockPlace = packet -> {
-        if(player.getPlayerVersion().isOrAbove(ProtocolVersion.V1_17))
+        if(player.getPlayerVersion().isNewerThanOrEquals(ServerVersion.V_1_17))
             totalTimer-= 50;
     };
 
@@ -40,7 +40,7 @@ public class Timer extends Check {
      */
     @Bind
     WTimedAction<WrapperPlayClientPong> transaction = (packet, timestamp) -> {
-        if(player.getPlayerVersion().isBelow(ProtocolVersion.V1_9)) return;
+        if(player.getPlayerVersion().isBelow(ClientVersion.V_1_9)) return;
 
         Anticheat.INSTANCE.getKeepaliveProcessor().getKeepById((short)packet.getId()).ifPresent(ka -> {
             long delta = timestamp - ka.startStamp;

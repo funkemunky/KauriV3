@@ -8,10 +8,12 @@
  */
 package dev.brighten.ac.utils.reflections;
 
+import com.github.retrooper.packetevents.PacketEvents;
+import com.github.retrooper.packetevents.manager.server.ServerVersion;
 import dev.brighten.ac.utils.objects.QuadFunction;
 import dev.brighten.ac.utils.objects.TriFunction;
 import dev.brighten.ac.utils.reflections.types.WrappedClass;
-import dev.brighten.ac.packet.ProtocolVersion;
+import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.val;
@@ -70,7 +72,7 @@ public class Reflections {
     }
 
     public static WrappedClass getUtilClass(String name) {
-        return getClass((ProtocolVersion.getGameVersion().isBelow(ProtocolVersion.V1_8)
+        return getClass((PacketEvents.getAPI().getServerManager().getVersion().isOlderThan(ServerVersion.V_1_8)
                 ? "net.minecraft.util." : "") + name.replace("dev.brighten.ac.utils.", ""));
     }
 

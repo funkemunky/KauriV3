@@ -6,7 +6,7 @@ import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.data.APlayer;
-import dev.brighten.ac.packet.ProtocolVersion;
+import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import dev.brighten.ac.utils.KLocation;
 import dev.brighten.ac.utils.annotation.Bind;
 import dev.brighten.ac.utils.world.CollisionBox;
@@ -21,7 +21,7 @@ import org.bukkit.util.Vector;
  * This check is designed to detect an attack through solid blocks, which would be impossible under normal
  * circumstances.
  */
-@CheckData(name = "KillAura (Trace)", checkId = "katrace", type = CheckType.KILLAURA, maxVersion = ProtocolVersion.V1_21_5)
+@CheckData(name = "KillAura (Trace)", checkId = "katrace", type = CheckType.KILLAURA, maxVersion = ClientVersion.V_1_21_5)
 public class KATrace extends Check {
 
     public KATrace(APlayer player) {

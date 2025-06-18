@@ -1,6 +1,6 @@
 package dev.brighten.ac.utils.wrapper;
 
-import dev.brighten.ac.packet.ProtocolVersion;
+import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import dev.brighten.ac.utils.wrapper.impl.Wrapper_18R3;
 import dev.brighten.ac.utils.wrapper.impl.Wrapper_Reflection;
 import org.bukkit.Material;
@@ -12,7 +12,7 @@ public abstract class Wrapper {
 
     public static Wrapper getInstance() {
         if(INSTANCE == null) {
-            switch (ProtocolVersion.getGameVersion()) {
+            switch (PacketEvents.getAPI().getServerManager().getVersion()) {
                 case V1_8_9: {
                     return INSTANCE = new Wrapper_18R3();
                 }

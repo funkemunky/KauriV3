@@ -1,6 +1,6 @@
 package dev.brighten.ac.utils;
 
-import dev.brighten.ac.packet.ProtocolVersion;
+import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import lombok.val;
 import org.bukkit.Location;
 import org.bukkit.enchantments.Enchantment;
@@ -49,7 +49,7 @@ public class PlayerUtils {
     }
 
     public static boolean isGliding(Player p) {
-        if (ProtocolVersion.getGameVersion().isBelow(ProtocolVersion.V1_9)) return false;
+        if (PacketEvents.getAPI().getServerManager().getVersion().isBelow(ClientVersion.V_1_9)) return false;
 
         boolean isGliding = false;
         try {
@@ -96,7 +96,7 @@ public class PlayerUtils {
 
     static {
         try {
-            if(ProtocolVersion.getGameVersion().isOrAbove(ProtocolVersion.V1_8)) {
+            if(PacketEvents.getAPI().getServerManager().getVersion().isNewerThanOrEquals(ServerVersion.V_1_8)) {
                 DEPTH = Enchantment.getByName("DEPTH_STRIDER");
             }
         } catch(Exception e) {

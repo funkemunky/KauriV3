@@ -3,7 +3,7 @@ package dev.brighten.ac.data.info;
 import com.github.retrooper.packetevents.protocol.particle.type.ParticleTypes;
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.data.APlayer;
-import dev.brighten.ac.packet.ProtocolVersion;
+import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import dev.brighten.ac.utils.*;
 import dev.brighten.ac.utils.math.IntVector;
 import dev.brighten.ac.utils.world.BlockData;
@@ -249,7 +249,7 @@ public class BlockInformation {
                                         }
                                 }
                                 if(player.getMovement().getDeltaY() > 0
-                                        && player.getPlayerVersion().isBelow(ProtocolVersion.V1_14)
+                                        && player.getPlayerVersion().isBelow(ClientVersion.V_1_14)
                                         && Materials.checkFlag(type, Materials.LADDER)
                                         && normalBox.copy().expand(0.2f, 0, 0.2f)
                                         .isCollided(blockBox)) {
@@ -372,7 +372,7 @@ public class BlockInformation {
         //Bukkit.broadcastMessage("chigga5");
         onHalfBlock = onSlab || onStairs || miscNear || bedNear;
 
-        if((player.getMovement().getDeltaY() <= 0 || player.getPlayerVersion().isOrAbove(ProtocolVersion.V1_14))
+        if((player.getMovement().getDeltaY() <= 0 || player.getPlayerVersion().isNewerThanOrEquals(ServerVersion.V_1_14))
                 && !onClimbable) {
             onClimbable = player.getInfo().getBlockOnTo().isPresent()
                     && BlockUtils.isClimbableBlock(player.getInfo().getBlockOnTo().get());

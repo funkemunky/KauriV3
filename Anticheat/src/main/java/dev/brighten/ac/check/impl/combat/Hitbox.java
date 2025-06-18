@@ -8,7 +8,7 @@ import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.data.APlayer;
-import dev.brighten.ac.packet.ProtocolVersion;
+import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import dev.brighten.ac.utils.*;
 import dev.brighten.ac.utils.annotation.Bind;
 import dev.brighten.ac.utils.timer.Timer;
@@ -84,7 +84,7 @@ public class Hitbox extends Check {
 
             List<SimpleCollisionBox> boxes = new ArrayList<>();
             double expand = 0.005;
-            if(player.getPlayerVersion().isBelow(ProtocolVersion.V1_9)) {
+            if(player.getPlayerVersion().isBelow(ClientVersion.V_1_9)) {
                 expand+= 0.1;
             }
 

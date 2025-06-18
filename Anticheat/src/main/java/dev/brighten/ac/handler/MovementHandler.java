@@ -9,7 +9,7 @@ import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.compat.CompatHandler;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.data.obj.CMove;
-import dev.brighten.ac.packet.ProtocolVersion;
+import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import dev.brighten.ac.utils.*;
 import dev.brighten.ac.utils.objects.evicting.EvictingList;
 import dev.brighten.ac.utils.timer.Timer;
@@ -104,7 +104,7 @@ public class MovementHandler {
         // Setting from as same location as to
         from.setLoc(to);
 
-        modernMovement = ProtocolVersion.getGameVersion().isOrAbove(ProtocolVersion.V1_21_5);
+        modernMovement = PacketEvents.getAPI().getServerManager().getVersion().isNewerThanOrEquals(ServerVersion.V_1_21_5);
     }
 
     private final boolean[] IS_OR_NOT = new boolean[]{true, false};
@@ -294,7 +294,7 @@ public class MovementHandler {
             return new FastMathType[]{FastMathType.FAST_LEGACY};
         }
 
-        if (player.getPlayerVersion().isBelow(ProtocolVersion.V1_16)) {
+        if (player.getPlayerVersion().isBelow(ClientVersion.V_1_16)) {
             return new FastMathType[]{
                     FastMathType.FAST_LEGACY,
                     FastMathType.VANILLA};
@@ -329,7 +329,7 @@ public class MovementHandler {
                 && packet.getLocation().getX() == to.getX()
                 && packet.getLocation().getY() == to.getY()
                 && packet.getLocation().getZ() == to.getZ()
-                && player.getPlayerVersion().isOrAbove(ProtocolVersion.V1_17);
+                && player.getPlayerVersion().isNewerThanOrEquals(ServerVersion.V_1_17);
 
         checkMovement = MovementUtils.checkMovement(player.getPlayerConnection());
 
@@ -410,7 +410,7 @@ public class MovementHandler {
             val origin = this.to.getLoc().clone();
 
             origin.add(0, player.getInfo().isSneaking()
-                    ? (player.getPlayerVersion().isBelow(ProtocolVersion.V1_14) ? 1.54 : 1.27f) : 1.62, 0);
+                    ? (player.getPlayerVersion().isBelow(ClientVersion.V_1_14) ? 1.54 : 1.27f) : 1.62, 0);
 
             RayCollision collision = new RayCollision(origin.toVector(), MathUtils.getDirection(origin));
 
@@ -499,7 +499,7 @@ public class MovementHandler {
                 || player.getInfo().getPossibleCapabilities().stream()
                 .anyMatch(capability -> capability.canFly));
 
-        boolean hasLevitation = ProtocolVersion.getGameVersion().isOrAbove(ProtocolVersion.V1_9)
+        boolean hasLevitation = PacketEvents.getAPI().getServerManager().getVersion().isNewerThanOrEquals(ServerVersion.V_1_9)
                 && player.getPotionHandler().hasPotionEffect(XPotion.LEVITATION.getPotionEffectType());
 
         player.getInfo().setRiptiding(CompatHandler.getINSTANCE().isRiptiding(player.getBukkitPlayer()));
@@ -677,9 +677,9 @@ it
     }
 
     public double[] getEyeHeights() {
-        if (player.getPlayerVersion().isOrAbove(ProtocolVersion.V1_14)) {
+        if (player.getPlayerVersion().isNewerThanOrEquals(ServerVersion.V_1_14)) {
             return new double[]{0.4f, 1.27f, 1.62f};
-        } else if (player.getPlayerVersion().isOrAbove(ProtocolVersion.V1_9)) {
+        } else if (player.getPlayerVersion().isNewerThanOrEquals(ServerVersion.V_1_9)) {
             return new double[]{0.4f, 1.54f, 1.62f};
         } else return new double[]{1.54f, 1.62f};
     }

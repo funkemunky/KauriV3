@@ -1,9 +1,10 @@
 package dev.brighten.ac.utils.world.types;
 
 import com.github.retrooper.packetevents.protocol.particle.type.ParticleType;
+import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.handler.block.WrappedBlock;
-import dev.brighten.ac.packet.ProtocolVersion;
+import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import dev.brighten.ac.utils.world.CollisionBox;
 import lombok.Setter;
 
@@ -17,10 +18,10 @@ public class DynamicCollisionBox implements CollisionBox {
     @Setter
     private WrappedBlock block;
     @Setter
-    private ProtocolVersion version;
+    private ClientVersion version;
     private double x,y,z;
 
-    public DynamicCollisionBox(CollisionFactory box, APlayer player, WrappedBlock block, ProtocolVersion version) {
+    public DynamicCollisionBox(CollisionFactory box, APlayer player, WrappedBlock block, ClientVersion version) {
         this.box = box;
         this.player = player;
         this.block = block;

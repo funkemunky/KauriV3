@@ -1,6 +1,8 @@
 package dev.brighten.ac.utils.reflections.impl;
 
-import dev.brighten.ac.packet.ProtocolVersion;
+import com.github.retrooper.packetevents.PacketEvents;
+import com.github.retrooper.packetevents.manager.server.ServerVersion;
+import com.github.retrooper.packetevents.protocol.player.ServerVersion;
 import dev.brighten.ac.utils.reflections.Reflections;
 import dev.brighten.ac.utils.reflections.types.WrappedClass;
 import dev.brighten.ac.utils.reflections.types.WrappedConstructor;
@@ -35,10 +37,10 @@ public class MinecraftReflection {
     public static WrappedClass chunk = Reflections.getNMSClass("Chunk");
     public static WrappedClass classBlockInfo;
     public static WrappedClass minecraftServer = Reflections.getNMSClass("MinecraftServer");
-    public static WrappedClass entityPlayer = ProtocolVersion.getGameVersion().isOrAbove(ProtocolVersion.V1_17)
+    public static WrappedClass entityPlayer = PacketEvents.getAPI().getServerManager().getVersion().isNewerThanOrEquals(ServerVersion.V_1_17)
             ? Reflections.getClass("net.minecraft.server.level.EntityPlayer")
             : Reflections.getNMSClass("EntityPlayer");
-    public static WrappedClass playerConnection = ProtocolVersion.getGameVersion().isOrAbove(ProtocolVersion.V1_17)
+    public static WrappedClass playerConnection = PacketEvents.getAPI().getServerManager().getVersion().isNewerThanOrEquals(ServerVersion.V_1_17)
             ? Reflections.getClass("net.minecraft.server.network.PlayerConnection")
             : Reflections.getNMSClass("PlayerConnection");
     public static WrappedClass networkManager = Reflections.getNMSClass("NetworkManager");
@@ -52,8 +54,8 @@ public class MinecraftReflection {
 
     private static final WrappedMethod getProfile = CraftReflection.craftPlayer.getMethod("getProfile");
     private static final WrappedMethod methodGetServerConnection = minecraftServer
-            .getMethodByType(serverConnection.getParent(), ProtocolVersion.getGameVersion()
-                    .isBelow(ProtocolVersion.V1_13) ? 1 : 0);
+            .getMethodByType(serverConnection.getParent(), PacketEvents.getAPI().getServerManager().getVersion()
+                    .isOlderThan(ServerVersion.V_1_13) ? 1 : 0);
     private static WrappedConstructor chatComponentTextConst;
     private static final WrappedMethod getProperties = gameProfile.getMethod("getProperties");
     private static final WrappedMethod removeAll = forwardMultiMap.getMethod("removeAll", Object.class);
@@ -96,10 +98,10 @@ public class MinecraftReflection {
     private static final WrappedField frictionFactor;
     private static final WrappedField strength;
     private static final WrappedField chunkProvider = MinecraftReflection.worldServer
-            .getFieldByType(Reflections.getNMSClass(ProtocolVersion.getGameVersion()
-                    .isBelow(ProtocolVersion.V1_16)
-                    && ProtocolVersion.getGameVersion()
-                    .isOrAbove(ProtocolVersion.V1_9) ? "IChunkProvider" : "ChunkProviderServer")
+            .getFieldByType(Reflections.getNMSClass(PacketEvents.getAPI().getServerManager().getVersion()
+                    .isOlderThan(ServerVersion.V_1_16)
+                    && PacketEvents.getAPI().getServerManager().getVersion()
+                    .isOrAbove(ServerVersion.V_1_9) ? "IChunkProvider" : "ChunkProviderServer")
                     .getParent(), 0);
 
 
@@ -235,7 +237,7 @@ public class MinecraftReflection {
      * @return new AxisAlignedBB
      */
     public static <T> T toAABB(double minX, double minY, double minZ, double maxX, double maxY, double maxZ) {
-        if(ProtocolVersion.getGameVersion().isBelow(ProtocolVersion.V1_8)) {
+        if(PacketEvents.getAPI().getServerManager().getVersion().isOlderThan(ServerVersion.V_1_8)) {
             return idioticOldStaticConstructorAABB
                     .invoke(null,
                             minX, minY, minZ,
@@ -262,12 +264,12 @@ public class MinecraftReflection {
     }
 
     static {
-        if(ProtocolVersion.getGameVersion().isAbove(ProtocolVersion.V1_7_10)) {
+        if(PacketEvents.getAPI().getServerManager().getVersion().isAbove(ServerVersion.V_1_7_10)) {
             iBlockData = Reflections.getNMSClass("IBlockData");
             blockPos = Reflections.getNMSClass("BlockPosition");
             blockPosConstructor = blockPos.getConstructor(int.class, int.class, int.class);
             getBlock = iBlockData.getMethodByType(block.getParent(), 0);
-            blockData = ProtocolVersion.getGameVersion().isOrAbove(ProtocolVersion.V1_17)
+            blockData = PacketEvents.getAPI().getServerManager().getVersion().isOrAbove(ServerVersion.V_1_17)
                     ? block.getFieldByType(iBlockData.getParent(), 0) :  block.getFieldByName("blockData");
             blockPosConstructor = blockPos.getConstructor(int.class, int.class, int.class);
             getBlockData = block.getMethodByType(iBlockData.getParent(), 0);
@@ -279,10 +281,10 @@ public class MinecraftReflection {
                     double.class, double.class, double.class, double.class, double.class, double.class);
             worldGetType = worldServer.getMethod("getType", int.class, int.class, int.class);
         }
-        if(ProtocolVersion.getGameVersion().isBelow(ProtocolVersion.V1_12)) {
+        if(PacketEvents.getAPI().getServerManager().getVersion().isOlderThan(ServerVersion.V_1_12)) {
             getCubes = world.getMethod("a", axisAlignedBB.getParent());
 
-            if(ProtocolVersion.getGameVersion().isBelow(ProtocolVersion.V1_8)) {
+            if(PacketEvents.getAPI().getServerManager().getVersion().isOlderThan(ServerVersion.V_1_8)) {
                 //1.7.10 does not have the BlockPosition object yet.
                 addCBoxes = block.getMethod("a", world.getParent(), int.class, int.class, int.class,
                         axisAlignedBB.getParent(), List.class, entity.getParent());
@@ -291,7 +293,7 @@ public class MinecraftReflection {
             } else {
                 addCBoxes = block.getMethod("a", world.getParent(), blockPos.getParent(), iBlockData.getParent(),
                         axisAlignedBB.getParent(), List.class, entity.getParent());
-                if(ProtocolVersion.getGameVersion().isOrAbove(ProtocolVersion.V1_9)) {
+                if(PacketEvents.getAPI().getServerManager().getVersion().isOrAbove(ServerVersion.V_1_9)) {
                     methodBlockCollisionBox = block
                             .getMethod("a", iBlockData.getParent(), world.getParent(), blockPos.getParent());
                 } else methodBlockCollisionBox = block
@@ -300,7 +302,7 @@ public class MinecraftReflection {
 
             getFlowMethod = Reflections.getNMSClass("BlockFluids")
                     .getDeclaredMethodByType(vec3D.getParent(), 0);
-        } else if(ProtocolVersion.getGameVersion().isBelow(ProtocolVersion.V1_13)) {
+        } else if(PacketEvents.getAPI().getServerManager().getVersion().isOlderThan(ServerVersion.V_1_13)) {
             getCubes = world.getMethod("getCubes", entity.getParent(), axisAlignedBB.getParent());
             addCBoxes = block.getMethod("a", iBlockData.getParent(), world.getParent(), blockPos.getParent(),
                     axisAlignedBB.getParent(), List.class, entity.getParent(), boolean.class);
@@ -309,13 +311,13 @@ public class MinecraftReflection {
             getFlowMethod = Reflections.getNMSClass("BlockFluids")
                     .getDeclaredMethodByType(vec3D.getParent(), 0);
         } else {
-            classBlockInfo = ProtocolVersion.getGameVersion().isOrAbove(ProtocolVersion.V1_16)
+            classBlockInfo = PacketEvents.getAPI().getServerManager().getVersion().isOrAbove(ServerVersion.V_1_16)
                     ? Reflections.getNMSClass("BlockBase$Info") : Reflections.getNMSClass("Block$Info");
             worldReader = Reflections.getNMSClass("IWorldReader");
             //1.13 and 1.13.1 returns just VoxelShape while 1.13.2+ returns a Stream<VoxelShape>
-            getCubes = ProtocolVersion.getGameVersion().isOrAbove(ProtocolVersion.V1_18)
+            getCubes = PacketEvents.getAPI().getServerManager().getVersion().isOrAbove(ServerVersion.V_1_18)
                     ? worldReader.getMethodByType(List.class, 0, entity.getParent(), axisAlignedBB.getParent())
-                    : (ProtocolVersion.getGameVersion().isBelow(ProtocolVersion.V1_16) ?
+                    : (PacketEvents.getAPI().getServerManager().getVersion().isOlderThan(ServerVersion.V_1_16) ?
                     worldReader.getMethod("a", entity.getParent(), axisAlignedBB.getParent(),
                             double.class, double.class, double.class)
                     : world.getMethod("c", entity.getParent(), axisAlignedBB.getParent(), Predicate.class));
@@ -324,33 +326,33 @@ public class MinecraftReflection {
             fluidMethod = world.getMethodByType(Reflections.getNMSClass("Fluid").getParent(), 0, blockPos.getParent());
             getFlowMethod = Reflections.getNMSClass("Fluid").getMethodByType(vec3D.getParent(), 0);
 
-            if(ProtocolVersion.getGameVersion().isBelow(ProtocolVersion.V1_19)) {
+            if(PacketEvents.getAPI().getServerManager().getVersion().isOlderThan(ServerVersion.V_1_19)) {
                 chatComponentText =  Reflections.getNMSClass("ChatComponentText");
                 chatComponentTextConst = chatComponentText.getConstructor(String.class);
             }
         }
 
-        if(ProtocolVersion.getGameVersion().isOrAbove(ProtocolVersion.V1_16)) {
+        if(PacketEvents.getAPI().getServerManager().getVersion().isOrAbove(ServerVersion.V_1_16)) {
             blockBase = Reflections.getNMSClass("BlockBase");
         }
-        if(ProtocolVersion.getGameVersion().isBelow(ProtocolVersion.V1_9)) {
+        if(PacketEvents.getAPI().getServerManager().getVersion().isOlderThan(ServerVersion.V_1_9)) {
             activeItemField = entityHuman.getFieldByType(itemStack.getParent(), 0);
         } else {
             activeItemField = entityLiving.getFieldByType(itemStack.getParent(), 0);
         }
 
-        canDestroyMethod = ProtocolVersion.getGameVersion().isBelow(ProtocolVersion.V1_16)
+        canDestroyMethod = PacketEvents.getAPI().getServerManager().getVersion().isOlderThan(ServerVersion.V_1_16)
                 ? playerInventory.getMethod("b",
-                ProtocolVersion.getGameVersion().isAbove(ProtocolVersion.V1_8_9)
+                PacketEvents.getAPI().getServerManager().getVersion().isAbove(ServerVersion.V_1_8_9)
                         ? iBlockData.getParent() : itemClass.getParent())
                 : itemStack.getMethodByType(boolean.class, 0, iBlockData.getParent());
-        if(ProtocolVersion.getGameVersion().isBelow(ProtocolVersion.V1_17)) {
-            frictionFactor = (ProtocolVersion.getGameVersion().isBelow(ProtocolVersion.V1_16)
+        if(PacketEvents.getAPI().getServerManager().getVersion().isOlderThan(ServerVersion.V_1_17)) {
+            frictionFactor = (PacketEvents.getAPI().getServerManager().getVersion().isOlderThan(ServerVersion.V_1_16)
                     ? block : blockBase).getFieldByName("frictionFactor");
         } else frictionFactor = blockBase.getFieldByType(float.class, 1);
-        strength = ProtocolVersion.getGameVersion().isOrAbove(ProtocolVersion.V1_17)
+        strength = PacketEvents.getAPI().getServerManager().getVersion().isOrAbove(ServerVersion.V_1_17)
                 ? blockBase.getFieldByType(float.class, 0)
-                : (ProtocolVersion.getGameVersion().isBelow(ProtocolVersion.V1_16)
+                : (PacketEvents.getAPI().getServerManager().getVersion().isOlderThan(ServerVersion.V_1_16)
                     ? block.getFieldByName("strength") : blockBase.getFieldByName("durability"));
     }
 }

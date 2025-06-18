@@ -7,7 +7,7 @@ import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.data.APlayer;
-import dev.brighten.ac.packet.ProtocolVersion;
+import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import dev.brighten.ac.utils.Color;
 import dev.brighten.ac.utils.Helper;
 import dev.brighten.ac.utils.MathUtils;
@@ -20,7 +20,7 @@ import dev.brighten.ac.utils.world.types.SimpleCollisionBox;
 
 import java.util.List;
 
-@CheckData(name = "Fly (Predict)", checkId = "flya", type = CheckType.MOVEMENT, experimental = true, punishVl = 7, maxVersion = ProtocolVersion.V1_21_5)
+@CheckData(name = "Fly (Predict)", checkId = "flya", type = CheckType.MOVEMENT, experimental = true, punishVl = 7, maxVersion = ClientVersion.V_1_21_5)
 public class FlyA extends Check {
 
     public FlyA(APlayer player) {
@@ -91,8 +91,8 @@ public class FlyA extends Check {
         }
 
         // Vanilla wrapping the deltaY to 0 if it's less than a certain amount.
-        if(player.getPlayerVersion().isBelow(ProtocolVersion.V1_21_1)) {
-            if(player.getPlayerVersion().isBelow(ProtocolVersion.V1_9)) {
+        if(player.getPlayerVersion().isBelow(ClientVersion.V_1_21_1)) {
+            if(player.getPlayerVersion().isBelow(ClientVersion.V_1_9)) {
                 if(Math.abs(predicted) < 0.005)
                     predicted = 0;
             } else if(Math.abs(predicted) < 0.003) {

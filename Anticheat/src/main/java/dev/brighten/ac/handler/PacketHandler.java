@@ -18,7 +18,7 @@ import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.data.obj.NormalAction;
 import dev.brighten.ac.handler.entity.FakeMob;
 import dev.brighten.ac.packet.PlayerCapabilities;
-import dev.brighten.ac.packet.ProtocolVersion;
+import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import dev.brighten.ac.packet.TransactionClientWrapper;
 import dev.brighten.ac.packet.WPacketPlayOutEntity;
 import dev.brighten.ac.utils.BlockUtils;
@@ -56,7 +56,7 @@ public class PacketHandler {
                         player.getLagInfo().setLastTransPing(player.getLagInfo().getTransPing());
                         player.getLagInfo().setTransPing(current - ka.id);
 
-                        if (player.getPlayerVersion().isOrAbove(ProtocolVersion.V1_9)
+                        if (player.getPlayerVersion().isNewerThanOrEquals(ServerVersion.V_1_9)
                                 && player.getMovement().getLastFlying().isPassed(1)) {
                             player.getMovement().runPositionHackFix();
                         }
@@ -127,7 +127,7 @@ public class PacketHandler {
 
             player.getEntityLocationHandler().onFlying();
 
-            if (player.getPlayerVersion().isOrAbove(ProtocolVersion.V1_17)
+            if (player.getPlayerVersion().isNewerThanOrEquals(ServerVersion.V_1_17)
                     && packet.hasPositionChanged() && packet.hasRotationChanged()
                     && MovementUtils.isSameLocation(new KLocation(
                             packet.getLocation().getX(),

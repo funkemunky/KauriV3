@@ -1,6 +1,6 @@
 package dev.brighten.ac.utils.world;
 
-import dev.brighten.ac.packet.ProtocolVersion;
+import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import dev.brighten.ac.utils.KLocation;
 import dev.brighten.ac.utils.reflections.Reflections;
 import dev.brighten.ac.utils.reflections.impl.CraftReflection;
@@ -69,7 +69,7 @@ public class EntityData {
         entityBounds.put(EntityType.IRON_GOLEM, new SimpleCollisionBox(new Vector(), 1.4f, 2.9f));
         entityBounds.put(EntityType.GHAST, new SimpleCollisionBox(new Vector(), 4f, 4f));
 
-        if(ProtocolVersion.getGameVersion().isBelow(ProtocolVersion.V1_14)) {
+        if(PacketEvents.getAPI().getServerManager().getVersion().isBelow(ClientVersion.V_1_14)) {
             fieldWidth = entity.getFieldByName("width");
             fieldLength = entity.getFieldByName("length");
         } else {

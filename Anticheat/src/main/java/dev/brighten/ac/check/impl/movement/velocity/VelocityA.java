@@ -7,20 +7,21 @@ import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.data.APlayer;
-import dev.brighten.ac.packet.ProtocolVersion;
+import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import dev.brighten.ac.utils.annotation.Bind;
+import org.bukkit.util.Vector;
 
-@CheckData(name = "Velocity (Vertical)", checkId = "velocitya", type = CheckType.MOVEMENT, maxVersion = ProtocolVersion.V1_21_5)
+@CheckData(name = "Velocity (Vertical)", checkId = "velocitya", type = CheckType.MOVEMENT, maxVersion = ClientVersion.V_1_21_5)
 public class VelocityA extends Check {
 
-    private Vector3d currentVelocity = null;
+    private Vector currentVelocity = null;
     private float buffer = 0;
 
     public VelocityA(APlayer player) {
         super(player);
 
         player.onVelocity(velocity -> {
-            currentVelocity = velocity;
+            currentVelocity = new Vector(velocity.getX(), velocity.getY(), velocity.getZ());
             debug("did velocity: " + currentVelocity.getY());
         });
     }
@@ -54,7 +55,7 @@ public class VelocityA extends Check {
             debug("pct=%.1f%% buffer=%.1f dy=%.4f vy=%.4f", pct, buffer,
                     player.getMovement().getDeltaY(), currentVelocity.getY());
 
-            currentVelocity.y = (currentVelocity.getY() - 0.08) * 0.98; // Reduce the velocity over time
+            currentVelocity.setY((currentVelocity.getY() - 0.08) * 0.98); // Reduce the velocity over time
         } else if(currentVelocity != null) {
             debug("not null: " + currentVelocity.getY());
         }

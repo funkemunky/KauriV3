@@ -1,8 +1,8 @@
 package dev.brighten.ac.utils.world.blocks;
 
+import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.handler.block.WrappedBlock;
-import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.utils.BlockUtils;
 import dev.brighten.ac.utils.Materials;
 import dev.brighten.ac.utils.XMaterial;
@@ -10,8 +10,10 @@ import dev.brighten.ac.utils.world.CollisionBox;
 import dev.brighten.ac.utils.world.types.CollisionFactory;
 import dev.brighten.ac.utils.world.types.ComplexCollisionBox;
 import dev.brighten.ac.utils.world.types.SimpleCollisionBox;
+import io.github.retrooper.packetevents.util.SpigotConversionUtil;
 import org.bukkit.Material;
 import org.bukkit.block.BlockFace;
+import org.bukkit.material.MaterialData;
 
 import java.util.Optional;
 
@@ -22,7 +24,7 @@ public class DynamicFence implements CollisionFactory {
     private static final double max = .5 + width;
 
     @Override
-    public CollisionBox fetch(ProtocolVersion version, APlayer player, WrappedBlock b) {
+    public CollisionBox fetch(ClientVersion version, APlayer player, WrappedBlock b) {
         ComplexCollisionBox box = new ComplexCollisionBox(new SimpleCollisionBox(min, 0, min, max, 1.5, max));
         boolean east =  fenceConnects(version, player, b, BlockFace.EAST);
         boolean north = fenceConnects(version, player, b, BlockFace.NORTH);
@@ -52,24 +54,26 @@ public class DynamicFence implements CollisionFactory {
         }
     }
 
-    private static boolean fenceConnects(ProtocolVersion v, APlayer player, WrappedBlock fenceBlock, BlockFace direction) {
+    private static boolean fenceConnects(ClientVersion v, APlayer player, WrappedBlock fenceBlock, BlockFace direction) {
         Optional<WrappedBlock> targetBlock = BlockUtils.getRelative(player, fenceBlock.getLocation(), direction, 1);
 
-        if(!targetBlock.isPresent()) return false;
+        if(targetBlock.isEmpty()) return false;
 
         Material target = targetBlock.get().getType();
         Material fence = fenceBlock.getType();
+
+        MaterialData fenceData = SpigotConversionUtil.toBukkitMaterialData(fenceBlock.getBlockState());
 
         if (!isFence(target)&&isBlacklisted(target))
             return false;
 
         if(Materials.checkFlag(target, Materials.STAIRS)) {
-            if (v.isBelow(ProtocolVersion.V1_12)) return false;
+            if (v.isOlderThan(ClientVersion.V_1_12)) return false;
 
-            return dir(fenceBlock.getData()).getOppositeFace() == direction;
+            return dir(fenceData.getData()).getOppositeFace() == direction;
         } else if(target.name().contains("GATE")) {
 
-            BlockFace f1 = dir(targetBlock.get().getData());
+            BlockFace f1 = dir(SpigotConversionUtil.toBukkitMaterialData(targetBlock.get().getBlockState()).getData());
             BlockFace f2 = f1.getOppositeFace();
             return direction == f1 || direction == f2;
         } else {
@@ -85,17 +89,12 @@ public class DynamicFence implements CollisionFactory {
     }
 
     private static BlockFace dir(byte data) {
-        switch(data & 3) {
-            case 0:
-            default:
-                return BlockFace.EAST;
-            case 1:
-                return BlockFace.WEST;
-            case 2:
-                return BlockFace.SOUTH;
-            case 3:
-                return BlockFace.NORTH;
-        }
+        return switch(data & 3) {
+            case 1 -> BlockFace.WEST;
+            case 2 -> BlockFace.SOUTH;
+            case 3 -> BlockFace.NORTH;
+            default ->  BlockFace.EAST;
+        };
     }
 
 }

@@ -1,8 +1,8 @@
 package dev.brighten.ac.utils.world.blocks;
 
+import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.handler.block.WrappedBlock;
-import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.utils.BlockUtils;
 import dev.brighten.ac.utils.Materials;
 import dev.brighten.ac.utils.XMaterial;
@@ -23,14 +23,14 @@ public class DynamicPane implements CollisionFactory {
     private static final double max = .5 + width;
 
     @Override
-    public CollisionBox fetch(ProtocolVersion version, APlayer player, WrappedBlock b) {
+    public CollisionBox fetch(ClientVersion version, APlayer player, WrappedBlock b) {
         ComplexCollisionBox box = new ComplexCollisionBox(new SimpleCollisionBox(min, 0, min, max, 1, max));
         boolean east =  fenceConnects(version, player, b, BlockFace.EAST);
         boolean north = fenceConnects(version, player, b, BlockFace.NORTH);
         boolean south = fenceConnects(version, player, b, BlockFace.SOUTH);
         boolean west =  fenceConnects(version, player, b, BlockFace.WEST);
 
-        if (version.isBelow(ProtocolVersion.V1_9) && !(east||north||south||west)) {
+        if (version.isOlderThan(ClientVersion.V_1_9) && !(east||north||south||west)) {
             east = true;
             west = true;
             north = true;
@@ -45,19 +45,19 @@ public class DynamicPane implements CollisionFactory {
     }
 
 
-    private static boolean fenceConnects(ProtocolVersion v, APlayer player, WrappedBlock fenceBlock, BlockFace direction) {
+    private static boolean fenceConnects(ClientVersion v, APlayer player, WrappedBlock fenceBlock, BlockFace direction) {
         Optional<WrappedBlock> targetBlock = BlockUtils.getRelative(player, fenceBlock.getLocation(), direction, 1);
 
-        if(!targetBlock.isPresent()) return false;
+        if(targetBlock.isEmpty()) return false;
         Material target = targetBlock.get().getType();
 
         if (!isPane(target)&&DynamicFence.isBlacklisted(target))
             return false;
 
         if(Materials.checkFlag(target, Materials.STAIRS)) {
-            if (v.isBelow(ProtocolVersion.V1_12)) return false;
+            if (v.isOlderThan(ClientVersion.V_1_12)) return false;
 
-            return dir(fenceBlock.getData()).getOppositeFace() == direction;
+            return dir(fenceBlock.getMaterialData().getData()).getOppositeFace() == direction;
         }  else return isPane(target) || (target.isSolid() && !target.isTransparent());
     }
 
@@ -69,17 +69,12 @@ public class DynamicPane implements CollisionFactory {
     }
 
     private static BlockFace dir(byte data) {
-        switch(data & 3) {
-            case 0:
-            default:
-                return BlockFace.EAST;
-            case 1:
-                return BlockFace.WEST;
-            case 2:
-                return BlockFace.SOUTH;
-            case 3:
-                return BlockFace.NORTH;
-        }
+        return switch (data & 3) {
+            case 1 -> BlockFace.WEST;
+            case 2 -> BlockFace.SOUTH;
+            case 3 -> BlockFace.NORTH;
+            default -> BlockFace.EAST;
+        };
     }
 
 }

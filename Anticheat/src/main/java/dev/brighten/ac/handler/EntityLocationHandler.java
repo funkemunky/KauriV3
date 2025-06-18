@@ -9,7 +9,7 @@ import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEn
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.handler.entity.FakeMob;
-import dev.brighten.ac.packet.ProtocolVersion;
+import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import dev.brighten.ac.packet.WPacketPlayOutEntity;
 import dev.brighten.ac.utils.EntityLocation;
 import dev.brighten.ac.utils.KLocation;
@@ -169,7 +169,7 @@ public class EntityLocationHandler {
         tuple.two = tuple.one.clone();
 
         runAction(entity, () -> {
-            if(data.getPlayerVersion().isOrAbove(ProtocolVersion.V1_9)) {
+            if(data.getPlayerVersion().isNewerThanOrEquals(ServerVersion.V_1_9)) {
                 if (!(Math.abs(eloc.x - packet.getPosition().getX()) >= 0.03125D)
                         && !(Math.abs(eloc.y - packet.getPosition().getY()) >= 0.015625D)
                         && !(Math.abs(eloc.z - packet.getPosition().getZ()) >= 0.03125D)) {

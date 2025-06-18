@@ -9,14 +9,14 @@ import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.check.WTimedAction;
 import dev.brighten.ac.data.APlayer;
-import dev.brighten.ac.packet.ProtocolVersion;
+import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import dev.brighten.ac.utils.BlockUtils;
 import dev.brighten.ac.utils.annotation.Bind;
 import dev.brighten.ac.utils.math.cond.MaxDouble;
 import io.github.retrooper.packetevents.util.SpigotConversionUtil;
 
 @CheckData(name = "Autoclicker (D)", checkId = "autoclickerd", type = CheckType.AUTOCLICKER, punishVl = 15,
-        maxVersion = ProtocolVersion.V1_8_9)
+        maxVersion = ClientVersion.V_1_8_9)
 public class AutoClickerD extends Check {
     public AutoClickerD(APlayer player) {
         super(player);

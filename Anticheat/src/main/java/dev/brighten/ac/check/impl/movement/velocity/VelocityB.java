@@ -6,7 +6,7 @@ import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.data.APlayer;
-import dev.brighten.ac.packet.ProtocolVersion;
+import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import dev.brighten.ac.utils.KLocation;
 import dev.brighten.ac.utils.MathUtils;
 import dev.brighten.ac.utils.annotation.Bind;
@@ -117,7 +117,7 @@ public class VelocityB extends Check {
                         lmotionZ = pvZ;
 
                 //Running multiplication done after previous prediction
-                if (player.getPlayerVersion().isOrAbove(ProtocolVersion.V1_9)) {
+                if (player.getPlayerVersion().isNewerThanOrEquals(ServerVersion.V_1_9)) {
                     if (Math.abs(lmotionX) < 0.003)
                         lmotionX = 0;
                     if (Math.abs(lmotionZ) < 0.003)
@@ -157,7 +157,7 @@ public class VelocityB extends Check {
 
                 } else f5 = iteration.sprinting ? 0.025999999F : 0.02f;
 
-                if (player.getPlayerVersion().isOrAbove(ProtocolVersion.V1_9)) {
+                if (player.getPlayerVersion().isNewerThanOrEquals(ServerVersion.V_1_9)) {
                     double keyedMotion = forward * forward + strafe * strafe;
 
                     if (keyedMotion >= 1.0E-4F) {

@@ -6,10 +6,10 @@ import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.data.APlayer;
-import dev.brighten.ac.packet.ProtocolVersion;
+import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import dev.brighten.ac.utils.annotation.Bind;
 
-@CheckData(name = "Inventory (BadClick)", checkId = "inventoryB", type = CheckType.INVENTORY, maxVersion = ProtocolVersion.V1_11)
+@CheckData(name = "Inventory (BadClick)", checkId = "inventoryB", type = CheckType.INVENTORY, maxVersion = ClientVersion.V_1_11)
 public class InventoryBadClick extends Check {
 
     public InventoryBadClick(APlayer player) {

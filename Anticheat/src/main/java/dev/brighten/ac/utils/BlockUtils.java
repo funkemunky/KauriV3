@@ -98,7 +98,8 @@ public class BlockUtils {
     public static Optional<WrappedBlock> getWrappedBlock(APlayer player, Location location) {
         if(player == null) {
             return getBlockAsync(location.clone())
-                    .map(b -> new WrappedBlock(b.getLocation(), b.getType(), b.getData()));
+                    .map(b -> new WrappedBlock(new IntVector(b.getLocation()), b.getType(),
+                            SpigotConversionUtil.fromBukkitMaterialData(b.getType().getNewData(b.getData()))));
         }
 
         return Optional.of(player.getBlockUpdateHandler()
@@ -108,17 +109,18 @@ public class BlockUtils {
     @SuppressWarnings("deprecation")
     public static Optional<WrappedBlock> getRelative(APlayer player, IntVector location, int modX, int modY, int modZ) {
         if(player == null) {
-            return getBlockAsync(location.clone().add(modX, modY, modZ))
-                    .map(b -> new WrappedBlock(b.getLocation(), b.getType(), b.getData()));
+            return getBlockAsync(location.clone().add(modX, modY, modZ).toLocation(player.getBukkitPlayer().getWorld()))
+                    .map(b -> new WrappedBlock(new IntVector(b.getLocation()), b.getType(),
+                            SpigotConversionUtil.fromBukkitMaterialData(b.getType().getNewData(b.getData()))));
         }
 
         return Optional.of(player.getBlockUpdateHandler()
-                .getRelative(new IntVector(location.getBlockX(), location.getBlockY(), location.getBlockZ()),
+                .getRelative(new IntVector(location.getX(), location.getY(), location.getZ()),
                         modX, modY, modZ));
     }
 
     public static Optional<WrappedBlock> getRelative(APlayer player, Location location, BlockFace face, int distance) {
-        return getRelative(player, location,
+        return getRelative(player, new IntVector(location),
                 face.getModX() * distance, face.getModY() * distance, face.getModZ() * distance);
     }
 
@@ -127,8 +129,21 @@ public class BlockUtils {
                 face.getModX() * distance, face.getModY() * distance, face.getModZ() * distance);
     }
 
-    public static Optional<WrappedBlock> getRelative(APlayer player, Location location, BlockFace face) {
+    public static Optional<WrappedBlock> getRelative(APlayer player, IntVector location,
+                                                     com.github.retrooper.packetevents.protocol.world.BlockFace face) {
         return getRelative(player, location,
+                face.getModX(), face.getModY(), face.getModZ());
+    }
+
+    public static Optional<WrappedBlock> getRelative(APlayer player, IntVector location,
+                                                     com.github.retrooper.packetevents.protocol.world
+                                                             .BlockFace face, int distance) {
+        return getRelative(player, location,
+                face.getModX() * distance, face.getModY() * distance, face.getModZ() * distance);
+    }
+
+    public static Optional<WrappedBlock> getRelative(APlayer player, IntVector vector, BlockFace face) {
+        return getRelative(player, vector,
                 face.getModX(), face.getModY(), face.getModZ());
     }
 
