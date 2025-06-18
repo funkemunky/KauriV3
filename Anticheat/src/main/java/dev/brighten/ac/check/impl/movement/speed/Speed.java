@@ -1,12 +1,12 @@
 package dev.brighten.ac.check.impl.movement.speed;
 
+import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerFlying;
 import dev.brighten.ac.api.check.CheckType;
 import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.ProtocolVersion;
-import dev.brighten.ac.packet.wrapper.in.WrapperPlayClientPlayerFlying;
 import dev.brighten.ac.utils.BlockUtils;
 import dev.brighten.ac.utils.PlayerUtils;
 import dev.brighten.ac.utils.TagsBuilder;
@@ -102,7 +102,7 @@ public class Speed extends Check {
 
             if(player.getBlockInfo().onSoulSand && player.getMovement().getFrom().isOnGround()
                     //Ensuring the player is actually standing on the block and recieving slow
-                    && packet.getY() % (1) == 0.875) {
+                    && packet.getLocation().getY() % (1) == 0.875) {
                 tags.addTag("soulsand");
                 moveFactor*= 0.88f;
             }

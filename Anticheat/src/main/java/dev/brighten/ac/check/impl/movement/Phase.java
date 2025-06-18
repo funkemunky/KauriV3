@@ -1,5 +1,8 @@
 package dev.brighten.ac.check.impl.movement;
 
+import com.github.retrooper.packetevents.protocol.teleport.RelativeFlag;
+import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerFlying;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerPositionAndLook;
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.api.check.CheckType;
 import dev.brighten.ac.check.Check;
@@ -7,8 +10,6 @@ import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.check.WCancellable;
 import dev.brighten.ac.data.APlayer;
-import dev.brighten.ac.packet.wrapper.in.WrapperPlayClientPlayerFlying;
-import dev.brighten.ac.packet.wrapper.out.WPacketPlayOutPosition;
 import dev.brighten.ac.utils.Helper;
 import dev.brighten.ac.utils.KLocation;
 import dev.brighten.ac.utils.Materials;
@@ -34,23 +35,30 @@ public class Phase extends Check {
     private Location teleportLoc = null;
 
     @Bind
-    WAction<WPacketPlayOutPosition> positionOut = packet -> {
+    WAction<WrapperPlayServerPlayerPositionAndLook> positionOut = packet -> {
         KLocation loc = new KLocation(packet.getX(), packet.getY(), packet.getZ(),
                 packet.getYaw(), packet.getPitch());
-        if (packet.getFlags().contains(WPacketPlayOutPosition.EnumPlayerTeleportFlags.X)) {
-            loc.add(player.getMovement().getTo().getLoc().getX(), 0, 0);
+
+        RelativeFlag flags = packet.getRelativeFlags();
+
+        if (flags.has(RelativeFlag.X)) {
+            loc.add(packet.getX(), 0, 0);
         }
-        if (packet.getFlags().contains(WPacketPlayOutPosition.EnumPlayerTeleportFlags.Y)) {
-            loc.add(0, player.getMovement().getTo().getLoc().getY(), 0);
+
+        if (flags.has(RelativeFlag.Y)) {
+            loc.add(0, packet.getY(), 0);
         }
-        if (packet.getFlags().contains(WPacketPlayOutPosition.EnumPlayerTeleportFlags.Z)) {
-            loc.add(0, 0, player.getMovement().getTo().getLoc().getZ());
+
+        if (flags.has(RelativeFlag.Z)) {
+            loc.add(0, 0, packet.getZ());
         }
-        if (packet.getFlags().contains(WPacketPlayOutPosition.EnumPlayerTeleportFlags.X_ROT)) {
-            loc.setPitch(loc.getPitch() + player.getMovement().getTo().getLoc().getPitch());
+
+        if (flags.has(RelativeFlag.YAW)) {
+            loc.setPitch(loc.getPitch() + packet.getYaw());
         }
-        if (packet.getFlags().contains(WPacketPlayOutPosition.EnumPlayerTeleportFlags.Y_ROT)) {
-            loc.setYaw(loc.getYaw() + player.getMovement().getTo().getLoc().getYaw());
+
+        if (flags.has(RelativeFlag.PITCH)) {
+            loc.setYaw(loc.getYaw() + packet.getPitch());
         }
 
         POSITIONS.add(loc.toVector());
@@ -69,7 +77,7 @@ public class Phase extends Check {
             return false;
         }
 
-        if(POSITIONS.size() > 0 && !packet.isOnGround() && POSITIONS.stream()
+        if(!POSITIONS.isEmpty() && !packet.isOnGround() && POSITIONS.stream()
                 .anyMatch(v -> v.distanceSquared(player.getMovement().getTo().getLoc().toVector()) < 0.0001)) {
             debug("Returned: [%s, %s, %s]", player.getMovement().getTo().getX(),
                     player.getMovement().getTo().getY(), player.getMovement().getTo().getZ());

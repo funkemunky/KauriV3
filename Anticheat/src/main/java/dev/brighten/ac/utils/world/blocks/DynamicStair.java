@@ -4,7 +4,6 @@ package dev.brighten.ac.utils.world.blocks;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.handler.block.WrappedBlock;
 import dev.brighten.ac.packet.ProtocolVersion;
-import dev.brighten.ac.packet.wrapper.objects.WrappedEnumDirection;
 import dev.brighten.ac.utils.BlockUtils;
 import dev.brighten.ac.utils.Materials;
 import dev.brighten.ac.utils.world.CollisionBox;
@@ -32,6 +31,7 @@ public class DynamicStair implements CollisionFactory {
     private static final int[] SHAPE_BY_STATE = new int[]{12, 5, 3, 10, 14, 13, 7, 11, 13, 7, 11, 14, 8, 4, 1, 2, 4, 1, 2, 8};
 
     public static EnumShape getStairsShape(APlayer player, WrappedBlock originalStairs) {
+
         BlockFace facing = BlockFace.valueOf(WrappedEnumDirection.fromType1(5 - (originalStairs.getData() & 3))
                 .name());
         Optional<WrappedBlock> offsetOne = BlockUtils.getRelative(player, originalStairs.getLocation(), facing);

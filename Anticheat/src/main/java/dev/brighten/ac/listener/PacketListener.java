@@ -18,10 +18,13 @@ public class PacketListener implements com.github.retrooper.packetevents.event.P
         Optional<APlayer> op = Anticheat.INSTANCE.getPlayerRegistry().getPlayer(user.getUUID());
 
 
-        op.ifPresent(player -> {
-            // Process the APlayer instance
-            Anticheat.INSTANCE.getPacketHandler().processReceive(player, event);
-        });
+        if(op.isPresent()) {
+            APlayer player = op.get();
+
+            if(Anticheat.INSTANCE.getPacketHandler().processReceive(player, event)) {
+                event.setCancelled(true);
+            }
+        }
 
     }
 
@@ -34,9 +37,12 @@ public class PacketListener implements com.github.retrooper.packetevents.event.P
         Optional<APlayer> op = Anticheat.INSTANCE.getPlayerRegistry().getPlayer(user.getUUID());
 
 
-        op.ifPresent(player -> {
-            // Process the APlayer instance
-            Anticheat.INSTANCE.getPacketHandler().processSend(player, event);
-        });
+        if(op.isPresent()) {
+            APlayer player = op.get();
+
+            if(Anticheat.INSTANCE.getPacketHandler().processSend(player, event)) {
+                event.setCancelled(true);
+            }
+        }
     }
 }

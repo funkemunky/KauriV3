@@ -2,6 +2,7 @@ package dev.brighten.ac;
 
 import co.aikar.commands.*;
 import com.github.retrooper.packetevents.PacketEventsAPI;
+import com.github.retrooper.packetevents.event.PacketListenerPriority;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import dev.brighten.ac.api.AnticheatAPI;
 import dev.brighten.ac.check.Check;
@@ -18,6 +19,7 @@ import dev.brighten.ac.handler.PacketHandler;
 import dev.brighten.ac.handler.entity.FakeEntityTracker;
 import dev.brighten.ac.handler.keepalive.KeepaliveProcessor;
 import dev.brighten.ac.handler.keepalive.actions.ActionManager;
+import dev.brighten.ac.listener.PacketListener;
 import dev.brighten.ac.logging.LoggerManager;
 import dev.brighten.ac.utils.*;
 import dev.brighten.ac.utils.annotation.ConfigSetting;
@@ -93,6 +95,8 @@ public class Anticheat extends JavaPlugin {
 
     private Configuration anticheatConfig;
 
+    private PacketListener packetListener;
+
     @SuppressWarnings("deprecation")
     public void onEnable() {
         INSTANCE = this;
@@ -111,6 +115,8 @@ public class Anticheat extends JavaPlugin {
         loadConfig();
 
         packetEventsAPI = SpigotPacketEventsBuilder.build(this);
+
+        packetEventsAPI.getEventManager().registerListener(packetListener = new PacketListener(), PacketListenerPriority.MONITOR);
 
         commandManager = new BukkitCommandManager(this);
         commandManager.enableUnstableAPI("help");

@@ -1,11 +1,11 @@
 package dev.brighten.ac.check.impl.movement.nofall;
 
+import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerFlying;
 import dev.brighten.ac.api.check.CheckType;
 import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.data.APlayer;
-import dev.brighten.ac.packet.wrapper.in.WrapperPlayClientPlayerFlying;
 import dev.brighten.ac.utils.annotation.Bind;
 
 @CheckData(name = "NoFall (B)", checkId = "nofallb", type = CheckType.MOVEMENT)

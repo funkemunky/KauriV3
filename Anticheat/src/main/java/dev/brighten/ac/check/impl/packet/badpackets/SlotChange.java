@@ -1,12 +1,12 @@
 package dev.brighten.ac.check.impl.packet.badpackets;
 
+import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientHeldItemChange;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerHeldItemChange;
 import dev.brighten.ac.api.check.CheckType;
 import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.data.APlayer;
-import dev.brighten.ac.packet.wrapper.in.WPacketPlayInHeldItemSlot;
-import dev.brighten.ac.packet.wrapper.out.WPacketPlayOutHeldItemSlot;
 import dev.brighten.ac.utils.annotation.Bind;
 
 @CheckData(name = "SlotChange", checkId = "slotchange", description = "Detects invalid slot changes.", type = CheckType.BADPACKETS)
@@ -18,28 +18,28 @@ public class SlotChange extends Check {
     private boolean didServerSlot = false;
     private int lastSlot = -1, buffer;
 
-    private final int BUFFER_MAX = 6;
+    private static final int BUFFER_MAX = 6;
 
     @Bind
-    WAction<WPacketPlayInHeldItemSlot> heldItemSlot = packet -> {
+    WAction<WrapperPlayClientHeldItemChange> heldItemSlot = packet -> {
         if(didServerSlot) {
             didServerSlot = false;
-            lastSlot = packet.getHandIndex();
+            lastSlot = packet.getSlot();
             return;
         }
 
-        if(packet.getHandIndex() == lastSlot) {
-            if(++buffer > 6) {
-                flag("Bad slot change detected at index %i", packet.getHandIndex());
+        if(packet.getSlot() == lastSlot) {
+            if(++buffer > BUFFER_MAX) {
+                flag("Bad slot change detected at index %i", packet.getSlot());
             }
-            debug("Invalid slot change detected! Slot: %i, buffer: %i/%i", packet.getHandIndex(), buffer, BUFFER_MAX);
+            debug("Invalid slot change detected! Slot: %i, buffer: %i/%i", packet.getSlot(), buffer, BUFFER_MAX);
         } else if(buffer > 0) {
             buffer = Math.max(buffer - 3, 0);
         }
     };
 
     @Bind
-    WAction<WPacketPlayOutHeldItemSlot> serverSlot = packet -> {
+    WAction<WrapperPlayServerHeldItemChange> serverSlot = packet -> {
         didServerSlot = true;
     };
 }

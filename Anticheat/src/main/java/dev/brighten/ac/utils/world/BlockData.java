@@ -9,6 +9,7 @@ import dev.brighten.ac.utils.XMaterial;
 import dev.brighten.ac.utils.math.IntVector;
 import dev.brighten.ac.utils.world.blocks.*;
 import dev.brighten.ac.utils.world.types.*;
+import io.github.retrooper.packetevents.util.SpigotConversionUtil;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
@@ -435,8 +436,18 @@ public enum BlockData {
     public CollisionBox getBox(Block block, ProtocolVersion version) {
         if (this.box != null)
             return this.box.copy().offset(block.getX(), block.getY(), block.getZ());
-        return new DynamicCollisionBox(dynamic, null, new WrappedBlock(block.getLocation(),
-                block.getType(), block.getData()), version).offset(block.getX(), block.getY(), block.getZ());
+        return new DynamicCollisionBox(dynamic, null, new WrappedBlock(new IntVector(block.getLocation()),
+                block.getType(),
+                SpigotConversionUtil.fromBukkitMaterialData(block.getType().getNewData(block.getData()))),
+                version)
+                .offset(block.getX(), block.getY(), block.getZ());
+    }
+
+    public CollisionBox getBox(WrappedBlock block, ProtocolVersion version) {
+        if (this.box != null)
+            return this.box.copy().offset(block.getLocation().getX(), block.getLocation().getY(), block.getLocation().getZ());
+        return new DynamicCollisionBox(dynamic, null, block, version)
+                .offset(block.getLocation().getX(), block.getLocation().getY(), block.getLocation().getZ());
     }
 
     public CollisionBox getBox(APlayer player, IntVector block, ProtocolVersion version) {

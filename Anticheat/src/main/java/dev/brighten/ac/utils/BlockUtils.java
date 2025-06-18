@@ -106,7 +106,7 @@ public class BlockUtils {
     }
 
     @SuppressWarnings("deprecation")
-    public static Optional<WrappedBlock> getRelative(APlayer player, Location location, int modX, int modY, int modZ) {
+    public static Optional<WrappedBlock> getRelative(APlayer player, IntVector location, int modX, int modY, int modZ) {
         if(player == null) {
             return getBlockAsync(location.clone().add(modX, modY, modZ))
                     .map(b -> new WrappedBlock(b.getLocation(), b.getType(), b.getData()));
@@ -119,6 +119,11 @@ public class BlockUtils {
 
     public static Optional<WrappedBlock> getRelative(APlayer player, Location location, BlockFace face, int distance) {
         return getRelative(player, location,
+                face.getModX() * distance, face.getModY() * distance, face.getModZ() * distance);
+    }
+
+    public static Optional<WrappedBlock> getRelative(APlayer player, IntVector vector, BlockFace face, int distance) {
+        return getRelative(player, vector,
                 face.getModX() * distance, face.getModY() * distance, face.getModZ() * distance);
     }
 

@@ -1,5 +1,6 @@
 package dev.brighten.ac.utils.world.blocks;
 
+import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.handler.block.WrappedBlock;
 import dev.brighten.ac.packet.ProtocolVersion;
@@ -21,7 +22,7 @@ public class DynamicWall implements CollisionFactory {
     private static final double max = .5 + width;
 
     @Override
-    public CollisionBox fetch(ProtocolVersion version, APlayer player, WrappedBlock b) {
+    public CollisionBox fetch(ClientVersion version, APlayer player, WrappedBlock b) {
         boolean var3 = wallConnects(version, player, b, BlockFace.NORTH);
         boolean var4 = wallConnects(version, player, b, BlockFace.SOUTH);
         boolean var5 = wallConnects(version, player, b, BlockFace.WEST);
@@ -59,7 +60,7 @@ public class DynamicWall implements CollisionFactory {
         return new SimpleCollisionBox(var7, 0.0, var9, var8, 1.5, var10);
     }
 
-    private static boolean wallConnects(ProtocolVersion v, APlayer player, WrappedBlock fenceBlock, BlockFace direction) {
+    private static boolean wallConnects(ClientVersion v, APlayer player, WrappedBlock fenceBlock, BlockFace direction) {
         Optional<WrappedBlock> targetBlock = BlockUtils.getRelative(player, fenceBlock.getLocation(), direction, 1);
 
         if(!targetBlock.isPresent()) return false;

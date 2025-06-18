@@ -1,11 +1,11 @@
 package dev.brighten.ac.check.impl.movement.nofall;
 
+import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerFlying;
 import dev.brighten.ac.api.check.CheckType;
 import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.data.APlayer;
-import dev.brighten.ac.packet.wrapper.in.WrapperPlayClientPlayerFlying;
 import dev.brighten.ac.utils.MathUtils;
 import dev.brighten.ac.utils.annotation.Bind;
 
@@ -36,7 +36,7 @@ public class NoFallC extends Check {
                 fallDistance = 0;
             } else fallDistance+= player.getMovement().getDeltaY();
 
-            if(player.getBlockInfo().blocksBelow && packet.getY() % MathUtils.GROUND_DIVISOR == 0) {
+            if(player.getBlockInfo().blocksBelow && packet.getLocation().getY() % MathUtils.GROUND_DIVISOR == 0) {
                 trueFallDistance = 0;
                 fallDistance = 0;
             } else trueFallDistance+= player.getMovement().getDeltaY();

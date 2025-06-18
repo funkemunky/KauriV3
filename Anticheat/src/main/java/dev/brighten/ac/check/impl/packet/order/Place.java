@@ -1,12 +1,12 @@
 package dev.brighten.ac.check.impl.packet.order;
 
+import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerBlockPlacement;
+import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerFlying;
 import dev.brighten.ac.api.check.CheckType;
 import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.WTimedAction;
 import dev.brighten.ac.data.APlayer;
-import dev.brighten.ac.packet.wrapper.in.WPacketPlayInBlockPlace;
-import dev.brighten.ac.packet.wrapper.in.WrapperPlayClientPlayerFlying;
 import dev.brighten.ac.utils.annotation.Bind;
 
 @CheckData(name = "Order (Place)", checkId = "order_place", type = CheckType.ORDER, punishVl = 4)
@@ -19,7 +19,7 @@ public class Place extends Check {
     private int buffer;
 
     @Bind
-    WTimedAction<WPacketPlayInBlockPlace> placePacket = (packet, timestamp) -> {
+    WTimedAction<WrapperPlayClientPlayerBlockPlacement> placePacket = (packet, timestamp) -> {
         if(timestamp - lastFlying < 10 && player.getLagInfo().getLastPacketDrop().isPassed(1)) {
             if(++buffer > 4) {
                 buffer = 5;

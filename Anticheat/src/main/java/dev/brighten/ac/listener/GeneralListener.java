@@ -2,7 +2,6 @@ package dev.brighten.ac.listener;
 
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.data.APlayer;
-import dev.brighten.ac.packet.wrapper.objects.WrappedWatchableObject;
 import dev.brighten.ac.utils.annotation.Init;
 import dev.brighten.ac.utils.world.types.RayCollision;
 import org.bukkit.Location;
@@ -19,7 +18,6 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 
 import java.util.ArrayList;
-import java.util.Collections;
 
 @Init
 public class GeneralListener implements Listener {
@@ -79,9 +77,7 @@ public class GeneralListener implements Listener {
 
                     Anticheat.INSTANCE.getRunUtils().taskLater(() -> {
                         player.getMob().despawn();
-                        player.getMob().spawn(true, loc1,
-                                new ArrayList<>(Collections.singletonList(
-                                        new WrappedWatchableObject(0, 16, (byte) 1))), player);
+                        player.getMob().spawn(true, loc1, new ArrayList<>(), player);
                     }, 5);
                 });
     }

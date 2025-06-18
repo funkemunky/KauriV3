@@ -1,12 +1,12 @@
 package dev.brighten.ac.check.impl.world;
 
+import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerBlockPlacement;
+import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerFlying;
 import dev.brighten.ac.api.check.CheckType;
 import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.WTimedAction;
 import dev.brighten.ac.data.APlayer;
-import dev.brighten.ac.packet.wrapper.in.WPacketPlayInBlockPlace;
-import dev.brighten.ac.packet.wrapper.in.WrapperPlayClientPlayerFlying;
 import dev.brighten.ac.utils.KLocation;
 import dev.brighten.ac.utils.annotation.Bind;
 
@@ -36,7 +36,7 @@ public class BlockC extends Check {
     };
 
     @Bind
-    WTimedAction<WPacketPlayInBlockPlace> blockPlace = (packet, timestamp) -> {
+    WTimedAction<WrapperPlayClientPlayerBlockPlacement> blockPlace = (packet, timestamp) -> {
         if(player.pastLocations.isEmpty()) return;
 
         KLocation lastMovePacket = player.pastLocations.getLast().one;

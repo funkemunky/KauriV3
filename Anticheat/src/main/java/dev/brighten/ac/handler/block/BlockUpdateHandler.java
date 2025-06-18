@@ -8,6 +8,7 @@ import com.github.retrooper.packetevents.protocol.world.chunk.BaseChunk;
 import com.github.retrooper.packetevents.protocol.world.chunk.Column;
 import com.github.retrooper.packetevents.protocol.world.chunk.TileEntity;
 import com.github.retrooper.packetevents.protocol.world.states.WrappedBlockState;
+import com.github.retrooper.packetevents.util.Vector3d;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerBlockPlacement;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerDigging;
 import com.github.retrooper.packetevents.wrapper.play.server.*;
@@ -18,6 +19,7 @@ import dev.brighten.ac.utils.world.types.RayCollision;
 import io.github.retrooper.packetevents.util.SpigotConversionUtil;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import lombok.RequiredArgsConstructor;
+import me.hydro.emulator.util.mcp.MathHelper;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -166,6 +168,14 @@ public class BlockUpdateHandler {
      */
     public WrappedBlock getBlock(IntVector vec) {
         return getBlock(vec.getX(), vec.getY(), vec.getZ());
+    }
+
+    public WrappedBlock getBlock(Vector3d vec) {
+        return getBlock(
+                MathHelper.floor_double(vec.getX()),
+                MathHelper.floor_double(vec.getY()),
+                MathHelper.floor_double(vec.getZ())
+        );
     }
 
     /**

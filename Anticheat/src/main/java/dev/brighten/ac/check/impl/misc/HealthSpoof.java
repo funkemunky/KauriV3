@@ -1,15 +1,18 @@
 package dev.brighten.ac.check.impl.misc;
 
+import com.github.retrooper.packetevents.protocol.entity.data.EntityData;
+import com.github.retrooper.packetevents.protocol.entity.data.EntityDataTypes;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityMetadata;
 import dev.brighten.ac.api.check.CheckType;
 import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.WCancellable;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.ProtocolVersion;
-import dev.brighten.ac.packet.handler.HandlerAbstract;
-import dev.brighten.ac.packet.wrapper.objects.WrappedWatchableObject;
-import dev.brighten.ac.packet.wrapper.out.WPacketPlayOutEntityMetadata;
 import dev.brighten.ac.utils.annotation.Bind;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @CheckData(name = "HealthSpoof", checkId = "healthspoof", type = CheckType.EXPLOIT, maxVersion = ProtocolVersion.V1_21_5)
 public class HealthSpoof extends Check {
@@ -19,16 +22,25 @@ public class HealthSpoof extends Check {
     }
 
     @Bind
-    WCancellable<WPacketPlayOutEntityMetadata> event = packet -> {
+    WCancellable<WrapperPlayServerEntityMetadata> event = packet -> {
         if(packet.getEntityId() == player.getBukkitPlayer().getEntityId()) return false;
 
-        for (WrappedWatchableObject watchedObject : packet.getWatchedObjects()) {
-            if (watchedObject.getDataValueId() == 6 && watchedObject.getWatchedObject() instanceof Float) {
-                watchedObject.setWatchedObject(1f);
+        List<EntityData<?>> newEntityMetadata = new ArrayList<>();
 
-                HandlerAbstract.getHandler().sendPacketSilently(player, packet.getPacket());
-                return true;
+        boolean overrwrite = false;
+        for (EntityData<?> data : packet.getEntityMetadata()) {
+            if(data.getType() == EntityDataTypes.FLOAT && data.getIndex() == 6) {
+                newEntityMetadata.add(new EntityData<>(6, EntityDataTypes.FLOAT, 1f));
+                overrwrite = true;
+            } else {
+                newEntityMetadata.add(data);
             }
+        }
+
+        if(overrwrite) {
+            WrapperPlayServerEntityMetadata newPacket = new WrapperPlayServerEntityMetadata(packet.getEntityId(), newEntityMetadata);
+            player.sendPacketSilently(newPacket);
+            return true;
         }
         return false;
     };

@@ -1,13 +1,13 @@
 package dev.brighten.ac.check.impl.misc.inventory;
 
+import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientClickWindow;
+import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerFlying;
 import dev.brighten.ac.api.check.CheckType;
 import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.ProtocolVersion;
-import dev.brighten.ac.packet.wrapper.in.WrapperPlayClientPlayerFlying;
-import dev.brighten.ac.packet.wrapper.in.WPacketPlayInWindowClick;
 import dev.brighten.ac.utils.annotation.Bind;
 
 @CheckData(name = "Inventory (ClickMove)", checkId = "inventoryc", type = CheckType.INVENTORY, maxVersion = ProtocolVersion.V1_21_5)
@@ -20,7 +20,7 @@ public class InventoryClickMove extends Check {
 
     // Updating the last time the player clicked in a menu for use in the below check for positional movement.
     @Bind
-    WAction<WPacketPlayInWindowClick> windowClick = packet -> lastWindowClick = player.getPlayerTick();
+    WAction<WrapperPlayClientClickWindow> windowClick = packet -> lastWindowClick = player.getPlayerTick();
 
     @Bind
     WAction<WrapperPlayClientPlayerFlying> flying = packet -> {

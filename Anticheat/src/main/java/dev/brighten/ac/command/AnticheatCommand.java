@@ -9,7 +9,6 @@ import dev.brighten.ac.check.Check;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.handler.BBRevealHandler;
 import dev.brighten.ac.messages.Messages;
-import dev.brighten.ac.packet.handler.HandlerAbstract;
 import dev.brighten.ac.utils.*;
 import dev.brighten.ac.utils.annotation.Init;
 import dev.brighten.ac.utils.msg.ChatBuilder;
@@ -17,9 +16,7 @@ import lombok.val;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.TextComponent;
-import net.minecraft.server.v1_8_R3.PacketPlayOutTitle;
 import org.bukkit.command.CommandSender;
-import org.bukkit.craftbukkit.v1_8_R3.util.CraftChatMessage;
 import org.bukkit.entity.Player;
 
 import java.io.UnsupportedEncodingException;
@@ -66,15 +63,6 @@ public class AnticheatCommand extends BaseCommand {
         BBRevealHandler.INSTANCE.giveWand(player);
         player.spigot().sendMessage(new ComponentBuilder(
                 "You've been given a very special wand. Handle it responsibly.").color(ChatColor.GREEN).create());
-    }
-
-    @Subcommand("title")
-    @Private
-    public void onTitle(CommandSender sender, OnlinePlayer target, String title) {
-        PacketPlayOutTitle packetSubtitle = new PacketPlayOutTitle(PacketPlayOutTitle.EnumTitleAction.TITLE,
-                CraftChatMessage.fromString(Color.translate(title))[0]);
-        HandlerAbstract.getHandler().sendPacketSilently(target.getPlayer(), packetSubtitle);
-        sender.sendMessage(Color.Green + "Sent title!");
     }
 
     @Subcommand("playerinfo|info|pi")
