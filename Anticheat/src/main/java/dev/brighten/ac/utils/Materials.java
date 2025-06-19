@@ -2,6 +2,8 @@ package dev.brighten.ac.utils;
 
 import com.github.retrooper.packetevents.protocol.world.states.type.StateType;
 import com.github.retrooper.packetevents.protocol.world.states.type.StateTypes;
+import dev.brighten.ac.utils.world.BlockData;
+import dev.brighten.ac.utils.world.types.NoCollisionBox;
 import org.bukkit.Material;
 
 import java.util.HashMap;
@@ -33,7 +35,7 @@ public class Materials {
                 flag |= SOLID;
             }
 
-            if(mat.isBlocking()) {
+            if(!(BlockData.getData(mat).getDefaultBox() instanceof NoCollisionBox)) {
                 flag |= COLLIDABLE;
             }
 

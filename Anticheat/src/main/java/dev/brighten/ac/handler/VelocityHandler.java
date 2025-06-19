@@ -9,7 +9,10 @@ import dev.brighten.ac.utils.Tuple;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 
 @RequiredArgsConstructor
@@ -31,6 +34,7 @@ public class VelocityHandler {
         if(packet.getEntityId() != PLAYER.getBukkitPlayer().getEntityId()) return;
 
         VELOCITY_MAP.add(new Tuple<>(packet.getVelocity(), false));
+        PLAYER.getInfo().getVelocity().reset();
     }
 
     public void onPre(WrapperPlayServerExplosion packet) {
@@ -39,6 +43,7 @@ public class VelocityHandler {
         if(kb == null) return;
 
         VELOCITY_MAP.add(new Tuple<>(kb, false));
+        PLAYER.getInfo().getVelocity().reset();
     }
 
     public void onPost(WrapperPlayServerEntityVelocity packet) {
@@ -62,8 +67,19 @@ public class VelocityHandler {
         }
     }
 
+    public void onComplete(WrapperPlayServerExplosion packet) {
+        // If the velocity is not confirmed, remove it.
+        VELOCITY_MAP.removeIf(value -> value.one.equals(packet.getKnockback()));
+    }
+
+    public void onComplete(WrapperPlayServerEntityVelocity packet) {
+        // If the velocity is not confirmed, remove it.
+        VELOCITY_MAP.removeIf(value -> value.one.equals(packet.getVelocity()));
+    }
+
     public List<Vector3d> getPossibleVectors() {
         return VELOCITY_MAP.stream()
+                .filter(set -> !set.two)
                 .map(set -> set.one)
                 .toList();
     }

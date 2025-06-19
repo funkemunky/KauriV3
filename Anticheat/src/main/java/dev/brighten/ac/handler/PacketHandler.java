@@ -333,32 +333,10 @@ public class PacketHandler {
             player.getInfo().getVelocityHistory().add(velocity);
             player.getInfo().setDoingVelocity(true);
 
-            player.runKeepaliveAction(ka -> player.getVelocityHandler().onPre(packet));
-            player.runKeepaliveAction(ka -> {
-                if (player.getInfo().getVelocityHistory().contains(velocity))
-                    player.getOnVelocityTasks().forEach(task -> task.accept(velocity));
-
-                player.getVelocityHandler().onPost(packet);
-                if (player.getInfo().getVelocityHistory().contains(velocity)) {
-                    player.getInfo().setDoingVelocity(false);
-                    player.getInfo().getVelocity().reset();
-                    synchronized (player.getInfo().getVelocityHistory()) {
-                        player.getInfo().getVelocityHistory().remove(velocity);
-                    }
-                }
-            }, 1);
-        } else if(event.getPacketType() == PacketType.Play.Server.ENTITY_VELOCITY) {
-            WrapperPlayServerEntityVelocity packet = new WrapperPlayServerEntityVelocity(event);
-
-            wrapped = packet;
-
-            if(packet.getEntityId() == player.getBukkitPlayer().getEntityId()) {
-                Vector3d velocity = packet.getVelocity();
-                player.getInfo().getVelocityHistory().add(velocity);
-                player.getInfo().setDoingVelocity(true);
-
-                player.runKeepaliveAction(ka -> player.getVelocityHandler().onPre(packet));
-                player.runKeepaliveAction(ka -> {
+            player.runInstantAction(ia -> {
+                if(!ia.isEnd()) {
+                    player.getVelocityHandler().onPre(packet);
+                } else {
                     if (player.getInfo().getVelocityHistory().contains(velocity))
                         player.getOnVelocityTasks().forEach(task -> task.accept(velocity));
 
@@ -370,7 +348,36 @@ public class PacketHandler {
                             player.getInfo().getVelocityHistory().remove(velocity);
                         }
                     }
-                }, 1);
+                }
+            }, true);
+            player.runKeepaliveAction(ka -> player.getVelocityHandler().onComplete(packet), 2);
+        } else if(event.getPacketType() == PacketType.Play.Server.ENTITY_VELOCITY) {
+            WrapperPlayServerEntityVelocity packet = new WrapperPlayServerEntityVelocity(event);
+
+            wrapped = packet;
+
+            if(packet.getEntityId() == player.getBukkitPlayer().getEntityId()) {
+                Vector3d velocity = packet.getVelocity();
+                player.getInfo().getVelocityHistory().add(velocity);
+                player.getInfo().setDoingVelocity(true);
+                player.runInstantAction(ia -> {
+                    if (!ia.isEnd()) {
+                        player.getVelocityHandler().onPre(packet);
+                    } else {
+                        if (player.getInfo().getVelocityHistory().contains(velocity))
+                            player.getOnVelocityTasks().forEach(task -> task.accept(velocity));
+
+                        player.getVelocityHandler().onPost(packet);
+                        if (player.getInfo().getVelocityHistory().contains(velocity)) {
+                            player.getInfo().setDoingVelocity(false);
+                            player.getInfo().getVelocity().reset();
+                            synchronized (player.getInfo().getVelocityHistory()) {
+                                player.getInfo().getVelocityHistory().remove(velocity);
+                            }
+                        }
+                    }
+                }, true);
+                player.runKeepaliveAction(ka -> player.getVelocityHandler().onComplete(packet), 2);
             }
         } else if(event.getPacketType() == PacketType.Play.Server.RESPAWN) {
             wrapped = new WrapperPlayServerRespawn(event);

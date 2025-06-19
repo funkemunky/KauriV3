@@ -73,7 +73,7 @@ public class Hitbox extends Check {
 
             final Tuple<EntityLocation, EntityLocation> eloc = optionalEloc.get();
 
-            final KLocation to = target.two;
+            final KLocation to = target.two.clone();
 
             if(eloc.one.x == 0 && eloc.one.y == 0 & eloc.one.z == 0) {
                 return;

@@ -13,6 +13,7 @@ import java.util.UUID;
 public class CancellableActionStore<T> {
     private final WCancellable<T> action;
     private final Class<? extends Check> checkClass;
+    private final String checkId;
     private final UUID uuid = UUID.randomUUID();
 
     @Override

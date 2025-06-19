@@ -97,6 +97,8 @@ public class Check implements ECheck {
     }
 
     public void correctMovement(KLocation toLoc) {
+        if(!isCancellable()) return;
+
         CancelResult result = CancelResult.builder().cancelled(false).build();
 
         for (AnticheatEvent event : AnticheatAPI.INSTANCE.getAllEvents()) {

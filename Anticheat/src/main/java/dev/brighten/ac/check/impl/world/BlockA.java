@@ -37,7 +37,7 @@ public class BlockA extends Check {
 
         WrappedBlock block = player.getBlockUpdateHandler().getBlock(loc);
 
-        CollisionBox box = BlockData.getData(block.getType()).getBox(block, player.getPlayerVersion());
+        CollisionBox box = BlockData.getData(block.getType()).getBox(player, block, player.getPlayerVersion());
 
         debug(packet.getBlockPosition().toString());
         if(!(box instanceof final SimpleCollisionBox simpleBox)) {

@@ -14,7 +14,7 @@ import java.util.Optional;
 public class CheckManager {
     private final Map<String, CheckStatic> checkClasses = new HashMap<>();
     private final Map<String, String> idToName = new HashMap<>();
-    private final Map<Class<? extends Check>, CheckSettings> checkSettings = new HashMap<>();
+    private final Map<String, CheckSettings> checkSettings = new HashMap<>();
     public CheckManager() {
         synchronized (checkClasses) {
             for (WrappedClass aClass : new ClassScanner().getClasses(CheckData.class)) {
@@ -38,10 +38,7 @@ public class CheckManager {
             generateConfigSettings(checkData);
             settings = Optional.of(CheckSettings.settingsFromData(checkData));
         }
-
-        checkSettings.put(checkClass.getParent(), settings.get());
-
-        Anticheat.INSTANCE.alog(true, "&7Adding check to CheckManager: " + checkData.name());
+        checkSettings.put(checkData.checkId(), settings.get());
 
         checkClasses.put(checkData.name(), check);
         idToName.put(checkData.checkId(), checkData.name());
@@ -62,8 +59,8 @@ public class CheckManager {
         return Optional.empty();
     }
 
-    public CheckSettings getCheckSettings(Class<? extends Check> checkClass) {
-        return checkSettings.get(checkClass);
+    public CheckSettings getCheckSettings(String checkId) {
+        return checkSettings.get(checkId);
     }
 
     private void generateConfigSettings(CheckData data) {

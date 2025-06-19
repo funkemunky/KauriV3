@@ -56,7 +56,7 @@ public class DynamicWall implements CollisionFactory {
     }
 
     private static boolean wallConnects(ClientVersion v, APlayer player, WrappedBlock fenceBlock, BlockFace direction) {
-        Optional<WrappedBlock> targetBlock = BlockUtils.getRelative(player, fenceBlock.getLocation(), direction, 1);
+        Optional<WrappedBlock> targetBlock = player == null ? Optional.empty() : BlockUtils.getRelative(player, fenceBlock.getLocation(), direction, 1);
 
         if(targetBlock.isEmpty()) return false;
 

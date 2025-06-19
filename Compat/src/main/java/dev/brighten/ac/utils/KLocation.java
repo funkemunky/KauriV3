@@ -63,10 +63,13 @@ public class KLocation implements Cloneable {
         return new Location(world, x, y, z, yaw, pitch);
     }
 
-    @SuppressWarnings("MethodDoesntCallSuperMethod")
     @Override
     public KLocation clone() {
-        return new KLocation(x, y, z, yaw, pitch, timeStamp);
+        try {
+            return (KLocation) super.clone();
+        } catch (CloneNotSupportedException e) {
+            return new KLocation(x, y, z, yaw, pitch, timeStamp);
+        }
     }
 
     public double distanceSquared(KLocation other) {

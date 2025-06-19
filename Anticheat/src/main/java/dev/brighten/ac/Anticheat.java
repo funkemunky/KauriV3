@@ -2,7 +2,6 @@ package dev.brighten.ac;
 
 import co.aikar.commands.*;
 import com.github.retrooper.packetevents.PacketEvents;
-import com.github.retrooper.packetevents.PacketEventsAPI;
 import com.github.retrooper.packetevents.event.PacketListenerPriority;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import dev.brighten.ac.api.AnticheatAPI;
@@ -13,8 +12,6 @@ import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.data.PlayerRegistry;
 import dev.brighten.ac.data.info.CheckHandler;
 import dev.brighten.ac.depends.LibraryLoader;
-import dev.brighten.ac.depends.MavenLibrary;
-import dev.brighten.ac.depends.Repository;
 import dev.brighten.ac.handler.BBRevealHandler;
 import dev.brighten.ac.handler.PacketHandler;
 import dev.brighten.ac.handler.entity.FakeEntityTracker;
@@ -194,7 +191,6 @@ public class Anticheat extends JavaPlugin {
         this.playerRegistry = new PlayerRegistry();
 
         this.keepaliveProcessor = new KeepaliveProcessor();
-        keepaliveProcessor.start();
 
         Bukkit.getOnlinePlayers().forEach(playerRegistry::generate);
         this.packetHandler = new PacketHandler();
@@ -243,7 +239,6 @@ public class Anticheat extends JavaPlugin {
 
         PacketEvents.getAPI().terminate();
 
-        keepaliveProcessor.stop();
         keepaliveProcessor.keepAlives.clear();
 
 

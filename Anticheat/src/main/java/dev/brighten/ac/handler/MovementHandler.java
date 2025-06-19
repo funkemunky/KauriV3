@@ -227,6 +227,8 @@ public class MovementHandler {
                                                 result.getTags().add("vanilla");
                                             } else if(fastMath == FastMathType.FAST_NEW) {
                                                 result.getTags().add("fast_new");
+                                            } else if(fastMath == FastMathType.MODERN_VANILLA) {
+                                                result.getTags().add("modern_vanilla");
                                             }
 
                                             if(forward > 0) {
@@ -360,7 +362,7 @@ public class MovementHandler {
             player.getInfo().setBlockOnTo(Optional.of(player.getBlockUpdateHandler()
                     .getBlock(new IntVector(to.getLoc()))));
             player.getInfo().setBlockBelow(Optional.of(player.getBlockUpdateHandler()
-                    .getBlock(new IntVector(to.getLoc().subtract(0, 1, 0)))));
+                    .getBlock(new IntVector(to.getLoc().clone().subtract(0, 1, 0)))));
 
             if (packet.hasPositionChanged()) {
                 // Updating player bounding box
@@ -834,6 +836,7 @@ it
         if (to.getBox().max().lengthSquared() == 0) { //Needs initializing
             setTo(packet);
             from.setLoc(to);
+            player.getBukkitPlayer().sendMessage("Initializing location");
         } else {
             from.setLoc(to);
             setTo(packet);

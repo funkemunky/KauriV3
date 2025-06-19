@@ -7,12 +7,12 @@ import com.github.retrooper.packetevents.protocol.world.states.type.StateType;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.handler.block.WrappedBlock;
 import dev.brighten.ac.utils.Helper;
+import dev.brighten.ac.utils.Materials;
 import dev.brighten.ac.utils.Tuple;
 import dev.brighten.ac.utils.math.RayTrace;
 import dev.brighten.ac.utils.world.BlockData;
 import dev.brighten.ac.utils.world.CollisionBox;
 import me.hydro.emulator.util.mcp.MathHelper;
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.util.Vector;
@@ -138,12 +138,11 @@ public class RayCollision implements CollisionBox {
         Helper.drawRay(this, 3, particle, Arrays.asList(players));
     }
 
-    public List<CollisionBox> boxesOnRay(APlayer world, double distance) {
+    public List<CollisionBox> boxesOnRay(APlayer player, double distance) {
         int amount = Math.round((float) (distance / 0.5));
 
         Location[] locs = new Location[Math.max(2, amount)]; //We do a max to prevent NegativeArraySizeException.
         List<CollisionBox> boxes = new ArrayList<>();
-        boolean primaryThread = Bukkit.isPrimaryThread();
         ClientVersion version = PacketEvents.getAPI().getServerManager().getVersion().toClientVersion();
 
         for (int i = 0; i < locs.length; i++) {
@@ -153,7 +152,7 @@ public class RayCollision implements CollisionBox {
             int fy = MathHelper.floor_double(originY + (directionY * ix));
             int fz = MathHelper.floor_double(originZ + (directionZ * ix));
 
-            WrappedBlock block = world.getBlockUpdateHandler().getBlock(fx, fy, fz);
+            WrappedBlock block = player.getBlockUpdateHandler().getBlock(fx, fy, fz);
 
             if (block == null) continue;
 
@@ -161,7 +160,7 @@ public class RayCollision implements CollisionBox {
 
             if (!type.isBlocking()) continue;
 
-            CollisionBox box = BlockData.getData(type).getBox(block, version);
+            CollisionBox box = BlockData.getData(type).getBox(player, block, version);
 
             if (!isCollided(box)) continue;
 
@@ -171,11 +170,10 @@ public class RayCollision implements CollisionBox {
         return boxes;
     }
 
-    public WrappedBlock getClosestBlockOfType(APlayer world, int bitmask, double distance) {
+    public WrappedBlock getClosestBlockOfType(APlayer player, int bitmask, double distance) {
         int amount = Math.round((float) (distance / 0.5));
 
-        Location[] locs = new Location[Math.max(2, amount)]; //We do a max to prevent NegativeArraySizeException.
-        boolean primaryThread = Bukkit.isPrimaryThread();
+        Location[] locs = new Location[Math.max(2, amount)]; //We do a max
         ClientVersion version = PacketEvents.getAPI().getServerManager().getVersion().toClientVersion();
 
         for (int i = 0; i < locs.length; i++) {
@@ -185,15 +183,15 @@ public class RayCollision implements CollisionBox {
             int fy = MathHelper.floor_double(originY + (directionY * ix));
             int fz = MathHelper.floor_double(originZ + (directionZ * ix));
 
-            WrappedBlock block = world.getBlockUpdateHandler().getBlock(fx, fy, fz);
+            WrappedBlock block = player.getBlockUpdateHandler().getBlock(fx, fy, fz);
 
-            if (block == null) continue;
+            if(block == null || !Materials.checkFlag(block.getType(), bitmask)) continue;
 
             final StateType type = block.getType();
 
             if (!type.isBlocking()) continue;
 
-            CollisionBox box = BlockData.getData(type).getBox(block, version);
+            CollisionBox box = BlockData.getData(type).getBox(player, block, version);
 
             if (!isCollided(box)) continue;
 

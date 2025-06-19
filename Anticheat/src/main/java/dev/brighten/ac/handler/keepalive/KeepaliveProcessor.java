@@ -1,22 +1,17 @@
 package dev.brighten.ac.handler.keepalive;
 
-import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPing;
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.TransactionServerWrapper;
-import dev.brighten.ac.utils.BukkitRunnable;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.shorts.Short2ObjectArrayMap;
-import org.bukkit.scheduler.BukkitTask;
 
 import java.util.Map;
 import java.util.Optional;
 
-public class KeepaliveProcessor implements BukkitRunnable {
-
-    private BukkitTask task;
+public class KeepaliveProcessor {
 
     public KeepAlive currentKeepalive = new KeepAlive((short) 0);
     public short tick;
@@ -29,8 +24,7 @@ public class KeepaliveProcessor implements BukkitRunnable {
     public KeepaliveProcessor() {
     }
 
-    @Override
-    public void run(BukkitTask task) {
+    public void run() {
         tick++;
 
         if(tick > Short.MAX_VALUE - 2) {
@@ -76,23 +70,10 @@ public class KeepaliveProcessor implements BukkitRunnable {
         return getKeepById(lastResponses.get(data.getBukkitPlayer().getUniqueId().hashCode()));
     }
 
-    public void start() {
-        if (task == null) {
-            task = Anticheat.INSTANCE.getRunUtils().taskTimer(this, 20L, 0L);
-        }
-    }
-
     public void addResponse(APlayer data, short id) {
         getKeepById(id).ifPresent(ka -> {
             lastResponses.put(data.getBukkitPlayer().getUniqueId().hashCode(), (Short) id);
             ka.received(data);
         });
-    }
-
-    public void stop() {
-        if (task != null) {
-            task.cancel();
-            task = null;
-        }
     }
 }

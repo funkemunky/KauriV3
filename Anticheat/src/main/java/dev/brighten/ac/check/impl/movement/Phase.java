@@ -87,7 +87,9 @@ public class Phase extends Check {
             POSITIONS.clear();
         } else if(teleportLoc != null) {
             final Location finalLoc = teleportLoc.clone(); // This is to make sure it isn't set null later.
-            Anticheat.INSTANCE.getRunUtils().task(() -> player.getBukkitPlayer().teleport(finalLoc));
+            if(isCancellable()) {
+                Anticheat.INSTANCE.getRunUtils().task(() -> player.getBukkitPlayer().teleport(finalLoc));
+            }
             return true;
         }
 
@@ -97,7 +99,9 @@ public class Phase extends Check {
             final Location fromLoc = player.getMovement().getFrom().getLoc()
                     .toLocation(player.getBukkitPlayer().getWorld());
 
-            Anticheat.INSTANCE.getRunUtils().task(() -> player.getBukkitPlayer().teleport(fromLoc));
+            if(isCancellable()) {
+                Anticheat.INSTANCE.getRunUtils().task(() -> player.getBukkitPlayer().teleport(fromLoc));
+            }
             return true;
         }
 
@@ -136,11 +140,13 @@ public class Phase extends Check {
         double totalDelta = dx + dy + dz;
 
         if(totalDelta > 0.0001) {
-            Anticheat.INSTANCE.getRunUtils().task(() -> {
-                teleportLoc = calculatedTo
-                        .toLocation(player.getBukkitPlayer().getWorld());
-                player.getBukkitPlayer().teleport(teleportLoc);
-            });
+            if(isCancellable()) {
+                Anticheat.INSTANCE.getRunUtils().task(() -> {
+                    teleportLoc = calculatedTo
+                            .toLocation(player.getBukkitPlayer().getWorld());
+                    player.getBukkitPlayer().teleport(teleportLoc);
+                });
+            }
             flag("x=%.4f, y=%.4f, z=%.4f", dx, dy, dz);
         }
 

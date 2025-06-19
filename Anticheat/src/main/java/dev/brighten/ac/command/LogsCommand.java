@@ -168,9 +168,7 @@ public class LogsCommand extends BaseCommand {
                 for (String key : violations.keySet()) {
                     if (Anticheat.INSTANCE.getCheckManager().isCheck(key)) {
                         CheckSettings checkData = Anticheat.INSTANCE.getCheckManager()
-                                .getCheckSettings(Anticheat.INSTANCE.getCheckManager().getCheckClasses()
-                                .get(Anticheat.INSTANCE.getCheckManager().getIdToName().get(key))
-                                        .getCheckClass().getParent());
+                                .getCheckSettings(key);
                         int vl = violations.get(key), maxVL = checkData.getPunishVl();
                         boolean developer = false;
 

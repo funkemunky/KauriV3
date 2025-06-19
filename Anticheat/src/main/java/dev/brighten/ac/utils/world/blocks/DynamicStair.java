@@ -35,7 +35,7 @@ public class DynamicStair implements CollisionFactory {
     private static EnumShape getStairsShape(APlayer player, WrappedBlock originalStairs) {
 
         BlockFace facing = originalStairs.getBlockState().getFacing();
-        Optional<WrappedBlock> offsetOne = BlockUtils.getRelative(player, originalStairs.getLocation(), facing);
+        Optional<WrappedBlock> offsetOne = player == null ? Optional.empty() : BlockUtils.getRelative(player, originalStairs.getLocation(), facing);
 
         if(offsetOne.isEmpty()) return EnumShape.STRAIGHT;
 
