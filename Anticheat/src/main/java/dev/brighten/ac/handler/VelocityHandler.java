@@ -67,17 +67,13 @@ public class VelocityHandler {
         }
     }
 
-    public void onComplete(WrapperPlayServerExplosion packet) {
-        // If the velocity is not confirmed, remove it.
-        VELOCITY_MAP.removeIf(value -> value.one.equals(packet.getKnockback()));
-    }
-
-    public void onComplete(WrapperPlayServerEntityVelocity packet) {
-        // If the velocity is not confirmed, remove it.
-        VELOCITY_MAP.removeIf(value -> value.one.equals(packet.getVelocity()));
-    }
-
     public List<Vector3d> getPossibleVectors() {
+        return VELOCITY_MAP.stream()
+                .map(set -> set.one)
+                .toList();
+    }
+
+    public List<Vector3d> getUnconfirmedVectors() {
         return VELOCITY_MAP.stream()
                 .filter(set -> !set.two)
                 .map(set -> set.one)

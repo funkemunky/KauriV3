@@ -350,7 +350,7 @@ public class PacketHandler {
                     }
                 }
             }, true);
-            player.runKeepaliveAction(ka -> player.getVelocityHandler().onComplete(packet), 2);
+            player.runKeepaliveAction(ka ->  player.getVelocityHandler().onPost(packet), 1);
         } else if(event.getPacketType() == PacketType.Play.Server.ENTITY_VELOCITY) {
             WrapperPlayServerEntityVelocity packet = new WrapperPlayServerEntityVelocity(event);
 
@@ -366,10 +366,7 @@ public class PacketHandler {
                     } else {
                         if (player.getInfo().getVelocityHistory().contains(velocity))
                             player.getOnVelocityTasks().forEach(task -> task.accept(velocity));
-
-                        player.getVelocityHandler().onPost(packet);
                         if (player.getInfo().getVelocityHistory().contains(velocity)) {
-                            player.getInfo().setDoingVelocity(false);
                             player.getInfo().getVelocity().reset();
                             synchronized (player.getInfo().getVelocityHistory()) {
                                 player.getInfo().getVelocityHistory().remove(velocity);
@@ -377,7 +374,10 @@ public class PacketHandler {
                         }
                     }
                 }, true);
-                player.runKeepaliveAction(ka -> player.getVelocityHandler().onComplete(packet), 2);
+                player.runKeepaliveAction(ka ->  {
+                    player.getInfo().setDoingVelocity(false);
+                    player.getVelocityHandler().onPost(packet);
+                }, 1);
             }
         } else if(event.getPacketType() == PacketType.Play.Server.RESPAWN) {
             wrapped = new WrapperPlayServerRespawn(event);

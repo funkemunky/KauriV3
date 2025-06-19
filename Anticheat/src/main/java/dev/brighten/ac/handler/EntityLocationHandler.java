@@ -217,17 +217,9 @@ public class EntityLocationHandler {
      * @param action Runnable
      */
     private void runAction(Entity entity, Runnable action) {
-        if(data.getInfo().getTarget() != null && data.getInfo().getTarget().getEntityId() == entity.getEntityId()) {
-            data.runInstantAction(ia -> {
-                if(!ia.isEnd()) {
-                    action.run();
-                } else entityLocationMap.get(entity.getUniqueId()).two = null;
-            }, true);
-        } else {
-            data.runKeepaliveAction(keepalive -> action.run());
-            data.runKeepaliveAction(keepalive ->
-                    entityLocationMap.get(entity.getUniqueId()).two = null, 1);
-        }
+        data.runKeepaliveAction(keepalive -> action.run());
+        data.runKeepaliveAction(keepalive ->
+                entityLocationMap.get(entity.getUniqueId()).two = null, 1);
     }
 
     public void onEntityDestroy(WrapperPlayServerDestroyEntities packet) {
