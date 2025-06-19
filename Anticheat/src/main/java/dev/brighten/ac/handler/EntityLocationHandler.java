@@ -10,6 +10,7 @@ import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEn
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.handler.entity.FakeMob;
+import dev.brighten.ac.handler.entity.TrackedEntity;
 import dev.brighten.ac.packet.WPacketPlayOutEntity;
 import dev.brighten.ac.utils.EntityLocation;
 import dev.brighten.ac.utils.KLocation;
@@ -20,6 +21,7 @@ import dev.brighten.ac.utils.timer.impl.MillisTimer;
 import dev.brighten.ac.utils.world.types.RayCollision;
 import io.github.retrooper.packetevents.util.SpigotConversionUtil;
 import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.bukkit.Location;
@@ -35,7 +37,7 @@ public class EntityLocationHandler {
 
     private final APlayer data;
 
-    private final Map<UUID, Tuple<EntityLocation, EntityLocation>> entityLocationMap = new ConcurrentHashMap<>();
+    private final Map<Integer, Tuple<EntityLocation, EntityLocation>> entityLocationMap = new ConcurrentHashMap<>();
     private final Map<Integer, List<FakeMob>> fakeMobs = new Int2ObjectArrayMap<>();
     private final Map<Integer, Integer> fakeMobToEntityId = new Int2ObjectArrayMap<>();
     private final Timer lastFlying = new MillisTimer();
@@ -43,6 +45,9 @@ public class EntityLocationHandler {
     public Set<Integer> canCreateMob = new HashSet<>();
     public int streak;
     public AtomicBoolean clientHasEntity = new AtomicBoolean(false);
+
+    @Getter
+    private Map<Integer, TrackedEntity> trackedEntities = new Int2ObjectArrayMap<>();
 
     private final Set<EntityType> allowedEntityTypes = Set.of(EntityTypes.ZOMBIE, EntityTypes.SHEEP,
             EntityTypes.BLAZE, EntityTypes.SKELETON, EntityTypes.PLAYER, EntityTypes.VILLAGER, EntityTypes.IRON_GOLEM,
@@ -106,12 +111,7 @@ public class EntityLocationHandler {
      * @param packet WrappedOutRelativePosition
      */
     void onRelPosition(WPacketPlayOutEntity packet) {
-        Optional<Entity> op = Anticheat.INSTANCE.getWorldInfo(data.getBukkitPlayer().getWorld())
-                .getEntity(packet.getId());
-
-        if(op.isEmpty()) return;
-
-        Entity entity = op.get();
+        TrackedEntity entity = trackedEntities.get(packet.getId());
 
         var type = SpigotConversionUtil.fromBukkitEntityType(entity.getType());
 
@@ -148,18 +148,11 @@ public class EntityLocationHandler {
      * @param packet WrappedOutEntityTeleportPacket
      */
     void onTeleportSent(WrapperPlayServerEntityTeleport packet) {
-        Optional<Entity> op = Anticheat.INSTANCE.getWorldInfo(data.getBukkitPlayer().getWorld())
-                .getEntity(packet.getEntityId());
+        TrackedEntity entity = trackedEntities.get(packet.getEntityId());
 
-        if(op.isEmpty()) return;
+        if(!allowedEntityTypes.contains(entity.getEntityType())) return;
 
-        Entity entity = op.get();
-
-        EntityType type = PacketEventsUtil.convertBukkitEntityType(entity.getType());
-
-        if(type == null || !allowedEntityTypes.contains(type)) return;
-
-        val tuple = entityLocationMap.computeIfAbsent(entity.getUniqueId(),
+        val tuple = entityLocationMap.computeIfAbsent(entity.getEntityId(),
                 key -> {
                     createFakeMob(packet.getEntityId(), entity.getLocation());
                     return new Tuple<>(new EntityLocation(entity), null);
@@ -216,25 +209,27 @@ public class EntityLocationHandler {
      * @param entity Entity
      * @param action Runnable
      */
-    private void runAction(Entity entity, Runnable action) {
+    private void runAction(TrackedEntity entity, Runnable action) {
         data.runKeepaliveAction(keepalive -> action.run());
         data.runKeepaliveAction(keepalive ->
-                entityLocationMap.get(entity.getUniqueId()).two = null, 1);
+                entityLocationMap.get(entity.getEntityId()).two = null, 1);
     }
 
     public void onEntityDestroy(WrapperPlayServerDestroyEntities packet) {
-        for(int id : packet.getEntityIds()) {
-            if(fakeMobs.containsKey(id)) {
-                List<FakeMob> mobs = fakeMobs.get(id);
+        data.runKeepaliveAction(ka -> {
+            for(int id : packet.getEntityIds()) {
+                if(fakeMobs.containsKey(id)) {
+                    List<FakeMob> mobs = fakeMobs.get(id);
 
-                for (FakeMob mob : mobs) {
-                    mob.despawn();
-                    fakeMobToEntityId.remove(mob.getEntityId());
+                    for (FakeMob mob : mobs) {
+                        mob.despawn();
+                        fakeMobToEntityId.remove(mob.getEntityId());
+                    }
+                    fakeMobs.remove(id);
+                    clientHasEntity.set(false);
                 }
-                fakeMobs.remove(id);
-                clientHasEntity.set(false);
             }
-        }
+        });
     }
 
     public void removeFakeMob(int id) {
@@ -252,7 +247,7 @@ public class EntityLocationHandler {
 
     private static final double[] offsets = new double[]{-1.25, 0, 1.25};
 
-    private void createFakeMob(int entityId, Location location) {
+    private void createFakeMob(int entityId, KLocation location) {
         if(!canCreateMob.contains(entityId)) return;
 
         List<FakeMob> mobs = new ArrayList<>();
@@ -286,7 +281,7 @@ public class EntityLocationHandler {
         EntityData<?> entityData = new EntityData<>(7, EntityDataTypes.INT, 5);
 
         types.add(entityData);
-        mob.spawn(true, point.toLocation(location.getWorld()), types, data);
+        mob.spawn(true, new KLocation(point.getX(), point.getY(), point.getZ()), types, data);
 
         fakeMobToEntityId.put(mob.getEntityId(), data.getBukkitPlayer().getEntityId());
 
@@ -326,7 +321,7 @@ public class EntityLocationHandler {
 
         if(fakeMobs == null) {
             if(!rel) {
-                createFakeMob(entityId, new Location(data.getBukkitPlayer().getWorld(), x, y, z));
+                createFakeMob(entityId, new KLocation(x, y, z));
             }
             return;
         }

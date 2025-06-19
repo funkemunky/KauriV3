@@ -11,6 +11,7 @@ import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSp
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.packet.WPacketPlayOutEntity;
+import dev.brighten.ac.utils.KLocation;
 import lombok.Getter;
 import org.bukkit.Location;
 
@@ -43,11 +44,11 @@ public class FakeMob {
 
     }
      */
-    public void spawn(boolean invisible, Location location, APlayer... players) {
+    public void spawn(boolean invisible, KLocation location, APlayer... players) {
         spawn(invisible, location, new ArrayList<>(), players);
     }
 
-    public void spawn(boolean invisible, Location location, List<EntityData<?>> objects, APlayer... players) {
+    public void spawn(boolean invisible, KLocation location, List<EntityData<?>> objects, APlayer... players) {
         if(!watching.isEmpty()) {
             despawn();
         }

@@ -2,6 +2,7 @@ package dev.brighten.ac.handler;
 
 import com.github.retrooper.packetevents.event.PacketReceiveEvent;
 import com.github.retrooper.packetevents.event.PacketSendEvent;
+import com.github.retrooper.packetevents.protocol.entity.type.EntityTypes;
 import com.github.retrooper.packetevents.protocol.item.ItemStack;
 import com.github.retrooper.packetevents.protocol.packettype.PacketType;
 import com.github.retrooper.packetevents.protocol.player.ClientVersion;
@@ -17,6 +18,7 @@ import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.data.obj.NormalAction;
 import dev.brighten.ac.handler.entity.FakeMob;
+import dev.brighten.ac.handler.entity.TrackedEntity;
 import dev.brighten.ac.packet.PlayerCapabilities;
 import dev.brighten.ac.packet.TransactionClientWrapper;
 import dev.brighten.ac.packet.WPacketPlayOutEntity;
@@ -27,6 +29,7 @@ import io.github.retrooper.packetevents.util.SpigotConversionUtil;
 import lombok.val;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
+import org.checkerframework.checker.units.qual.K;
 
 import java.util.Optional;
 
@@ -442,6 +445,67 @@ public class PacketHandler {
             wrapped = packet;
 
             player.getEntityLocationHandler().onRelPosition(new WPacketPlayOutEntity(packet));
+        } else if(event.getPacketType() == PacketType.Play.Server.SPAWN_ENTITY) {
+            WrapperPlayServerSpawnEntity packet = new WrapperPlayServerSpawnEntity(event);
+            wrapped = packet;
+
+            double x = packet.getPosition().getX();
+            double y = packet.getPosition().getY();
+            double z = packet.getPosition().getZ();
+
+            player.getEntityLocationHandler().getTrackedEntities().put(packet.getEntityId(),
+                    new TrackedEntity(packet.getEntityId(), packet.getEntityType(),
+                            new KLocation(x, y, z, packet.getYaw(), packet.getPitch())));
+        } else if(event.getPacketType() == PacketType.Play.Server.SPAWN_LIVING_ENTITY) {
+            WrapperPlayServerSpawnLivingEntity packet = new WrapperPlayServerSpawnLivingEntity(event);
+
+            wrapped = packet;
+
+            double x = packet.getPosition().getX();
+            double y = packet.getPosition().getY();
+            double z = packet.getPosition().getZ();
+
+            player.getEntityLocationHandler().getTrackedEntities().put(packet.getEntityId(),
+                    new TrackedEntity(packet.getEntityId(), packet.getEntityType(),
+                            new KLocation(x, y, z, packet.getYaw(), packet.getPitch())));
+        } else if(event.getPacketType() == PacketType.Play.Server.SPAWN_PLAYER) {
+            WrapperPlayServerSpawnPlayer packet = new WrapperPlayServerSpawnPlayer(event);
+
+            wrapped = packet;
+
+            double x = packet.getPosition().getX();
+            double y = packet.getPosition().getY();
+            double z = packet.getPosition().getZ();
+
+
+            player.getEntityLocationHandler().getTrackedEntities().put(packet.getEntityId(),
+                    new TrackedEntity(packet.getEntityId(), EntityTypes.PLAYER,
+                            new KLocation(x, y, z, packet.getYaw(),packet.getPitch())));
+        } else if(event.getPacketType() == PacketType.Play.Server.SPAWN_PAINTING) {
+            WrapperPlayServerSpawnPainting packet = new WrapperPlayServerSpawnPainting(event);
+
+            wrapped = packet;
+
+            int x = packet.getPosition().getX();
+            int y = packet.getPosition().getY();
+            int z = packet.getPosition().getZ();
+
+            player.getEntityLocationHandler().getTrackedEntities().put(packet.getEntityId(),
+                    new TrackedEntity(packet.getEntityId(), EntityTypes.PAINTING, new KLocation(x, y, z)));
+        } else if(event.getPacketType() == PacketType.Play.Server.ENTITY_POSITION_SYNC) {
+            WrapperPlayServerEntityPositionSync packet = new WrapperPlayServerEntityPositionSync(event);
+
+            wrapped = packet;
+
+            player.getEntityLocationHandler().onPositionSync(packet);
+        } else if(event.getPacketType() == PacketType.Play.Server.ENTITY_METADATA) {
+            wrapped = new WrapperPlayServerEntityMetadata(event);
+        }else if(event.getPacketType() == PacketType.Play.Server.DESTROY_ENTITIES) {
+            WrapperPlayServerDestroyEntities packet = new WrapperPlayServerDestroyEntities(event);
+
+            wrapped = packet;
+
+            player.getEntityLocationHandler().onEntityDestroy(packet);
         } else if(event.getPacketType() == PacketType.Play.Server.CLOSE_WINDOW) {
             wrapped = new WrapperPlayServerCloseWindow(event);
             player.runKeepaliveAction(ka -> player.getInfo().setInventoryOpen(false));
