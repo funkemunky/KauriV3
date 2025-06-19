@@ -42,14 +42,15 @@ public class Hitbox extends Check {
     @Bind
     WAction<WrapperPlayClientInteractEntity> useEntity = packet -> {
 
-        Optional<Entity> entity = Anticheat.INSTANCE.getWorldInfo(player.getBukkitPlayer().getWorld()).getEntity(packet.getEntityId());
-        if(entity.isEmpty()) return;
+        if(packet.getAction() != WrapperPlayClientInteractEntity.InteractAction.ATTACK)
+            return;
 
-        if(packet.getAction() == WrapperPlayClientInteractEntity.InteractAction.ATTACK
-                && allowedEntityTypes.contains(entity.get().getType())) {
-            attacks.add(new Tuple<>(entity.get(),
-                    player.getMovement().getTo().getLoc().clone()));
-        }
+        Optional<Entity> entity = Anticheat.INSTANCE.getWorldInfo(player.getBukkitPlayer().getWorld())
+                .getEntity(packet.getEntityId());
+        if(entity.isEmpty() || !allowedEntityTypes.contains(entity.get().getType())) return;
+
+        attacks.add(new Tuple<>(entity.get(),
+                player.getMovement().getTo().getLoc().clone()));
     };
 
     //TODO Figure out how to make the check more sensitive without compromising network stability
@@ -74,7 +75,7 @@ public class Hitbox extends Check {
 
             final Tuple<EntityLocation, EntityLocation> eloc = optionalEloc.get();
 
-            final KLocation to = target.two.clone();
+            final KLocation to = player.getMovement().getTo().getLoc().clone();
 
             if(eloc.one.x == 0 && eloc.one.y == 0 & eloc.one.z == 0) {
                 return;
