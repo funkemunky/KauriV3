@@ -84,14 +84,90 @@
                         </goals>
                         <configuration>
                             <minimizeJar>true</minimizeJar>
+                            <minimizeJar>true</minimizeJar>
                             <relocations>
                                 <relocation>
-                                    <pattern>org.dizitart</pattern>
-                                    <shadedPattern>dev.brighten.anticheat.libs.org.dizitart</shadedPattern>
+                                    <pattern>co.aikar</pattern>
+                                    <shadedPattern>dev.brighten.ac.libs.co.aikar</shadedPattern>
                                 </relocation>
                                 <relocation>
-                                    <pattern>co.aikar</pattern>
-                                    <shadedPattern>dev.brighten.anticheat.libs.co.aikar</shadedPattern>
+                                    <pattern>net.jodah</pattern>
+                                    <shadedPattern>dev.brighten.ac.libs.net.jodah</shadedPattern>
+                                </relocation>
+                                <relocation>
+                                    <pattern>com.github.retrooper</pattern>
+                                    <shadedPattern>dev.brighten.ac.libs.com.github.retrooper
+                                    </shadedPattern> <!--relocate packetevents package. choose something unique!-->
+                                </relocation>
+                                <relocation>
+                                    <pattern>io.github.retrooper</pattern>
+                                    <shadedPattern>dev.brighten.ac.libs.io.github.retrooper
+                                    </shadedPattern> <!--relocate packetevents package. choose something unique!-->
+                                </relocation>
+                                <relocation>
+                                    <pattern>net.kyori</pattern>
+                                    <shadedPattern>dev.brighten.ac.libs.com.github.retrooper.packetevents.libs.net.kyori
+                                    </shadedPattern> <!--relocate packetevents package. choose something unique!-->
+                                </relocation>
+                                <relocation>
+                                    <pattern>com.google.common</pattern>
+                                    <shadedPattern>dev.brighten.ac.libs.com.google.common
+                                    </shadedPattern>
+                                </relocation>
+                                <relocation>
+                                    <pattern>com.google.errorprone</pattern>
+                                    <shadedPattern>dev.brighten.ac.libs.com.google.errorprone
+                                    </shadedPattern>
+                                </relocation>
+                                <relocation>
+                                    <pattern>com.google.j2objc</pattern>
+                                    <shadedPattern>dev.brighten.ac.libs.com.google.j2objc
+                                    </shadedPattern>
+                                </relocation>
+                                <relocation>
+                                    <pattern>com.fasterxml</pattern>
+                                    <shadedPattern>dev.brighten.ac.libs.com.fasterxml
+                                    </shadedPattern>
+                                </relocation>
+                                <relocation>
+                                    <pattern>javax.annotation</pattern>
+                                    <shadedPattern>dev.brighten.ac.libs.javax.annotation
+                                    </shadedPattern>
+                                </relocation>
+                                <relocation>
+                                    <pattern>org.apache</pattern>
+                                    <shadedPattern>dev.brighten.ac.libs.org.apache
+                                    </shadedPattern>
+                                </relocation>
+                                <relocation>
+                                    <pattern>org.h2</pattern>
+                                    <shadedPattern>dev.brighten.ac.libs.org.h2
+                                    </shadedPattern>
+                                </relocation>
+                                <relocation>
+                                    <pattern>org.checkerframework</pattern>
+                                    <shadedPattern>dev.brighten.ac.libs.org.checkerframework
+                                    </shadedPattern>
+                                </relocation>
+                                <relocation>
+                                    <pattern>org.slf4j</pattern>
+                                    <shadedPattern>dev.brighten.ac.libs.org.slf4j
+                                    </shadedPattern>
+                                </relocation>
+                                <relocation>
+                                    <pattern>me.hydro</pattern>
+                                    <shadedPattern>dev.brighten.ac.libs.me.hydro
+                                    </shadedPattern>
+                                </relocation>
+                                <relocation>
+                                    <pattern>it.unimi</pattern>
+                                    <shadedPattern>dev.brighten.ac.libs.it.unimi
+                                    </shadedPattern>
+                                </relocation>
+                                <relocation>
+                                    <pattern>org.objectweb</pattern>
+                                    <shadedPattern>dev.brighten.ac.libs.org.objectweb
+                                    </shadedPattern>
                                 </relocation>
                             </relocations>
                         </configuration>
@@ -131,11 +207,13 @@
             <groupId>org.dizitart</groupId>
             <artifactId>nitrite</artifactId>
             <version>4.3.0</version>
+            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.dizitart</groupId>
             <artifactId>nitrite-mvstore-adapter</artifactId>
             <version>4.3.0</version>
+            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.dizitart</groupId>
@@ -168,11 +246,6 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>org.reflections</groupId>
-            <artifactId>reflections</artifactId>
-            <version>0.10.2</version> <!-- or latest -->
-        </dependency>
-        <dependency>
             <groupId>org.github.spigot</groupId>
             <artifactId>1.7.10</artifactId>
             <version>1.7.10</version>
@@ -182,7 +255,7 @@
             <groupId>it.unimi.dsi</groupId>
             <artifactId>fastutil</artifactId>
             <version>8.5.11</version>
-            <scope>provided</scope>
+            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>com.shevchik.protocolsupport</groupId>
@@ -200,13 +273,13 @@
             <groupId>org.ow2.asm</groupId>
             <artifactId>asm</artifactId>
             <version>9.4</version>
-            <scope>provided</scope>
+            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.ow2.asm</groupId>
             <artifactId>asm-tree</artifactId>
             <version>9.4</version>
-            <scope>provided</scope>
+            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>co.aikar</groupId>

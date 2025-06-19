@@ -10,8 +10,6 @@ import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.data.PlayerRegistry;
 import dev.brighten.ac.data.info.CheckHandler;
 import dev.brighten.ac.depends.LibraryLoader;
-import dev.brighten.ac.depends.MavenLibrary;
-import dev.brighten.ac.depends.Repository;
 import dev.brighten.ac.handler.BBRevealHandler;
 import dev.brighten.ac.handler.PacketHandler;
 import dev.brighten.ac.handler.entity.FakeEntityTracker;
@@ -54,9 +52,6 @@ import java.util.stream.Collectors;
 @Getter
 @NoArgsConstructor
 @Init
-@MavenLibrary(groupId = "it.unimi.dsi", artifactId = "fastutil", version = "8.5.11", repo = @Repository(url = "https://repo1.maven.org/maven2"))
-@MavenLibrary(groupId = "org.ow2.asm", artifactId = "asm", version = "9.4", repo = @Repository(url = "https://repo1.maven.org/maven2"))
-@MavenLibrary(groupId = "org.ow2.asm", artifactId = "asm-tree", version = "9.4", repo = @Repository(url = "https://repo1.maven.org/maven2"))
 public class Anticheat extends JavaPlugin {
 
     public static Anticheat INSTANCE;
