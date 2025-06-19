@@ -7,9 +7,9 @@ import com.github.retrooper.packetevents.protocol.entity.data.EntityDataTypes;
 import com.github.retrooper.packetevents.protocol.entity.type.EntityTypes;
 import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import com.github.retrooper.packetevents.protocol.player.User;
+import com.github.retrooper.packetevents.protocol.world.dimension.DimensionType;
 import com.github.retrooper.packetevents.util.Vector3d;
 import com.github.retrooper.packetevents.wrapper.PacketWrapper;
-import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPing;
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.api.spigot.impl.LegacyPlayer;
 import dev.brighten.ac.api.spigot.impl.ModernPlayer;
@@ -51,7 +51,6 @@ import org.bukkit.entity.Player;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 
@@ -141,6 +140,10 @@ public class APlayer {
         // Grabbing the protocol version of the player.
         Anticheat.INSTANCE.getLogger().info("Attempting Getting player version for " + getBukkitPlayer().getName());
 
+        ClientVersion version = PacketEvents.getAPI().getPlayerManager().getClientVersion(getBukkitPlayer());
+
+        Anticheat.INSTANCE.getLogger().info("Got player version " + version.name() + " for " + getBukkitPlayer().getName());
+
         Anticheat.INSTANCE.getRunUtils().task(() -> checkHandler.initChecks());
 
         if(PacketEvents.getAPI().getServerManager().getVersion().isOlderThan(ServerVersion.V_1_9)) {
@@ -212,6 +215,7 @@ public class APlayer {
             Check.alertsEnabled.add(getUuid());
             getBukkitPlayer().spigot().sendMessage(Messages.ALERTS_ON);
         }
+        initialized = true;
     }
 
     private void generateEntities() {
@@ -237,6 +241,7 @@ public class APlayer {
         if(mob != null) {
             mob.despawn();
         }
+        initialized = false;
     }
 
 
@@ -307,17 +312,25 @@ public class APlayer {
     }
 
     public void sendPacketSilently(PacketWrapper<?> packet) {
+        User user = PacketEvents.getAPI().getPlayerManager().getUser(bukkitPlayer);
+        if(user == null) return;
+
         if(sniffing) {
             sniffedPackets.add("(Silent) [" +  Anticheat.INSTANCE.getKeepaliveProcessor().tick + "] "
                     + packet.toString());
         }
 
-        User user = PacketEvents.getAPI().getPlayerManager().getUser(bukkitPlayer);
         user.sendPacketSilently(packet);
+    }
+
+    public DimensionType getDimensionType() {
+        return PacketEvents.getAPI().getPlayerManager().getUser(getBukkitPlayer()).getDimensionType();
     }
 
     public void sendPacket(PacketWrapper<?> packet) {
         User user = PacketEvents.getAPI().getPlayerManager().getUser(bukkitPlayer);
+
+        if(user == null) return;
         user.sendPacket(packet);
     }
 

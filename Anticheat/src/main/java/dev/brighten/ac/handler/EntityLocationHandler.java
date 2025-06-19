@@ -4,15 +4,16 @@ import com.github.retrooper.packetevents.protocol.entity.data.EntityData;
 import com.github.retrooper.packetevents.protocol.entity.data.EntityDataTypes;
 import com.github.retrooper.packetevents.protocol.entity.type.EntityType;
 import com.github.retrooper.packetevents.protocol.entity.type.EntityTypes;
+import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerDestroyEntities;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityTeleport;
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.handler.entity.FakeMob;
-import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import dev.brighten.ac.packet.WPacketPlayOutEntity;
 import dev.brighten.ac.utils.EntityLocation;
 import dev.brighten.ac.utils.KLocation;
+import dev.brighten.ac.utils.PacketEventsUtil;
 import dev.brighten.ac.utils.Tuple;
 import dev.brighten.ac.utils.timer.Timer;
 import dev.brighten.ac.utils.timer.impl.MillisTimer;
@@ -26,7 +27,6 @@ import org.bukkit.entity.Entity;
 import org.bukkit.util.Vector;
 
 import java.util.*;
-import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -155,8 +155,9 @@ public class EntityLocationHandler {
 
         Entity entity = op.get();
 
-        if(!allowedEntityTypes.contains(SpigotConversionUtil.fromBukkitEntityType(entity.getType()))) return;
+        EntityType type = PacketEventsUtil.convertBukkitEntityType(entity.getType());
 
+        if(type == null || !allowedEntityTypes.contains(type)) return;
 
         val tuple = entityLocationMap.computeIfAbsent(entity.getUniqueId(),
                 key -> {

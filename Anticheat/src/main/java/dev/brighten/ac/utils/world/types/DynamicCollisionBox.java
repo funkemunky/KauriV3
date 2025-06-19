@@ -4,7 +4,6 @@ import com.github.retrooper.packetevents.protocol.particle.type.ParticleType;
 import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.handler.block.WrappedBlock;
-import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import dev.brighten.ac.utils.world.CollisionBox;
 import lombok.Setter;
 

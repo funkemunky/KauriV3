@@ -9,6 +9,7 @@ import dev.brighten.ac.utils.annotation.Init;
 import dev.brighten.ac.utils.math.IntVector;
 import dev.brighten.ac.utils.world.BlockData;
 import dev.brighten.ac.utils.world.EntityData;
+import io.github.retrooper.packetevents.util.SpigotConversionUtil;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import org.bukkit.Material;
@@ -49,7 +50,8 @@ public class BBRevealHandler implements Listener {
         if(player == null || !player.getWrappedPlayer().getItemInHand().isSimilar(wand)) return;
 
         if(event.getAction() == Action.RIGHT_CLICK_BLOCK) {
-            if(Materials.checkFlag(event.getClickedBlock().getType(), Materials.COLLIDABLE)) {
+            if(Materials.checkFlag(SpigotConversionUtil.fromBukkitItemMaterial(event.getClickedBlock().getType()).getPlacedType()
+                    , Materials.COLLIDABLE)) {
                 IntVector blockLoc = new IntVector(event.getClickedBlock().getX(),
                         event.getClickedBlock().getY(), event.getClickedBlock().getZ());
                 Set<IntVector> blocksToShow = this.blocksToShow
@@ -63,7 +65,7 @@ public class BBRevealHandler implements Listener {
                     blocksToShow.add(blockLoc);
                     event.getPlayer().spigot().sendMessage(new ComponentBuilder("Now showing block: ")
                             .color(ChatColor.GREEN).append(event.getClickedBlock().getType().name()).color(ChatColor.WHITE)
-                                    .append(" (collidable=" + Materials.checkFlag(event.getClickedBlock().getType(), Materials.COLLIDABLE) + ")")
+                                    .append(" (collidable=" + Materials.checkFlag(SpigotConversionUtil.fromBukkitItemMaterial(event.getClickedBlock().getType()).getPlacedType(), Materials.COLLIDABLE) + ")")
                                     .color(ChatColor.GRAY)
                             .create());
                 }

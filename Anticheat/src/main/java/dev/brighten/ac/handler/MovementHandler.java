@@ -2,6 +2,7 @@ package dev.brighten.ac.handler;
 
 import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.manager.server.ServerVersion;
+import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import com.github.retrooper.packetevents.protocol.teleport.RelativeFlag;
 import com.github.retrooper.packetevents.util.Vector3d;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerFlying;
@@ -10,8 +11,8 @@ import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.compat.CompatHandler;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.data.obj.CMove;
-import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import dev.brighten.ac.utils.*;
+import dev.brighten.ac.utils.math.IntVector;
 import dev.brighten.ac.utils.objects.evicting.EvictingList;
 import dev.brighten.ac.utils.timer.Timer;
 import dev.brighten.ac.utils.timer.impl.TickTimer;
@@ -356,11 +357,10 @@ public class MovementHandler {
         if (moveTicks > 0) {
 
             // Updating block locations
-            player.getInfo().setBlockOnTo(BlockUtils
-                    .getBlockAsync(to.getLoc().toLocation(player.getBukkitPlayer().getWorld())));
-            player.getInfo().setBlockBelow(BlockUtils
-                    .getBlockAsync(to.getLoc().toLocation(player.getBukkitPlayer().getWorld())
-                            .subtract(0, 1, 0)));
+            player.getInfo().setBlockOnTo(Optional.of(player.getBlockUpdateHandler()
+                    .getBlock(new IntVector(to.getLoc()))));
+            player.getInfo().setBlockBelow(Optional.of(player.getBlockUpdateHandler()
+                    .getBlock(new IntVector(to.getLoc().subtract(0, 1, 0)))));
 
             if (packet.hasPositionChanged()) {
                 // Updating player bounding box

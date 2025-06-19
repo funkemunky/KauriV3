@@ -199,7 +199,7 @@ public class BlockUtils {
         };
     }
 
-    public static boolean isClimbableBlock(Block block) {
+    public static boolean isClimbableBlock(WrappedBlock block) {
         return Materials.checkFlag(block.getType(), Materials.LADDER);
     }
 

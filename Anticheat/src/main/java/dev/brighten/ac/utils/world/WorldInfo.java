@@ -2,21 +2,14 @@ package dev.brighten.ac.utils.world;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.LoadingCache;
-import dev.brighten.ac.Anticheat;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.entity.Entity;
-import org.bukkit.scheduler.BukkitTask;
 
-import java.util.*;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.FutureTask;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 public class WorldInfo {
     @Getter
@@ -43,7 +36,7 @@ public class WorldInfo {
                 }
                 throw new RuntimeException("Entity " + id + " not found");
             }));
-        } catch (ExecutionException e) {
+        } catch (Throwable e) {
             return Optional.empty();
         }
     }

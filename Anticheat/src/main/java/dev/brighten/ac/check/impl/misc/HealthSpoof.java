@@ -1,18 +1,10 @@
 package dev.brighten.ac.check.impl.misc;
 
-import com.github.retrooper.packetevents.protocol.entity.data.EntityData;
-import com.github.retrooper.packetevents.protocol.entity.data.EntityDataTypes;
-import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityMetadata;
+import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import dev.brighten.ac.api.check.CheckType;
 import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
-import dev.brighten.ac.check.WCancellable;
 import dev.brighten.ac.data.APlayer;
-import com.github.retrooper.packetevents.protocol.player.ClientVersion;
-import dev.brighten.ac.utils.annotation.Bind;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @CheckData(name = "HealthSpoof", checkId = "healthspoof", type = CheckType.EXPLOIT, maxVersion = ClientVersion.V_1_21_5)
 public class HealthSpoof extends Check {

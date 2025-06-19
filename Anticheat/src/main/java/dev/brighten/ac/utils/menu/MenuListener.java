@@ -3,7 +3,6 @@ package dev.brighten.ac.utils.menu;
 import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.manager.server.ServerVersion;
 import dev.brighten.ac.Anticheat;
-import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import dev.brighten.ac.utils.BlockUtils;
 import dev.brighten.ac.utils.Color;
 import dev.brighten.ac.utils.XMaterial;

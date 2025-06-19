@@ -1,19 +1,17 @@
 package dev.brighten.ac.utils.world.blocks;
 
 import com.github.retrooper.packetevents.protocol.player.ClientVersion;
+import com.github.retrooper.packetevents.protocol.world.BlockFace;
+import com.github.retrooper.packetevents.protocol.world.states.type.StateType;
+import com.github.retrooper.packetevents.protocol.world.states.type.StateTypes;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.handler.block.WrappedBlock;
 import dev.brighten.ac.utils.BlockUtils;
 import dev.brighten.ac.utils.Materials;
-import dev.brighten.ac.utils.XMaterial;
 import dev.brighten.ac.utils.world.CollisionBox;
 import dev.brighten.ac.utils.world.types.CollisionFactory;
 import dev.brighten.ac.utils.world.types.ComplexCollisionBox;
 import dev.brighten.ac.utils.world.types.SimpleCollisionBox;
-import io.github.retrooper.packetevents.util.SpigotConversionUtil;
-import org.bukkit.Material;
-import org.bukkit.block.BlockFace;
-import org.bukkit.material.MaterialData;
 
 import java.util.Optional;
 
@@ -37,21 +35,14 @@ public class DynamicFence implements CollisionFactory {
         return box;
     }
 
-    static boolean isBlacklisted(Material m) {
-        XMaterial material = BlockUtils.getXMaterial(m);
-        switch(material) {
-            case BEACON:
-            case STICK:
-            case MELON:
-            case DAYLIGHT_DETECTOR:
-            case BARRIER:
-                return true;
-            default:
-                return !Materials.checkFlag(m, Materials.SOLID)
-                        || Materials.checkFlag(m, Materials.WALL)
-                        || Materials.checkFlag(m, Materials.FENCE)
-                        || m.name().contains("DAYLIGHT");
-        }
+    static boolean isBlacklisted(StateType m) {
+        if(m.equals(StateTypes.BEACON) ||  m.equals(StateTypes.MELON)
+                || m.equals(StateTypes.DAYLIGHT_DETECTOR) || m.equals(StateTypes.BARRIER)) {
+            return true;
+        } return !Materials.checkFlag(m, Materials.SOLID)
+                || Materials.checkFlag(m, Materials.WALL)
+                || Materials.checkFlag(m, Materials.FENCE)
+                || m.getName().toUpperCase().contains("DAYLIGHT");
     }
 
     private static boolean fenceConnects(ClientVersion v, APlayer player, WrappedBlock fenceBlock, BlockFace direction) {
@@ -59,10 +50,8 @@ public class DynamicFence implements CollisionFactory {
 
         if(targetBlock.isEmpty()) return false;
 
-        Material target = targetBlock.get().getType();
-        Material fence = fenceBlock.getType();
-
-        MaterialData fenceData = SpigotConversionUtil.toBukkitMaterialData(fenceBlock.getBlockState());
+        StateType target = targetBlock.get().getType();
+        StateType fence = fenceBlock.getType();
 
         if (!isFence(target)&&isBlacklisted(target))
             return false;
@@ -70,22 +59,22 @@ public class DynamicFence implements CollisionFactory {
         if(Materials.checkFlag(target, Materials.STAIRS)) {
             if (v.isOlderThan(ClientVersion.V_1_12)) return false;
 
-            return dir(fenceData.getData()).getOppositeFace() == direction;
-        } else if(target.name().contains("GATE")) {
+            return fenceBlock.getBlockState().getFacing().getOppositeFace() == direction;
+        } else if(target.getName().toUpperCase().contains("GATE")) {
 
-            BlockFace f1 = dir(SpigotConversionUtil.toBukkitMaterialData(targetBlock.get().getBlockState()).getData());
+            BlockFace f1 = targetBlock.get().getBlockState().getFacing();
             BlockFace f2 = f1.getOppositeFace();
             return direction == f1 || direction == f2;
         } else {
             if (fence == target) return true;
             if (isFence(target))
-                return !fence.name().contains("NETHER") && !target.name().contains("NETHER");
-            else return isFence(target) || (target.isSolid() && !target.isTransparent());
+                return !fence.getName().toUpperCase().contains("NETHER") && !target.getName().toUpperCase().contains("NETHER");
+            else return isFence(target) || (target.isBlocking() && target.isSolid());
         }
     }
 
-    private static boolean isFence(Material material) {
-        return Materials.checkFlag(material, Materials.FENCE) && material.name().contains("FENCE");
+    private static boolean isFence(StateType material) {
+        return Materials.checkFlag(material, Materials.FENCE);
     }
 
     private static BlockFace dir(byte data) {

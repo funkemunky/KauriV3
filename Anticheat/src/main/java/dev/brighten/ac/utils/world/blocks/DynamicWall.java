@@ -2,6 +2,7 @@ package dev.brighten.ac.utils.world.blocks;
 
 import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import com.github.retrooper.packetevents.protocol.world.BlockFace;
+import com.github.retrooper.packetevents.protocol.world.states.type.StateType;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.handler.block.WrappedBlock;
 import dev.brighten.ac.utils.BlockUtils;
@@ -9,16 +10,11 @@ import dev.brighten.ac.utils.Materials;
 import dev.brighten.ac.utils.world.CollisionBox;
 import dev.brighten.ac.utils.world.types.CollisionFactory;
 import dev.brighten.ac.utils.world.types.SimpleCollisionBox;
-import org.bukkit.Material;
 
 import java.util.Optional;
 
 @SuppressWarnings("Duplicates")
 public class DynamicWall implements CollisionFactory {
-
-    private static final double width = 0.25;
-    private static final double min = .5 - width;
-    private static final double max = .5 + width;
 
     @Override
     public CollisionBox fetch(ClientVersion version, APlayer player, WrappedBlock b) {
@@ -64,7 +60,7 @@ public class DynamicWall implements CollisionFactory {
 
         if(targetBlock.isEmpty()) return false;
 
-        Material target = targetBlock.get().getType();
+        StateType target = targetBlock.get().getType();
 
         if (!isWall(target)&&DynamicFence.isBlacklisted(target))
             return false;
@@ -73,10 +69,10 @@ public class DynamicWall implements CollisionFactory {
             if (v.isOlderThan(ClientVersion.V_1_12)) return false;
 
             return fenceBlock.getBlockState().getFacing().getOppositeFace() == direction;
-        } else return isWall(target) || (target.isSolid() && !target.isTransparent());
+        } else return isWall(target) || (target.isSolid() && !target.isBlocking());
     }
 
-    private static boolean isWall(Material m) {
+    private static boolean isWall(StateType m) {
         return Materials.checkFlag(m, Materials.WALL);
     }
 }

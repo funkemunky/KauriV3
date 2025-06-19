@@ -1,27 +1,37 @@
 package dev.brighten.ac.handler.block;
 
 import com.github.retrooper.packetevents.PacketEvents;
+import com.github.retrooper.packetevents.manager.server.ServerVersion;
 import com.github.retrooper.packetevents.protocol.player.DiggingAction;
 import com.github.retrooper.packetevents.protocol.world.chunk.BaseChunk;
 import com.github.retrooper.packetevents.protocol.world.chunk.Column;
 import com.github.retrooper.packetevents.protocol.world.chunk.TileEntity;
+import com.github.retrooper.packetevents.protocol.world.chunk.impl.v1_16.Chunk_v1_9;
+import com.github.retrooper.packetevents.protocol.world.chunk.impl.v1_7.Chunk_v1_7;
+import com.github.retrooper.packetevents.protocol.world.chunk.impl.v1_8.Chunk_v1_8;
+import com.github.retrooper.packetevents.protocol.world.chunk.impl.v_1_18.Chunk_v1_18;
+import com.github.retrooper.packetevents.protocol.world.chunk.palette.DataPalette;
+import com.github.retrooper.packetevents.protocol.world.dimension.DimensionType;
 import com.github.retrooper.packetevents.protocol.world.states.WrappedBlockState;
 import com.github.retrooper.packetevents.protocol.world.states.type.StateTypes;
 import com.github.retrooper.packetevents.util.Vector3d;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerBlockPlacement;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerDigging;
-import com.github.retrooper.packetevents.wrapper.play.server.*;
-import dev.brighten.ac.Anticheat;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerBlockChange;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerChunkData;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerChunkDataBulk;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerMultiBlockChange;
 import dev.brighten.ac.data.APlayer;
-import dev.brighten.ac.utils.*;
+import dev.brighten.ac.utils.BlockUtils;
+import dev.brighten.ac.utils.LongHash;
+import dev.brighten.ac.utils.Materials;
+import dev.brighten.ac.utils.XMaterial;
 import dev.brighten.ac.utils.math.IntVector;
 import dev.brighten.ac.utils.world.types.RayCollision;
-import io.github.retrooper.packetevents.util.SpigotConversionUtil;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import lombok.RequiredArgsConstructor;
 import me.hydro.emulator.util.mcp.MathHelper;
 import org.bukkit.Location;
-import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 
@@ -30,7 +40,7 @@ import java.util.Optional;
 @SuppressWarnings("unused")
 @RequiredArgsConstructor
 public class BlockUpdateHandler {
-    private final Long2ObjectOpenHashMap<Column> chunks = new Long2ObjectOpenHashMap<>(1000);
+    private final Long2ObjectOpenHashMap<KColumn> chunks = new Long2ObjectOpenHashMap<>(1000);
 
     private final APlayer player;
 
@@ -41,6 +51,8 @@ public class BlockUpdateHandler {
         synchronized (chunks) {
             chunks.clear();
         }
+
+        setMinHeight(player.getDimensionType());
     }
 
     /**
@@ -75,27 +87,15 @@ public class BlockUpdateHandler {
         player.getInfo().getLastPlace().reset();
 
 
-        if(place.getItemStack().isPresent()) {
-            Optional<Column> col = getChunk(pos.getX() >> 4, pos.getZ() >> 4);
+        int x = pos.getX();
+        int y = pos.getY();
+        int z = pos.getZ();
 
-            if(col.isEmpty()) {
-                return;
-            }
-
-            int x = pos.getX();
-            int y = pos.getY();
-            int z = pos.getZ();
-
-            if(pos.getY() < 0 || (y >> 4) > col.get().getChunks().length) {
-                return;
-            }
-
-
-            BaseChunk chunk = col.get().getChunks()[y >> 4];
-
-            chunk.set(x & 15, y & 15, z & 15,
-                    WrappedBlockState.getDefaultState(place.getItemStack().get().getType().getPlacedType()));
+        if(place.getItemStack().isEmpty() || place.getItemStack().get().getType().getPlacedType() == null) {
+            return;
         }
+
+        updateBlock(x, y, z, WrappedBlockState.getDefaultState(place.getItemStack().get().getType().getPlacedType()));
     }
 
     /**
@@ -104,10 +104,10 @@ public class BlockUpdateHandler {
      * @param z z coordinate
      * @return the chunk at the specified coordinates
      */
-    public Optional<Column> getChunk(int x, int z) {
+    public Optional<KColumn> getChunk(int x, int z) {
         synchronized (chunks) {
             long hash = LongHash.toLong(x, z);
-            Column chunk = chunks.get(hash);
+            KColumn chunk = chunks.get(hash);
 
             // If the chunk is null, create a new one
             if(chunk == null) {
@@ -120,9 +120,22 @@ public class BlockUpdateHandler {
 
     private void updateChunk(Column chunk) {
         synchronized (chunks) {
-            chunks.put(LongHash.toLong(chunk.getX(), chunk.getZ()), chunk);
+            KColumn column = new KColumn(chunk.getX(), chunk.getZ(), chunk.getChunks());
+            chunks.put(LongHash.toLong(column.x(), column.z()), column);
         }
     }
+
+    private static BaseChunk create() {
+        if (PacketEvents.getAPI().getServerManager().getVersion().isNewerThanOrEquals(ServerVersion.V_1_18)) {
+            return new Chunk_v1_18();
+        } else if (PacketEvents.getAPI().getServerManager().getVersion().isNewerThanOrEquals(ServerVersion.V_1_9)) {
+            return new Chunk_v1_9(0, DataPalette.createForChunk());
+        } else if(PacketEvents.getAPI().getServerManager().getVersion().isNewerThanOrEquals(ServerVersion.V_1_8)) {
+            return new Chunk_v1_8(false);
+        }
+        return new Chunk_v1_7(false, false);
+    }
+
 
     /**
      * Get a block at the specified coordinates
@@ -133,7 +146,12 @@ public class BlockUpdateHandler {
         return getBlock(location.getBlockX(), location.getBlockY(), location.getBlockZ());
     }
 
-    private int minHeight = 0;
+    private int minHeight = 0, maxHeight = 256;
+
+    public void setMinHeight(DimensionType type) {
+        minHeight = type.getMinY();
+        maxHeight = minHeight + type.getHeight();
+    }
 
     private static final WrappedBlockState airBlockState = WrappedBlockState.getByGlobalId(PacketEvents.getAPI().getServerManager().getVersion().toClientVersion(), 0);
 
@@ -145,7 +163,7 @@ public class BlockUpdateHandler {
      * @return the block at the specified coordinates
      */
     public WrappedBlock getBlock(int x, int y, int z) {
-        Optional<Column> col = getChunk(x >> 4, z >> 4);
+        Optional<KColumn> col = getChunk(x >> 4, z >> 4);
 
         y -= minHeight;
 
@@ -154,7 +172,13 @@ public class BlockUpdateHandler {
                     StateTypes.AIR,
                     airBlockState);
         }
-        BaseChunk chunk = col.get().getChunks()[y >> 4];
+        BaseChunk chunk = col.get().chunks()[y >> 4];
+
+        if(chunk == null) {
+            return new WrappedBlock(new IntVector(x, y, z),
+                    StateTypes.AIR,
+                    airBlockState);
+        }
 
         WrappedBlockState state = chunk.get(player.getPlayerVersion(), x & 15, y & 15, z & 15);
 
@@ -206,20 +230,7 @@ public class BlockUpdateHandler {
                 return;
             }
 
-            Optional<Column> col = getChunk(pos.getX() >> 4, pos.getZ() >> 4);
-
-            if(col.isEmpty()) {
-                return;
-            }
-
-            if(pos.getY() < 0 || (pos.getY() >> 4) > col.get().getChunks().length) {
-                return;
-            }
-
-
-            BaseChunk chunk = col.get().getChunks()[pos.getY() >> 4];
-
-            chunk.set(pos.getX() & 15, pos.getY() & 15, pos.getY() & 15, airBlockState);
+            updateBlock(pos.getX(), pos.getY(), pos.getZ(), airBlockState);
         }
     }
 
@@ -234,20 +245,7 @@ public class BlockUpdateHandler {
         player.runKeepaliveAction(k -> {
             IntVector pos = new IntVector(packet.getBlockPosition());
 
-            Optional<Column> col = getChunk(pos.getX() >> 4, pos.getZ() >> 4);
-
-            if(col.isEmpty()) {
-                return;
-            }
-
-            if(pos.getY() < 0 || (pos.getY() >> 4) > col.get().getChunks().length) {
-                return;
-            }
-
-            BaseChunk chunk = col.get().getChunks()[pos.getY() >> 4];
-
-            chunk.set(pos.getX() & 15, pos.getY() & 15, pos.getZ() & 15,
-                    packet.getBlockState());
+            updateBlock(pos.getX(), pos.getY(), pos.getZ(), packet.getBlockState());
         });
     }
 
@@ -261,21 +259,36 @@ public class BlockUpdateHandler {
             for (WrapperPlayServerMultiBlockChange.EncodedBlock info : packet.getBlocks()) {
 
                 WrappedBlockState blockState = info.getBlockState(player.getPlayerVersion());
-                Optional<Column> col = getChunk(info.getX() >> 4, info.getZ() >> 4);
 
-                if(col.isEmpty()) {
-                    continue;
-                }
-                if(info.getY() < 0 || (info.getY() >> 4) > col.get().getChunks().length) {
-                    continue;
-                }
-
-                BaseChunk chunk = col.get().getChunks()[info.getY() >> 4];
-
-                chunk.set(info.getX() & 15, info.getY() & 15, info.getZ() & 15,
-                        blockState);
+                updateBlock(info.getX(), info.getY(), info.getZ(), blockState);
             }
         });
+    }
+
+    private void updateBlock(int x, int y, int z, WrappedBlockState blockState) {
+        Optional<KColumn> col = getChunk(x >> 4, z >> 4);
+
+        if(col.isEmpty()) {
+            return;
+        }
+
+        int offset = y - minHeight;
+
+        if(offset < 0 || (offset >> 4) > col.get().chunks().length) {
+            return;
+        }
+
+        BaseChunk chunk = col.get().chunks()[offset >> 4];
+
+        if(chunk == null) {
+            chunk = create();
+            col.get().chunks()[offset >> 4] = chunk;
+
+            chunk.set(null, 0, 0, 0, 0);
+        }
+
+        chunk.set(x & 15, offset & 15, z & 15,
+                blockState);
     }
 
     /**
@@ -334,4 +347,7 @@ public class BlockUpdateHandler {
     public WrappedBlock getRelative(IntVector location, BlockFace face) {
         return getBlock(location.clone().add(face.getModX(), face.getModY(), face.getModZ()));
     }
+
+    public record KColumn(int x, int z, BaseChunk[] chunks) {}
+
 }

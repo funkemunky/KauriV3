@@ -2,14 +2,11 @@ package dev.brighten.ac.utils.world.types;
 
 import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.protocol.particle.type.ParticleType;
-import com.github.retrooper.packetevents.protocol.world.states.type.StateType;
-import com.github.retrooper.packetevents.protocol.world.states.type.StateTypes;
-import dev.brighten.ac.data.APlayer;
 import com.github.retrooper.packetevents.protocol.player.ClientVersion;
+import com.github.retrooper.packetevents.protocol.world.states.type.StateType;
+import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.handler.block.WrappedBlock;
-import dev.brighten.ac.utils.BlockUtils;
 import dev.brighten.ac.utils.Helper;
-import dev.brighten.ac.utils.Materials;
 import dev.brighten.ac.utils.Tuple;
 import dev.brighten.ac.utils.math.RayTrace;
 import dev.brighten.ac.utils.world.BlockData;
@@ -17,9 +14,6 @@ import dev.brighten.ac.utils.world.CollisionBox;
 import me.hydro.emulator.util.mcp.MathHelper;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.World;
-import org.bukkit.block.Block;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.util.Vector;
 

@@ -1,5 +1,6 @@
 package dev.brighten.ac.check.impl.combat.autoclicker;
 
+import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientAnimation;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerBlockPlacement;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerFlying;
@@ -9,7 +10,6 @@ import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.check.WTimedAction;
 import dev.brighten.ac.data.APlayer;
-import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import dev.brighten.ac.utils.BlockUtils;
 import dev.brighten.ac.utils.annotation.Bind;
 import dev.brighten.ac.utils.math.cond.MaxDouble;

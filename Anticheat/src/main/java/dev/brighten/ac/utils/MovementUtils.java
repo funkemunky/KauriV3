@@ -2,22 +2,15 @@ package dev.brighten.ac.utils;
 
 import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.manager.server.ServerVersion;
-import dev.brighten.ac.data.APlayer;
 import com.github.retrooper.packetevents.protocol.player.ClientVersion;
-import dev.brighten.ac.utils.world.BlockData;
-import dev.brighten.ac.utils.world.CollisionBox;
-import dev.brighten.ac.utils.world.types.SimpleCollisionBox;
+import dev.brighten.ac.data.APlayer;
+import dev.brighten.ac.handler.block.WrappedBlock;
 import lombok.val;
 import me.hydro.emulator.util.mcp.MathHelper;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
-
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
 
 public class MovementUtils {
 
@@ -45,9 +38,9 @@ public class MovementUtils {
             int i = MathHelper.floor_double(data.getMovement().getTo().getLoc().getX());
             int j = MathHelper.floor_double(data.getMovement().getTo().getBox().minY);
             int k = MathHelper.floor_double(data.getMovement().getTo().getLoc().getZ());
-            Optional<Block> block = BlockUtils.getBlockAsync(new Location(data.getBukkitPlayer().getWorld(), i, j, k));
+            WrappedBlock block = data.getBlockUpdateHandler().getBlock(i, j, k);
 
-            return block.filter(value -> Materials.checkFlag(value.getType(), Materials.LADDER)).isPresent();
+            return Materials.checkFlag(block.getType(), Materials.LADDER);
 
         } catch(NullPointerException e) {
             return false;
@@ -86,24 +79,8 @@ public class MovementUtils {
 
             if(block.isEmpty()) break; //No point in continuing since the one below will still be not present.
 
-            if(Materials.checkFlag(block.get().getType(), Materials.SOLID)
-                    || Materials.checkFlag(block.get().getType(), Materials.LIQUID)) {
-                CollisionBox box = BlockData.getData(block.get().getType())
-                        .getBox(block.get(), PacketEvents.getAPI().getServerManager().getVersion().toClientVersion());
-
-                if(box instanceof SimpleCollisionBox sbox) {
-
-                    return new Location(block.get().getWorld(), x, sbox.maxY, z);
-                } else {
-                    List<SimpleCollisionBox> sboxes = new ArrayList<>();
-
-                    box.downCast(sboxes);
-
-                    double maxY = sboxes.stream().max(Comparator.comparing(sbox -> sbox.maxY)).map(s -> s.maxY)
-                            .orElse(y + 0.01);
-
-                    return new Location(block.get().getWorld(), x, maxY, z);
-                }
+            if(block.get().getType().isSolid()) {
+                return new Location(block.get().getWorld(), x, y + 0.001, z);
             }
         }
 

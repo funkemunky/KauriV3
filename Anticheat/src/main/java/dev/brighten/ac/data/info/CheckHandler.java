@@ -58,6 +58,13 @@ public class CheckHandler {
     public void initChecks() {
         // Enabling checks for players on join
 
+        if (!player.isInitialized()) {
+            Anticheat.INSTANCE.alog("Player " + player.getBukkitPlayer().getName() + " is not initialized!");
+            return;
+        }
+
+        Anticheat.INSTANCE.alog("Initializing checks for player %s %s", player.getBukkitPlayer().getName(), TO_HOOK.size());
+
         for (CheckStatic toHook : TO_HOOK) {
             KListener listener = toHook.playerInit(player);
             synchronized (EVENTS) {
@@ -217,8 +224,6 @@ public class CheckHandler {
             }
         }
     }
-
-    //TODO When using WPacket wrappers only, make this strictly WPacket param based only
 
     public boolean callSyncPacket(Object packet, long timestamp) {
         if(!player.isInitialized()) {

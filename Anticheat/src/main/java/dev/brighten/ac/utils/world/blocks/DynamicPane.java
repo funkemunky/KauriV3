@@ -2,16 +2,16 @@ package dev.brighten.ac.utils.world.blocks;
 
 import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import com.github.retrooper.packetevents.protocol.world.BlockFace;
+import com.github.retrooper.packetevents.protocol.world.states.type.StateType;
+import com.github.retrooper.packetevents.protocol.world.states.type.StateTypes;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.handler.block.WrappedBlock;
 import dev.brighten.ac.utils.BlockUtils;
 import dev.brighten.ac.utils.Materials;
-import dev.brighten.ac.utils.XMaterial;
 import dev.brighten.ac.utils.world.CollisionBox;
 import dev.brighten.ac.utils.world.types.CollisionFactory;
 import dev.brighten.ac.utils.world.types.ComplexCollisionBox;
 import dev.brighten.ac.utils.world.types.SimpleCollisionBox;
-import org.bukkit.Material;
 
 import java.util.Optional;
 
@@ -49,7 +49,7 @@ public class DynamicPane implements CollisionFactory {
         Optional<WrappedBlock> targetBlock = BlockUtils.getRelative(player, fenceBlock.getLocation(), direction, 1);
 
         if(targetBlock.isEmpty()) return false;
-        Material target = targetBlock.get().getType();
+        StateType target = targetBlock.get().getType();
 
         if (!isPane(target)&&DynamicFence.isBlacklisted(target))
             return false;
@@ -58,14 +58,12 @@ public class DynamicPane implements CollisionFactory {
             if (v.isOlderThan(ClientVersion.V_1_12)) return false;
 
             return fenceBlock.getBlockState().getFacing().getOppositeFace() == direction;
-        }  else return isPane(target) || (target.isSolid() && !target.isTransparent());
+        }  else return isPane(target) || (target.isSolid() && !target.isBlocking());
     }
 
-    private static boolean isPane(Material m) {
-        XMaterial mat = BlockUtils.getXMaterial(m);
-
-        return mat == XMaterial.IRON_BARS || mat.name().contains("PANE")
-                || mat.name().contains("THIN");
+    private static boolean isPane(StateType m) {
+        return m == StateTypes.IRON_BARS || m.getName().toUpperCase().contains("PANE")
+                || m.getName().toUpperCase().contains("THIN");
     }
 
 }

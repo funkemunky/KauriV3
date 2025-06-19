@@ -15,7 +15,6 @@ import dev.brighten.ac.utils.world.BlockData;
 import dev.brighten.ac.utils.world.CollisionBox;
 import dev.brighten.ac.utils.world.types.RayCollision;
 import dev.brighten.ac.utils.world.types.SimpleCollisionBox;
-import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
@@ -188,12 +187,12 @@ public class Helper {
         return collisionBoxes;
     }
 
-    public static List<Tuple<SimpleCollisionBox, Material>>
+    public static List<Tuple<SimpleCollisionBox, StateType>>
     getCollisionsWithTypeNoEntities(APlayer player, SimpleCollisionBox collisionBox) {
         return getCollisionsWithTypeNoEntities(player, collisionBox, Materials.COLLIDABLE);
     }
 
-    public static List<Tuple<SimpleCollisionBox, Material>>
+    public static List<Tuple<SimpleCollisionBox, StateType>>
     getCollisionsWithTypeNoEntities(APlayer player, SimpleCollisionBox collisionBox, int mask) {
         int x1 = (int) Math.floor(collisionBox.minX);
         int y1 = (int) Math.floor(collisionBox.minY);
@@ -201,7 +200,7 @@ public class Helper {
         int x2 = (int) Math.floor(collisionBox.maxX + 1);
         int y2 = (int) Math.floor(collisionBox.maxY + 1);
         int z2 = (int) Math.floor(collisionBox.maxZ + 1);
-        List<Tuple<SimpleCollisionBox, Material>> collisionBoxes = new ArrayList<>();
+        List<Tuple<SimpleCollisionBox, StateType>> collisionBoxes = new ArrayList<>();
         for (int x = x1; x < x2; ++x)
             for (int y = y1 - 1; y < y2; ++y)
                 for (int z = z1; z < z2; ++z) {
@@ -236,9 +235,9 @@ public class Helper {
             for (int y = y1 - 1; y < y2; ++y)
                 for (int z = z1; z < z2; ++z) {
                     IntVector vec = new IntVector(x, y, z);
-                    Material type = player.getBlockUpdateHandler().getBlock(vec).getType();
+                    StateType type = player.getBlockUpdateHandler().getBlock(vec).getType();
 
-                    if (type != Material.AIR && Materials.checkFlag(type, mask)) {
+                    if (type != StateTypes.AIR && Materials.checkFlag(type, mask)) {
                         CollisionBox box = BlockData.getData(type)
                                 .getBox(player, vec, PacketEvents.getAPI().getServerManager().getVersion().toClientVersion());
 
@@ -249,25 +248,6 @@ public class Helper {
                 }
 
         return collisionBoxes;
-    }
-
-    public static List<Block> getBlocksNearby2(World world, SimpleCollisionBox collisionBox, int mask) {
-        int x1 = (int) Math.floor(collisionBox.minX);
-        int y1 = (int) Math.floor(collisionBox.minY);
-        int z1 = (int) Math.floor(collisionBox.minZ);
-        int x2 = (int) Math.ceil(collisionBox.maxX);
-        int y2 = (int) Math.ceil(collisionBox.maxY);
-        int z2 = (int) Math.ceil(collisionBox.maxZ);
-        List<Block> blocks = new LinkedList<>();
-        Block block;
-        for (int x = x1; x <= x2; x++)
-            for (int y = y1; y <= y2; y++)
-                for (int z = z1; z <= z2; z++)
-                    if ((block = getBlockAt(world, x, y, z)) != null
-                            && BlockUtils.getXMaterial(block.getType()) != XMaterial.AIR)
-                        if (Materials.checkFlag(block.getType(), mask))
-                            blocks.add(block);
-        return blocks;
     }
 
     private static final int[] decimalPlaces = {0, 10, 100, 1000, 10000, 100000, 1000000,
@@ -292,21 +272,5 @@ public class Helper {
                 .collect(Collectors.joining("", "[", ""));
         String nums = String.valueOf(format((time / (double) max) * 100, 3));
         return line + "§f] §c" + nums + "%";
-    }
-
-    public static List<CollisionBox> toCollisions(List<Block> blocks) {
-        return blocks.stream().map(b -> BlockData.getData(b.getType()).getBox(b, PacketEvents.getAPI().getServerManager().getVersion().toClientVersion()))
-                .collect(Collectors.toCollection(LinkedList::new));
-    }
-
-    public static List<SimpleCollisionBox> toCollisionsDowncasted(List<Block> blocks) {
-        List<SimpleCollisionBox> collisions = new LinkedList<>();
-        blocks.forEach(b -> BlockData.getData(b.getType())
-                .getBox(b, PacketEvents.getAPI().getServerManager().getVersion().toClientVersion()).downCast(collisions));
-        return collisions;
-    }
-
-    public static CollisionBox toCollisions(Block b) {
-        return BlockData.getData(b.getType()).getBox(b, PacketEvents.getAPI().getServerManager().getVersion().toClientVersion());
     }
 }

@@ -1,6 +1,7 @@
 package dev.brighten.ac.utils.math;
 
 import com.github.retrooper.packetevents.util.Vector3i;
+import dev.brighten.ac.utils.KLocation;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -20,6 +21,12 @@ public class IntVector implements Cloneable {
     private int x, y, z;
 
     public IntVector(Location location) {
+        this.x = MathHelper.floor_double(location.getX());
+        this.y = MathHelper.floor_double(location.getY());
+        this.z = MathHelper.floor_double(location.getZ());
+    }
+
+    public IntVector(KLocation location) {
         this.x = MathHelper.floor_double(location.getX());
         this.y = MathHelper.floor_double(location.getY());
         this.z = MathHelper.floor_double(location.getZ());

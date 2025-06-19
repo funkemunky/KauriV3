@@ -28,7 +28,7 @@ import lombok.val;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 
-import java.util.*;
+import java.util.Optional;
 
 public class PacketHandler {
 
@@ -376,14 +376,17 @@ public class PacketHandler {
             wrapped = new WrapperPlayServerRespawn(event);
             if(player.getPlayerVersion().isOlderThan(ClientVersion.V_1_14)) {
                 player.runKeepaliveAction(k -> player.getBukkitPlayer().setSprinting(false), 1);
-            } else {
-                player.runKeepaliveAction(ka -> player.getInfo().lastRespawn.reset());
             }
+            player.runKeepaliveAction(ka -> player.getInfo().lastRespawn.reset());
+            player.runKeepaliveAction(ka -> player.getBlockUpdateHandler()
+                    .setMinHeight(player.getDimensionType()));
         } else if(event.getPacketType() == PacketType.Play.Server.PLAYER_POSITION_AND_LOOK) {
             WrapperPlayServerPlayerPositionAndLook packet = new WrapperPlayServerPlayerPositionAndLook(event);
 
             wrapped = packet;
 
+            player.runKeepaliveAction(ka ->
+                    player.getBlockUpdateHandler().setMinHeight(player.getDimensionType()));
             player.getMovement().addPosition(packet);
         } else if(event.getPacketType() == PacketType.Play.Server.ATTACH_ENTITY) {
             WrapperPlayServerAttachEntity packet = new WrapperPlayServerAttachEntity(event);
@@ -441,7 +444,7 @@ public class PacketHandler {
                 player.getInfo().setInventoryOpen(true);
                 player.getInfo().lastInventoryOpen.reset();
             });
-        } else {
+        }  else {
             wrapped = new PacketWrapper<>(event);
         }
 

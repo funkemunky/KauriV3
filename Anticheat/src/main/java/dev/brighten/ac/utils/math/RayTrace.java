@@ -2,7 +2,6 @@ package dev.brighten.ac.utils.math;
 
 import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.manager.server.ServerVersion;
-import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import dev.brighten.ac.utils.world.types.SimpleCollisionBox;
 import org.bukkit.Effect;
 import org.bukkit.World;

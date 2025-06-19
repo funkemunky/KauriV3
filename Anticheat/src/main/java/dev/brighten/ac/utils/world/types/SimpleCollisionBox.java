@@ -1,6 +1,5 @@
 package dev.brighten.ac.utils.world.types;
 
-import com.github.retrooper.packetevents.protocol.particle.Particle;
 import com.github.retrooper.packetevents.protocol.particle.type.ParticleType;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.utils.Helper;
@@ -9,7 +8,6 @@ import dev.brighten.ac.utils.reflections.impl.MinecraftReflection;
 import dev.brighten.ac.utils.world.CollisionBox;
 import me.hydro.emulator.util.mcp.AxisAlignedBB;
 import org.bukkit.Location;
-import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
 
 import java.util.Arrays;
