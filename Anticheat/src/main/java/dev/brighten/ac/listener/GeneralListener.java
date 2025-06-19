@@ -2,6 +2,7 @@ package dev.brighten.ac.listener;
 
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.data.APlayer;
+import dev.brighten.ac.utils.KLocation;
 import dev.brighten.ac.utils.annotation.Init;
 import dev.brighten.ac.utils.world.types.RayCollision;
 import org.bukkit.Location;
@@ -16,6 +17,7 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.PlayerEditBookEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
+import org.bukkit.util.Vector;
 
 import java.util.ArrayList;
 
@@ -39,9 +41,9 @@ public class GeneralListener implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onInteract(PlayerInteractEvent event) {
-        Anticheat.INSTANCE.getPlayerRegistry().getPlayer(event.getPlayer().getUniqueId()).ifPresent(player -> {
-            player.getInfo().breakingBlock = event.getAction().equals(Action.LEFT_CLICK_BLOCK);
-        });
+        Anticheat.INSTANCE.getPlayerRegistry().getPlayer(event.getPlayer().getUniqueId())
+                .ifPresent(player -> player.getInfo().breakingBlock = event.getAction()
+                        .equals(Action.LEFT_CLICK_BLOCK));
     }
 
     @EventHandler(ignoreCancelled = true)
@@ -73,11 +75,11 @@ public class GeneralListener implements Listener {
 
                     RayCollision coll = new RayCollision(origin.toVector(), origin.getDirection().multiply(-1));
 
-                    Location loc1 = coll.collisionPoint(1.2).toLocation(event.getTo().getWorld());
+                    Vector loc1 = coll.collisionPoint(1.2);
 
                     Anticheat.INSTANCE.getRunUtils().taskLater(() -> {
                         player.getMob().despawn();
-                        player.getMob().spawn(true, loc1, new ArrayList<>(), player);
+                        player.getMob().spawn(true, new KLocation(loc1), new ArrayList<>(), player);
                     }, 5);
                 });
     }

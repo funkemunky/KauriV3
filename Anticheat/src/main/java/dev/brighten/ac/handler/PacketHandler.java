@@ -29,7 +29,6 @@ import io.github.retrooper.packetevents.util.SpigotConversionUtil;
 import lombok.val;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
-import org.checkerframework.checker.units.qual.K;
 
 import java.util.Optional;
 
@@ -140,6 +139,7 @@ public class PacketHandler {
             }
 
             player.getMovement().process(packet);
+            player.getVelocityHandler().onFlyingPost(packet);
         } else if(event.getPacketType().equals(PacketType.Play.Client.STEER_VEHICLE)) {
             WrapperPlayClientSteerVehicle packet = new WrapperPlayClientSteerVehicle(event);
 

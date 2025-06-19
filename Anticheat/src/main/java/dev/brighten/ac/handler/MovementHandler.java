@@ -167,7 +167,7 @@ public class MovementHandler {
             List<Vector3d> possibleVelocity = new ArrayList<>();
 
             possibleVelocity.add(null);
-            possibleVelocity.addAll(player.getVelocityHandler().getUnconfirmedVectors());
+            possibleVelocity.addAll(player.getVelocityHandler().getPossibleVectors());
 
             Motion previousMotion = player.EMULATOR.getMotion().clone();
 

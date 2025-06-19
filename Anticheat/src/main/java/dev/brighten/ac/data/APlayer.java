@@ -47,6 +47,7 @@ import me.hydro.emulator.util.mcp.AxisAlignedBB;
 import me.hydro.emulator.util.mcp.BlockPos;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
+import org.bukkit.util.Vector;
 
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -225,12 +226,12 @@ public class APlayer {
 
         RayCollision coll = new RayCollision(origin.toVector(), origin.getDirection().multiply(-1));
 
-        Location loc1 = coll.collisionPoint(2).toLocation(getBukkitPlayer().getWorld());
+        Vector loc1 = coll.collisionPoint(2);
 
         List<EntityData<?>> dataList = new ArrayList<>();
 
         dataList.add(new EntityData<>(7, EntityDataTypes.INT, 1));
-        mob.spawn(true, loc1, dataList, this);
+        mob.spawn(true, new KLocation(loc1), dataList, this);
     }
 
     protected void unload() {
@@ -252,7 +253,9 @@ public class APlayer {
     public void runKeepaliveAction(Consumer<KeepAlive> action, int later) {
         int id = Anticheat.INSTANCE.getKeepaliveProcessor().currentKeepalive.id + later;
 
-        keepAliveStamps.add(new NormalAction(id, action));
+        synchronized (keepAliveStamps) {
+            keepAliveStamps.add(new NormalAction(id, action));
+        }
 
     }
 

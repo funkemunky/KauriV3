@@ -1,10 +1,10 @@
 package dev.brighten.ac.utils;
 
 import dev.brighten.ac.Anticheat;
+import dev.brighten.ac.handler.entity.TrackedEntity;
 import dev.brighten.ac.utils.objects.evicting.EvictingList;
 import lombok.RequiredArgsConstructor;
 import me.hydro.emulator.util.mcp.MathHelper;
-import org.bukkit.entity.Entity;
 import org.bukkit.util.Vector;
 
 import java.util.ArrayList;
@@ -14,7 +14,7 @@ import java.util.List;
 @RequiredArgsConstructor
 //Duplicate class for obfuscation purposes
 public class EntityLocation {
-    public final Entity entity;
+    public final TrackedEntity entity;
     public double newX, newY, newZ, x, y, z;
     public float newYaw, newPitch, yaw, pitch;
     public int increment = 0;
@@ -101,6 +101,7 @@ public class EntityLocation {
             this.x = d0;
             this.y = d1;
             this.z = d2;
+            entity.setLocation(new KLocation(x, y, z, yaw, pitch));
             interpolatedLocations.add(new KLocation(x, y, z, yaw, pitch));
         }
     }

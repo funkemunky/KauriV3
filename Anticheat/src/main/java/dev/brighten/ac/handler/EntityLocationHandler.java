@@ -6,25 +6,22 @@ import com.github.retrooper.packetevents.protocol.entity.type.EntityType;
 import com.github.retrooper.packetevents.protocol.entity.type.EntityTypes;
 import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerDestroyEntities;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityPositionSync;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityTeleport;
-import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.handler.entity.FakeMob;
 import dev.brighten.ac.handler.entity.TrackedEntity;
 import dev.brighten.ac.packet.WPacketPlayOutEntity;
 import dev.brighten.ac.utils.EntityLocation;
 import dev.brighten.ac.utils.KLocation;
-import dev.brighten.ac.utils.PacketEventsUtil;
 import dev.brighten.ac.utils.Tuple;
 import dev.brighten.ac.utils.timer.Timer;
 import dev.brighten.ac.utils.timer.impl.MillisTimer;
 import dev.brighten.ac.utils.world.types.RayCollision;
-import io.github.retrooper.packetevents.util.SpigotConversionUtil;
 import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
-import org.bukkit.Location;
 import org.bukkit.entity.Entity;
 import org.bukkit.util.Vector;
 
@@ -62,7 +59,7 @@ public class EntityLocationHandler {
      * @return Optional<EntityLocation></EntityLocation>
      */
     public Optional<Tuple<EntityLocation, EntityLocation>> getEntityLocation(Entity entity) {
-        return Optional.ofNullable(entityLocationMap.get(entity.getUniqueId()));
+        return Optional.ofNullable(entityLocationMap.get(entity.getEntityId()));
     }
 
     public Optional<List<FakeMob>> getFakeMob(int entityId) {
@@ -113,11 +110,9 @@ public class EntityLocationHandler {
     void onRelPosition(WPacketPlayOutEntity packet) {
         TrackedEntity entity = trackedEntities.get(packet.getId());
 
-        var type = SpigotConversionUtil.fromBukkitEntityType(entity.getType());
+        if(!allowedEntityTypes.contains(entity.getEntityType())) return;
 
-        if(type == null || !allowedEntityTypes.contains(type)) return;
-
-        val tuple = entityLocationMap.computeIfAbsent(entity.getUniqueId(),
+        val tuple = entityLocationMap.computeIfAbsent(entity.getEntityId(),
                 key -> {
                      createFakeMob(packet.getId(), entity.getLocation());
                      return new Tuple<>(new EntityLocation(entity), null);
@@ -141,6 +136,35 @@ public class EntityLocationHandler {
         });
     }
 
+    void onPositionSync(WrapperPlayServerEntityPositionSync packet) {
+        TrackedEntity entity = trackedEntities.get(packet.getId());
+
+        if(!allowedEntityTypes.contains(entity.getEntityType())) return;
+
+        val tuple = entityLocationMap.computeIfAbsent(entity.getEntityId(),
+                key -> {
+                    createFakeMob(packet.getId(), entity.getLocation());
+                    return new Tuple<>(new EntityLocation(entity), null);
+                });
+
+        processFakeMobs(packet.getId(), false, packet.getValues().getPosition().getX(),
+                packet.getValues().getPosition().getY(), packet.getValues().getPosition().getZ());
+
+        EntityLocation eloc = tuple.one;
+
+        tuple.two = tuple.one.clone();
+
+        runAction(entity, () -> {
+            //We don't need to do version checking here. Atlas handles this for us.
+            eloc.newX = packet.getValues().getPosition().getX();
+            eloc.newY = packet.getValues().getPosition().getY();
+            eloc.newZ = packet.getValues().getPosition().getZ();
+            eloc.newYaw = packet.getValues().getYaw();
+            eloc.newPitch = packet.getValues().getPitch();
+
+            eloc.increment = 3;
+        });
+    }
     /**
      *
      * Processing PacketPlayOutEntityTeleport to update locations in a non-relative manner.
@@ -210,9 +234,15 @@ public class EntityLocationHandler {
      * @param action Runnable
      */
     private void runAction(TrackedEntity entity, Runnable action) {
-        data.runKeepaliveAction(keepalive -> action.run());
-        data.runKeepaliveAction(keepalive ->
-                entityLocationMap.get(entity.getEntityId()).two = null, 1);
+        if(data.getInfo().getTarget() != null && entity.getEntityId() == data.getInfo().getTarget().getEntityId()) {
+            data.runInstantAction(ia -> {
+                if(!ia.isEnd()) {
+                    action.run();
+                }
+            }, true);
+        } else {
+            data.runKeepaliveAction(keepalive -> action.run());
+        }
     }
 
     public void onEntityDestroy(WrapperPlayServerDestroyEntities packet) {
