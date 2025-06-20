@@ -266,11 +266,11 @@ public class EntityLocationHandler {
             FakeMob mob = new FakeMob(EntityTypes.MAGMA_CUBE);
 
             List<EntityData<?>> types = new ArrayList<>();
-            EntityData<?> entityData = new EntityData<>(7, EntityDataTypes.INT, 10);
+            EntityData<?> entityData = new EntityData<>(16, EntityDataTypes.BYTE, (byte)10);
             types.add(entityData);
 
             // Setting Magma cube size to size 10
-            mob.spawn(false, location.clone().add(offset, offset, offset),
+            mob.spawn(true, location.clone().add(offset, offset, offset),
                     types, data);
 
             trackedEntity.get().getFakeMobs().add(mob);
@@ -285,12 +285,10 @@ public class EntityLocationHandler {
 
         FakeMob mob = new FakeMob(EntityTypes.SLIME);
         List<EntityData<?>> types = new ArrayList<>();
-        EntityData<?> entityData = new EntityData<>(7, EntityDataTypes.INT, 5);
+        EntityData<?> entityData = new EntityData<>(16, EntityDataTypes.BYTE, (byte)5);
 
         types.add(entityData);
-        mob.spawn(false, new KLocation(point.getX(), point.getY(), point.getZ()), types, data);
-
-        data.getBukkitPlayer().sendMessage("Created fake mob at " + point.getX() + ", " + point.getY() + ", " + point.getZ());
+        mob.spawn(true, new KLocation(point.getX(), point.getY(), point.getZ()), types, data);
 
         playerEntity.get().getFakeMobs().add(mob);
 

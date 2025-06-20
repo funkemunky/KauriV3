@@ -6,7 +6,6 @@ import com.github.retrooper.packetevents.protocol.entity.data.EntityData;
 import com.github.retrooper.packetevents.protocol.entity.data.EntityDataTypes;
 import com.github.retrooper.packetevents.protocol.entity.type.EntityTypes;
 import com.github.retrooper.packetevents.protocol.player.ClientVersion;
-import com.github.retrooper.packetevents.protocol.player.User;
 import com.github.retrooper.packetevents.protocol.world.dimension.DimensionType;
 import com.github.retrooper.packetevents.util.Vector3d;
 import com.github.retrooper.packetevents.wrapper.PacketWrapper;
@@ -230,8 +229,8 @@ public class APlayer {
 
         List<EntityData<?>> dataList = new ArrayList<>();
 
-        dataList.add(new EntityData<>(7, EntityDataTypes.INT, 1));
-        mob.spawn(true, new KLocation(loc1), dataList, this);
+        dataList.add(new EntityData<>(16, EntityDataTypes.BYTE, (byte)1));
+        mob.spawn(false, new KLocation(loc1), dataList, this);
     }
 
     protected void unload() {
