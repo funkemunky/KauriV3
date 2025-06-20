@@ -45,6 +45,7 @@ public class Hitbox extends Check {
                 && allowedEntityTypes.contains(entity.getType())) {
             attacks.add(new Tuple<>(packet.getEntity(player.getBukkitPlayer().getWorld()),
                     player.getMovement().getTo().getLoc().clone()));
+            debug("attack on tick %s", player.getPlayerTick());
         }
     };
 
@@ -75,6 +76,8 @@ public class Hitbox extends Check {
             if(eloc.one.x == 0 && eloc.one.y == 0 & eloc.one.z == 0) {
                 return;
             }
+
+            debug("Checking for hitbox on tick %s", player.getPlayerTick());
 
             double distance = Double.MAX_VALUE;
             boolean collided = false; //Using this to compare smaller numbers than Double.MAX_VALUE. Slightly faster
