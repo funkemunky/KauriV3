@@ -319,7 +319,7 @@ public class APlayer {
                     + packet.toString());
         }
 
-        PacketEvents.getAPI().getPlayerManager().sendPacketSilently(bukkitPlayer, packet);
+        PacketEvents.getAPI().getPlayerManager().writePacketSilently(bukkitPlayer, packet);
     }
 
     public DimensionType getDimensionType() {
@@ -327,7 +327,7 @@ public class APlayer {
     }
 
     public void sendPacket(PacketWrapper<?> packet) {
-        PacketEvents.getAPI().getPlayerManager().sendPacket(bukkitPlayer, packet);
+        PacketEvents.getAPI().getPlayerManager().writePacket(bukkitPlayer, packet);
     }
 
     public ClientVersion getPlayerVersion() {
