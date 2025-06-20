@@ -11,8 +11,6 @@ import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.utils.annotation.Bind;
 import lombok.val;
 
-import java.util.List;
-
 @CheckData(name = "KillAura (Bot)", checkId = "kabot", type = CheckType.KILLAURA, maxVersion = ClientVersion.V_1_21_5)
 public class KABot extends Check {
 
@@ -31,13 +29,11 @@ public class KABot extends Check {
 
     @Bind
     WAction<WrapperPlayClientInteractEntity> packet = packet -> {
-        val optional = player.getEntityLocationHandler().getFakeMob(packet.getEntityId());
+        val optional = player.getEntityLocationHandler().getTrackedEntity(packet.getEntityId());
 
         if(optional.isPresent()
                 && (player.getEntityLocationHandler().clientHasEntity.get()
-                || player.getEntityLocationHandler()
-                        .getFakeMob(player.getBukkitPlayer().getEntityId())
-                        .map(List::size).orElse(0) > 0))  {
+                || !optional.get().getFakeMobs().isEmpty()))  {
             if(++buffer > 3) {
                 flag("Attacked player without attacking bot!");
             }

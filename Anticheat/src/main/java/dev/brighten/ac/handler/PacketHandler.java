@@ -194,7 +194,7 @@ public class PacketHandler {
                     Optional<Entity> target = Anticheat.INSTANCE.getWorldInfo(player.getBukkitPlayer().getWorld()).getEntity(packet.getEntityId());
 
                     if(target.isPresent() && target.get() instanceof LivingEntity entity) {
-                        if (player.getInfo().lastFakeBotHit.isPassed(400) && Math.random() > 0.9) {
+                        if (player.getInfo().lastFakeBotHit.isPassed(20) && Math.random() > 0.9) {
                             player.getEntityLocationHandler().canCreateMob.add(entity.getEntityId());
                         }
                         player.getInfo().setTarget(entity);

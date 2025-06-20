@@ -2,12 +2,13 @@ package dev.brighten.ac.utils.world;
 
 import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.manager.server.ServerVersion;
-import com.github.retrooper.packetevents.protocol.player.ClientVersion;
-import dev.brighten.ac.utils.KLocation;
+import dev.brighten.ac.Anticheat;
+import dev.brighten.ac.handler.entity.TrackedEntity;
 import dev.brighten.ac.utils.reflections.Reflections;
 import dev.brighten.ac.utils.reflections.impl.CraftReflection;
 import dev.brighten.ac.utils.reflections.types.WrappedClass;
 import dev.brighten.ac.utils.reflections.types.WrappedField;
+import dev.brighten.ac.utils.world.types.NoCollisionBox;
 import dev.brighten.ac.utils.world.types.SimpleCollisionBox;
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
@@ -29,8 +30,9 @@ public class EntityData {
 
             //We cast this as a float since the fields are floats.
 
-            return new SimpleCollisionBox(new Vector(), (float)fieldWidth.get(ventity),
-                    (float)fieldLength.get(ventity));
+            float width = fieldWidth.get(ventity);
+            float length = fieldLength.get(ventity);
+            return new SimpleCollisionBox(new Vector(), width, length);
         }).copy();
     }
 
@@ -38,12 +40,14 @@ public class EntityData {
         return bounds(entity).offset(location.getX(), location.getY(), location.getZ());
     }
 
-    public static CollisionBox getEntityBox(Vector vector, Entity entity) {
-        return bounds(entity).offset(vector.getX(), vector.getY(), vector.getZ());
-    }
+    public static CollisionBox getEntityBox(Location location, TrackedEntity entity) {
+        var bukkitEntity = Anticheat.INSTANCE.getWorldInfo(location.getWorld()).getEntity(entity.getEntityId());
 
-    public static CollisionBox getEntityBox(KLocation location, Entity entity) {
-        return bounds(entity).offset(location.getX(), location.getY(), location.getZ());
+        if(bukkitEntity.isEmpty()) {
+            return NoCollisionBox.INSTANCE;
+        }
+
+        return bounds(bukkitEntity.get()).offset(location.getX(), location.getY(), location.getZ());
     }
 
     static {

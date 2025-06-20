@@ -10,7 +10,7 @@ import com.github.retrooper.packetevents.protocol.world.chunk.impl.v1_16.Chunk_v
 import com.github.retrooper.packetevents.protocol.world.chunk.impl.v1_7.Chunk_v1_7;
 import com.github.retrooper.packetevents.protocol.world.chunk.impl.v1_8.Chunk_v1_8;
 import com.github.retrooper.packetevents.protocol.world.chunk.impl.v_1_18.Chunk_v1_18;
-import com.github.retrooper.packetevents.protocol.world.chunk.palette.DataPalette;
+import com.github.retrooper.packetevents.protocol.world.chunk.palette.PaletteType;
 import com.github.retrooper.packetevents.protocol.world.dimension.DimensionType;
 import com.github.retrooper.packetevents.protocol.world.states.WrappedBlockState;
 import com.github.retrooper.packetevents.protocol.world.states.type.StateTypes;
@@ -21,6 +21,7 @@ import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerBl
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerChunkData;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerChunkDataBulk;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerMultiBlockChange;
+import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.utils.BlockUtils;
 import dev.brighten.ac.utils.LongHash;
@@ -28,15 +29,19 @@ import dev.brighten.ac.utils.Materials;
 import dev.brighten.ac.utils.XMaterial;
 import dev.brighten.ac.utils.math.IntVector;
 import dev.brighten.ac.utils.world.types.RayCollision;
+import io.github.retrooper.packetevents.util.SpigotConversionUtil;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import me.hydro.emulator.util.mcp.MathHelper;
+import org.bukkit.Chunk;
 import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 
-import java.util.Optional;
-
+@Slf4j
 @SuppressWarnings("unused")
 @RequiredArgsConstructor
 public class BlockUpdateHandler {
@@ -104,18 +109,67 @@ public class BlockUpdateHandler {
      * @param z z coordinate
      * @return the chunk at the specified coordinates
      */
-    public Optional<KColumn> getChunk(int x, int z) {
+    public KColumn getChunk(int x, int z) {
         synchronized (chunks) {
-            long hash = LongHash.toLong(x, z);
+            long hash = LongHash.toLong(x >> 4, z >> 4);
             KColumn chunk = chunks.get(hash);
 
             // If the chunk is null, create a new one
             if(chunk == null) {
-                return Optional.empty();
+                chunk = getBukkitColumn(player.getBukkitPlayer().getWorld(), x, z);
+
+                if(chunk == null) {
+                    return new KColumn(x, z, new BaseChunk[maxHeight / 16]);
+                }
+                chunks.put(hash, chunk);
             }
 
-            return Optional.of(chunk);
+            return chunk;
         }
+    }
+
+    private KColumn getBukkitColumn(World world, int x, int z) {
+        Chunk chunk = BlockUtils.getChunkAsync(world, x >> 4, z >> 4).orElse(null);
+
+        if(chunk == null) {
+            // Handle loading on main thread
+            Anticheat.INSTANCE.getRunUtils().task(() -> {
+                long hash = LongHash.toLong(x >> 4, z >> 4);
+
+                if(!chunks.containsKey(hash)) {
+                    chunks.put(hash, getBukkitColumn(world, x, z));
+                }
+            });
+            return null;
+        }
+        BaseChunk[] levels = new BaseChunk[world.getMaxHeight() / 16];
+
+        for(int i = 0; i < levels.length; i++) {
+            levels[i] = create();
+        }
+
+        int chunkX = chunk.getX();
+        int chunkZ = chunk.getZ();
+
+        for(int blockX = chunk.getX(); blockX < chunk.getX() + 16 ; blockX++) {
+            for(int blockZ = chunk.getZ(); blockZ < chunk.getZ() + 16 ; blockZ++) {
+                for(int blockY = minHeight ; blockY < world.getMaxHeight() ; blockY++) {
+                    Block block = chunk.getBlock(blockX, blockY, blockZ);
+
+                    if(block.getType() == null || block.getType().equals(Material.AIR)) {
+                        continue; // Air
+                    }
+
+                    BaseChunk baseChunk = levels[blockY >> 4];
+
+                    WrappedBlockState state = SpigotConversionUtil.fromBukkitMaterialData(block.getState().getData());
+
+                    baseChunk.set(blockX & 15, blockY & 15, blockZ & 15, state);
+                }
+            }
+        }
+
+        return new KColumn(x, z, levels);
     }
 
     private void updateChunk(Column chunk) {
@@ -129,7 +183,7 @@ public class BlockUpdateHandler {
         if (PacketEvents.getAPI().getServerManager().getVersion().isNewerThanOrEquals(ServerVersion.V_1_18)) {
             return new Chunk_v1_18();
         } else if (PacketEvents.getAPI().getServerManager().getVersion().isNewerThanOrEquals(ServerVersion.V_1_9)) {
-            return new Chunk_v1_9(0, DataPalette.createForChunk());
+            return new Chunk_v1_9(0, PaletteType.BIOME.create().paletteType.create());
         } else if(PacketEvents.getAPI().getServerManager().getVersion().isNewerThanOrEquals(ServerVersion.V_1_8)) {
             return new Chunk_v1_8(false);
         }
@@ -163,19 +217,30 @@ public class BlockUpdateHandler {
      * @return the block at the specified coordinates
      */
     public WrappedBlock getBlock(int x, int y, int z) {
-        Optional<KColumn> col = getChunk(x >> 4, z >> 4);
+        KColumn col = getChunk(x, z);
 
         y -= minHeight;
 
-        if(col.isEmpty()) {
-            return new WrappedBlock(new IntVector(x, y, z),
-                    StateTypes.AIR,
-                    airBlockState);
-        }
-        BaseChunk chunk = col.get().chunks()[y >> 4];
+        BaseChunk chunk = col.chunks()[y >> 4];
 
         if(chunk == null) {
-            return new WrappedBlock(new IntVector(x, y, z),
+            //Get Bukkit Block
+            Block block = BlockUtils.getBlockAsync(new Location(player.getBukkitPlayer().getWorld(), x, y, z))
+                    .orElse(null);
+
+            if(block != null) {
+                WrappedBlockState state = SpigotConversionUtil.fromBukkitMaterialData(block.getState().getData());
+
+                if (state.getType() == StateTypes.AIR) {
+                    return new WrappedBlock(new IntVector(x, y + minHeight, z),
+                            StateTypes.AIR,
+                            airBlockState);
+                } else {
+                    chunk = create();
+                    col.chunks()[y >> 4] = chunk;
+                    chunk.set(x & 15, y & 15, z & 15, state);
+                }
+            } else return new WrappedBlock(new IntVector(x, y, z),
                     StateTypes.AIR,
                     airBlockState);
         }
@@ -266,23 +331,19 @@ public class BlockUpdateHandler {
     }
 
     private void updateBlock(int x, int y, int z, WrappedBlockState blockState) {
-        Optional<KColumn> col = getChunk(x >> 4, z >> 4);
-
-        if(col.isEmpty()) {
-            return;
-        }
+        KColumn col = getChunk(x, z);
 
         int offset = y - minHeight;
 
-        if(offset < 0 || (offset >> 4) > col.get().chunks().length) {
+        if(offset < 0 || (offset >> 4) > col.chunks().length) {
             return;
         }
 
-        BaseChunk chunk = col.get().chunks()[offset >> 4];
+        BaseChunk chunk = col.chunks()[offset >> 4];
 
         if(chunk == null) {
             chunk = create();
-            col.get().chunks()[offset >> 4] = chunk;
+            col.chunks()[offset >> 4] = chunk;
 
             chunk.set(null, 0, 0, 0, 0);
         }

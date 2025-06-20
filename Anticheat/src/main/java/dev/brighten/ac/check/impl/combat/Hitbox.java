@@ -1,5 +1,7 @@
 package dev.brighten.ac.check.impl.combat;
 
+import com.github.retrooper.packetevents.protocol.entity.type.EntityType;
+import com.github.retrooper.packetevents.protocol.entity.type.EntityTypes;
 import com.github.retrooper.packetevents.protocol.particle.type.ParticleTypes;
 import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientInteractEntity;
@@ -10,14 +12,13 @@ import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.data.APlayer;
+import dev.brighten.ac.handler.entity.TrackedEntity;
 import dev.brighten.ac.utils.*;
 import dev.brighten.ac.utils.annotation.Bind;
 import dev.brighten.ac.utils.timer.Timer;
 import dev.brighten.ac.utils.timer.impl.TickTimer;
 import dev.brighten.ac.utils.world.EntityData;
 import dev.brighten.ac.utils.world.types.SimpleCollisionBox;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.EntityType;
 import org.bukkit.util.Vector;
 
 import java.util.*;
@@ -29,11 +30,11 @@ public class Hitbox extends Check {
     private int hbuffer;
 
     public Timer lastAimOnTarget = new TickTimer(), lastPosition = new TickTimer();
-    private final Queue<Tuple<Entity, KLocation>> attacks = new LinkedBlockingQueue<>();
+    private final Queue<Tuple<TrackedEntity, KLocation>> attacks = new LinkedBlockingQueue<>();
 
-    private final EnumSet<EntityType> allowedEntityTypes = EnumSet.of(EntityType.ZOMBIE, EntityType.SHEEP,
-            EntityType.BLAZE, EntityType.SKELETON, EntityType.PLAYER, EntityType.VILLAGER, EntityType.IRON_GOLEM,
-            EntityType.WITCH, EntityType.COW, EntityType.CREEPER);
+    private final Set<EntityType> allowedEntityTypes = Set.of(EntityTypes.ZOMBIE, EntityTypes.SHEEP,
+            EntityTypes.BLAZE, EntityTypes.SKELETON, EntityTypes.PLAYER, EntityTypes.VILLAGER, EntityTypes.IRON_GOLEM,
+            EntityTypes.WITCH, EntityTypes.COW, EntityTypes.CREEPER);
 
     public Hitbox(APlayer player) {
         super(player);
@@ -45,9 +46,8 @@ public class Hitbox extends Check {
         if(packet.getAction() != WrapperPlayClientInteractEntity.InteractAction.ATTACK)
             return;
 
-        Optional<Entity> entity = Anticheat.INSTANCE.getWorldInfo(player.getBukkitPlayer().getWorld())
-                .getEntity(packet.getEntityId());
-        if(entity.isEmpty() || !allowedEntityTypes.contains(entity.get().getType())) return;
+        Optional<TrackedEntity> entity = player.getEntityLocationHandler().getTrackedEntity(packet.getEntityId());
+        if(entity.isEmpty() || !allowedEntityTypes.contains(entity.get().getEntityType())) return;
 
         attacks.add(new Tuple<>(entity.get(),
                 player.getMovement().getTo().getLoc().clone()));
@@ -62,22 +62,16 @@ public class Hitbox extends Check {
             attacks.clear();
             return;
         }
-        Tuple<Entity, KLocation> target;
+        Tuple<TrackedEntity, KLocation> target;
 
         while((target = attacks.poll()) != null) {
             //Updating new entity loc
-            Optional<Tuple<EntityLocation, EntityLocation>> optionalEloc = player.getEntityLocationHandler()
-                    .getEntityLocation(target.one);
-
-            if(optionalEloc.isEmpty()) {
-                return;
-            }
-
-            final Tuple<EntityLocation, EntityLocation> eloc = optionalEloc.get();
+            
+            TrackedEntity entity = target.one;
 
             final KLocation to = player.getMovement().getTo().getLoc().clone();
 
-            if(eloc.one.x == 0 && eloc.one.y == 0 & eloc.one.z == 0) {
+            if(entity.getNewEntityLocation().x == 0 && entity.getNewEntityLocation().y == 0 & entity.getNewEntityLocation().z == 0) {
                 return;
             }
 
@@ -95,23 +89,23 @@ public class Hitbox extends Check {
                 expand+= 0.03;
             }
 
-            if(eloc.two != null) {
-                for (KLocation oldLocation : eloc.one.interpolatedLocations) {
+            if(entity.getOldEntityLocation() != null) {
+                for (KLocation oldLocation : entity.getNewEntityLocation().interpolatedLocations) {
                     SimpleCollisionBox box = (SimpleCollisionBox)
-                            EntityData.getEntityBox(oldLocation.toVector(), target.one);
+                            EntityData.getEntityBox(oldLocation.toLocation(player.getBukkitPlayer().getWorld()), target.one);
 
                     boxes.add(box.expand(expand));
                 }
-                for (KLocation oldLocation : eloc.two.interpolatedLocations) {
+                for (KLocation oldLocation : entity.getOldEntityLocation().interpolatedLocations) {
                     SimpleCollisionBox box = (SimpleCollisionBox)
-                            EntityData.getEntityBox(oldLocation.toVector(), target.one);
+                            EntityData.getEntityBox(oldLocation.toLocation(player.getBukkitPlayer().getWorld()), target.one);
 
                     boxes.add(box.expand(expand));
                 }
             } else {
-                for (KLocation oldLocation : eloc.one.interpolatedLocations) {
+                for (KLocation oldLocation : entity.getNewEntityLocation().interpolatedLocations) {
                     SimpleCollisionBox box = (SimpleCollisionBox)
-                            EntityData.getEntityBox(oldLocation.toVector(), target.one);
+                            EntityData.getEntityBox(oldLocation.toLocation(player.getBukkitPlayer().getWorld()), target.one);
 
                     boxes.add(box.expand(expand));
                 }
@@ -188,7 +182,7 @@ public class Hitbox extends Check {
                         player.getInfo().isSneaking());
             } else if(player.getEntityLocationHandler().streak > 1) {
                 if (++hbuffer > 5) {
-                    flag("%.1f;%.1f;%.1f", eloc.one.x, eloc.one.y, eloc.one.z);
+                    flag("%.1f;%.1f;%.1f", entity.getNewEntityLocation().x, entity.getNewEntityLocation().y, entity.getNewEntityLocation().z);
                 }
                 debug("Missed!");
             }

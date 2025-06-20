@@ -103,7 +103,7 @@ public class BBRevealHandler implements Listener {
                     var blockBox = BlockData.getData(block.getType())
                             .getBox(player.get(), blockLoc, player.get().getPlayerVersion());
 
-                    blockBox.draw(ParticleTypes.FLAME, new APlayer[]{player.get()});
+                    blockBox.draw(ParticleTypes.FLAME, player.get());
                 });
             });
             entitiesToShow.forEach(e -> EntityData.getEntityBox(e.getLocation(), e)

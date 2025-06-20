@@ -8,66 +8,64 @@ import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerDestroyEntities;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityPositionSync;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityTeleport;
+import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.handler.entity.FakeMob;
 import dev.brighten.ac.handler.entity.TrackedEntity;
 import dev.brighten.ac.packet.WPacketPlayOutEntity;
 import dev.brighten.ac.utils.EntityLocation;
 import dev.brighten.ac.utils.KLocation;
-import dev.brighten.ac.utils.Tuple;
 import dev.brighten.ac.utils.timer.Timer;
 import dev.brighten.ac.utils.timer.impl.MillisTimer;
 import dev.brighten.ac.utils.world.types.RayCollision;
 import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lombok.val;
-import org.bukkit.entity.Entity;
 import org.bukkit.util.Vector;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @RequiredArgsConstructor
 public class EntityLocationHandler {
 
     private final APlayer data;
-
-    private final Map<Integer, Tuple<EntityLocation, EntityLocation>> entityLocationMap = new ConcurrentHashMap<>();
-    private final Map<Integer, List<FakeMob>> fakeMobs = new Int2ObjectArrayMap<>();
-    private final Map<Integer, Integer> fakeMobToEntityId = new Int2ObjectArrayMap<>();
+    @Getter
+    private Map<Integer, TrackedEntity> trackedEntities = new Int2ObjectArrayMap<>();
     private final Timer lastFlying = new MillisTimer();
 
     public Set<Integer> canCreateMob = new HashSet<>();
     public int streak;
     public AtomicBoolean clientHasEntity = new AtomicBoolean(false);
 
-    @Getter
-    private Map<Integer, TrackedEntity> trackedEntities = new Int2ObjectArrayMap<>();
-
     private final Set<EntityType> allowedEntityTypes = Set.of(EntityTypes.ZOMBIE, EntityTypes.SHEEP,
             EntityTypes.BLAZE, EntityTypes.SKELETON, EntityTypes.PLAYER, EntityTypes.VILLAGER, EntityTypes.IRON_GOLEM,
             EntityTypes.WITCH, EntityTypes.COW, EntityTypes.CREEPER);
 
-    /**
-     *
-     * Returns the EntityLocation based on the provided Entity's UUID. May be null if the Entity is not
-     * being tracked, so we use an Optional since it could be non existent.
-     *
-     * @param entity Entity
-     * @return Optional<EntityLocation></EntityLocation>
-     */
-    public Optional<Tuple<EntityLocation, EntityLocation>> getEntityLocation(Entity entity) {
-        return Optional.ofNullable(entityLocationMap.get(entity.getEntityId()));
-    }
-
-    public Optional<List<FakeMob>> getFakeMob(int entityId) {
-        return Optional.ofNullable(fakeMobs.get(entityId));
-    }
-
     public Optional<Integer> getTargetOfFakeMob(int fakeMobId) {
-        return Optional.ofNullable(fakeMobToEntityId.get(fakeMobId));
+        for (TrackedEntity value : trackedEntities.values()) {
+            if(value.getFakeMobs().stream().anyMatch(mob -> mob.getEntityId() == fakeMobId)) {
+                return Optional.of(value.getEntityId());
+            }
+        }
+        return Optional.empty();
+    }
+
+    public Optional<TrackedEntity> getTrackedEntity(int entityId) {
+        TrackedEntity trackedEntity = trackedEntities.get(entityId);
+
+        if(trackedEntity == null) {
+            var entity = Anticheat.INSTANCE.getWorldInfo(data.getBukkitPlayer().getWorld()).getEntity(entityId);
+
+            if(entity.isEmpty()) {
+                return Optional.empty();
+            }
+            KLocation loc = new KLocation(entity.get().getLocation());
+            trackedEntity = new TrackedEntity(entityId, EntityTypes.PLAYER, loc);
+            trackedEntities.put(entityId, trackedEntity);
+        }
+
+        return Optional.of(trackedEntity);
     }
 
     /**
@@ -83,18 +81,21 @@ public class EntityLocationHandler {
 
         processZombie();
 
-        entityLocationMap.values().forEach(eloc -> {
-            if(eloc.one != null) {
-                if(eloc.one.interpolatedLocations.size() > 1 && eloc.one.increment == 0) {
-                    eloc.one.interpolatedLocations.removeFirst();
+        trackedEntities.values().forEach(entity -> {
+            var oldLoc = entity.getOldEntityLocation();
+            var newLoc = entity.getNewEntityLocation();
+
+            if(oldLoc != null) {
+                if(oldLoc.interpolatedLocations.size() > 1 && oldLoc.increment == 0) {
+                    oldLoc.interpolatedLocations.removeFirst();
                 }
-                eloc.one.interpolateLocation();
+                oldLoc.interpolateLocation();
             }
-            if(eloc.two != null) {
-                if(eloc.two.interpolatedLocations.size() > 1 && eloc.two.increment == 0) {
-                    eloc.two.interpolatedLocations.removeFirst();
+            if(newLoc != null) {
+                if(newLoc.interpolatedLocations.size() > 1 && newLoc.increment == 0) {
+                    newLoc.interpolatedLocations.removeFirst();
                 }
-                eloc.two.interpolateLocation();
+                newLoc.interpolateLocation();
             }
         });
 
@@ -108,23 +109,17 @@ public class EntityLocationHandler {
      * @param packet WrappedOutRelativePosition
      */
     void onRelPosition(WPacketPlayOutEntity packet) {
-        TrackedEntity entity = trackedEntities.get(packet.getId());
+        Optional<TrackedEntity> entity = getTrackedEntity(packet.getId());
 
-        if(!allowedEntityTypes.contains(entity.getEntityType())) return;
-
-        val tuple = entityLocationMap.computeIfAbsent(entity.getEntityId(),
-                key -> {
-                     createFakeMob(packet.getId(), entity.getLocation());
-                     return new Tuple<>(new EntityLocation(entity), null);
-                });
+        if(entity.isEmpty() || !allowedEntityTypes.contains(entity.get().getEntityType())) return;
 
         processFakeMobs(packet.getId(), true, packet.getX(), packet.getY(), packet.getZ());
 
-        EntityLocation eloc = tuple.one;
+        EntityLocation eloc = entity.get().getNewEntityLocation();
 
-        tuple.two = tuple.one.clone();
+        entity.get().setOldEntityLocation(entity.get().getNewEntityLocation().clone());
 
-        runAction(entity, () -> {
+        runAction(entity.get(), () -> {
             //We don't need to do version checking here. Atlas handles this for us.
             eloc.newX += packet.getX();
             eloc.newY += packet.getY();
@@ -137,24 +132,18 @@ public class EntityLocationHandler {
     }
 
     void onPositionSync(WrapperPlayServerEntityPositionSync packet) {
-        TrackedEntity entity = trackedEntities.get(packet.getId());
+        Optional<TrackedEntity> entity = getTrackedEntity(packet.getId());
 
-        if(!allowedEntityTypes.contains(entity.getEntityType())) return;
-
-        val tuple = entityLocationMap.computeIfAbsent(entity.getEntityId(),
-                key -> {
-                    createFakeMob(packet.getId(), entity.getLocation());
-                    return new Tuple<>(new EntityLocation(entity), null);
-                });
+        if(entity.isEmpty() || !allowedEntityTypes.contains(entity.get().getEntityType())) return;
 
         processFakeMobs(packet.getId(), false, packet.getValues().getPosition().getX(),
                 packet.getValues().getPosition().getY(), packet.getValues().getPosition().getZ());
 
-        EntityLocation eloc = tuple.one;
+        EntityLocation eloc = entity.get().getNewEntityLocation();
 
-        tuple.two = tuple.one.clone();
+        entity.get().setOldEntityLocation(entity.get().getNewEntityLocation().clone());
 
-        runAction(entity, () -> {
+        runAction(entity.get(), () -> {
             //We don't need to do version checking here. Atlas handles this for us.
             eloc.newX = packet.getValues().getPosition().getX();
             eloc.newY = packet.getValues().getPosition().getY();
@@ -172,23 +161,17 @@ public class EntityLocationHandler {
      * @param packet WrappedOutEntityTeleportPacket
      */
     void onTeleportSent(WrapperPlayServerEntityTeleport packet) {
-        TrackedEntity entity = trackedEntities.get(packet.getEntityId());
+        Optional<TrackedEntity> entity = getTrackedEntity(packet.getEntityId());
 
-        if(!allowedEntityTypes.contains(entity.getEntityType())) return;
-
-        val tuple = entityLocationMap.computeIfAbsent(entity.getEntityId(),
-                key -> {
-                    createFakeMob(packet.getEntityId(), entity.getLocation());
-                    return new Tuple<>(new EntityLocation(entity), null);
-                });
+        if(entity.isEmpty() || !allowedEntityTypes.contains(entity.get().getEntityType())) return;
 
         processFakeMobs(packet.getEntityId(), false, packet.getPosition().getX(), packet.getPosition().getY(), packet.getPosition().getZ());
 
-        EntityLocation eloc = tuple.one;
+        EntityLocation eloc = entity.get().getNewEntityLocation();
 
-        tuple.two = tuple.one.clone();
+        entity.get().setOldEntityLocation(entity.get().getNewEntityLocation().clone());
 
-        runAction(entity, () -> {
+        runAction(entity.get(), () -> {
             if(data.getPlayerVersion().isNewerThanOrEquals(ClientVersion.V_1_9)) {
                 if (!(Math.abs(eloc.x - packet.getPosition().getX()) >= 0.03125D)
                         && !(Math.abs(eloc.y - packet.getPosition().getY()) >= 0.015625D)
@@ -238,41 +221,32 @@ public class EntityLocationHandler {
             data.runInstantAction(ia -> {
                 if(!ia.isEnd()) {
                     action.run();
-                } else entityLocationMap.get(entity.getEntityId()).two = null;
+                } else entity.setOldEntityLocation(null);
             }, true);
         } else {
             data.runKeepaliveAction(keepalive -> action.run());
             data.runKeepaliveAction(keepalive ->
-                    entityLocationMap.get(entity.getEntityId()).two = null, 1);
+                    entity.setOldEntityLocation(null), 1);
         }
     }
 
     public void onEntityDestroy(WrapperPlayServerDestroyEntities packet) {
         data.runKeepaliveAction(ka -> {
             for(int id : packet.getEntityIds()) {
-                if(fakeMobs.containsKey(id)) {
-                    List<FakeMob> mobs = fakeMobs.get(id);
-
-                    for (FakeMob mob : mobs) {
-                        mob.despawn();
-                        fakeMobToEntityId.remove(mob.getEntityId());
-                    }
-                    fakeMobs.remove(id);
-                    clientHasEntity.set(false);
-                }
+                removeFakeMob(id);
             }
         });
     }
 
     public void removeFakeMob(int id) {
-        if(fakeMobs.containsKey(id)) {
-            List<FakeMob> mobs = fakeMobs.get(id);
+        if(trackedEntities.containsKey(id)) {
+            List<FakeMob> mobs = getTrackedEntity(id).map(TrackedEntity::getFakeMobs).orElse(new ArrayList<>());
 
             for (FakeMob mob : mobs) {
                 mob.despawn();
-                fakeMobToEntityId.remove(mob.getEntityId());
             }
-            fakeMobs.remove(id);
+
+            mobs.clear();
         }
         clientHasEntity.set(false);
     }
@@ -280,11 +254,14 @@ public class EntityLocationHandler {
     private static final double[] offsets = new double[]{-1.25, 0, 1.25};
 
     private void createFakeMob(int entityId, KLocation location) {
-        if(!canCreateMob.contains(entityId)) return;
+        if (!canCreateMob.contains(entityId)) return;
 
-        List<FakeMob> mobs = new ArrayList<>();
+        Optional<TrackedEntity> trackedEntity = getTrackedEntity(entityId);
 
-        clientHasEntity.set(false);
+        Optional<TrackedEntity> playerEntity = getTrackedEntity(data.getBukkitPlayer().getEntityId());
+
+        if(trackedEntity.isEmpty() || playerEntity.isEmpty()) return;
+
         for (double offset : offsets) {
             FakeMob mob = new FakeMob(EntityTypes.MAGMA_CUBE);
 
@@ -293,12 +270,10 @@ public class EntityLocationHandler {
             types.add(entityData);
 
             // Setting Magma cube size to size 10
-            mob.spawn(true, location.clone().add(offset, offset, offset),
+            mob.spawn(false, location.clone().add(offset, offset, offset),
                     types, data);
 
-            fakeMobToEntityId.put(mob.getEntityId(), entityId);
-
-            mobs.add(mob);
+            trackedEntity.get().getFakeMobs().add(mob);
         }
 
         KLocation eyeLoc = data.getMovement().getTo().getLoc().clone()
@@ -313,22 +288,21 @@ public class EntityLocationHandler {
         EntityData<?> entityData = new EntityData<>(7, EntityDataTypes.INT, 5);
 
         types.add(entityData);
-        mob.spawn(true, new KLocation(point.getX(), point.getY(), point.getZ()), types, data);
+        mob.spawn(false, new KLocation(point.getX(), point.getY(), point.getZ()), types, data);
 
-        fakeMobToEntityId.put(mob.getEntityId(), data.getBukkitPlayer().getEntityId());
+        data.getBukkitPlayer().sendMessage("Created fake mob at " + point.getX() + ", " + point.getY() + ", " + point.getZ());
 
+        playerEntity.get().getFakeMobs().add(mob);
 
-        this.fakeMobs.put(data.getBukkitPlayer().getEntityId(), new ArrayList<>(Collections.singletonList(mob)));
-        this.fakeMobs.put(entityId, mobs);
         canCreateMob.remove(entityId);
 
         data.runKeepaliveAction(ka -> clientHasEntity.set(true));
     }
 
     public void processZombie() {
-        List<FakeMob> fakeMobs = this.fakeMobs.get(data.getBukkitPlayer().getEntityId());
-
-        if(fakeMobs == null) return;
+        List<FakeMob> fakeMobs = getTrackedEntity(data.getBukkitPlayer().getEntityId())
+                .map(TrackedEntity::getFakeMobs)
+                .orElse(new ArrayList<>());
 
         if(fakeMobs.size() > 1) {
             fakeMobs.forEach(fakeMob -> removeFakeMob(fakeMob.getEntityId()));
@@ -349,16 +323,21 @@ public class EntityLocationHandler {
     }
 
     public void processFakeMobs(int entityId, boolean rel, double x, double y, double z) {
-        List<FakeMob> fakeMobs = this.fakeMobs.get(entityId);
+        List<FakeMob> fakeMobs = getTrackedEntity(entityId).map(TrackedEntity::getFakeMobs).orElse(new ArrayList<>());
 
-        if(fakeMobs == null) {
+        if(fakeMobs.isEmpty()) {
             if(!rel) {
                 createFakeMob(entityId, new KLocation(x, y, z));
+            }
+
+            if(data.getInfo().getTarget() != null && data.getInfo().getTarget().getEntityId() == entityId) {
+                clientHasEntity.set(false);
             }
             return;
         }
 
         if(fakeMobs.size() != offsets.length + 1) {
+            data.getBukkitPlayer().sendMessage("Offset length mismatch! Expected: " + (offsets.length + 1) + ", Found: " + fakeMobs.size());
             fakeMobs.forEach(fakeMob -> removeFakeMob(fakeMob.getEntityId()));
         }
 
