@@ -335,7 +335,6 @@ public class EntityLocationHandler {
         }
 
         if(fakeMobs.size() != offsets.length + 1) {
-            data.getBukkitPlayer().sendMessage("Offset length mismatch! Expected: " + (offsets.length + 1) + ", Found: " + fakeMobs.size());
             fakeMobs.forEach(fakeMob -> removeFakeMob(fakeMob.getEntityId()));
         }
 
