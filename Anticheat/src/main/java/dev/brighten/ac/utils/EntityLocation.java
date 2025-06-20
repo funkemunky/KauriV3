@@ -17,7 +17,7 @@ public class EntityLocation {
     public int increment = 0;
     public boolean sentTeleport = false;
     public KLocation location;
-    public Deque<KLocation> interpolatedLocations = new EvictingList<>(3);
+    public Deque<KLocation> interpolatedLocations = new EvictingList<>(2);
 
     public void interpolateLocation() {
         if(increment > 0) {

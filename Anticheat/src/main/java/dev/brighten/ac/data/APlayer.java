@@ -230,7 +230,7 @@ public class APlayer {
         List<EntityData<?>> dataList = new ArrayList<>();
 
         dataList.add(new EntityData<>(16, EntityDataTypes.BYTE, (byte)1));
-        mob.spawn(false, new KLocation(loc1), dataList, this);
+        mob.spawn(true, new KLocation(loc1), dataList, this);
     }
 
     protected void unload() {
