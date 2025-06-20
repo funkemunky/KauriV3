@@ -1,10 +1,14 @@
 package dev.brighten.ac.utils.world.blocks;
 
 
+import com.github.retrooper.packetevents.PacketEvents;
+import com.github.retrooper.packetevents.manager.server.ServerVersion;
 import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import com.github.retrooper.packetevents.protocol.world.BlockFace;
+import com.github.retrooper.packetevents.protocol.world.states.WrappedBlockState;
 import com.github.retrooper.packetevents.protocol.world.states.defaulttags.BlockTags;
 import com.github.retrooper.packetevents.protocol.world.states.enums.Half;
+import com.github.retrooper.packetevents.protocol.world.states.enums.Shape;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.handler.block.WrappedBlock;
 import dev.brighten.ac.utils.BlockUtils;
@@ -13,21 +17,22 @@ import dev.brighten.ac.utils.world.CollisionBox;
 import dev.brighten.ac.utils.world.types.CollisionFactory;
 import dev.brighten.ac.utils.world.types.ComplexCollisionBox;
 import dev.brighten.ac.utils.world.types.HexCollisionBox;
+import dev.brighten.ac.utils.world.types.SimpleCollisionBox;
 
 import java.util.Optional;
 import java.util.stream.IntStream;
 
 public class DynamicStair implements CollisionFactory {
-    protected static final CollisionBox TOP_AABB = new HexCollisionBox(0, 8, 0, 16, 16, 16);
-    protected static final CollisionBox BOTTOM_AABB = new HexCollisionBox(0, 0, 0, 16, 8, 16);
-    protected static final CollisionBox OCTET_NNN = new HexCollisionBox(0.0D, 0.0D, 0.0D, 8.0D, 8.0D, 8.0D);
-    protected static final CollisionBox OCTET_NNP = new HexCollisionBox(0.0D, 0.0D, 8.0D, 8.0D, 8.0D, 16.0D);
-    protected static final CollisionBox OCTET_NPN = new HexCollisionBox(0.0D, 8.0D, 0.0D, 8.0D, 16.0D, 8.0D);
-    protected static final CollisionBox OCTET_NPP = new HexCollisionBox(0.0D, 8.0D, 8.0D, 8.0D, 16.0D, 16.0D);
-    protected static final CollisionBox OCTET_PNN = new HexCollisionBox(8.0D, 0.0D, 0.0D, 16.0D, 8.0D, 8.0D);
-    protected static final CollisionBox OCTET_PNP = new HexCollisionBox(8.0D, 0.0D, 8.0D, 16.0D, 8.0D, 16.0D);
-    protected static final CollisionBox OCTET_PPN = new HexCollisionBox(8.0D, 8.0D, 0.0D, 16.0D, 16.0D, 8.0D);
-    protected static final CollisionBox OCTET_PPP = new HexCollisionBox(8.0D, 8.0D, 8.0D, 16.0D, 16.0D, 16.0D);
+    protected static final SimpleCollisionBox TOP_AABB = new HexCollisionBox(0, 8, 0, 16, 16, 16);
+    protected static final SimpleCollisionBox BOTTOM_AABB = new HexCollisionBox(0, 0, 0, 16, 8, 16);
+    protected static final SimpleCollisionBox OCTET_NNN = new HexCollisionBox(0.0D, 0.0D, 0.0D, 8.0D, 8.0D, 8.0D);
+    protected static final SimpleCollisionBox OCTET_NNP = new HexCollisionBox(0.0D, 0.0D, 8.0D, 8.0D, 8.0D, 16.0D);
+    protected static final SimpleCollisionBox OCTET_NPN = new HexCollisionBox(0.0D, 8.0D, 0.0D, 8.0D, 16.0D, 8.0D);
+    protected static final SimpleCollisionBox OCTET_NPP = new HexCollisionBox(0.0D, 8.0D, 8.0D, 8.0D, 16.0D, 16.0D);
+    protected static final SimpleCollisionBox OCTET_PNN = new HexCollisionBox(8.0D, 0.0D, 0.0D, 16.0D, 8.0D, 8.0D);
+    protected static final SimpleCollisionBox OCTET_PNP = new HexCollisionBox(8.0D, 0.0D, 8.0D, 16.0D, 8.0D, 16.0D);
+    protected static final SimpleCollisionBox OCTET_PPN = new HexCollisionBox(8.0D, 8.0D, 0.0D, 16.0D, 16.0D, 8.0D);
+    protected static final SimpleCollisionBox OCTET_PPP = new HexCollisionBox(8.0D, 8.0D, 8.0D, 16.0D, 16.0D, 16.0D);
     protected static final CollisionBox[] TOP_SHAPES = makeShapes(TOP_AABB, OCTET_NNN, OCTET_PNN, OCTET_NNP, OCTET_PNP);
     protected static final CollisionBox[] BOTTOM_SHAPES = makeShapes(BOTTOM_AABB, OCTET_NPN, OCTET_PPN, OCTET_NPP, OCTET_PPP);
     private static final int[] SHAPE_BY_STATE = new int[]{12, 5, 3, 10, 14, 13, 7, 11, 13, 7, 11, 14, 8, 4, 1, 2, 4, 1, 2, 8};
@@ -35,15 +40,23 @@ public class DynamicStair implements CollisionFactory {
     private static EnumShape getStairsShape(APlayer player, WrappedBlock originalStairs) {
 
         BlockFace facing = originalStairs.getBlockState().getFacing();
-        Optional<WrappedBlock> offsetOne = player == null ? Optional.empty() : BlockUtils.getRelative(player, originalStairs.getLocation(), facing);
+        int x = originalStairs.getLocation().getX(),
+                y = originalStairs.getLocation().getY(),
+                z = originalStairs.getLocation().getZ();
+        WrappedBlock offsetOne = player == null
+                ? null
+                : player.getBlockUpdateHandler().getBlock(
+                x + facing.getModX(),
+                y + facing.getModY(),
+                z + facing.getModZ());
 
-        if(offsetOne.isEmpty()) return EnumShape.STRAIGHT;
+        if(offsetOne == null) return EnumShape.STRAIGHT;
 
-        if (Materials.checkFlag(offsetOne.get().getType(), Materials.STAIRS)
-                && (originalStairs.getBlockState().getHalf()) == (offsetOne.get().getBlockState().getHalf())) {
-            BlockFace enumfacing1 = offsetOne.get().getBlockState().getFacing();
+        if (Materials.checkFlag(offsetOne.getType(), Materials.STAIRS)
+                && originalStairs.getBlockState().getHalf() == offsetOne.getBlockState().getHalf()) {
+            BlockFace enumfacing1 = offsetOne.getBlockState().getFacing();
 
-            if (isDifferentAxis(facing, enumfacing1) && canTakeShape(player, originalStairs, enumfacing1.getOppositeFace().getModX(), enumfacing1.getOppositeFace().getModY(), enumfacing1.getOppositeFace().getModZ())) {
+            if (isDifferentAxis(facing, enumfacing1) && canTakeShape(player, originalStairs, x + enumfacing1.getOppositeFace().getModX(), y + enumfacing1.getOppositeFace().getModY(), z + enumfacing1.getOppositeFace().getModZ())) {
                 if (enumfacing1 == rotateYCCW(facing)) {
                     return EnumShape.OUTER_LEFT;
                 }
@@ -52,20 +65,22 @@ public class DynamicStair implements CollisionFactory {
             }
         }
 
-        Optional<WrappedBlock> offsetTwo = BlockUtils.getRelative(player, originalStairs.getLocation(),
-                facing.getOppositeFace().getModX(),
-                facing.getOppositeFace().getModY(), facing.getOppositeFace().getModZ());
+        WrappedBlock offsetTwo = player.getBlockUpdateHandler()
+                .getBlock(x + facing.getOppositeFace().getModX(),
+                        y + facing.getOppositeFace().getModY(), z
+                                + facing.getOppositeFace().getModZ());
 
-        if(offsetTwo.isEmpty()) return EnumShape.STRAIGHT;
+        if(offsetTwo == null) return EnumShape.STRAIGHT;
 
-        if (Materials.checkFlag(offsetTwo.get().getType(), Materials.STAIRS)
-                && (originalStairs.getBlockState().getHalf() == offsetTwo.get().getBlockState().getHalf())) {
-            BlockFace enumfacing2 = offsetTwo.get().getBlockState().getFacing();
+        if (Materials.checkFlag(offsetTwo.getType(), Materials.STAIRS)
+                && originalStairs.getBlockState().getHalf() == offsetTwo.getBlockState().getHalf()) {
+            BlockFace enumfacing2 = offsetTwo.getBlockState().getFacing();
 
-            if (isDifferentAxis(facing, enumfacing2) && canTakeShape(player, originalStairs,
-                    originalStairs.getLocation().getX() + enumfacing2.getModX(),
-                    originalStairs.getLocation().getY() + enumfacing2.getModY(),
-                    originalStairs.getLocation().getZ() + enumfacing2.getModZ())) {
+            if (isDifferentAxis(facing, enumfacing2)
+                    && canTakeShape(player, originalStairs,
+                    x + enumfacing2.getModX(),
+                    y + enumfacing2.getModY(),
+                    z + enumfacing2.getModZ())) {
                 if (enumfacing2 == rotateYCCW(facing)) {
                     return EnumShape.INNER_LEFT;
                 }
@@ -126,9 +141,14 @@ public class DynamicStair implements CollisionFactory {
     public CollisionBox fetch(ClientVersion version, APlayer player, WrappedBlock block) {
         int shapeOrdinal;
         // If server is 1.13+ and client is also 1.13+, we can read the block's data directly
-        EnumShape shape = getStairsShape(player, block);
-        shapeOrdinal = shape.ordinal();
-        return (block.getBlockState().getHalf() != Half.BOTTOM ? TOP_SHAPES : BOTTOM_SHAPES)[SHAPE_BY_STATE[getShapeIndex(block, shapeOrdinal)]].copy();
+        if (PacketEvents.getAPI().getServerManager().getVersion().isNewerThanOrEquals(ServerVersion.V_1_13)
+                && version.isNewerThanOrEquals(ClientVersion.V_1_13)) {
+            shapeOrdinal = toEnumShape(block.getBlockState().getShape()).ordinal();
+        } else {
+            EnumShape shape = getStairsShape(player, block);
+            shapeOrdinal = shape.ordinal();
+        }
+        return (block.getBlockState().getHalf() == Half.BOTTOM ? BOTTOM_SHAPES : TOP_SHAPES)[SHAPE_BY_STATE[getShapeIndex(block, shapeOrdinal)]].copy();
     }
 
     private int getShapeIndex(WrappedBlock state, int shapeOrdinal) {
@@ -142,6 +162,16 @@ public class DynamicStair implements CollisionFactory {
             case WEST -> 1;
             case EAST -> 3;
             default -> -1;
+        };
+    }
+
+    private EnumShape toEnumShape(Shape shape) {
+        return switch (shape) {
+            case INNER_LEFT -> EnumShape.INNER_LEFT;
+            case INNER_RIGHT -> EnumShape.INNER_RIGHT;
+            case OUTER_LEFT -> EnumShape.OUTER_LEFT;
+            case OUTER_RIGHT -> EnumShape.OUTER_RIGHT;
+            default -> EnumShape.STRAIGHT;
         };
     }
 

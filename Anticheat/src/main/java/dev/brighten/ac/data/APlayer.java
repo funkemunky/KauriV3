@@ -315,15 +315,12 @@ public class APlayer {
     }
 
     public void sendPacketSilently(PacketWrapper<?> packet) {
-        User user = PacketEvents.getAPI().getPlayerManager().getUser(bukkitPlayer);
-        if(user == null) return;
-
         if(sniffing) {
             sniffedPackets.add("(Silent) [" +  Anticheat.INSTANCE.getKeepaliveProcessor().tick + "] "
                     + packet.toString());
         }
 
-        user.sendPacketSilently(packet);
+        PacketEvents.getAPI().getPlayerManager().sendPacketSilently(bukkitPlayer, packet);
     }
 
     public DimensionType getDimensionType() {
@@ -331,10 +328,7 @@ public class APlayer {
     }
 
     public void sendPacket(PacketWrapper<?> packet) {
-        User user = PacketEvents.getAPI().getPlayerManager().getUser(bukkitPlayer);
-
-        if(user == null) return;
-        user.sendPacket(packet);
+        PacketEvents.getAPI().getPlayerManager().sendPacket(bukkitPlayer, packet);
     }
 
     public ClientVersion getPlayerVersion() {

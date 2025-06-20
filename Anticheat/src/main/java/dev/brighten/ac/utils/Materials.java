@@ -39,32 +39,34 @@ public class Materials {
                 flag |= COLLIDABLE;
             }
 
-            if (mat.getName().endsWith("_STAIRS")) {
+            if (mat.getName().toUpperCase().contains("STAIR")) {
                 flag |= STAIRS;
             }
 
-            if (mat.getName().contains("SLAB") || mat.getName().contains("STEP")) {
+            if (mat.getName().toUpperCase().contains("SLAB") || mat.getName().toUpperCase().contains("STEP")) {
                 flag |= SLABS;
             }
 
             if(mat.getName().contains("SKULL"))
                 flag |= SOLID;
 
-            if(mat.getName().contains("STATIONARY") || mat.getName().contains("LAVA") || mat.getName().contains("WATER")) {
-                if(mat.getName().contains("LAVA")) {
+            if(mat.getName().toUpperCase().contains("STATIONARY")
+                    || mat.getName().toUpperCase().contains("LAVA")
+                    || mat.getName().toUpperCase().contains("WATER")) {
+                if(mat.getName().toUpperCase().contains("LAVA")) {
                     flag |= LIQUID | LAVA;
                 } else flag |= LIQUID | WATER;
             }
 
-            if (mat.getName().contains("FENCE")) {
-                if(!mat.getName().contains("GATE")) flag |= FENCE;
+            if (mat.getName().toUpperCase().contains("FENCE")) {
+                if(!mat.getName().toUpperCase().contains("GATE")) flag |= FENCE;
             }
-            if(mat.getName().contains("WALL")) flag |= WALL;
-            if(mat.getName().contains("BED") && !mat.getName().contains("ROCK")) flag  |= SLABS;
-            if(mat.getName().contains("ICE")) flag |= ICE;
-            if(mat.getName().contains("CARPET")) flag |= SOLID;
+            if(mat.getName().toUpperCase().contains("WALL")) flag |= WALL;
+            if(mat.getName().toUpperCase().contains("BED") && !mat.getName().contains("ROCK")) flag  |= SLABS;
+            if(mat.getName().toUpperCase().contains("ICE")) flag |= ICE;
+            if(mat.getName().toUpperCase().contains("CARPET")) flag |= SOLID;
             //Signs get set as collidable when they shouldn't
-            if(mat.getName().contains("SIGN")) flag = 0;
+            if(mat.getName().toUpperCase().contains("SIGN")) flag = 0;
 
             MATERIAL_FLAGS.put(mat, flag);
             i++;

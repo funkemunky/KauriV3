@@ -234,14 +234,16 @@ public class EntityLocationHandler {
      * @param action Runnable
      */
     private void runAction(TrackedEntity entity, Runnable action) {
-        if(data.getInfo().getTarget() != null && entity.getEntityId() == data.getInfo().getTarget().getEntityId()) {
+        if(data.getInfo().getTarget() != null && data.getInfo().getTarget().getEntityId() == entity.getEntityId()) {
             data.runInstantAction(ia -> {
                 if(!ia.isEnd()) {
                     action.run();
-                }
+                } else entityLocationMap.get(entity.getEntityId()).two = null;
             }, true);
         } else {
             data.runKeepaliveAction(keepalive -> action.run());
+            data.runKeepaliveAction(keepalive ->
+                    entityLocationMap.get(entity.getEntityId()).two = null, 1);
         }
     }
 
