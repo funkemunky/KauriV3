@@ -69,7 +69,7 @@ public class Hitbox extends Check {
             
             TrackedEntity entity = target.one;
 
-            final KLocation to = player.getMovement().getTo().getLoc().clone();
+            final KLocation to = target.two;
 
             if(entity.getNewEntityLocation().x == 0 && entity.getNewEntityLocation().y == 0 & entity.getNewEntityLocation().z == 0) {
                 return;

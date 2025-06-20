@@ -221,7 +221,7 @@ public class BlockUpdateHandler {
 
         y -= minHeight;
 
-        BaseChunk chunk = col.chunks()[y >> 4];
+        BaseChunk chunk = col.chunks()[y & 15];
 
         if(chunk == null) {
             //Get Bukkit Block
