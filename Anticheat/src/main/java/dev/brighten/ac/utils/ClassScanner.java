@@ -173,6 +173,106 @@ public class ClassScanner {
         return plugins;
     }
 
+    public Set<String> scanFile2(String file, Class<?> clazz) {
+        Bukkit.getLogger().info("Found file: " + clazz.getProtectionDomain().getCodeSource().getLocation().toString());
+        return scanFile2(file, new URL[]{clazz.getProtectionDomain().getCodeSource().getLocation()});
+    }
+
+    public Set<String> scanFile2(String file, URL[] urls) {
+        Set<URI> sources =  new HashSet<>();
+        Set<String> plugins =  new HashSet<>();
+
+
+        for (URL url : urls) {
+            if (!url.getProtocol().equals("file")) {
+                continue;
+            }
+
+            URI source;
+            try {
+                source = url.toURI();
+            } catch (URISyntaxException e) {
+                continue;
+            }
+
+            if (sources.add(source)) {
+                scanPath2(file, Paths.get(source), plugins);
+            }
+        }
+
+        return plugins;
+    }
+
+    private void scanPath2(String file, Path path, Set<String> plugins) {
+        if (Files.exists(path)) {
+            if (Files.isDirectory(path)) {
+                scanDirectory2(file, path, plugins);
+            } else {
+                scanZip2(file, path, plugins);
+            }
+        }
+    }
+
+    private void scanDirectory2(String file, Path dir, final Set<String> plugins) {
+        try {
+            Files.walkFileTree(dir, newHashSet(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE,
+                    new SimpleFileVisitor<>() {
+                        @Override
+                        public FileVisitResult visitFile(Path path, BasicFileAttributes attrs) throws IOException {
+                            if (CLASS_FILE.matches(path.getFileName())) {
+                                try (InputStream in = Files.newInputStream(path)) {
+                                    String plugin = findClasses(file, in);
+                                    if (plugin != null) {
+                                        plugins.add(plugin);
+                                    }
+                                }
+                            }
+
+                            return FileVisitResult.CONTINUE;
+                        }
+                    });
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public String findClasses(String file, InputStream in) {
+        try {
+            ClassReader reader = new ClassReader(in);
+            ClassNode classNode = new ClassNode();
+            reader.accept(classNode, ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
+
+            return classNode.name.replace('/', '.');
+        } catch (Exception e) {
+            e.printStackTrace();
+            Bukkit.getLogger().severe("Failed to scan: " + in.toString());
+        }
+        return null;
+    }
+
+    private void scanZip2(String file, Path path, Set<String> plugins) {
+        if (!ARCHIVE.matches(path.getFileName())) {
+            return;
+        }
+
+        try (ZipFile zip = new ZipFile(path.toFile())) {
+            zip.stream().parallel().forEach(entry -> {
+                if (!entry.isDirectory() && entry.getName().endsWith(".class")) {
+                    try (InputStream in = zip.getInputStream(entry)) {
+                        String plugin = findClasses(file, in);
+                        if (plugin != null) {
+                            plugins.add(plugin);
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     private  void scanPath(String file, Path path, Set<String> plugins) {
         if (Files.exists(path)) {
             if (Files.isDirectory(path)) {

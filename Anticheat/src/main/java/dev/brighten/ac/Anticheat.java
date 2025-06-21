@@ -3,6 +3,7 @@ package dev.brighten.ac;
 import co.aikar.commands.*;
 import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.event.PacketListenerPriority;
+import com.github.retrooper.packetevents.settings.PacketEventsSettings;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import dev.brighten.ac.api.AnticheatAPI;
 import dev.brighten.ac.check.Check;
@@ -93,7 +94,7 @@ public class Anticheat extends JavaPlugin {
 
     @Override
     public void onLoad() {
-        PacketEvents.setAPI(SpigotPacketEventsBuilder.build(this));
+        PacketEvents.setAPI(SpigotPacketEventsBuilder.build(this, new PacketEventsSettings().debug(true).fullStackTrace(true).kickIfTerminated(false)));
         PacketEvents.getAPI().load();
     }
 

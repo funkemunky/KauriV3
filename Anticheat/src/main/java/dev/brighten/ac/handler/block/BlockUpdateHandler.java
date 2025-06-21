@@ -154,7 +154,7 @@ public class BlockUpdateHandler {
         for(int blockX = chunk.getX(); blockX < chunk.getX() + 16 ; blockX++) {
             for(int blockZ = chunk.getZ(); blockZ < chunk.getZ() + 16 ; blockZ++) {
                 for(int blockY = minHeight ; blockY < world.getMaxHeight() ; blockY++) {
-                    Block block = chunk.getBlock(blockX, blockY, blockZ);
+                    Block block = chunk.getBlock(blockX, blockY & 15, blockZ);
 
                     if(block.getType() == null || block.getType().equals(Material.AIR)) {
                         continue; // Air

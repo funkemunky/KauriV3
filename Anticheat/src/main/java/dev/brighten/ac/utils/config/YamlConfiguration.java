@@ -6,6 +6,7 @@ import lombok.SneakyThrows;
 import org.bukkit.configuration.serialization.ConfigurationSerializable;
 import org.bukkit.configuration.serialization.ConfigurationSerialization;
 import org.yaml.snakeyaml.DumperOptions;
+import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
 import org.yaml.snakeyaml.nodes.Node;
@@ -21,34 +22,25 @@ import java.util.*;
 public class YamlConfiguration extends ConfigurationProvider
 {
 
-    private final ThreadLocal<Yaml> yaml = new ThreadLocal<Yaml>()
-    {
-        @Override
-        protected Yaml initialValue()
-        {
-            Representer representer = new Representer()
+    private final ThreadLocal<Yaml> yaml = ThreadLocal.withInitial(() -> {
+        DumperOptions options = new DumperOptions();
+        options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
+        Representer representer = new Representer(options) {
             {
-                {
-                    representers.put( Configuration.class, data -> represent( ( (Configuration) data ).self ));
-                    representers.put(ConfigurationSerializable.class, new Represent() {
-                        @Override
-                        public Node representData(Object data) {
-                            ConfigurationSerializable serializable = (ConfigurationSerializable)data;
-                            Map<String, Object> values = new LinkedHashMap();
-                            values.put("==", ConfigurationSerialization.getAlias(serializable.getClass()));
-                            values.putAll(serializable.serialize());
-                            return represent(values);
-                        }
-                    });
-                }
-            };
+                representers.put(Configuration.class, data -> represent(((Configuration) data).self));
+                representers.put(ConfigurationSerializable.class, data -> {
+                    ConfigurationSerializable serializable = (ConfigurationSerializable) data;
+                    Map<String, Object> values = new LinkedHashMap<>();
+                    values.put("==", ConfigurationSerialization.getAlias(serializable.getClass()));
+                    values.putAll(serializable.serialize());
+                    return represent(values);
+                });
+            }
+        };
 
-            DumperOptions options = new DumperOptions();
-            options.setDefaultFlowStyle( DumperOptions.FlowStyle.BLOCK );
-            representer.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
-            return new Yaml( new Constructor(), representer, options );
-        }
-    };
+        representer.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
+        return new Yaml(new Constructor(new LoaderOptions()), representer, options);
+    });
 
     @Override
     public void save(Configuration config, File file) throws IOException

@@ -10,10 +10,11 @@ package dev.brighten.ac.utils.reflections;
 
 import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.manager.server.ServerVersion;
+import dev.brighten.ac.Anticheat;
+import dev.brighten.ac.utils.ClassScanner;
 import dev.brighten.ac.utils.objects.QuadFunction;
 import dev.brighten.ac.utils.objects.TriFunction;
 import dev.brighten.ac.utils.reflections.types.WrappedClass;
-import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.val;
@@ -23,8 +24,12 @@ import java.lang.invoke.LambdaMetafactory;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.Method;
+import java.util.Collections;
+import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Getter
 public class Reflections {
@@ -34,11 +39,26 @@ public class Reflections {
     public static String OBC_PREFIX = Bukkit.getServer().getClass().getPackage().getName();
     public static String VERSION = OBC_PREFIX.replace("org.bukkit.craftbukkit", "")
             .replace(".", "");
+    private static Set<String> classNames;
 
     static {
-        String version = Bukkit.getServer().getClass().getPackage().getName().split("\\.")[3];
-        craftBukkitString = "org.bukkit.craftbukkit." + version + ".";
-        netMinecraftServerString = "net.minecraft.server." + version + ".";
+        String[] split = Bukkit.getServer().getClass().getPackage().getName().split("\\.");
+        String version = split.length > 3 ? split[3] : null;
+        craftBukkitString = "org.bukkit.craftbukkit." + (version == null ? "" : version + ".");
+        netMinecraftServerString = "net.minecraft.server." + (version == null ? "" : version + ".");
+        Anticheat.INSTANCE.alog(true, "MinecraftServer: + " + netMinecraftServerString);
+
+        Anticheat.INSTANCE.alog(true, "Loading class names...");
+
+
+        try {
+            classNames = new ClassScanner().scanFile2(null,
+                            Class.forName("org.bukkit.craftbukkit.Main"))
+                    .stream().filter(s -> s.contains("net.minecraft"))
+                    .collect(Collectors.toSet());
+        } catch(Exception e) {
+            classNames = Collections.emptySet();
+        }
     }
 
     public static boolean classExists(String name) {
@@ -59,6 +79,13 @@ public class Reflections {
         try {
             return getClass(netMinecraftServerString + name);
         } catch(Throwable e) {
+            Pattern toTest = Pattern.compile("\\." + name.replace("$", ".") + "$");
+            for (String className : classNames) {
+                if(toTest.matcher(className).find()) {
+                    Anticheat.INSTANCE.alog(true, "FOUND CLASS: " + className);
+                    return getClass(className);
+                }
+            }
             throw new ClassNotFoundException(name);
         }
     }

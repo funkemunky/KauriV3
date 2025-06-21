@@ -13,6 +13,7 @@ import dev.brighten.ac.utils.math.IntVector;
 import dev.brighten.ac.utils.reflections.impl.MinecraftReflection;
 import dev.brighten.ac.utils.world.BlockData;
 import dev.brighten.ac.utils.world.CollisionBox;
+import dev.brighten.ac.utils.world.EntityData;
 import dev.brighten.ac.utils.world.types.RayCollision;
 import dev.brighten.ac.utils.world.types.SimpleCollisionBox;
 import org.bukkit.World;
@@ -165,10 +166,6 @@ public class Helper {
         return getCollisions(player, collisionBox, Materials.COLLIDABLE);
     }
 
-    public static SimpleCollisionBox getEntityCollision(Entity entity) {
-        return new SimpleCollisionBox(MinecraftReflection.getEntityBoundingBox(entity));
-    }
-
     public static List<SimpleCollisionBox> getCollisions(APlayer player, SimpleCollisionBox collisionBox, int mask) {
         List<SimpleCollisionBox> collisionBoxes = getCollisionsNoEntities(player, collisionBox, mask);
 
@@ -176,8 +173,7 @@ public class Helper {
             for (Entity entity : player.getInfo().getNearbyEntities()) {
                 if (!BlockUtils.isEntityCollidable(entity)) continue;
 
-                SimpleCollisionBox entityCollisionBox =
-                        new SimpleCollisionBox(MinecraftReflection.getEntityBoundingBox(entity));
+                CollisionBox entityCollisionBox = EntityData.getEntityBox(entity.getLocation(), entity);
 
                 if (entityCollisionBox.isIntersected(collisionBox))
                     entityCollisionBox.downCast(collisionBoxes);
