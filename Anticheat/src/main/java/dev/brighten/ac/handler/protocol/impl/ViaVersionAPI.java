@@ -2,7 +2,7 @@ package dev.brighten.ac.handler.protocol.impl;
 
 import com.viaversion.viaversion.api.Via;
 import dev.brighten.ac.Anticheat;
-import dev.brighten.ac.handler.protocolsupport.Protocol;
+import dev.brighten.ac.handler.protocol.Protocol;
 import org.bukkit.entity.Player;
 
 public class ViaVersionAPI implements Protocol {

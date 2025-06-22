@@ -1,9 +1,9 @@
 package dev.brighten.ac.handler.protocol;
 
 import dev.brighten.ac.Anticheat;
-import dev.brighten.ac.handler.protocolsupport.impl.NoAPI;
-import dev.brighten.ac.handler.protocolsupport.impl.ProtocolSupport;
-import dev.brighten.ac.handler.protocolsupport.impl.ViaVersionAPI;
+import dev.brighten.ac.handler.protocol.impl.NoAPI;
+import dev.brighten.ac.handler.protocol.impl.ProtocolSupport;
+import dev.brighten.ac.handler.protocol.impl.ViaVersionAPI;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
