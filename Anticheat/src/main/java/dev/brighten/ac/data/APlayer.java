@@ -6,6 +6,7 @@ import com.github.retrooper.packetevents.protocol.entity.data.EntityData;
 import com.github.retrooper.packetevents.protocol.entity.data.EntityDataTypes;
 import com.github.retrooper.packetevents.protocol.entity.type.EntityTypes;
 import com.github.retrooper.packetevents.protocol.player.ClientVersion;
+import com.github.retrooper.packetevents.protocol.player.User;
 import com.github.retrooper.packetevents.protocol.world.dimension.DimensionType;
 import com.github.retrooper.packetevents.util.Vector3d;
 import com.github.retrooper.packetevents.wrapper.PacketWrapper;
@@ -114,9 +115,12 @@ public class APlayer {
     @Getter
     private boolean initialized = false;
 
-    public APlayer(Player player) {
+    private User user;
+
+    public APlayer(Player player, User user) {
         this.bukkitPlayer = player;
         this.uuid = player.getUniqueId();
+        this.user = user;
 
         Anticheat.INSTANCE.getLogger().info("Constructored " + player.getName());
 
@@ -244,7 +248,6 @@ public class APlayer {
         initialized = false;
     }
 
-
     public void runKeepaliveAction(Consumer<KeepAlive> action) {
         runKeepaliveAction(action, 0);
     }
@@ -280,7 +283,6 @@ public class APlayer {
             sendPacketSilently(new TransactionServerWrapper(startId, 0).getWrapper(getPlayerVersion()));
         }
 
-
         if(runPost) {
             short finalEndId = endId, finalStartId = startId;
             Anticheat.INSTANCE.onTickEnd(() -> {
@@ -313,10 +315,21 @@ public class APlayer {
         playerTick++;
     }
 
+    public ClientVersion getPlayerVersion() {
+        if(user.getClientVersion() == ClientVersion.UNKNOWN) {
+            return PacketEvents.getAPI().getServerManager().getVersion().toClientVersion();
+        }
+        return user.getClientVersion();
+    }
+
     public void sendPacketSilently(PacketWrapper<?> packet) {
+        if(getPlayerVersion() == ClientVersion.UNKNOWN) {
+            return;
+        }
+
         if(sniffing) {
             sniffedPackets.add("(Silent) [" +  Anticheat.INSTANCE.getKeepaliveProcessor().tick + "] "
-                    + packet.toString());
+                    + packet);
         }
 
         PacketEvents.getAPI().getPlayerManager().writePacketSilently(bukkitPlayer, packet);
@@ -327,11 +340,10 @@ public class APlayer {
     }
 
     public void sendPacket(PacketWrapper<?> packet) {
+        if(getPlayerVersion() == ClientVersion.UNKNOWN) {
+            return;
+        }
         PacketEvents.getAPI().getPlayerManager().writePacket(bukkitPlayer, packet);
-    }
-
-    public ClientVersion getPlayerVersion() {
-        return PacketEvents.getAPI().getPlayerManager().getClientVersion(bukkitPlayer);
     }
 
     @Override

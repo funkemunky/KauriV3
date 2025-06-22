@@ -6,6 +6,7 @@ import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import com.github.retrooper.packetevents.wrapper.PacketWrapper;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPing;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerWindowConfirmation;
+import dev.brighten.ac.Anticheat;
 
 public class TransactionServerWrapper {
     private final short action;
@@ -31,9 +32,14 @@ public class TransactionServerWrapper {
     }
 
     public PacketWrapper<?> getWrapper(ClientVersion clientVersion) {
+        if(clientVersion == ClientVersion.UNKNOWN) {
+            return null;
+        }
         if(clientVersion.isOlderThan(ClientVersion.V_1_17)) {
+            Anticheat.INSTANCE.alog(true, "Sending WINDOWWWWW packet to client version: " + clientVersion);
             return new WrapperPlayServerWindowConfirmation(id, action, false);
         } else {
+            Anticheat.INSTANCE.alog(true, "Sending Ping packet to client version: " + clientVersion);
             return new WrapperPlayServerPing(action);
         }
     }
