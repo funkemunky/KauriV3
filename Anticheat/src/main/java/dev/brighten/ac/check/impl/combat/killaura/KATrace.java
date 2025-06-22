@@ -43,10 +43,14 @@ public class KATrace extends Check {
             return;
         }
 
+        var trackedEntity = player.getEntityLocationHandler().getTrackedEntity(player.getInfo().getTarget().getEntityId());
+
+        if(trackedEntity.isEmpty()) {
+            return;
+        }
         // Getting the target's bounding box
         SimpleCollisionBox targetBox = (SimpleCollisionBox) EntityData.getEntityBox(player.getInfo().getTarget()
-                        .getLocation(),
-                player.getInfo().target);
+                        .getLocation(), trackedEntity.get());
 
         if(targetBox == null) return;
 

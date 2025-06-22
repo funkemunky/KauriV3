@@ -16,7 +16,6 @@ import com.google.common.io.ByteArrayDataInput;
 import com.google.common.io.ByteStreams;
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.data.APlayer;
-import dev.brighten.ac.data.obj.NormalAction;
 import dev.brighten.ac.handler.entity.FakeMob;
 import dev.brighten.ac.handler.entity.TrackedEntity;
 import dev.brighten.ac.packet.PlayerCapabilities;
@@ -58,7 +57,8 @@ public class PacketHandler {
                         player.getLagInfo().setTransPing(current - ka.id);
 
                         if (player.getPlayerVersion().isNewerThanOrEquals(ClientVersion.V_1_9)
-                                && player.getMovement().getLastFlying().isPassed(1)) {
+                                && player.getPlayerVersion().isOlderThanOrEquals(ClientVersion.V_1_21)
+                                && player.getMovement().getLastFlying().isPassed(2)) {
                             player.getMovement().runPositionHackFix();
                         }
 
@@ -92,16 +92,15 @@ public class PacketHandler {
                         ka.getReceived(player.getBukkitPlayer().getUniqueId())
                                 .ifPresent(r -> r.receivedStamp = timestamp);
 
-                        synchronized (player.keepAliveStamps) {
-                            var it = player.keepAliveStamps.iterator();
-
-                            while(it.hasNext()) {
-                                NormalAction action = it.next();
-                                if (action.stamp > ka.id) continue;
+                        synchronized (player.keepAliveLock) {
+                            player.keepAliveStamps.removeIf(action -> {
+                                if(action.stamp > ka.id) {
+                                    return false;
+                                }
 
                                 action.action.accept(ka);
-                                it.remove();
-                            }
+                                return true;
+                            });
                         }
                     });
                     player.getLagInfo().getLastClientTransaction().reset();
@@ -194,7 +193,7 @@ public class PacketHandler {
                     Optional<Entity> target = Anticheat.INSTANCE.getWorldInfo(player.getBukkitPlayer().getWorld()).getEntity(packet.getEntityId());
 
                     if(target.isPresent() && target.get() instanceof LivingEntity entity) {
-                        if (player.getInfo().lastFakeBotHit.isPassed(20) && Math.random() > 0.9) {
+                        if (player.getInfo().lastFakeBotHit.isPassed(400) && Math.random() > 0.9) {
                             player.getEntityLocationHandler().canCreateMob.add(entity.getEntityId());
                         }
                         player.getInfo().setTarget(entity);

@@ -6,6 +6,7 @@ import com.github.retrooper.packetevents.protocol.world.states.type.StateType;
 import com.github.retrooper.packetevents.protocol.world.states.type.StateTypes;
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.data.APlayer;
+import dev.brighten.ac.handler.entity.TrackedEntity;
 import dev.brighten.ac.utils.BlockUtils;
 import dev.brighten.ac.utils.Helper;
 import dev.brighten.ac.utils.Materials;
@@ -17,7 +18,6 @@ import dev.brighten.ac.utils.world.EntityData;
 import dev.brighten.ac.utils.world.types.SimpleCollisionBox;
 import me.hydro.emulator.util.mcp.MathHelper;
 import org.bukkit.Location;
-import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 
 import java.util.*;
@@ -152,11 +152,10 @@ public class BlockInformation {
                             }
 
                             if (player.isBoxDebug()) {
-                                Anticheat.INSTANCE.getScheduler().execute(() ->
-                                        blockBox.downCast().forEach(sc ->
-                                                Helper.drawCuboid(sc,
-                                                        ParticleTypes.FLAME,
-                                                        Collections.singletonList(player))));
+                                Anticheat.INSTANCE.getScheduler().execute(() -> blockBox.downCast().forEach(sc ->
+                                        Helper.drawCuboid(sc,
+                                                ParticleTypes.FLAME,
+                                                Collections.singletonList(player))));
                             }
 
                             if (blockBox.isCollided(normalBox)) {
@@ -311,12 +310,14 @@ public class BlockInformation {
             if (!player.getInfo().isWorldLoaded())
                 return;
 
-            for (Entity entity : player.getInfo().getNearbyEntities()) {
+            for (TrackedEntity entity : player.getInfo().getNearbyEntities()) {
                 boolean isBlockEntity = !(entity instanceof LivingEntity);
 
                 if (!isBlockEntity) continue;
 
-                CollisionBox entityBox = EntityData.getEntityBox(entity.getLocation(), entity);
+
+                CollisionBox entityBox = EntityData.getEntityBox(entity.getLocation()
+                        .toLocation(player.getBukkitPlayer().getWorld()), entity);
 
                 if (entityBox == null) continue;
 

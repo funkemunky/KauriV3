@@ -32,21 +32,6 @@ public class FakeMob {
         this.type = type;
     }
 
-    /*
-    protected void b(int i, boolean flag) {
-        byte b0 = this.datawatcher.getByte(0);
-        if (flag) {
-            this.datawatcher.watch(0, (byte)(b0 | 1 << i));
-        } else {
-            this.datawatcher.watch(0, (byte)(b0 & ~(1 << i)));
-        }
-
-    }
-     */
-    public void spawn(boolean invisible, KLocation location, APlayer... players) {
-        spawn(invisible, location, new ArrayList<>(), players);
-    }
-
     public void spawn(boolean invisible, KLocation location, List<EntityData<?>> objects, APlayer... players) {
         if(!watching.isEmpty()) {
             despawn();
@@ -63,7 +48,7 @@ public class FakeMob {
                     new Vector3d(location.getX(), location.getY(), location.getZ()), location.getYaw(), location.getPitch(), location.getYaw(),
                     new Vector3d(0, 0, 0), objects);
 
-            player.sendPacketSilently(packet);
+            player.sendPacket(packet);
             watching.add(player);
         }
 
@@ -85,7 +70,7 @@ public class FakeMob {
 
         WrapperPlayServerEntityMetadata packet = new WrapperPlayServerEntityMetadata(entityId, entityMetadata);
 
-        watching.forEach(player -> player.sendPacketSilently(packet));
+        watching.forEach(player -> player.sendPacket(packet));
     }
 
     public void despawn() {
@@ -102,7 +87,7 @@ public class FakeMob {
         WPacketPlayOutEntity packet = WPacketPlayOutEntity.builder().id(entityId).x(dx).y(dy).z(dz).moved(true).build();
 
         for (APlayer player : watching) {
-            player.sendPacketSilently(packet.getPacket());
+            player.sendPacket(packet.getPacket());
         }
     }
 
@@ -111,7 +96,7 @@ public class FakeMob {
                 .pitch(dpitch).moved(true).looked(true).build();
 
         for (APlayer player : watching) {
-            player.sendPacketSilently(packet.getPacket());
+            player.sendPacket(packet.getPacket());
         }
     }
 
@@ -120,7 +105,7 @@ public class FakeMob {
                 .looked(true).build();
 
         for (APlayer player : watching) {
-            player.sendPacketSilently(packet.getPacket());
+            player.sendPacket(packet.getPacket());
         }
     }
 
@@ -129,7 +114,7 @@ public class FakeMob {
                 new Vector3d(x, y, z), yaw, pitch, false);
 
         for (APlayer player : watching) {
-            player.sendPacketSilently(packet);
+            player.sendPacket(packet);
         }
     }
 }

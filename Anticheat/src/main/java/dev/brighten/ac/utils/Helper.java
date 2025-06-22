@@ -9,21 +9,20 @@ import com.github.retrooper.packetevents.util.Vector3d;
 import com.github.retrooper.packetevents.util.Vector3f;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerParticle;
 import dev.brighten.ac.data.APlayer;
+import dev.brighten.ac.handler.entity.TrackedEntity;
 import dev.brighten.ac.utils.math.IntVector;
 import dev.brighten.ac.utils.world.BlockData;
 import dev.brighten.ac.utils.world.CollisionBox;
 import dev.brighten.ac.utils.world.EntityData;
 import dev.brighten.ac.utils.world.types.RayCollision;
 import dev.brighten.ac.utils.world.types.SimpleCollisionBox;
-import org.bukkit.World;
-import org.bukkit.block.Block;
-import org.bukkit.entity.Entity;
 import org.bukkit.util.Vector;
-import org.checkerframework.checker.units.qual.C;
 
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+
 
 /**
  * @author DeprecatedLuke
@@ -50,7 +49,7 @@ public class Helper {
                     new Vector3d(fx, fy, fz), new Vector3f(0, 0, 0),  0f, 1);
 
             for (APlayer p : players) {
-                p.sendPacketSilently(packet);
+                p.writePacketSilently(packet);
             }
         }
     }
@@ -66,7 +65,7 @@ public class Helper {
 
             label61:
             while (var8.hasNext()) {
-                float fy = (Float) var8.next();
+                float fy = var8.next();
                 Iterator<Float> var10 = z.iterator();
 
                 while (true) {
@@ -96,64 +95,12 @@ public class Helper {
                             new Vector3d(fx, fy, fz), new Vector3f(0, 0, 0), 0f, 1);
 
                     for (APlayer p : players) {
-                        p.sendPacketSilently(packet);
+                        p.writePacketSilently(packet);
                     }
                 }
             }
         }
 
-    }
-
-    public static void drawPoint(Vector3d point, ParticleType<?> particle, Collection<? extends APlayer> players) {
-        WrapperPlayServerParticle packet = new WrapperPlayServerParticle(new Particle<>(particle), false,
-                point, new Vector3f(0, 0, 0), 0f, 1);
-
-        for (APlayer p : players) {
-            p.sendPacketSilently(packet);
-        }
-    }
-
-    public static SimpleCollisionBox wrap(SimpleCollisionBox a, SimpleCollisionBox b) {
-        double minX = Math.min(a.minX, b.minX);
-        double minY = Math.min(a.minY, b.minY);
-        double minZ = Math.min(a.minZ, b.minZ);
-        double maxX = Math.max(a.maxX, b.maxX);
-        double maxY = Math.max(a.maxY, b.maxY);
-        double maxZ = Math.max(a.maxZ, b.maxZ);
-        return new SimpleCollisionBox(minX, minY, minZ, maxX, maxY, maxZ);
-    }
-
-    public static SimpleCollisionBox wrap(List<SimpleCollisionBox> box) {
-        if (!box.isEmpty()) {
-            SimpleCollisionBox wrap = box.get(0).copy();
-            for (int i = 1; i < box.size(); i++) {
-                SimpleCollisionBox a = box.get(i);
-                if (wrap.minX > a.minX) wrap.minX = a.minX;
-                if (wrap.minY > a.minY) wrap.minY = a.minY;
-                if (wrap.minZ > a.minZ) wrap.minZ = a.minZ;
-                if (wrap.maxX < a.maxX) wrap.maxX = a.maxX;
-                if (wrap.maxY < a.maxY) wrap.maxY = a.maxY;
-                if (wrap.maxZ < a.maxZ) wrap.maxZ = a.maxZ;
-            }
-            return wrap;
-        }
-        return null;
-    }
-
-    public static boolean isCollided(SimpleCollisionBox toCheck, CollisionBox other) {
-        List<SimpleCollisionBox> downcasted = new ArrayList<>();
-
-        other.downCast(downcasted);
-
-        return downcasted.stream().anyMatch(box -> box.maxX >= toCheck.minX && box.minX <= toCheck.maxX
-                && box.maxY >= toCheck.minY && box.minY <= toCheck.maxY && box.maxZ >= toCheck.minZ
-                && box.minZ <= toCheck.maxZ);
-    }
-
-
-    public static <C extends CollisionBox> List<C> collisions(List<C> boxes, CollisionBox box) {
-        return boxes.stream().filter(b -> b.isCollided(box))
-                .collect(Collectors.toCollection(LinkedList::new));
     }
 
     public static List<SimpleCollisionBox> getCollisions(APlayer player, SimpleCollisionBox collisionBox) {
@@ -164,50 +111,16 @@ public class Helper {
         List<SimpleCollisionBox> collisionBoxes = getCollisionsNoEntities(player, collisionBox, mask);
 
         if(player != null) {
-            for (Entity entity : player.getInfo().getNearbyEntities()) {
+            for (TrackedEntity entity : player.getInfo().getNearbyEntities()) {
                 if (!BlockUtils.isEntityCollidable(entity)) continue;
 
-                CollisionBox entityCollisionBox = EntityData.getEntityBox(entity.getLocation(), entity);
+                CollisionBox entityCollisionBox = EntityData.getEntityBox(entity.getLocation()
+                        .toLocation(player.getBukkitPlayer().getWorld()), entity);
 
                 if (entityCollisionBox.isIntersected(collisionBox))
                     entityCollisionBox.downCast(collisionBoxes);
             }
         }
-
-        return collisionBoxes;
-    }
-
-    public static List<Tuple<SimpleCollisionBox, StateType>>
-    getCollisionsWithTypeNoEntities(APlayer player, SimpleCollisionBox collisionBox) {
-        return getCollisionsWithTypeNoEntities(player, collisionBox, Materials.COLLIDABLE);
-    }
-
-    public static List<Tuple<SimpleCollisionBox, StateType>>
-    getCollisionsWithTypeNoEntities(APlayer player, SimpleCollisionBox collisionBox, int mask) {
-        int x1 = (int) Math.floor(collisionBox.minX);
-        int y1 = (int) Math.floor(collisionBox.minY);
-        int z1 = (int) Math.floor(collisionBox.minZ);
-        int x2 = (int) Math.floor(collisionBox.maxX + 1);
-        int y2 = (int) Math.floor(collisionBox.maxY + 1);
-        int z2 = (int) Math.floor(collisionBox.maxZ + 1);
-        List<Tuple<SimpleCollisionBox, StateType>> collisionBoxes = new ArrayList<>();
-        for (int x = x1; x < x2; ++x)
-            for (int y = y1 - 1; y < y2; ++y)
-                for (int z = z1; z < z2; ++z) {
-                    IntVector vec = new IntVector(x, y, z);
-                    StateType type = player.getBlockUpdateHandler().getBlock(vec).getType();
-
-                    if (type != StateTypes.AIR && Materials.checkFlag(type, mask)) {
-                        CollisionBox box = BlockData.getData(type)
-                                .getBox(player, vec, PacketEvents.getAPI().getServerManager().getVersion().toClientVersion());
-
-                        if (box.isIntersected(collisionBox)) {
-                            for (SimpleCollisionBox simpleCollisionBox : box.downCast()) {
-                                collisionBoxes.add(new Tuple<>(simpleCollisionBox, type));
-                            }
-                        }
-                    }
-                }
 
         return collisionBoxes;
     }
@@ -245,22 +158,5 @@ public class Helper {
 
     public static double format(double d, int dec) {
         return (long) (d * decimalPlaces[dec] + 0.5) / (double) decimalPlaces[dec];
-    }
-
-    public static String drawUsage(long max, long time) {
-        double chunk = max / 50.;
-        String line = IntStream.range(0, 50).mapToObj(i -> (chunk * i < time ? "§c" : "§7") + "❘")
-                .collect(Collectors.joining("", "[", ""));
-        String zeros = "00";
-        String nums = Integer.toString((int) ((time / (double) max) * 100));
-        return line + "§f] §c" + zeros.substring(0, 3 - nums.length()) + nums + "% §f❘";
-    }
-
-    public static String drawUsage(long max, double time) {
-        double chunk = max / 50.;
-        String line = IntStream.range(0, 50).mapToObj(i -> (chunk * i < time ? "§c" : "§7") + "❘")
-                .collect(Collectors.joining("", "[", ""));
-        String nums = String.valueOf(format((time / (double) max) * 100, 3));
-        return line + "§f] §c" + nums + "%";
     }
 }

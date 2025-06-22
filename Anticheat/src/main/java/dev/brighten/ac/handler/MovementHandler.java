@@ -87,7 +87,7 @@ public class MovementHandler {
     private final Timer lastCinematic = new TickTimer(2);
     private final Timer lastReset = new TickTimer(2);
     private final EvictingList<Integer> sensitivitySamples = new EvictingList<>(50);
-    private boolean modernMovement = false;
+    private boolean modernMovement;
     public MovementHandler(APlayer player) {
         this.player = player;
 
@@ -655,14 +655,16 @@ it
         sentPositionUpdate = false;
     }
 
-    private final RelativeFlag relFlags = RelativeFlag.X.and(RelativeFlag.Y)
-            .and(RelativeFlag.Z).and(RelativeFlag.YAW).and(RelativeFlag.PITCH);
+    private final RelativeFlag relFlags = RelativeFlag.X.or(RelativeFlag.Y)
+            .or(RelativeFlag.Z).or(RelativeFlag.YAW).or(RelativeFlag.PITCH);
 
     public void runPositionHackFix() {
         if (sentPositionUpdate) return;
 
-        player.sendPacket(new WrapperPlayServerPlayerPositionAndLook(0, 0, 0,0,0,
-                relFlags.getMask(), 0, false));
+        player.sendPacket(new WrapperPlayServerPlayerPositionAndLook(0, Vector3d.zero(), new Vector3d(0,0,0), 0, 0,
+                relFlags));
+
+        player.getBukkitPlayer().sendMessage("§c[Anticheat] §7Position update sent to fix movement issues.");
 
         sentPositionUpdate = true;
     }

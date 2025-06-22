@@ -2,6 +2,7 @@ package dev.brighten.ac.data.info;
 
 import com.github.retrooper.packetevents.util.Vector3d;
 import dev.brighten.ac.handler.block.WrappedBlock;
+import dev.brighten.ac.handler.entity.TrackedEntity;
 import dev.brighten.ac.packet.PlayerCapabilities;
 import dev.brighten.ac.utils.KLocation;
 import dev.brighten.ac.utils.PastLocation;
@@ -11,7 +12,6 @@ import dev.brighten.ac.utils.timer.Timer;
 import dev.brighten.ac.utils.timer.impl.TickTimer;
 import lombok.Getter;
 import lombok.Setter;
-import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.potion.PotionEffect;
 
@@ -38,7 +38,7 @@ public class GeneralInformation {
     public boolean serverGround, lastServerGround, canFly, nearGround, worldLoaded, generalCancel, inVehicle, creative,
             sneaking, lsneaking, sprinting, gliding, riptiding, wasOnSlime, onLadder, doingVelocity, breakingBlock,
                inventoryOpen;
-    public List<Entity> nearbyEntities = Collections.emptyList();
+    public List<TrackedEntity> nearbyEntities = Collections.emptyList();
     public PastLocation targetPastLocation = new PastLocation();
     public KLocation lastKnownGoodPosition;
     public long lastArmSwing;

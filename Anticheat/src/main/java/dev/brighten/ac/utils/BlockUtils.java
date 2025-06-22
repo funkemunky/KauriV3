@@ -1,11 +1,13 @@
 package dev.brighten.ac.utils;
 
+import com.github.retrooper.packetevents.protocol.entity.type.EntityTypes;
 import com.github.retrooper.packetevents.protocol.item.type.ItemType;
 import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import com.github.retrooper.packetevents.protocol.world.states.type.StateType;
 import com.github.retrooper.packetevents.protocol.world.states.type.StateTypes;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.handler.block.WrappedBlock;
+import dev.brighten.ac.handler.entity.TrackedEntity;
 import dev.brighten.ac.utils.math.IntVector;
 import io.github.retrooper.packetevents.util.SpigotConversionUtil;
 import org.bukkit.*;
@@ -140,8 +142,9 @@ public class BlockUtils {
         };
     }
 
-    public static boolean isEntityCollidable(Entity entity) {
-        return entity instanceof Vehicle;
+    public static boolean isEntityCollidable(TrackedEntity entity) {
+        return entity.getEntityType().isInstanceOf(EntityTypes.BOAT) ||
+                entity.getEntityType().isInstanceOf(EntityTypes.MINECART);
     }
 
     public static boolean isSolid(Block block) {

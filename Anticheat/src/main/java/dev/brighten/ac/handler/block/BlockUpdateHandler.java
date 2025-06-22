@@ -131,6 +131,7 @@ public class BlockUpdateHandler {
     private KColumn getBukkitColumn(World world, int x, int z) {
         Chunk chunk = BlockUtils.getChunkAsync(world, x >> 4, z >> 4).orElse(null);
 
+        Anticheat.INSTANCE.alog(true, "Chunk at " + x + ", " + z + " is null: " + (chunk == null) + " maxheight=" + world.getMaxHeight());
         if(chunk == null) {
             // Handle loading on main thread
             Anticheat.INSTANCE.getRunUtils().task(() -> {
@@ -148,13 +149,13 @@ public class BlockUpdateHandler {
             levels[i] = create();
         }
 
-        int chunkX = chunk.getX();
-        int chunkZ = chunk.getZ();
+        int chunkX = chunk.getX() * 16;
+        int chunkZ = chunk.getZ() * 16;
 
-        for(int blockX = chunk.getX(); blockX < chunk.getX() + 16 ; blockX++) {
-            for(int blockZ = chunk.getZ(); blockZ < chunk.getZ() + 16 ; blockZ++) {
+        for(int blockX = chunkX; blockX < chunkX + 16 ; blockX++) {
+            for(int blockZ = chunkZ; blockZ < chunkZ + 16 ; blockZ++) {
                 for(int blockY = minHeight ; blockY < world.getMaxHeight() ; blockY++) {
-                    Block block = chunk.getBlock(blockX, blockY & 15, blockZ);
+                    Block block = chunk.getBlock(blockX, blockY, blockZ);
 
                     if(block.getType() == null || block.getType().equals(Material.AIR)) {
                         continue; // Air
@@ -163,6 +164,10 @@ public class BlockUpdateHandler {
                     BaseChunk baseChunk = levels[blockY >> 4];
 
                     WrappedBlockState state = SpigotConversionUtil.fromBukkitMaterialData(block.getState().getData());
+
+                    if(state.getType() == StateTypes.GRAY_TERRACOTTA) {
+                        Anticheat.INSTANCE.alog(true, "Block at " + blockX + ", " + blockY + ", " + blockZ + " is " + state.getType());
+                    }
 
                     baseChunk.set(blockX & 15, blockY & 15, blockZ & 15, state);
                 }
@@ -221,7 +226,7 @@ public class BlockUpdateHandler {
 
         y -= minHeight;
 
-        BaseChunk chunk = col.chunks()[y & 15];
+        BaseChunk chunk = col.chunks().length - 1 < (y >> 4) ? null : col.chunks()[y >> 4];
 
         if(chunk == null) {
             //Get Bukkit Block
@@ -245,7 +250,7 @@ public class BlockUpdateHandler {
                     airBlockState);
         }
 
-        WrappedBlockState state = chunk.get(player.getPlayerVersion(), x & 15, y & 15, z & 15);
+        WrappedBlockState state = chunk.get(PacketEvents.getAPI().getServerManager().getVersion().toClientVersion(),x & 15, y & 15, z & 15);
 
         return new WrappedBlock(new IntVector(x, y, z),
                 state.getType(),
@@ -323,7 +328,7 @@ public class BlockUpdateHandler {
         player.runKeepaliveAction(k -> {
             for (WrapperPlayServerMultiBlockChange.EncodedBlock info : packet.getBlocks()) {
 
-                WrappedBlockState blockState = info.getBlockState(player.getPlayerVersion());
+                WrappedBlockState blockState = info.getBlockState(PacketEvents.getAPI().getServerManager().getVersion().toClientVersion());
 
                 updateBlock(info.getX(), info.getY(), info.getZ(), blockState);
             }

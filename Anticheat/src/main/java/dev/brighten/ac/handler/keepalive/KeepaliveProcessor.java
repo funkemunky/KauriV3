@@ -49,13 +49,16 @@ public class KeepaliveProcessor {
                 double dh = Math.min(value.getMovement().getDeltaXZ(), 1),
                         dy = Math.min(1, Math.abs(value.getMovement().getDeltaY()));
 
-                value.getInfo().nearbyEntities = value.getBukkitPlayer()
-                        .getNearbyEntities(2 + dh, 3 + dy, 2 + dh);
+                value.getInfo().nearbyEntities = value.getEntityLocationHandler().getTrackedEntities().values()
+                        .stream()
+                        .filter(te ->
+                                te.getLocation().distance(value.getMovement().getTo().getLoc()) < (2 + (dh + dy) / 2))
+                        .toList();
             }
 
             TransactionServerWrapper transaction = new TransactionServerWrapper(currentKeepalive.id, 0);
 
-            value.sendPacketSilently(transaction.getWrapper(value.getPlayerVersion()));
+            value.writePacketSilently(transaction.getWrapper());
         }
     }
 
