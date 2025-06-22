@@ -4,7 +4,6 @@ import com.github.retrooper.packetevents.protocol.particle.type.ParticleType;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.utils.Helper;
 import dev.brighten.ac.utils.KLocation;
-import dev.brighten.ac.utils.reflections.impl.MinecraftReflection;
 import dev.brighten.ac.utils.world.CollisionBox;
 import me.hydro.emulator.util.mcp.AxisAlignedBB;
 import org.bukkit.Location;
@@ -78,7 +77,7 @@ public class SimpleCollisionBox implements CollisionBox {
     }
 
     public void sort() {
-        double temp = 0;
+        double temp;
         if (minX >= maxX) {
             temp = minX;
             this.minX = maxX;

@@ -1,5 +1,6 @@
 package dev.brighten.ac.utils.config;
 
+import dev.brighten.ac.Anticheat;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
@@ -9,14 +10,13 @@ import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
-import org.yaml.snakeyaml.nodes.Node;
-import org.yaml.snakeyaml.representer.Represent;
 import org.yaml.snakeyaml.representer.Representer;
 
 import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.logging.Level;
 
 @NoArgsConstructor(access = AccessLevel.PACKAGE)
 public class YamlConfiguration extends ConfigurationProvider
@@ -85,7 +85,7 @@ public class YamlConfiguration extends ConfigurationProvider
                     if (currentLayer == 0) {
                         currentPath = new StringBuilder(key);
                     } else {
-                        currentPath.append("." + key);
+                        currentPath.append(".").append(key);
                     }
 
                     String path = currentPath.toString();
@@ -102,7 +102,7 @@ public class YamlConfiguration extends ConfigurationProvider
         try {
             writer.write(sb.toString());
         } catch (IOException e) {
-            e.printStackTrace();
+            Anticheat.INSTANCE.getLogger().log(Level.WARNING, "Failed to save config file", e);
         }
     }
     @Override

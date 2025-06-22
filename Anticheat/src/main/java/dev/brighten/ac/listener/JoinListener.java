@@ -1,13 +1,10 @@
 package dev.brighten.ac.listener;
 
 import dev.brighten.ac.Anticheat;
-import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.utils.annotation.Init;
 import org.bukkit.event.EventHandler;
-import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerKickEvent;
-import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
 @Init

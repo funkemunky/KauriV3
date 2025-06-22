@@ -1,5 +1,6 @@
 package dev.brighten.ac.data;
 
+import com.github.retrooper.packetevents.PacketEvents;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
@@ -22,7 +23,7 @@ public class PlayerRegistry {
         }
 
         synchronized (aplayerMap) {
-            APlayer aplayer = new APlayer(player);
+            APlayer aplayer = new APlayer(player, PacketEvents.getAPI().getPlayerManager().getUser(player));
             aplayerMap.put(player.getUniqueId().hashCode(), aplayer);
             return aplayer;
         }

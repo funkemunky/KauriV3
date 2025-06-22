@@ -10,7 +10,6 @@ import com.github.retrooper.packetevents.util.Vector3f;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerParticle;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.utils.math.IntVector;
-import dev.brighten.ac.utils.reflections.impl.MinecraftReflection;
 import dev.brighten.ac.utils.world.BlockData;
 import dev.brighten.ac.utils.world.CollisionBox;
 import dev.brighten.ac.utils.world.EntityData;
@@ -20,6 +19,7 @@ import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
 import org.bukkit.util.Vector;
+import org.checkerframework.checker.units.qual.C;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -106,17 +106,11 @@ public class Helper {
 
     public static void drawPoint(Vector3d point, ParticleType<?> particle, Collection<? extends APlayer> players) {
         WrapperPlayServerParticle packet = new WrapperPlayServerParticle(new Particle<>(particle), false,
-                point, new Vector3f(0, 0, 0),  0f, 1);
+                point, new Vector3f(0, 0, 0), 0f, 1);
 
         for (APlayer p : players) {
             p.sendPacketSilently(packet);
         }
-    }
-
-    public static Block getBlockAt(World world, int x, int y, int z) {
-        return world.isChunkLoaded(x >> 4, z >> 4)
-                ? world.getChunkAt(x >> 4, z >> 4).getBlock(x & 15, y, z & 15)
-                : null;
     }
 
     public static SimpleCollisionBox wrap(SimpleCollisionBox a, SimpleCollisionBox b) {

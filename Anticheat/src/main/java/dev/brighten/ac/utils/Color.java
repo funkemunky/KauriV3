@@ -2,7 +2,6 @@ package dev.brighten.ac.utils;
 
 import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.manager.server.ServerVersion;
-import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import org.bukkit.ChatColor;
 
 import java.util.regex.Matcher;
