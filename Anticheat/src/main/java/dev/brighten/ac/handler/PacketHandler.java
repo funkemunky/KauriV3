@@ -138,7 +138,11 @@ public class PacketHandler {
             }
 
             player.getMovement().process(packet);
+
+            var result = player.getCheckHandler().callSyncPacket(wrapped, timestamp);
             player.getVelocityHandler().onFlyingPost(packet);
+
+            return result;
         } else if(event.getPacketType().equals(PacketType.Play.Client.STEER_VEHICLE)) {
             WrapperPlayClientSteerVehicle packet = new WrapperPlayClientSteerVehicle(event);
 

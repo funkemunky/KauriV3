@@ -95,7 +95,7 @@ public class Helper {
                             new Vector3d(fx, fy, fz), new Vector3f(0, 0, 0), 0f, 1);
 
                     for (APlayer p : players) {
-                        p.writePacketSilently(packet);
+                        p.sendPacket(packet);
                     }
                 }
             }
@@ -104,7 +104,7 @@ public class Helper {
     }
 
     public static List<SimpleCollisionBox> getCollisions(APlayer player, SimpleCollisionBox collisionBox) {
-        return getCollisions(player, collisionBox, Materials.COLLIDABLE);
+        return getCollisions(player, collisionBox, -100);
     }
 
     public static List<SimpleCollisionBox> getCollisions(APlayer player, SimpleCollisionBox collisionBox, int mask) {
@@ -140,9 +140,9 @@ public class Helper {
                     IntVector vec = new IntVector(x, y, z);
                     StateType type = player.getBlockUpdateHandler().getBlock(vec).getType();
 
-                    if (type != StateTypes.AIR && Materials.checkFlag(type, mask)) {
+                    if (type != StateTypes.AIR && (mask == -100 || Materials.checkFlag(type, mask))) {
                         CollisionBox box = BlockData.getData(type)
-                                .getBox(player, vec, PacketEvents.getAPI().getServerManager().getVersion().toClientVersion());
+                                .getBox(player, vec, player.getPlayerVersion());
 
                         if (box.isIntersected(collisionBox)) {
                             box.downCast(collisionBoxes);

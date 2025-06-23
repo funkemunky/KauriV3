@@ -131,7 +131,6 @@ public class BlockUpdateHandler {
     private KColumn getBukkitColumn(World world, int x, int z) {
         Chunk chunk = BlockUtils.getChunkAsync(world, x >> 4, z >> 4).orElse(null);
 
-        Anticheat.INSTANCE.alog(true, "Chunk at " + x + ", " + z + " is null: " + (chunk == null) + " maxheight=" + world.getMaxHeight());
         if(chunk == null) {
             // Handle loading on main thread
             Anticheat.INSTANCE.getRunUtils().task(() -> {
@@ -164,10 +163,6 @@ public class BlockUpdateHandler {
                     BaseChunk baseChunk = levels[blockY >> 4];
 
                     WrappedBlockState state = SpigotConversionUtil.fromBukkitMaterialData(block.getState().getData());
-
-                    if(state.getType() == StateTypes.GRAY_TERRACOTTA) {
-                        Anticheat.INSTANCE.alog(true, "Block at " + blockX + ", " + blockY + ", " + blockZ + " is " + state.getType());
-                    }
 
                     baseChunk.set(blockX & 15, blockY & 15, blockZ & 15, state);
                 }

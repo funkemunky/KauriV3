@@ -3,11 +3,14 @@ package dev.brighten.ac.handler;
 import com.github.retrooper.packetevents.protocol.particle.type.ParticleTypes;
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.data.APlayer;
+import dev.brighten.ac.handler.block.WrappedBlock;
 import dev.brighten.ac.utils.ItemBuilder;
+import dev.brighten.ac.utils.Materials;
 import dev.brighten.ac.utils.annotation.Init;
 import dev.brighten.ac.utils.math.IntVector;
 import dev.brighten.ac.utils.world.BlockData;
 import dev.brighten.ac.utils.world.EntityData;
+import dev.brighten.ac.utils.world.types.SimpleCollisionBox;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import org.bukkit.Material;
@@ -23,6 +26,7 @@ import org.bukkit.inventory.ItemStack;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Init
 public class BBRevealHandler implements Listener {
@@ -59,9 +63,14 @@ public class BBRevealHandler implements Listener {
                         .create());
             } else {
                 blocksToShow.add(blockLoc);
+                WrappedBlock block = player.getBlockUpdateHandler().getBlock(blockLoc);
                 event.getPlayer().spigot().sendMessage(new ComponentBuilder("Now showing block: ")
-                        .color(ChatColor.GREEN).append(event.getClickedBlock().getType().name()).color(ChatColor.WHITE)
+                        .color(ChatColor.GREEN).color(ChatColor.WHITE).append(event.getClickedBlock().getType().name())
                         .color(ChatColor.GRAY)
+                                .append(" flags: " + block.getBlockState().getType() + " | " + Materials.checkFlag(block.getType(), Materials.COLLIDABLE) + "," +
+                                        Materials.checkFlag(block.getType(), Materials.SOLID) + "," + Materials.checkFlag(block.getType(), Materials.LIQUID))
+                                .color(ChatColor.RED)
+                                .append(" | box=" + BlockData.getData(block.getType()).getBox(player, blockLoc, player.getPlayerVersion()).downCast().stream().map(SimpleCollisionBox::toString).collect(Collectors.joining(", ")))
                         .create());
             }
             event.setCancelled(true);

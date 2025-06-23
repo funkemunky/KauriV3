@@ -194,8 +194,11 @@ public enum BlockData {
 
     _SNOW((protocol, player, b) -> {
         int height = b.getBlockState().getLayers();
+        if(height <= 0) {
+            player.getBukkitPlayer().sendMessage(String.format("Height is %s for snow block at ", height) + b.getLocation());
+        }
         if (height == 0) return new SimpleCollisionBox(0, 0, 0, 1, 0, 1); // return NoCollisionBox.INSTANCE;
-        return new SimpleCollisionBox(0, 0, 0, 1, height * 0.125, 1);
+        return new SimpleCollisionBox(0, 0, 0, 1, (height - 1) * 0.125, 1);
     }, StateTypes.SNOW),
 
     _SLAB((protocol, player, b) -> {

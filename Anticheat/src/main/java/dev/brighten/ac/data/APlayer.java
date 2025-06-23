@@ -176,8 +176,7 @@ public class APlayer {
                     List<AxisAlignedBB> axisAlignedBBs = new ArrayList<>();
 
                     for (SimpleCollisionBox bb2 : Helper.getCollisions(APlayer.this,
-                            sbc,
-                            Materials.COLLIDABLE)) {
+                            sbc)) {
                         axisAlignedBBs
                                 .add(new AxisAlignedBB(bb2.minX, bb2.minY, bb2.minZ, bb2.maxX, bb2.maxY, bb2.maxZ));
                     }
