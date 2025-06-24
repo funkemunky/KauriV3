@@ -87,7 +87,7 @@ public class FlyB extends Check {
             possibleHeights.add(slimeY);
 
         maximumHeightCheck: {
-            if(player.getInfo().nearGround || player.getBlockInfo().nearSteppableEntity) break maximumHeightCheck;
+            if(player.getInfo().nearGround || player.getBlockInfo().nearSteppableEntity || player.getBlockInfo().pistonNear) break maximumHeightCheck;
 
             double maxHeight = possibleHeights.stream().max(Comparator.comparing(c -> c)).orElse(1.5) + 0.05f;
 

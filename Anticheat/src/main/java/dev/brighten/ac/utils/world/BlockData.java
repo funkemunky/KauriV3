@@ -251,7 +251,7 @@ public enum BlockData {
             StateTypes.END_PORTAL_FRAME),
 
     _CARPET(new SimpleCollisionBox(0.0F, 0.0F, 0.0F, 1.0F, 0.0625F, 1.0F),
-            StateTypes.values().stream().filter(m -> m.getName().contains("CARPET")).toArray(StateType[]::new)),
+            BlockTags.WOOL_CARPETS.getStates().toArray(new StateType[0])),
     _Daylight(new SimpleCollisionBox(0.0F, 0.0F, 0.0F, 1.0F, 0.375, 1.0F),
             StateTypes.DAYLIGHT_DETECTOR),
     _LILIPAD((v, player, b) -> {

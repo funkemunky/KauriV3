@@ -64,12 +64,24 @@ public class Prediction extends Check {
             if(totalMotion < 9E-4 || (mx * mx + my * my + mz * mz) < 9E-4) {
                 lastSkipPos.reset();
             }
-            boolean zeroThree = lastSkipPos.isNotPassed(4);
+
+            boolean zeroThree = lastSkipPos.isNotPassed(4) || tags.contains("003");
+            //TODO Implement actual proper handling for this
+            boolean isSlimeFuck =
+                    (player.getInfo().isWasOnSlime() && player.getMovement().getAirTicks() < 4 && player.getMovement().getGroundTicks() < 4)
+                            || (tags.contains("slime-block") && zeroThree);
             boolean collided = player.EMULATOR.getTags().contains("x-collided")
                     || player.EMULATOR.getTags().contains("z-collided");
 
-            boolean badOffset = offset > (player.getMovement().getDeltaXZ() == 0
+            double threshold = (player.getMovement().getDeltaXZ() == 0
                     ? (zeroThree ? 0.24 : 0.03) : (zeroThree ? 0.03 : (collided ? 0.01 : 0.003)));
+
+            if(isSlimeFuck) {
+                threshold = 0.032;
+                tags += ",slimeissue";
+            }
+
+            boolean badOffset = offset > threshold;
 
             if(badOffset) {
                 debug("[%s] dx=%.6f px=%.6f dz=%.6f pz=%.6f dy=%.6f py=%.6f velocities=%s", zeroThree, player.getMovement().getDeltaX(),
@@ -83,7 +95,7 @@ public class Prediction extends Check {
                 }
 
                 if(++buffer > 2) {
-                    flag("%s", offset);
+                    flag("%s [tags=%s]", offset, tags);
                     correctMovement(loc);
                     buffer = 4;
                 }
