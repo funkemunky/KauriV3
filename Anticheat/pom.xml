@@ -24,6 +24,10 @@
             <url>https://repo.viaversion.com</url>
         </repository>
         <repository>
+            <id>spigot-repo</id>
+            <url>https://hub.spigotmc.org/nexus/content/repositories/snapshots/</url>
+        </repository>
+        <repository>
             <id>evokegames</id>
             <url>https://maven.evokegames.gg/snapshots</url>
         </repository>
@@ -50,10 +54,6 @@
         <repository>
             <id>funkemunky-releases</id>
             <url>https://nexus.funkemunky.cc/repository/releases/</url>
-        </repository>
-        <repository>
-            <id>spigot-repo</id>
-            <url>https://hub.spigotmc.org/nexus/content/repositories/snapshots/</url>
         </repository>
     </repositories>
 
