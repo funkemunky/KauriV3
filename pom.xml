@@ -19,6 +19,16 @@
         <module>Neo/neo</module>
     </modules>
 
+    <build>
+        <extensions>
+            <extension>
+                <groupId>org.apache.maven.extensions</groupId>
+                <artifactId>maven-build-cache-extension</artifactId>
+                <version>1.0.0</version>
+            </extension>
+        </extensions>
+    </build>
+
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>

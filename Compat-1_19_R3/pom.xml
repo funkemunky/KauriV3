@@ -17,6 +17,16 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
+    <build>
+        <extensions>
+            <extension>
+                <groupId>org.apache.maven.extensions</groupId>
+                <artifactId>maven-build-cache-extension</artifactId>
+                <version>1.0.0</version>
+            </extension>
+        </extensions>
+    </build>
+
     <repositories>
         <!-- This adds the Spigot Maven repository to the build -->
         <repository>
