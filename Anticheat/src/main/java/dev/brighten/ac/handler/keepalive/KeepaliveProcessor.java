@@ -2,21 +2,16 @@ package dev.brighten.ac.handler.keepalive;
 
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.data.APlayer;
-import dev.brighten.ac.packet.handler.HandlerAbstract;
-import dev.brighten.ac.packet.wrapper.out.WPacketPlayOutTransaction;
-import dev.brighten.ac.utils.BukkitRunnable;
+import dev.brighten.ac.packet.TransactionServerWrapper;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.shorts.Short2ObjectArrayMap;
-import org.bukkit.scheduler.BukkitTask;
 
 import java.util.Map;
 import java.util.Optional;
 
-public class KeepaliveProcessor implements BukkitRunnable {
-
-    private BukkitTask task;
+public class KeepaliveProcessor {
 
     public KeepAlive currentKeepalive = new KeepAlive((short) 0);
     public short tick;
@@ -29,8 +24,7 @@ public class KeepaliveProcessor implements BukkitRunnable {
     public KeepaliveProcessor() {
     }
 
-    @Override
-    public void run(BukkitTask task) {
+    public void run() {
         tick++;
 
         if(tick > Short.MAX_VALUE - 2) {
@@ -55,14 +49,16 @@ public class KeepaliveProcessor implements BukkitRunnable {
                 double dh = Math.min(value.getMovement().getDeltaXZ(), 1),
                         dy = Math.min(1, Math.abs(value.getMovement().getDeltaY()));
 
-                value.getInfo().nearbyEntities = value.getBukkitPlayer()
-                        .getNearbyEntities(2 + dh, 3 + dy, 2 + dh);
+                value.getInfo().nearbyEntities = value.getEntityLocationHandler().getTrackedEntities().values()
+                        .stream()
+                        .filter(te ->
+                                te.getLocation().distance(value.getMovement().getTo().getLoc()) < (2 + (dh + dy) / 2))
+                        .toList();
             }
 
-            WPacketPlayOutTransaction transaction = WPacketPlayOutTransaction.builder().id(0)
-                    .action(currentKeepalive.id).accept(false).build();
+            TransactionServerWrapper transaction = new TransactionServerWrapper(currentKeepalive.id, 0);
 
-            HandlerAbstract.getHandler().sendPacketSilently(value.getBukkitPlayer(), transaction);
+            value.writePacketSilently(transaction.getWrapper());
         }
     }
 
@@ -77,23 +73,10 @@ public class KeepaliveProcessor implements BukkitRunnable {
         return getKeepById(lastResponses.get(data.getBukkitPlayer().getUniqueId().hashCode()));
     }
 
-    public void start() {
-        if (task == null) {
-            task = Anticheat.INSTANCE.getRunUtils().taskTimer(this, 20L, 0L);
-        }
-    }
-
     public void addResponse(APlayer data, short id) {
         getKeepById(id).ifPresent(ka -> {
             lastResponses.put(data.getBukkitPlayer().getUniqueId().hashCode(), (Short) id);
             ka.received(data);
         });
-    }
-
-    public void stop() {
-        if (task != null) {
-            task.cancel();
-            task = null;
-        }
     }
 }

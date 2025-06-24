@@ -13,6 +13,7 @@ import java.util.UUID;
 public class TimedActionStore<T> {
     private final WTimedAction<T> action;
     private final Class<? extends Check> checkClass;
+    private final String checkId;
     //To ensure duplicate actions are not added to the list
     private final UUID uuid = UUID.randomUUID();
 

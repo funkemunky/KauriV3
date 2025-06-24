@@ -1,5 +1,10 @@
 package dev.brighten.ac.check.impl.packet.badpackets;
 
+import com.github.retrooper.packetevents.protocol.player.ClientVersion;
+import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerBlockPlacement;
+import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerFlying;
+import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPong;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerPositionAndLook;
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.api.check.CheckType;
 import dev.brighten.ac.check.Check;
@@ -7,11 +12,6 @@ import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.check.WTimedAction;
 import dev.brighten.ac.data.APlayer;
-import dev.brighten.ac.packet.ProtocolVersion;
-import dev.brighten.ac.packet.wrapper.in.WPacketPlayInBlockPlace;
-import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
-import dev.brighten.ac.packet.wrapper.in.WPacketPlayInTransaction;
-import dev.brighten.ac.packet.wrapper.out.WPacketPlayOutPosition;
 import dev.brighten.ac.utils.annotation.Bind;
 import dev.brighten.ac.utils.timer.impl.TickTimer;
 
@@ -27,11 +27,11 @@ public class Timer extends Check {
     private long totalTimer = -1;
 
     @Bind
-    WAction<WPacketPlayOutPosition> position = packet -> totalTimer-= 50;
+    WAction<WrapperPlayServerPlayerPositionAndLook> position = packet -> totalTimer-= 50;
 
     @Bind
-    WAction<WPacketPlayInBlockPlace> blockPlace = packet -> {
-        if(player.getPlayerVersion().isOrAbove(ProtocolVersion.V1_17))
+    WAction<WrapperPlayClientPlayerBlockPlacement> blockPlace = packet -> {
+        if(player.getPlayerVersion().isNewerThanOrEquals(ClientVersion.V_1_17))
             totalTimer-= 50;
     };
 
@@ -39,10 +39,10 @@ public class Timer extends Check {
      * Fixing bug with 1.9 since flying packets are not always sent
      */
     @Bind
-    WTimedAction<WPacketPlayInTransaction> transaction = (packet, timestamp) -> {
-        if(player.getPlayerVersion().isBelow(ProtocolVersion.V1_9)) return;
+    WTimedAction<WrapperPlayClientPong> transaction = (packet, timestamp) -> {
+        if(player.getPlayerVersion().isOlderThan(ClientVersion.V_1_9)) return;
 
-        Anticheat.INSTANCE.getKeepaliveProcessor().getKeepById(packet.getAction()).ifPresent(ka -> {
+        Anticheat.INSTANCE.getKeepaliveProcessor().getKeepById((short)packet.getId()).ifPresent(ka -> {
             long delta = timestamp - ka.startStamp;
 
             if(delta < 1095L && totalTimer - (timestamp + 100) > 3000L) {
@@ -52,7 +52,7 @@ public class Timer extends Check {
     };
 
     @Bind
-    WTimedAction<WPacketPlayInFlying> flying = (packet, timestamp) -> {
+    WTimedAction<WrapperPlayClientPlayerFlying> flying = (packet, timestamp) -> {
         if(totalTimer == -1) {
             totalTimer = player.getCreation().getCurrent() - 50;
             debug("set base time");

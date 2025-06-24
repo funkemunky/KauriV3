@@ -1,7 +1,8 @@
 package dev.brighten.ac.utils.menu;
 
+import com.github.retrooper.packetevents.PacketEvents;
+import com.github.retrooper.packetevents.manager.server.ServerVersion;
 import dev.brighten.ac.Anticheat;
-import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.utils.BlockUtils;
 import dev.brighten.ac.utils.Color;
 import dev.brighten.ac.utils.XMaterial;
@@ -124,9 +125,9 @@ public class MenuListener implements Listener {
         }
         if(inventory instanceof AnvilInventory anvil && anvils.containsKey(inventory)) {
 
-            WrappedMethod method = new WrappedClass(ProtocolVersion.getGameVersion().isOrAbove(ProtocolVersion.V1_11)
+            WrappedMethod method = new WrappedClass(PacketEvents.getAPI().getServerManager().getVersion().isNewerThanOrEquals(ServerVersion.V_1_11)
                     ? AnvilInventory.class : Inventory.class)
-                    .getMethod(ProtocolVersion.getGameVersion().isOrAbove(ProtocolVersion.V1_11)
+                    .getMethod(PacketEvents.getAPI().getServerManager().getVersion().isNewerThanOrEquals(ServerVersion.V_1_11)
                                     ? "getRenameText" : "getName");
             anvils.get(anvil).consumer.accept(event.getPlayer(), Color.translate(method.invoke(anvil)));
             anvils.remove(anvil);

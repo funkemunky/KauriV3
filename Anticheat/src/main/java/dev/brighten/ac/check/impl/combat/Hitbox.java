@@ -1,21 +1,24 @@
 package dev.brighten.ac.check.impl.combat;
 
+import com.github.retrooper.packetevents.protocol.entity.type.EntityType;
+import com.github.retrooper.packetevents.protocol.entity.type.EntityTypes;
+import com.github.retrooper.packetevents.protocol.particle.type.ParticleTypes;
+import com.github.retrooper.packetevents.protocol.player.ClientVersion;
+import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientInteractEntity;
+import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerFlying;
+import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.api.check.CheckType;
 import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.data.APlayer;
-import dev.brighten.ac.packet.ProtocolVersion;
-import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
-import dev.brighten.ac.packet.wrapper.in.WPacketPlayInUseEntity;
+import dev.brighten.ac.handler.entity.TrackedEntity;
 import dev.brighten.ac.utils.*;
 import dev.brighten.ac.utils.annotation.Bind;
 import dev.brighten.ac.utils.timer.Timer;
 import dev.brighten.ac.utils.timer.impl.TickTimer;
 import dev.brighten.ac.utils.world.EntityData;
 import dev.brighten.ac.utils.world.types.SimpleCollisionBox;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.EntityType;
 import org.bukkit.util.Vector;
 
 import java.util.*;
@@ -27,64 +30,57 @@ public class Hitbox extends Check {
     private int hbuffer;
 
     public Timer lastAimOnTarget = new TickTimer(), lastPosition = new TickTimer();
-    private final Queue<Tuple<Entity, KLocation>> attacks = new LinkedBlockingQueue<>();
+    private final Queue<Tuple<TrackedEntity, KLocation>> attacks = new LinkedBlockingQueue<>();
 
-    private final EnumSet<EntityType> allowedEntityTypes = EnumSet.of(EntityType.ZOMBIE, EntityType.SHEEP,
-            EntityType.BLAZE, EntityType.SKELETON, EntityType.PLAYER, EntityType.VILLAGER, EntityType.IRON_GOLEM,
-            EntityType.WITCH, EntityType.COW, EntityType.CREEPER);
+    private final Set<EntityType> allowedEntityTypes = Set.of(EntityTypes.ZOMBIE, EntityTypes.SHEEP,
+            EntityTypes.BLAZE, EntityTypes.SKELETON, EntityTypes.PLAYER, EntityTypes.VILLAGER, EntityTypes.IRON_GOLEM,
+            EntityTypes.WITCH, EntityTypes.COW, EntityTypes.CREEPER);
 
     public Hitbox(APlayer player) {
         super(player);
     }
 
     @Bind
-    WAction<WPacketPlayInUseEntity> useEntity = packet -> {
-        Entity entity = packet.getEntity(player.getBukkitPlayer().getWorld());
-        if(entity == null) return;
-        if(packet.getAction() == WPacketPlayInUseEntity.EnumEntityUseAction.ATTACK
-                && allowedEntityTypes.contains(entity.getType())) {
-            attacks.add(new Tuple<>(packet.getEntity(player.getBukkitPlayer().getWorld()),
-                    player.getMovement().getTo().getLoc().clone()));
-            debug("attack on tick %s", player.getPlayerTick());
-        }
+    WAction<WrapperPlayClientInteractEntity> useEntity = packet -> {
+
+        if(packet.getAction() != WrapperPlayClientInteractEntity.InteractAction.ATTACK)
+            return;
+
+        Optional<TrackedEntity> entity = player.getEntityLocationHandler().getTrackedEntity(packet.getEntityId());
+        if(entity.isEmpty() || !allowedEntityTypes.contains(entity.get().getEntityType())) return;
+
+        attacks.add(new Tuple<>(entity.get(),
+                player.getMovement().getTo().getLoc().clone()));
     };
 
     //TODO Figure out how to make the check more sensitive without compromising network stability
     //Aka figure out how to minimize the amount of previous locations needed to process to keep network
     //stability. like shortening the amount stored, or removing older ones.
     @Bind
-    WAction<WPacketPlayInFlying> onFlying = packet -> {
+    WAction<WrapperPlayClientPlayerFlying> onFlying = packet -> {
         if(player.getInfo().isCreative() || player.getInfo().isInVehicle()) {
             attacks.clear();
             return;
         }
-        Tuple<Entity, KLocation> target;
+        Tuple<TrackedEntity, KLocation> target;
 
         while((target = attacks.poll()) != null) {
             //Updating new entity loc
-            Optional<Tuple<EntityLocation, EntityLocation>> optionalEloc = player.getEntityLocationHandler()
-                    .getEntityLocation(target.one);
 
-            if(optionalEloc.isEmpty()) {
-                return;
-            }
-
-            final Tuple<EntityLocation, EntityLocation> eloc = optionalEloc.get();
+            TrackedEntity entity = target.one;
 
             final KLocation to = target.two;
 
-            if(eloc.one.x == 0 && eloc.one.y == 0 & eloc.one.z == 0) {
+            if(entity.getNewEntityLocation().x == 0 && entity.getNewEntityLocation().y == 0 & entity.getNewEntityLocation().z == 0) {
                 return;
             }
-
-            debug("Checking for hitbox on tick %s", player.getPlayerTick());
 
             double distance = Double.MAX_VALUE;
             boolean collided = false; //Using this to compare smaller numbers than Double.MAX_VALUE. Slightly faster
 
             List<SimpleCollisionBox> boxes = new ArrayList<>();
             double expand = 0.005;
-            if(player.getPlayerVersion().isBelow(ProtocolVersion.V1_9)) {
+            if(player.getPlayerVersion().isOlderThan(ClientVersion.V_1_9)) {
                 expand+= 0.1;
             }
 
@@ -93,29 +89,29 @@ public class Hitbox extends Check {
                 expand+= 0.03;
             }
 
-            if(eloc.two != null) {
-                for (KLocation oldLocation : eloc.one.interpolatedLocations) {
+            if(entity.getOldEntityLocation() != null) {
+                for (KLocation oldLocation : entity.getNewEntityLocation().interpolatedLocations) {
                     SimpleCollisionBox box = (SimpleCollisionBox)
-                            EntityData.getEntityBox(oldLocation.toVector(), target.one);
+                            EntityData.getEntityBox(oldLocation.toLocation(player.getBukkitPlayer().getWorld()), target.one);
 
                     boxes.add(box.expand(expand));
                 }
-                for (KLocation oldLocation : eloc.two.interpolatedLocations) {
+                for (KLocation oldLocation : entity.getOldEntityLocation().interpolatedLocations) {
                     SimpleCollisionBox box = (SimpleCollisionBox)
-                            EntityData.getEntityBox(oldLocation.toVector(), target.one);
+                            EntityData.getEntityBox(oldLocation.toLocation(player.getBukkitPlayer().getWorld()), target.one);
 
                     boxes.add(box.expand(expand));
                 }
             } else {
-                for (KLocation oldLocation : eloc.one.interpolatedLocations) {
+                for (KLocation oldLocation : entity.getNewEntityLocation().interpolatedLocations) {
                     SimpleCollisionBox box = (SimpleCollisionBox)
-                            EntityData.getEntityBox(oldLocation.toVector(), target.one);
+                            EntityData.getEntityBox(oldLocation.toLocation(player.getBukkitPlayer().getWorld()), target.one);
 
                     boxes.add(box.expand(expand));
                 }
             }
 
-            if(boxes.size() == 0) return;
+            if(boxes.isEmpty()) return;
 
             int hits = 0;
 
@@ -177,6 +173,7 @@ public class Hitbox extends Check {
                         flag("d=%.3f>-3.0", distance);
                         buffer = Math.min(1, buffer);
                     }
+                    Anticheat.INSTANCE.getRunUtils().taskAsync(() -> boxes.forEach(box -> box.draw(ParticleTypes.FLAME, player)));
                 } else if(buffer > 0) buffer-= 0.02f;
 
                 if(hbuffer > 0) hbuffer--;
@@ -185,12 +182,12 @@ public class Hitbox extends Check {
                         player.getInfo().isSneaking());
             } else if(player.getEntityLocationHandler().streak > 1) {
                 if (++hbuffer > 5) {
-                    flag("%.1f;%.1f;%.1f", eloc.one.x, eloc.one.y, eloc.one.z);
+                    flag("%.1f;%.1f;%.1f", entity.getNewEntityLocation().x, entity.getNewEntityLocation().y, entity.getNewEntityLocation().z);
                 }
                 debug("Missed!");
             }
         }
-        if(packet.isMoved())
+        if(packet.hasPositionChanged())
             lastPosition.reset();
     };
 

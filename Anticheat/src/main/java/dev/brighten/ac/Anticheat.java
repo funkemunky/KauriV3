@@ -10,14 +10,14 @@ import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.data.PlayerRegistry;
 import dev.brighten.ac.data.info.CheckHandler;
 import dev.brighten.ac.depends.LibraryLoader;
+import dev.brighten.ac.depends.MavenLibrary;
+import dev.brighten.ac.depends.Relocate;
 import dev.brighten.ac.handler.BBRevealHandler;
 import dev.brighten.ac.handler.PacketHandler;
 import dev.brighten.ac.handler.entity.FakeEntityTracker;
 import dev.brighten.ac.handler.keepalive.KeepaliveProcessor;
 import dev.brighten.ac.handler.keepalive.actions.ActionManager;
 import dev.brighten.ac.logging.LoggerManager;
-import dev.brighten.ac.packet.handler.HandlerAbstract;
-import dev.brighten.ac.packet.listener.PacketProcessor;
 import dev.brighten.ac.utils.*;
 import dev.brighten.ac.utils.annotation.ConfigSetting;
 import dev.brighten.ac.utils.annotation.Init;
@@ -52,12 +52,49 @@ import java.util.stream.Collectors;
 @Getter
 @NoArgsConstructor
 @Init
+@MavenLibrary(groupId = "it\\.unimi\\.dsi", artifactId = "fastutil", version = "8.5.11", relocations = {
+        @Relocate(from = "it\\.unimi", to = "dev.brighten.ac.libs.it.unimi")
+})
+@MavenLibrary(groupId = "org\\.yaml\\", artifactId = "snakeyaml", version = "2.2", relocations = {
+        @Relocate(from = "org\\.yaml\\.snakeyaml", to = "dev.brighten.ac.libs.org.yaml.snakeyaml")
+})
+@MavenLibrary(groupId = "org\\.dizitart", artifactId = "nitrite", version = "4.3.0", relocations = {
+        @Relocate(from = "org\\.dizitart", to = "dev.brighten.ac.libs.org.dizitart"),
+        @Relocate(from = "org\\.h2", to = "dev.brighten.ac.libs.org.h2"),
+        @Relocate(from = "com\\.fasterxml", to = "dev.brighten.ac.libs.com.fasterxml"),
+        @Relocate(from = "org\\.slf4j", to = "dev.brighten.ac.libs.org.slf4j"),
+})
+@MavenLibrary(groupId = "com.h2database", artifactId = "h2-mvstore", version = "2.2.224", relocations = {
+        @Relocate(from = "org\\.h2", to = "dev.brighten.ac.libs.org.h2"),
+})
+@MavenLibrary(groupId = "com\\.\\fas\\terxml\\.jac\\kson\\.core", artifactId = "jackson-databind", version = "2.16.1", relocations = {
+        @Relocate(from = "com\\.fasterxml", to = "dev.brighten.ac.libs.com.fasterxml")
+})
+@MavenLibrary(groupId = "com\\.\\fas\\terxml\\.jac\\kson\\.core", artifactId = "jackson-core", version = "2.16.1", relocations = {
+        @Relocate(from = "com\\.fasterxml", to = "dev.brighten.ac.libs.com.fasterxml")
+})
+@MavenLibrary(groupId = "com\\.\\fas\\terxml\\.jac\\kson\\.core", artifactId = "jackson-annotations", version = "2.16.1", relocations = {
+        @Relocate(from = "com\\.fasterxml", to = "dev.brighten.ac.libs.com.fasterxml")
+})
+@MavenLibrary(groupId = "org\\.dizitart", artifactId = "nitrite-mvstore-adapter", version = "4.3.0", relocations = {
+        @Relocate(from = "org\\.dizitart", to = "dev.brighten.ac.libs.org.dizitart"),
+        @Relocate(from = "org\\.h2", to = "dev.brighten.ac.libs.org.h2"),
+        @Relocate(from = "com\\.fasterxml", to = "dev.brighten.ac.libs.com.fasterxml"),
+        @Relocate(from = "org\\.slf4j", to = "dev.brighten.ac.libs.org.slf4j"),
+})
+@MavenLibrary(groupId = "org\\.slf4j", artifactId = "slf4j-api", version = "2.0.13", relocations = {
+        @Relocate(from = "org\\.slf4j", to = "dev.brighten.ac.libs.org.slf4j"),
+})
+@MavenLibrary(groupId = "org\\.dizitart", artifactId = "nitrite-jackson-mapper", version = "4.3.0", relocations = {
+        @Relocate(from = "org\\.dizitart", to = "dev.brighten.ac.libs.org.dizitart"),
+        @Relocate(from = "com\\.fasterxml", to = "dev.brighten.ac.libs.com.fasterxml"),
+        @Relocate(from = "org\\.slf4j", to = "dev.brighten.ac.libs.org.slf4j"),
+})
 public class Anticheat extends JavaPlugin {
 
     public static Anticheat INSTANCE;
 
     private ScheduledExecutorService scheduler;
-    private PacketProcessor packetProcessor;
     private BukkitCommandManager commandManager;
     private ActionManager actionManager;
     private CheckManager checkManager;
@@ -88,10 +125,17 @@ public class Anticheat extends JavaPlugin {
 
     private Configuration anticheatConfig;
 
+    @Override
+    public void onLoad() {
+        INSTANCE = this;
+        getLogger().info("Loading Anticheat...");
+        LibraryLoader.loadAll(INSTANCE);
+
+        PacketEventsRegister.register();
+    }
+
     @SuppressWarnings("deprecation")
     public void onEnable() {
-        INSTANCE = this;
-        new LibraryLoader().loadAll(getClass());
 
         runUtils = new RunUtils();
 
@@ -105,10 +149,10 @@ public class Anticheat extends JavaPlugin {
 
         loadConfig();
 
+        PacketEventsRegister.init();
+
         commandManager = new BukkitCommandManager(this);
         commandManager.enableUnstableAPI("help");
-
-        runTpsTask();
 
         Anticheat.INSTANCE.getCommandManager()
                 .getCommandCompletions().registerCompletion("@checks", (c) -> Anticheat.INSTANCE.getCheckManager().getCheckClasses().keySet()
@@ -161,8 +205,6 @@ public class Anticheat extends JavaPlugin {
         commandPropertiesManager = new CommandPropertiesManager(commandManager, getDataFolder(),
                 getResource("command-messages.properties"));
 
-        packetProcessor = new PacketProcessor();
-
         new AnticheatAPI();
 
         new ClassScanner().initializeScanner(getClass(), this,
@@ -178,33 +220,27 @@ public class Anticheat extends JavaPlugin {
         serverInjector = new ServerInjector();
         serverInjector.inject();
 
-
-        this.keepaliveProcessor = new KeepaliveProcessor();
         this.fakeTracker = new FakeEntityTracker();
         this.checkManager = new CheckManager();
         this.playerRegistry = new PlayerRegistry();
-        HandlerAbstract.init();
+
+        this.keepaliveProcessor = new KeepaliveProcessor();
+
         Bukkit.getOnlinePlayers().forEach(playerRegistry::generate);
         this.packetHandler = new PacketHandler();
         logManager = new LoggerManager();
         this.actionManager = new ActionManager();
-
-        Bukkit.getOnlinePlayers().forEach(player -> player.kickPlayer("Server restarting..."));
-
-
-        keepaliveProcessor.start();
 
         logManager.init();
 
         alog(Color.Green + "Loading WorldInfo system...");
         Bukkit.getWorlds().forEach(w -> worldInfoMap.put(w.getUID(), new WorldInfo(w)));
 
-        Bukkit.getOnlinePlayers().forEach(HandlerAbstract.getHandler()::add);
+        PacketEventsRegister.registerListener();
     }
 
     public void onDisable() {
         scheduler.shutdownNow();
-
 
         // Unregistering APlayer objects
         playerRegistry.unregisterAll();
@@ -233,7 +269,8 @@ public class Anticheat extends JavaPlugin {
         checkManager.getCheckSettings().clear();
         checkManager.getIdToName().clear();
 
-        keepaliveProcessor.stop();
+        PacketEventsRegister.terminate();
+
         keepaliveProcessor.keepAlives.clear();
 
 
@@ -249,16 +286,10 @@ public class Anticheat extends JavaPlugin {
 
         worldInfoMap.clear();
 
-
-
         // Unregistering packet listeners for players
-        HandlerAbstract.getHandler().shutdown();
         HandlerList.unregisterAll(this);
-        packetProcessor.shutdown();
-
 
         onTickEnd.clear();
-
 
         AnticheatAPI.INSTANCE.shutdown();
 

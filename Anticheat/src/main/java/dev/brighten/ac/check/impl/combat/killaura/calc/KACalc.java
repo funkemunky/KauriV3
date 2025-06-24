@@ -1,12 +1,13 @@
 package dev.brighten.ac.check.impl.combat.killaura.calc;
 
+import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerFlying;
 import dev.brighten.ac.check.Hook;
 import dev.brighten.ac.check.KListener;
 import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.check.impl.combat.killaura.calc.impl.KAGrid;
 import dev.brighten.ac.check.impl.combat.killaura.calc.impl.KAZero;
 import dev.brighten.ac.data.APlayer;
-import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
+import dev.brighten.ac.handler.entity.TrackedEntity;
 import dev.brighten.ac.utils.EntityLocation;
 import dev.brighten.ac.utils.KLocation;
 import dev.brighten.ac.utils.MathUtils;
@@ -28,16 +29,18 @@ public class KACalc extends KListener {
             PITCH_OFFSET = new EvictingList<>(10);
 
     @Bind
-    WAction<WPacketPlayInFlying> flying = packet -> {
+    WAction<WrapperPlayClientPlayerFlying> flying = packet -> {
         if(player.getInfo().getTarget() == null || player.getInfo().lastAttack.isPassed(40)) return;
-        Optional<Tuple<EntityLocation, EntityLocation>> optional = player.getEntityLocationHandler()
-                .getEntityLocation(player.getInfo().getTarget());
+        Optional<TrackedEntity> optional = player.getEntityLocationHandler()
+                .getTrackedEntity(player.getInfo().getTarget().getEntityId());
 
         if(optional.isEmpty()) return;
 
-        Tuple<EntityLocation, EntityLocation> tuple = optional.get();
+        EntityLocation location = optional.get().getNewEntityLocation();
 
-        EntityLocation location = tuple.one;
+        if(location == null) {
+            return;
+        }
         Vector current = location.getCurrentIteration();
 
         KLocation originKLoc = player.getMovement().getTo().getLoc().clone()
@@ -59,7 +62,8 @@ public class KACalc extends KListener {
         std[0] = MathUtils.stdev(YAW_OFFSET);
         std[1] = MathUtils.stdev(PITCH_OFFSET);
 
-        find(KAZero.class).ifPresent(zero -> zero.runCheck(tuple, std, offset, rotations));
-        find(KAGrid.class).ifPresent(grid -> grid.runCheck(tuple, std, offset, rotations));
+        var elocTuple = new Tuple<>(optional.get().getNewEntityLocation(), optional.get().getOldEntityLocation());
+        find(KAZero.class).ifPresent(zero -> zero.runCheck(elocTuple, std, offset, rotations));
+        find(KAGrid.class).ifPresent(grid -> grid.runCheck(elocTuple, std, offset, rotations));
     };
 }

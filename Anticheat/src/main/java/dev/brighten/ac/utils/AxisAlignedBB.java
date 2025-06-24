@@ -1,6 +1,6 @@
 package dev.brighten.ac.utils;
 
-import dev.brighten.ac.packet.wrapper.objects.WrappedEnumDirection;
+import com.github.retrooper.packetevents.protocol.world.Direction;
 import dev.brighten.ac.utils.world.types.RayCollision;
 import dev.brighten.ac.utils.world.types.SimpleCollisionBox;
 import org.bukkit.Location;
@@ -272,20 +272,20 @@ public class AxisAlignedBB {
         if (vec3d8 == null) {
             return null;
         } else {
-            WrappedEnumDirection enumdirection = null;
+            Direction enumdirection = null;
 
             if (vec3d8 == vec3d2) {
-                enumdirection = WrappedEnumDirection.WEST;
+                enumdirection = Direction.WEST;
             } else if (vec3d8 == vec3d3) {
-                enumdirection = WrappedEnumDirection.EAST;
+                enumdirection = Direction.EAST;
             } else if (vec3d8 == vec3d4) {
-                enumdirection = WrappedEnumDirection.DOWN;
+                enumdirection = Direction.DOWN;
             } else if (vec3d8 == vec3d5) {
-                enumdirection = WrappedEnumDirection.UP;
+                enumdirection = Direction.UP;
             } else if (vec3d8 == vec3d6) {
-                enumdirection = WrappedEnumDirection.NORTH;
+                enumdirection = Direction.NORTH;
             } else {
-                enumdirection = WrappedEnumDirection.SOUTH;
+                enumdirection = Direction.SOUTH;
             }
 
             return vec3d8;

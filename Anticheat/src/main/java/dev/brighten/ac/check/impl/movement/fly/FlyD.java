@@ -1,11 +1,11 @@
 package dev.brighten.ac.check.impl.movement.fly;
 
+import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerFlying;
 import dev.brighten.ac.api.check.CheckType;
 import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.data.APlayer;
-import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
 import dev.brighten.ac.utils.annotation.Bind;
 
 @CheckData(name = "Fly (Increment)", checkId = "flyd", type = CheckType.MOVEMENT, experimental = true)
@@ -17,8 +17,8 @@ public class FlyD extends Check {
     private double totalY;
 
     @Bind
-    WAction<WPacketPlayInFlying> flyingPacket = packet -> {
-        if(!packet.isMoved() || player.getMovement().getMoveTicks() <= 2
+    WAction<WrapperPlayClientPlayerFlying> flyingPacket = packet -> {
+        if(!packet.hasPositionChanged() || player.getMovement().getMoveTicks() <= 2
                 || player.getBlockInfo().miscNear || player.getBlockInfo().onSlab
                 || player.getBlockInfo().fenceBelow || player.getBlockInfo().fenceNear
                 || player.getBlockInfo().onStairs || player.getInfo().isGeneralCancel()) return;

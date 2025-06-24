@@ -1,7 +1,7 @@
 package dev.brighten.ac.check;
 
+import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import dev.brighten.ac.api.check.CheckType;
-import dev.brighten.ac.packet.ProtocolVersion;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -22,6 +22,6 @@ public @interface CheckData {
     boolean experimental() default false;
     int punishVl() default 10;
 
-    ProtocolVersion minVersion() default ProtocolVersion.V1_7;
-    ProtocolVersion maxVersion() default ProtocolVersion.V1_21_5;
+    ClientVersion minVersion() default ClientVersion.V_1_8;
+    ClientVersion maxVersion() default ClientVersion.V_1_21_5;
 }

@@ -1,9 +1,9 @@
 package dev.brighten.ac.handler;
 
+import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerFlying;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityEffect;
 import dev.brighten.ac.data.APlayer;
-import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
-import dev.brighten.ac.packet.wrapper.out.WPacketPlayOutEntityEffect;
-import lombok.val;
+import io.github.retrooper.packetevents.util.SpigotConversionUtil;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
@@ -22,7 +22,7 @@ public class PotionHandler {
         potionEffects.addAll(data.getBukkitPlayer().getActivePotionEffects());
     }
 
-    public void onFlying(WPacketPlayInFlying packet) {
+    public void onFlying(WrapperPlayClientPlayerFlying packet) {
         for (PotionEffect effect : potionEffects) {
             if(data.getBukkitPlayer().hasPotionEffect(effect.getType())) continue;
 
@@ -30,14 +30,14 @@ public class PotionHandler {
         }
     }
 
-    public void onPotionEffect(WPacketPlayOutEntityEffect packet) {
+    public void onPotionEffect(WrapperPlayServerEntityEffect packet) {
         data.runKeepaliveAction(d -> {
-            val type = PotionEffectType.getById(packet.getEffectId());
+            var type = SpigotConversionUtil.toBukkitPotionEffectType(packet.getPotionType());
             data.getPotionHandler().potionEffects.stream().filter(pe -> pe.getType().equals(type))
                     .forEach(data.getPotionHandler().potionEffects::remove);
             data.getPotionHandler().potionEffects
-                    .add(new PotionEffect(type, packet.getDuration(), packet.getAmplifier(),
-                            (packet.getFlags() & 1) == 1));
+                    .add(new PotionEffect(type, packet.getEffectDurationTicks(), packet.getEffectAmplifier(),
+                            packet.isAmbient()));
         });
     }
 

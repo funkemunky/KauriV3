@@ -1,18 +1,19 @@
 package dev.brighten.ac.check.impl.combat.autoclicker;
 
+import com.github.retrooper.packetevents.protocol.player.ClientVersion;
+import com.github.retrooper.packetevents.protocol.player.InteractionHand;
+import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientAnimation;
 import dev.brighten.ac.api.check.CheckType;
 import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.data.APlayer;
-import dev.brighten.ac.packet.ProtocolVersion;
-import dev.brighten.ac.packet.wrapper.in.WPacketPlayInArmAnimation;
 import dev.brighten.ac.utils.annotation.Bind;
 import dev.brighten.ac.utils.objects.evicting.EvictingList;
 
 import java.util.List;
 
-@CheckData(name = "Autoclicker (C)", checkId = "autoclickerc", type = CheckType.AUTOCLICKER, maxVersion = ProtocolVersion.V1_21_5)
+@CheckData(name = "Autoclicker (C)", checkId = "autoclickerc", type = CheckType.AUTOCLICKER, maxVersion = ClientVersion.V_1_21_5)
 public class AutoclickerC extends Check {
 
     public AutoclickerC(APlayer player) {
@@ -24,8 +25,10 @@ public class AutoclickerC extends Check {
     private final List<Integer> tickDeltas = new EvictingList<>(30);
 
     @Bind
-    WAction<WPacketPlayInArmAnimation> action = (packet) -> {
-        if(player.getInfo().isBreakingBlock() || player.getWrappedPlayer().getItemInHand().getType().isBlock()) return;
+    WAction<WrapperPlayClientAnimation> action = (packet) -> {
+        if(player.getInfo().isBreakingBlock()
+                || player.getWrappedPlayer().getItemInHand().getType().isBlock()
+                || packet.getHand() != InteractionHand.MAIN_HAND) return;
 
         int currentTick = player.getPlayerTick();
         int deltaPlace = currentTick - lastPlace;

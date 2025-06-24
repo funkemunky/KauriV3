@@ -1,65 +1,71 @@
 package dev.brighten.ac.handler;
 
+import com.github.retrooper.packetevents.protocol.entity.data.EntityData;
+import com.github.retrooper.packetevents.protocol.entity.data.EntityDataTypes;
+import com.github.retrooper.packetevents.protocol.entity.type.EntityType;
+import com.github.retrooper.packetevents.protocol.entity.type.EntityTypes;
+import com.github.retrooper.packetevents.protocol.player.ClientVersion;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerDestroyEntities;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityPositionSync;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityTeleport;
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.handler.entity.FakeMob;
-import dev.brighten.ac.packet.ProtocolVersion;
-import dev.brighten.ac.packet.wrapper.objects.WrappedWatchableObject;
-import dev.brighten.ac.packet.wrapper.out.*;
+import dev.brighten.ac.handler.entity.TrackedEntity;
+import dev.brighten.ac.packet.WPacketPlayOutEntity;
 import dev.brighten.ac.utils.EntityLocation;
 import dev.brighten.ac.utils.KLocation;
-import dev.brighten.ac.utils.Tuple;
 import dev.brighten.ac.utils.timer.Timer;
 import dev.brighten.ac.utils.timer.impl.MillisTimer;
 import dev.brighten.ac.utils.world.types.RayCollision;
 import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lombok.val;
-import org.bukkit.Location;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.EntityType;
 import org.bukkit.util.Vector;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @RequiredArgsConstructor
 public class EntityLocationHandler {
 
     private final APlayer data;
-
-    private final Map<UUID, Tuple<EntityLocation, EntityLocation>> entityLocationMap = new ConcurrentHashMap<>();
-    private final Map<Integer, List<FakeMob>> fakeMobs = new Int2ObjectArrayMap<>();
-    private final Map<Integer, Integer> fakeMobToEntityId = new Int2ObjectArrayMap<>();
+    @Getter
+    private Map<Integer, TrackedEntity> trackedEntities = new Int2ObjectArrayMap<>();
     private final Timer lastFlying = new MillisTimer();
 
     public Set<Integer> canCreateMob = new HashSet<>();
     public int streak;
     public AtomicBoolean clientHasEntity = new AtomicBoolean(false);
 
-    private final EnumSet<EntityType> allowedEntityTypes = EnumSet.of(EntityType.ZOMBIE, EntityType.SHEEP,
-            EntityType.BLAZE, EntityType.SKELETON, EntityType.PLAYER, EntityType.VILLAGER, EntityType.IRON_GOLEM,
-            EntityType.WITCH, EntityType.COW, EntityType.CREEPER);
-
-    /**
-     *
-     * Returns the EntityLocation based on the provided Entity's UUID. May be null if the Entity is not
-     * being tracked, so we use an Optional since it could be non existent.
-     *
-     * @param entity Entity
-     * @return Optional<EntityLocation></EntityLocation>
-     */
-    public Optional<Tuple<EntityLocation, EntityLocation>> getEntityLocation(Entity entity) {
-        return Optional.ofNullable(entityLocationMap.get(entity.getUniqueId()));
-    }
-
-    public Optional<List<FakeMob>> getFakeMob(int entityId) {
-        return Optional.ofNullable(fakeMobs.get(entityId));
-    }
+    private final Set<EntityType> allowedEntityTypes = Set.of(EntityTypes.ZOMBIE, EntityTypes.SHEEP,
+            EntityTypes.BLAZE, EntityTypes.SKELETON, EntityTypes.PLAYER, EntityTypes.VILLAGER, EntityTypes.IRON_GOLEM,
+            EntityTypes.WITCH, EntityTypes.COW, EntityTypes.CREEPER);
 
     public Optional<Integer> getTargetOfFakeMob(int fakeMobId) {
-        return Optional.ofNullable(fakeMobToEntityId.get(fakeMobId));
+        for (TrackedEntity value : trackedEntities.values()) {
+            if(value.getFakeMobs().stream().anyMatch(mob -> mob.getEntityId() == fakeMobId)) {
+                return Optional.of(value.getEntityId());
+            }
+        }
+        return Optional.empty();
+    }
+
+    public Optional<TrackedEntity> getTrackedEntity(int entityId) {
+        TrackedEntity trackedEntity = trackedEntities.get(entityId);
+
+        if(trackedEntity == null) {
+            var entity = Anticheat.INSTANCE.getWorldInfo(data.getBukkitPlayer().getWorld()).getEntity(entityId);
+
+            if(entity.isEmpty()) {
+                return Optional.empty();
+            }
+            KLocation loc = new KLocation(entity.get().getLocation());
+            trackedEntity = new TrackedEntity(entityId, EntityTypes.PLAYER, loc);
+            trackedEntities.put(entityId, trackedEntity);
+        }
+
+        return Optional.of(trackedEntity);
     }
 
     /**
@@ -75,18 +81,21 @@ public class EntityLocationHandler {
 
         processZombie();
 
-        entityLocationMap.values().forEach(eloc -> {
-            if(eloc.one != null) {
-                if(eloc.one.interpolatedLocations.size() > 1 && eloc.one.increment == 0) {
-                    eloc.one.interpolatedLocations.removeFirst();
+        trackedEntities.values().forEach(entity -> {
+            var oldLoc = entity.getOldEntityLocation();
+            var newLoc = entity.getNewEntityLocation();
+
+            if(oldLoc != null) {
+                if(oldLoc.interpolatedLocations.size() > 1 && oldLoc.increment == 0) {
+                    oldLoc.interpolatedLocations.removeFirst();
                 }
-                eloc.one.interpolateLocation();
+                oldLoc.interpolateLocation();
             }
-            if(eloc.two != null) {
-                if(eloc.two.interpolatedLocations.size() > 1 && eloc.two.increment == 0) {
-                    eloc.two.interpolatedLocations.removeFirst();
+            if(newLoc != null) {
+                if(newLoc.interpolatedLocations.size() > 1 && newLoc.increment == 0) {
+                    newLoc.interpolatedLocations.removeFirst();
                 }
-                eloc.two.interpolateLocation();
+                newLoc.interpolateLocation();
             }
         });
 
@@ -100,28 +109,17 @@ public class EntityLocationHandler {
      * @param packet WrappedOutRelativePosition
      */
     void onRelPosition(WPacketPlayOutEntity packet) {
-        Optional<Entity> op = Anticheat.INSTANCE.getWorldInfo(data.getBukkitPlayer().getWorld())
-                .getEntity(packet.getId());
+        Optional<TrackedEntity> entity = getTrackedEntity(packet.getId());
 
-        if(op.isEmpty()) return;
-
-        Entity entity = op.get();
-
-        if(!allowedEntityTypes.contains(entity.getType())) return;
-
-        val tuple = entityLocationMap.computeIfAbsent(entity.getUniqueId(),
-                key -> {
-                     createFakeMob(packet.getId(), entity.getLocation());
-                     return new Tuple<>(new EntityLocation(entity), null);
-                });
+        if(entity.isEmpty() || !allowedEntityTypes.contains(entity.get().getEntityType())) return;
 
         processFakeMobs(packet.getId(), true, packet.getX(), packet.getY(), packet.getZ());
 
-        EntityLocation eloc = tuple.one;
+        EntityLocation eloc = entity.get().getNewEntityLocation();
 
-        tuple.two = tuple.one.clone();
+        entity.get().setOldEntityLocation(entity.get().getNewEntityLocation().clone());
 
-        runAction(entity, () -> {
+        runAction(entity.get(), () -> {
             //We don't need to do version checking here. Atlas handles this for us.
             eloc.newX += packet.getX();
             eloc.newY += packet.getY();
@@ -133,51 +131,62 @@ public class EntityLocationHandler {
         });
     }
 
+    void onPositionSync(WrapperPlayServerEntityPositionSync packet) {
+        Optional<TrackedEntity> entity = getTrackedEntity(packet.getId());
+
+        if(entity.isEmpty() || !allowedEntityTypes.contains(entity.get().getEntityType())) return;
+
+        processFakeMobs(packet.getId(), false, packet.getValues().getPosition().getX(),
+                packet.getValues().getPosition().getY(), packet.getValues().getPosition().getZ());
+
+        EntityLocation eloc = entity.get().getNewEntityLocation();
+
+        entity.get().setOldEntityLocation(entity.get().getNewEntityLocation().clone());
+
+        runAction(entity.get(), () -> {
+            //We don't need to do version checking here. Atlas handles this for us.
+            eloc.newX = packet.getValues().getPosition().getX();
+            eloc.newY = packet.getValues().getPosition().getY();
+            eloc.newZ = packet.getValues().getPosition().getZ();
+            eloc.newYaw = packet.getValues().getYaw();
+            eloc.newPitch = packet.getValues().getPitch();
+
+            eloc.increment = 3;
+        });
+    }
     /**
      *
      * Processing PacketPlayOutEntityTeleport to update locations in a non-relative manner.
      *
      * @param packet WrappedOutEntityTeleportPacket
      */
-    void onTeleportSent(WPacketPlayOutEntityTeleport packet) {
-        Optional<Entity> op = Anticheat.INSTANCE.getWorldInfo(data.getBukkitPlayer().getWorld())
-                .getEntity(packet.getEntityId());
+    void onTeleportSent(WrapperPlayServerEntityTeleport packet) {
+        Optional<TrackedEntity> entity = getTrackedEntity(packet.getEntityId());
 
-        if(op.isEmpty()) return;
+        if(entity.isEmpty() || !allowedEntityTypes.contains(entity.get().getEntityType())) return;
 
-        Entity entity = op.get();
+        processFakeMobs(packet.getEntityId(), false, packet.getPosition().getX(), packet.getPosition().getY(), packet.getPosition().getZ());
 
-        if(!allowedEntityTypes.contains(entity.getType())) return;
+        EntityLocation eloc = entity.get().getNewEntityLocation();
 
+        entity.get().setOldEntityLocation(entity.get().getNewEntityLocation().clone());
 
-        val tuple = entityLocationMap.computeIfAbsent(entity.getUniqueId(),
-                key -> {
-                    createFakeMob(packet.getEntityId(), entity.getLocation());
-                    return new Tuple<>(new EntityLocation(entity), null);
-                });
-
-        processFakeMobs(packet.getEntityId(), false, packet.getX(), packet.getY(), packet.getZ());
-
-        EntityLocation eloc = tuple.one;
-
-        tuple.two = tuple.one.clone();
-
-        runAction(entity, () -> {
-            if(data.getPlayerVersion().isOrAbove(ProtocolVersion.V1_9)) {
-                if (!(Math.abs(eloc.x - packet.getX()) >= 0.03125D)
-                        && !(Math.abs(eloc.y - packet.getY()) >= 0.015625D)
-                        && !(Math.abs(eloc.z - packet.getZ()) >= 0.03125D)) {
+        runAction(entity.get(), () -> {
+            if(data.getPlayerVersion().isNewerThanOrEquals(ClientVersion.V_1_9)) {
+                if (!(Math.abs(eloc.x - packet.getPosition().getX()) >= 0.03125D)
+                        && !(Math.abs(eloc.y - packet.getPosition().getY()) >= 0.015625D)
+                        && !(Math.abs(eloc.z - packet.getPosition().getZ()) >= 0.03125D)) {
                     eloc.increment = 0;
                     //We don't need to do version checking here. Atlas handles this for us.
-                    eloc.newX = eloc.x = packet.getX();
-                    eloc.newY = eloc.y = packet.getY();
-                    eloc.newZ = eloc.z = packet.getZ();
+                    eloc.newX = eloc.x = packet.getPosition().getX();
+                    eloc.newY = eloc.y = packet.getPosition().getY();
+                    eloc.newZ = eloc.z = packet.getPosition().getZ();
                     eloc.newYaw = eloc.yaw = packet.getYaw();
                     eloc.newPitch = eloc.pitch = packet.getPitch();
                 } else {
-                    eloc.newX = packet.getX();
-                    eloc.newY = packet.getY();
-                    eloc.newZ = packet.getZ();
+                    eloc.newX = packet.getPosition().getX();
+                    eloc.newY = packet.getPosition().getY();
+                    eloc.newZ = packet.getPosition().getZ();
                     eloc.newYaw = packet.getYaw();
                     eloc.newPitch = packet.getPitch();
 
@@ -185,9 +194,9 @@ public class EntityLocationHandler {
                 }
             } else {
                 //We don't need to do version checking here. Atlas handles this for us.
-                eloc.newX = packet.getX();
-                eloc.newY = packet.getY();
-                eloc.newZ = packet.getZ();
+                eloc.newX = packet.getPosition().getX();
+                eloc.newY = packet.getPosition().getY();
+                eloc.newZ = packet.getPosition().getZ();
                 eloc.newYaw = packet.getYaw();
                 eloc.newPitch = packet.getPitch();
 
@@ -207,77 +216,64 @@ public class EntityLocationHandler {
      * @param entity Entity
      * @param action Runnable
      */
-    private void runAction(Entity entity, Runnable action) {
+    private void runAction(TrackedEntity entity, Runnable action) {
         if(data.getInfo().getTarget() != null && data.getInfo().getTarget().getEntityId() == entity.getEntityId()) {
             data.runInstantAction(ia -> {
                 if(!ia.isEnd()) {
                     action.run();
-                } else entityLocationMap.get(entity.getUniqueId()).two = null;
+                } else entity.setOldEntityLocation(null);
             }, true);
         } else {
             data.runKeepaliveAction(keepalive -> action.run());
             data.runKeepaliveAction(keepalive ->
-                    entityLocationMap.get(entity.getUniqueId()).two = null, 1);
+                    entity.setOldEntityLocation(null), 1);
         }
     }
 
-    public void onSpawnEntity(WPacketPlayOutNamedEntitySpawn packet) {
-        createFakeMob(packet.getEntityId(), new Location(data.getBukkitPlayer().getWorld(), packet.getX(), packet.getY(), packet.getZ()));
-    }
-
-    public void onSpawnEntity(WPacketPlayOutSpawnEntityLiving packet) {
-        if(!allowedEntityTypes.contains(packet.getType())) return;
-
-        createFakeMob(packet.getEntityId(), new Location(data.getBukkitPlayer().getWorld(), packet.getX(), packet.getY(), packet.getZ()));
-    }
-
-    public void onEntityDestroy(WPacketPlayOutEntityDestroy packet) {
-        for(int id : packet.getEntityIds()) {
-            if(fakeMobs.containsKey(id)) {
-                List<FakeMob> mobs = fakeMobs.get(id);
-
-                for (FakeMob mob : mobs) {
-                    mob.despawn();
-                    fakeMobToEntityId.remove(mob.getEntityId());
-                }
-                fakeMobs.remove(id);
-                clientHasEntity.set(false);
+    public void onEntityDestroy(WrapperPlayServerDestroyEntities packet) {
+        data.runKeepaliveAction(ka -> {
+            for(int id : packet.getEntityIds()) {
+                removeFakeMob(id);
             }
-        }
+        });
     }
 
     public void removeFakeMob(int id) {
-        if(fakeMobs.containsKey(id)) {
-            List<FakeMob> mobs = fakeMobs.get(id);
+        if(trackedEntities.containsKey(id)) {
+            List<FakeMob> mobs = getTrackedEntity(id).map(TrackedEntity::getFakeMobs).orElse(new ArrayList<>());
 
             for (FakeMob mob : mobs) {
                 mob.despawn();
-                fakeMobToEntityId.remove(mob.getEntityId());
             }
-            fakeMobs.remove(id);
+
+            mobs.clear();
         }
         clientHasEntity.set(false);
     }
 
     private static final double[] offsets = new double[]{-1.25, 0, 1.25};
 
-    private void createFakeMob(int entityId, Location location) {
-        if(!canCreateMob.contains(entityId)) return;
+    private void createFakeMob(int entityId, KLocation location) {
+        if (!canCreateMob.contains(entityId)) return;
 
-        List<FakeMob> mobs = new ArrayList<>();
+        Optional<TrackedEntity> trackedEntity = getTrackedEntity(entityId);
 
-        clientHasEntity.set(false);
+        Optional<TrackedEntity> playerEntity = getTrackedEntity(data.getBukkitPlayer().getEntityId());
+
+        if(trackedEntity.isEmpty() || playerEntity.isEmpty()) return;
+
         for (double offset : offsets) {
-            FakeMob mob = new FakeMob(EntityType.MAGMA_CUBE);
+            FakeMob mob = new FakeMob(EntityTypes.MAGMA_CUBE);
+
+            List<EntityData<?>> types = new ArrayList<>();
+            EntityData<?> entityData = new EntityData<>(16, EntityDataTypes.BYTE, (byte)10);
+            types.add(entityData);
 
             // Setting Magma cube size to size 10
             mob.spawn(true, location.clone().add(offset, offset, offset),
-                    new ArrayList<>(Collections.singletonList(
-                            new WrappedWatchableObject(0, 16, (byte) 10))), data);
+                    types, data);
 
-            fakeMobToEntityId.put(mob.getEntityId(), entityId);
-
-            mobs.add(mob);
+            trackedEntity.get().getFakeMobs().add(mob);
         }
 
         KLocation eyeLoc = data.getMovement().getTo().getLoc().clone()
@@ -287,32 +283,31 @@ public class EntityLocationHandler {
 
         Vector point = collision.collisionPoint(0.4);
 
-        FakeMob mob = new FakeMob(EntityType.SLIME);
+        FakeMob mob = new FakeMob(EntityTypes.SLIME);
+        List<EntityData<?>> types = new ArrayList<>();
+        EntityData<?> entityData = new EntityData<>(16, EntityDataTypes.BYTE, (byte)5);
 
-        mob.spawn(true, point.toLocation(location.getWorld()),  new ArrayList<>(Collections.singletonList(
-                new WrappedWatchableObject(0, 16, (byte) 5))), data);
+        types.add(entityData);
+        mob.spawn(true, new KLocation(point.getX(), point.getY(), point.getZ()), types, data);
 
-        fakeMobToEntityId.put(mob.getEntityId(), data.getBukkitPlayer().getEntityId());
+        playerEntity.get().getFakeMobs().add(mob);
 
-
-        this.fakeMobs.put(data.getBukkitPlayer().getEntityId(), new ArrayList<>(Collections.singletonList(mob)));
-        this.fakeMobs.put(entityId, mobs);
         canCreateMob.remove(entityId);
 
         data.runKeepaliveAction(ka -> clientHasEntity.set(true));
     }
 
     public void processZombie() {
-        List<FakeMob> fakeMobs = this.fakeMobs.get(data.getBukkitPlayer().getEntityId());
-
-        if(fakeMobs == null) return;
+        List<FakeMob> fakeMobs = getTrackedEntity(data.getBukkitPlayer().getEntityId())
+                .map(TrackedEntity::getFakeMobs)
+                .orElse(new ArrayList<>());
 
         if(fakeMobs.size() > 1) {
             fakeMobs.forEach(fakeMob -> removeFakeMob(fakeMob.getEntityId()));
         }
 
         for (FakeMob fakeMob : fakeMobs) {
-            if(fakeMob.getType() == EntityType.SLIME) {
+            if(fakeMob.getType() == EntityTypes.SLIME) {
                 KLocation eyeLoc = data.getMovement().getTo().getLoc().clone().add(0, 0.6, 0);
 
                 RayCollision collision = new RayCollision(eyeLoc.toVector(), eyeLoc.getDirection());
@@ -326,11 +321,15 @@ public class EntityLocationHandler {
     }
 
     public void processFakeMobs(int entityId, boolean rel, double x, double y, double z) {
-        List<FakeMob> fakeMobs = this.fakeMobs.get(entityId);
+        List<FakeMob> fakeMobs = getTrackedEntity(entityId).map(TrackedEntity::getFakeMobs).orElse(new ArrayList<>());
 
-        if(fakeMobs == null) {
+        if(fakeMobs.isEmpty()) {
             if(!rel) {
-                createFakeMob(entityId, new Location(data.getBukkitPlayer().getWorld(), x, y, z));
+                createFakeMob(entityId, new KLocation(x, y, z));
+            }
+
+            if(data.getInfo().getTarget() != null && data.getInfo().getTarget().getEntityId() == entityId) {
+                clientHasEntity.set(false);
             }
             return;
         }

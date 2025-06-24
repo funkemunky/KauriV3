@@ -1,5 +1,17 @@
 package dev.brighten.ac.data;
 
+import com.github.retrooper.packetevents.PacketEvents;
+import com.github.retrooper.packetevents.manager.server.ServerVersion;
+import com.github.retrooper.packetevents.protocol.entity.data.EntityData;
+import com.github.retrooper.packetevents.protocol.entity.data.EntityDataTypes;
+import com.github.retrooper.packetevents.protocol.entity.type.EntityTypes;
+import com.github.retrooper.packetevents.protocol.player.ClientVersion;
+import com.github.retrooper.packetevents.protocol.player.User;
+import com.github.retrooper.packetevents.protocol.world.dimension.DimensionType;
+import com.github.retrooper.packetevents.protocol.world.states.type.StateType;
+import com.github.retrooper.packetevents.protocol.world.states.type.StateTypes;
+import com.github.retrooper.packetevents.util.Vector3d;
+import com.github.retrooper.packetevents.wrapper.PacketWrapper;
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.api.spigot.impl.LegacyPlayer;
 import dev.brighten.ac.api.spigot.impl.ModernPlayer;
@@ -17,15 +29,11 @@ import dev.brighten.ac.handler.VelocityHandler;
 import dev.brighten.ac.handler.block.BlockUpdateHandler;
 import dev.brighten.ac.handler.entity.FakeMob;
 import dev.brighten.ac.handler.keepalive.KeepAlive;
-import dev.brighten.ac.handler.protocolsupport.Protocol;
+import dev.brighten.ac.handler.protocol.Protocol;
 import dev.brighten.ac.messages.Messages;
-import dev.brighten.ac.packet.ProtocolVersion;
-import dev.brighten.ac.packet.handler.HandlerAbstract;
-import dev.brighten.ac.packet.wrapper.WPacket;
-import dev.brighten.ac.packet.wrapper.objects.WrappedWatchableObject;
+import dev.brighten.ac.packet.TransactionServerWrapper;
 import dev.brighten.ac.utils.*;
 import dev.brighten.ac.utils.objects.evicting.EvictingList;
-import dev.brighten.ac.utils.reflections.impl.MinecraftReflection;
 import dev.brighten.ac.utils.timer.Timer;
 import dev.brighten.ac.utils.timer.impl.MillisTimer;
 import dev.brighten.ac.utils.world.types.RayCollision;
@@ -40,10 +48,6 @@ import me.hydro.emulator.collision.impl.*;
 import me.hydro.emulator.object.input.DataSupplier;
 import me.hydro.emulator.util.mcp.AxisAlignedBB;
 import me.hydro.emulator.util.mcp.BlockPos;
-import net.minecraft.server.v1_8_R3.PacketPlayOutTransaction;
-import org.bukkit.Achievement;
-import org.bukkit.Location;
-import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
 
@@ -86,11 +90,6 @@ public class APlayer {
     private int playerTick;
     @Getter
     private final Timer creation = new MillisTimer();
-    @Getter
-    //TODO Actually grab real player version once finished implementing version grabber from Atlas
-    private ProtocolVersion playerVersion = ProtocolVersion.UNKNOWN;
-
-    private Object playerConnection;
 
     public Emulator EMULATOR;
 
@@ -98,7 +97,8 @@ public class APlayer {
 
     public final Map<Short, Tuple<InstantAction, Consumer<InstantAction>>> instantTransaction = Collections
             .synchronizedMap(new Short2ObjectLinkedOpenHashMap<>());
-    public final List<NormalAction> keepAliveStamps = Collections.synchronizedList(new LinkedList<>());
+    public final Object keepAliveLock = new Object();
+    public final List<NormalAction> keepAliveStamps = new LinkedList<>();
     public final List<String> sniffedPackets = new CopyOnWriteArrayList<>();
     public boolean sniffing;
 
@@ -108,10 +108,12 @@ public class APlayer {
     @Getter
     private final Deque<Object> packetQueue = new LinkedList<>();
     @Getter
-    private final List<Consumer<Vector>> onVelocityTasks = new ArrayList<>();
+    private final List<Consumer<Vector3d>> onVelocityTasks = new ArrayList<>();
     public final EvictingList<Tuple<KLocation, Double>> pastLocations = new EvictingList<>(20);
     @Getter
     private FakeMob mob;
+    @Getter
+    private ClientVersion playerVersion;
 
     @Setter
     @Getter
@@ -119,16 +121,20 @@ public class APlayer {
     @Getter
     private boolean initialized = false;
 
-    public APlayer(Player player) {
+    private final User user;
+
+    public APlayer(Player player, User user) {
         this.bukkitPlayer = player;
         this.uuid = player.getUniqueId();
-        this.playerConnection = MinecraftReflection.getPlayerConnection(player);
+        this.user = user;
 
         Anticheat.INSTANCE.getLogger().info("Constructored " + player.getName());
+
         load();
     }
 
     private void load() {
+        Anticheat.INSTANCE.getLogger().info("Loading " + getBukkitPlayer().getName());
         this.movement = new MovementHandler(this);
         this.potionHandler = new PotionHandler(this);
         this.velocityHandler = new VelocityHandler(this);
@@ -141,18 +147,17 @@ public class APlayer {
 
         creation.reset();
 
-        Anticheat.INSTANCE.getLogger().info("Loading " + getBukkitPlayer().getName());
-
-        // Grabbing the protocol version of the player.
         Anticheat.INSTANCE.getScheduler().schedule(() -> {
+            // Grabbing the protocol version of the player.
             Anticheat.INSTANCE.getLogger().info("Attempting Getting player version for " + getBukkitPlayer().getName());
-            int numVersion = Protocol.getProtocol().getPlayerVersion(getBukkitPlayer());
 
-            playerVersion = ProtocolVersion.getVersion(numVersion);
+            ClientVersion version = ClientVersion.getById(Protocol.getProtocol().getPlayerVersion(getBukkitPlayer()));
 
-            Anticheat.INSTANCE.getRunUtils().task(() -> checkHandler.initChecks());
+            this.playerVersion = version;
 
-            if(ProtocolVersion.getGameVersion().isBelow(ProtocolVersion.V1_9)) {
+            Anticheat.INSTANCE.getLogger().info("Got player version " + version.name() + " for " + getBukkitPlayer().getName());
+
+            if(PacketEvents.getAPI().getServerManager().getVersion().isOlderThan(ServerVersion.V_1_9)) {
                 this.wrappedPlayer = new LegacyPlayer(getBukkitPlayer());
             } else this.wrappedPlayer = new ModernPlayer(getBukkitPlayer());
 
@@ -171,10 +176,9 @@ public class APlayer {
                     List<AxisAlignedBB> axisAlignedBBs = new ArrayList<>();
 
                     for (SimpleCollisionBox bb2 : Helper.getCollisions(APlayer.this,
-                            sbc,
-                            Materials.COLLIDABLE)) {
-                       axisAlignedBBs
-                               .add(new AxisAlignedBB(bb2.minX, bb2.minY, bb2.minZ, bb2.maxX, bb2.maxY, bb2.maxZ));
+                            sbc)) {
+                        axisAlignedBBs
+                                .add(new AxisAlignedBB(bb2.minX, bb2.minY, bb2.minZ, bb2.maxX, bb2.maxY, bb2.maxZ));
                     }
 
                     return axisAlignedBBs;
@@ -183,63 +187,53 @@ public class APlayer {
                 @Override
                 public Block getBlockAt(BlockPos blockPos) {
                     //Optional<org.bukkit.block.Block>
-                    val block = BlockUtils.getBlockAsync(
-                            new Location(getBukkitPlayer().getWorld(), blockPos.getX(), blockPos.getY(), blockPos.getZ()));
+                    var block = APlayer.this.getBlockUpdateHandler()
+                            .getBlock(blockPos.getX(), blockPos.getY(), blockPos.getZ());
 
-                    if (block.isPresent()) {
-                        XMaterial xmaterial = XMaterial.matchXMaterial(block.get().getType());
+                    StateType type = block.getType();
 
-                        switch (xmaterial) {
-                            case SLIME_BLOCK: {
-                                return new BlockSlime();
-                            }
-                            case SOUL_SAND: {
-                                return new BlockSoulSand();
-                            }
-                            case COBWEB: {
-                                return new BlockWeb();
-                            }
-                            case ICE:
-                            case PACKED_ICE:
-                            case FROSTED_ICE: {
-                                return new BlockIce();
-                            }
-                            case BLUE_ICE: {
-                                return new BlockBlueIce();
-                            }
-                        }
+                    if(type == StateTypes.SLIME_BLOCK) {
+                        return new BlockSlime();
+                    } else if(type == StateTypes.SOUL_SAND) {
+                        return new BlockSoulSand();
+                    } else if(type == StateTypes.COBWEB) {
+                        return new BlockWeb();
+                    } else if(type == StateTypes.ICE || type == StateTypes.PACKED_ICE || type == StateTypes.FROSTED_ICE) {
+                        return new BlockIce();
+                    } else if(type == StateTypes.BLUE_ICE) {
+                        return new BlockBlueIce();
                     }
+
                     return new Block();
                 }
-            }, playerVersion.getVersion());
+            }, getPlayerVersion().getProtocolVersion());
+
+            generateEntities();
+
+            // Enabling alerts for players on join if they have the permissions to
+            if(getBukkitPlayer().hasPermission("anticheat.command.alerts")
+                    || getBukkitPlayer().hasPermission("anticheat.alerts")) {
+                Check.alertsEnabled.add(getUuid());
+                getBukkitPlayer().spigot().sendMessage(Messages.ALERTS_ON);
+            }
             initialized = true;
-        }, 100L, TimeUnit.MILLISECONDS);
-
-        // Removing inventory achievement
-        getBukkitPlayer().removeAchievement(Achievement.OPEN_INVENTORY);
-
-        // Enabling alerts for players on join if they have the permissions to
-        if(getBukkitPlayer().hasPermission("anticheat.command.alerts")
-                || getBukkitPlayer().hasPermission("anticheat.alerts")) {
-            Check.alertsEnabled.add(getUuid());
-            getBukkitPlayer().spigot().sendMessage(Messages.ALERTS_ON);
-        }
-
-        generateEntities();
+            Anticheat.INSTANCE.getRunUtils().task(() -> checkHandler.initChecks());
+        }, 100, TimeUnit.MILLISECONDS);
     }
 
     private void generateEntities() {
-        mob = new FakeMob(EntityType.MAGMA_CUBE);
+        mob = new FakeMob(EntityTypes.MAGMA_CUBE);
 
         KLocation origin = getMovement().getTo().getLoc().clone().add(0, 1.7, 0);
 
         RayCollision coll = new RayCollision(origin.toVector(), origin.getDirection().multiply(-1));
 
-        Location loc1 = coll.collisionPoint(2).toLocation(getBukkitPlayer().getWorld());
+        Vector loc1 = coll.collisionPoint(2);
 
-        mob.spawn(true, loc1,
-                new ArrayList<>(Collections.singletonList(
-                        new WrappedWatchableObject(0, 16, (byte) 1))), this);
+        List<EntityData<?>> dataList = new ArrayList<>();
+
+        dataList.add(new EntityData<>(16, EntityDataTypes.BYTE, (byte)1));
+        mob.spawn(true, new KLocation(loc1), dataList, this);
     }
 
     protected void unload() {
@@ -247,17 +241,11 @@ public class APlayer {
         this.lagInfo = null;
         this.movement = null;
         this.checkHandler.shutdown();
-        mob.despawn();
-    }
-
-    public Object getPlayerConnection() {
-        if(this.playerConnection == null) {
-            this.playerConnection = MinecraftReflection.getPlayerConnection(bukkitPlayer);
+        if(mob != null) {
+            mob.despawn();
         }
-
-        return this.playerConnection;
+        initialized = false;
     }
-
 
     public void runKeepaliveAction(Consumer<KeepAlive> action) {
         runKeepaliveAction(action, 0);
@@ -266,16 +254,21 @@ public class APlayer {
     public void runKeepaliveAction(Consumer<KeepAlive> action, int later) {
         int id = Anticheat.INSTANCE.getKeepaliveProcessor().currentKeepalive.id + later;
 
-        keepAliveStamps.add(new NormalAction(id, action));
-
+        synchronized (keepAliveLock) {
+            keepAliveStamps.add(new NormalAction(id, action));
+        }
     }
 
-    public void onVelocity(Consumer<Vector> runnable) {
+    public boolean isGlidePossible() {
+        if(PacketEvents.getAPI().getServerManager().getVersion().isOlderThan(ServerVersion.V_1_9)) {
+            return false;
+        }
+
+        return bukkitPlayer.getInventory().getChestplate().getType() == XMaterial.ELYTRA.parseMaterial();
+    }
+
+    public void onVelocity(Consumer<Vector3d> runnable) {
         onVelocityTasks.add(runnable);
-    }
-
-    public void runInstantAction(Consumer<InstantAction> runnable) {
-        runInstantAction(runnable, false);
     }
 
     public void runInstantAction(Consumer<InstantAction> runnable, boolean runPost) {
@@ -293,9 +286,8 @@ public class APlayer {
         InstantAction startAction = new InstantAction(startId, endId, false);
         synchronized (instantTransaction) {
             instantTransaction.put(startId, new Tuple<>(startAction, runnable));
-            HandlerAbstract.getHandler().sendPacketSilently(this, new PacketPlayOutTransaction(0, startId, false));
+            writePacketSilently(new TransactionServerWrapper(startId, 0).getWrapper());
         }
-
 
         if(runPost) {
             short finalEndId = endId, finalStartId = startId;
@@ -303,15 +295,14 @@ public class APlayer {
                 InstantAction endAction = new InstantAction(finalStartId, finalEndId, true);
                 synchronized (instantTransaction) {
                     instantTransaction.put(finalEndId, new Tuple<>(endAction, runnable));
-                    HandlerAbstract.getHandler()
-                            .sendPacketSilently(this, new PacketPlayOutTransaction(0, finalEndId, false));
+                    writePacketSilently(new TransactionServerWrapper(finalEndId, 0).getWrapper());
                 }
             });
         }
     }
 
     public double getEyeHeight() {
-        if(ProtocolVersion.getGameVersion().isOrAbove(ProtocolVersion.V1_14)) {
+        if(PacketEvents.getAPI().getServerManager().getVersion().isNewerThanOrEquals(ServerVersion.V_1_14)) {
             return getInfo().sneaking ? 1.27f : 1.62f;
         } else {
             return getInfo().sneaking ? 1.54f : 1.62f;
@@ -319,7 +310,7 @@ public class APlayer {
     }
 
     public double getPreviousEyeHeight() {
-        if(ProtocolVersion.getGameVersion().isOrAbove(ProtocolVersion.V1_14)) {
+        if(PacketEvents.getAPI().getServerManager().getVersion().isNewerThanOrEquals(ServerVersion.V_1_14)) {
             return getInfo().lsneaking ? 1.27f : 1.62f;
         } else {
             return getInfo().lsneaking ? 1.54f : 1.62f;
@@ -330,17 +321,21 @@ public class APlayer {
         playerTick++;
     }
 
-    public void sendPacketSilently(Object packet) {
+    public void writePacketSilently(PacketWrapper<?> packet) {
         if(sniffing) {
             sniffedPackets.add("(Silent) [" +  Anticheat.INSTANCE.getKeepaliveProcessor().tick + "] "
-                    + (packet instanceof WPacket ? ((WPacket)packet).getPacketType()
-                    : HandlerAbstract.getPacketType(packet)) + ": " + packet);
+                    + packet);
         }
-        HandlerAbstract.getHandler().sendPacketSilently(this, packet);
+
+       user.writePacketSilently(packet);
     }
 
-    public void sendPacket(Object packet) {
-        HandlerAbstract.getHandler().sendPacket(this, packet);
+    public DimensionType getDimensionType() {
+        return user.getDimensionType();
+    }
+
+    public void sendPacket(PacketWrapper<?> packet) {
+        user.sendPacket(packet);
     }
 
     @Override

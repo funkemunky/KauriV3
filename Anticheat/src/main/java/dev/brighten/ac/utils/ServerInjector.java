@@ -38,6 +38,8 @@ public class ServerInjector {
                         public void onSize() {
                             Runnable toRun;
 
+                            Anticheat.INSTANCE.getKeepaliveProcessor().run();
+
                             while((toRun = Anticheat.INSTANCE.getOnTickEnd().poll()) != null) {
                                 toRun.run();
                             }

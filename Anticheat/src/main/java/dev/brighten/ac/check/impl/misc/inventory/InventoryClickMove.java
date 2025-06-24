@@ -1,16 +1,16 @@
 package dev.brighten.ac.check.impl.misc.inventory;
 
+import com.github.retrooper.packetevents.protocol.player.ClientVersion;
+import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientClickWindow;
+import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerFlying;
 import dev.brighten.ac.api.check.CheckType;
 import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.data.APlayer;
-import dev.brighten.ac.packet.ProtocolVersion;
-import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
-import dev.brighten.ac.packet.wrapper.in.WPacketPlayInWindowClick;
 import dev.brighten.ac.utils.annotation.Bind;
 
-@CheckData(name = "Inventory (ClickMove)", checkId = "inventoryc", type = CheckType.INVENTORY, maxVersion = ProtocolVersion.V1_21_5)
+@CheckData(name = "Inventory (ClickMove)", checkId = "inventoryc", type = CheckType.INVENTORY, maxVersion = ClientVersion.V_1_21_5)
 public class InventoryClickMove extends Check {
     public InventoryClickMove(APlayer player) {
         super(player);
@@ -20,15 +20,15 @@ public class InventoryClickMove extends Check {
 
     // Updating the last time the player clicked in a menu for use in the below check for positional movement.
     @Bind
-    WAction<WPacketPlayInWindowClick> windowClick = packet -> lastWindowClick = player.getPlayerTick();
+    WAction<WrapperPlayClientClickWindow> windowClick = packet -> lastWindowClick = player.getPlayerTick();
 
     @Bind
-    WAction<WPacketPlayInFlying> flying = packet -> {
+    WAction<WrapperPlayClientPlayerFlying> flying = packet -> {
         // If the player isn't sending any rotational or positional updates, then we don't need to check them.
-        if((!packet.isMoved()
+        if((!packet.hasPositionChanged()
                 || player.getPlayerTick() < 10 // Can false flag on join
                 || (player.getMovement().getDeltaX() == 0 && player.getMovement().getDeltaZ() == 0))
-                && !packet.isLooked()) return;
+                && !packet.hasRotationChanged()) return;
 
         // The player is not moving, therefore we do not check when they last clicked since this behavior
         // is legitimate.

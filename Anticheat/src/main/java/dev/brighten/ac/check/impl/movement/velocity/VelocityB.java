@@ -1,12 +1,14 @@
 package dev.brighten.ac.check.impl.movement.velocity;
 
+import com.github.retrooper.packetevents.protocol.player.ClientVersion;
+import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerFlying;
 import dev.brighten.ac.api.check.CheckType;
 import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.data.APlayer;
-import dev.brighten.ac.packet.ProtocolVersion;
-import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
+import dev.brighten.ac.handler.block.WrappedBlock;
+import dev.brighten.ac.utils.BlockUtils;
 import dev.brighten.ac.utils.KLocation;
 import dev.brighten.ac.utils.MathUtils;
 import dev.brighten.ac.utils.annotation.Bind;
@@ -15,8 +17,6 @@ import dev.brighten.ac.utils.timer.Timer;
 import dev.brighten.ac.utils.timer.impl.TickTimer;
 import lombok.val;
 import me.hydro.emulator.util.mcp.MathHelper;
-import org.bukkit.Material;
-import org.bukkit.craftbukkit.v1_8_R3.util.CraftMagicNumbers;
 import org.bukkit.potion.PotionEffectType;
 
 import java.util.ArrayList;
@@ -53,7 +53,7 @@ public class VelocityB extends Check {
     private final List<Iteration> iterations = new ArrayList<>();
 
     @Bind
-    WAction<WPacketPlayInFlying> flying = packet -> {
+    WAction<WrapperPlayClientPlayerFlying> flying = packet -> {
 
         check:
         {
@@ -61,11 +61,10 @@ public class VelocityB extends Check {
             val underBlockLoc = previousFrom != null
                     ? player.getMovement().getFrom().getLoc() : player.getMovement().getTo().getLoc();
 
-            Material underMaterial = player.getBlockUpdateHandler()
+            WrappedBlock underMaterial = player.getBlockUpdateHandler()
                     .getBlock(new IntVector(MathHelper.floor_double(underBlockLoc.getX()),
                             MathHelper.floor_double(underBlockLoc.getY() - 1),
-                            MathHelper.floor_double(underBlockLoc.getZ())))
-                    .getType();
+                            MathHelper.floor_double(underBlockLoc.getZ())));
 
             if (player.getMovement().getMoveTicks() == 0
                     || player.getInfo().isGeneralCancel()
@@ -99,7 +98,7 @@ public class VelocityB extends Check {
                     strafe *= 0.3F;
                 }
 
-                float friction = CraftMagicNumbers.getBlock(underMaterial).frictionFactor;
+                float friction = BlockUtils.getMaterialFriction(player, underMaterial.getBlockState().getType());
 
                 if (iteration.using) {
                     forward *= 0.2F;
@@ -117,7 +116,7 @@ public class VelocityB extends Check {
                         lmotionZ = pvZ;
 
                 //Running multiplication done after previous prediction
-                if (player.getPlayerVersion().isOrAbove(ProtocolVersion.V1_9)) {
+                if (player.getPlayerVersion().isNewerThanOrEquals(ClientVersion.V_1_9)) {
                     if (Math.abs(lmotionX) < 0.003)
                         lmotionX = 0;
                     if (Math.abs(lmotionZ) < 0.003)
@@ -157,7 +156,7 @@ public class VelocityB extends Check {
 
                 } else f5 = iteration.sprinting ? 0.025999999F : 0.02f;
 
-                if (player.getPlayerVersion().isOrAbove(ProtocolVersion.V1_9)) {
+                if (player.getPlayerVersion().isNewerThanOrEquals(ClientVersion.V_1_9)) {
                     double keyedMotion = forward * forward + strafe * strafe;
 
                     if (keyedMotion >= 1.0E-4F) {

@@ -1,14 +1,18 @@
 package dev.brighten.ac.handler;
 
-import com.google.common.collect.Sets;
+import com.github.retrooper.packetevents.PacketEvents;
+import com.github.retrooper.packetevents.manager.server.ServerVersion;
+import com.github.retrooper.packetevents.protocol.player.ClientVersion;
+import com.github.retrooper.packetevents.protocol.teleport.RelativeFlag;
+import com.github.retrooper.packetevents.util.Vector3d;
+import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerFlying;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerPositionAndLook;
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.compat.CompatHandler;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.data.obj.CMove;
-import dev.brighten.ac.packet.ProtocolVersion;
-import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
-import dev.brighten.ac.packet.wrapper.out.WPacketPlayOutPosition;
 import dev.brighten.ac.utils.*;
+import dev.brighten.ac.utils.math.IntVector;
 import dev.brighten.ac.utils.objects.evicting.EvictingList;
 import dev.brighten.ac.utils.timer.Timer;
 import dev.brighten.ac.utils.timer.impl.TickTimer;
@@ -83,7 +87,7 @@ public class MovementHandler {
     private final Timer lastCinematic = new TickTimer(2);
     private final Timer lastReset = new TickTimer(2);
     private final EvictingList<Integer> sensitivitySamples = new EvictingList<>(50);
-    private boolean modernMovement = false;
+    private boolean modernMovement;
     public MovementHandler(APlayer player) {
         this.player = player;
 
@@ -102,7 +106,7 @@ public class MovementHandler {
         // Setting from as same location as to
         from.setLoc(to);
 
-        modernMovement = ProtocolVersion.getGameVersion().isOrAbove(ProtocolVersion.V1_21_5);
+        modernMovement = PacketEvents.getAPI().getServerManager().getVersion().isNewerThanOrEquals(ServerVersion.V_1_21_5);
     }
 
     private final boolean[] IS_OR_NOT = new boolean[]{true, false};
@@ -160,7 +164,7 @@ public class MovementHandler {
                 }
             }
 
-            List<org.bukkit.util.Vector> possibleVelocity = new ArrayList<>();
+            List<Vector3d> possibleVelocity = new ArrayList<>();
 
             possibleVelocity.add(null);
             possibleVelocity.addAll(player.getVelocityHandler().getPossibleVectors());
@@ -174,7 +178,7 @@ public class MovementHandler {
                             for (boolean usingItem : getUsingItemIterations(forward, strafe)) {
                                 for (boolean hitSlow : getHitSlowIterations()) {
                                     for (FastMathType fastMath : getFastMathIterations(forward, strafe)) {
-                                        for(org.bukkit.util.Vector possibleVector : possibleVelocity) {
+                                        for(Vector3d possibleVector : possibleVelocity) {
                                             IterationInput input = IterationInput.builder()
                                                     .jumping(jumping)
                                                     .forward(forward)
@@ -223,6 +227,8 @@ public class MovementHandler {
                                                 result.getTags().add("vanilla");
                                             } else if(fastMath == FastMathType.FAST_NEW) {
                                                 result.getTags().add("fast_new");
+                                            } else if(fastMath == FastMathType.MODERN_VANILLA) {
+                                                result.getTags().add("modern_vanilla");
                                             }
 
                                             if(forward > 0) {
@@ -292,7 +298,7 @@ public class MovementHandler {
             return new FastMathType[]{FastMathType.FAST_LEGACY};
         }
 
-        if (player.getPlayerVersion().isBelow(ProtocolVersion.V1_16)) {
+        if (player.getPlayerVersion().isOlderThan(ClientVersion.V_1_16)) {
             return new FastMathType[]{
                     FastMathType.FAST_LEGACY,
                     FastMathType.VANILLA};
@@ -319,21 +325,21 @@ public class MovementHandler {
     }
 
 
-    public void process(WPacketPlayInFlying packet) {
+    public void process(WrapperPlayClientPlayerFlying packet) {
 
         player.getPotionHandler().onFlying(packet);
 
-        excuseNextFlying = packet.isMoved() && packet.isLooked()
-                && packet.getX() == to.getX()
-                && packet.getY() == to.getY()
-                && packet.getZ() == to.getZ()
-                && player.getPlayerVersion().isOrAbove(ProtocolVersion.V1_17);
+        excuseNextFlying = packet.hasPositionChanged() && packet.hasRotationChanged()
+                && packet.getLocation().getX() == to.getX()
+                && packet.getLocation().getY() == to.getY()
+                && packet.getLocation().getZ() == to.getZ()
+                && player.getPlayerVersion().isNewerThanOrEquals(ClientVersion.V_1_17);
 
-        checkMovement = MovementUtils.checkMovement(player.getPlayerConnection());
-
+        checkMovement = teleportsToConfirm == 0 && posLocs.isEmpty();
+        
         if (checkMovement) {
             moveTicks++;
-            if (!packet.isMoved()) moveTicks = 1;
+            if (!packet.hasPositionChanged()) moveTicks = 1;
         } else moveTicks = 0;
 
         if(excuseNextFlying) {
@@ -346,27 +352,26 @@ public class MovementHandler {
 
         checkForTeleports(packet);
 
-        if (packet.isMoved()) {
+        if (packet.hasPositionChanged()) {
             player.getBlockInfo().runCollisionCheck();
         }
 
         if (moveTicks > 0) {
 
             // Updating block locations
-            player.getInfo().setBlockOnTo(BlockUtils
-                    .getBlockAsync(to.getLoc().toLocation(player.getBukkitPlayer().getWorld())));
-            player.getInfo().setBlockBelow(BlockUtils
-                    .getBlockAsync(to.getLoc().toLocation(player.getBukkitPlayer().getWorld())
-                            .subtract(0, 1, 0)));
+            player.getInfo().setBlockOnTo(Optional.of(player.getBlockUpdateHandler()
+                    .getBlock(new IntVector(to.getLoc()))));
+            player.getInfo().setBlockBelow(Optional.of(player.getBlockUpdateHandler()
+                    .getBlock(new IntVector(to.getLoc().clone().subtract(0, 1, 0)))));
 
-            if (packet.isMoved()) {
+            if (packet.hasPositionChanged()) {
                 // Updating player bounding box
                 player.getInfo().getLastMove().reset();
 
                 player.getInfo().setOnLadder(MovementUtils.isOnLadder(player));
             }
 
-            if (packet.isMoved() && !lastTeleport.isNotPassed(2) && !player.getInfo().isCreative()
+            if (packet.hasPositionChanged() && !lastTeleport.isNotPassed(2) && !player.getInfo().isCreative()
                     && !player.getInfo().isCanFly()) {
 
                 synchronized (player.pastLocations) { //To prevent ConcurrentModificationExceptions
@@ -385,7 +390,7 @@ public class MovementHandler {
         if (player.getBlockInfo().onSlime) player.getInfo().slimeTimer.reset();
         if (player.getBlockInfo().onClimbable) player.getInfo().climbTimer.reset();
 
-        if (packet.isLooked()) {
+        if (packet.hasRotationChanged()) {
             process();
             float deltaYaw = Math.abs(this.deltaYaw), lastDeltaYaw = Math.abs(this.lDeltaYaw);
             final double differenceYaw = Math.abs(this.deltaYaw - lastDeltaYaw);
@@ -408,14 +413,14 @@ public class MovementHandler {
             val origin = this.to.getLoc().clone();
 
             origin.add(0, player.getInfo().isSneaking()
-                    ? (player.getPlayerVersion().isBelow(ProtocolVersion.V1_14) ? 1.54 : 1.27f) : 1.62, 0);
+                    ? (player.getPlayerVersion().isOlderThan(ClientVersion.V_1_14) ? 1.54 : 1.27f) : 1.62, 0);
 
             RayCollision collision = new RayCollision(origin.toVector(), MathUtils.getDirection(origin));
 
             synchronized (lookingAtBoxes) {
                 lookingAtBoxes.clear();
                 lookingAtBoxes.addAll(collision
-                        .boxesOnRay(player.getBukkitPlayer().getWorld(),
+                        .boxesOnRay(player,
                                 player.getBukkitPlayer().getGameMode().equals(GameMode.CREATIVE) ? 6.0 : 5.0));
                 lookingAtBlock = !lookingAtBoxes.isEmpty();
             }
@@ -497,7 +502,7 @@ public class MovementHandler {
                 || player.getInfo().getPossibleCapabilities().stream()
                 .anyMatch(capability -> capability.canFly));
 
-        boolean hasLevitation = ProtocolVersion.getGameVersion().isOrAbove(ProtocolVersion.V1_9)
+        boolean hasLevitation = PacketEvents.getAPI().getServerManager().getVersion().isNewerThanOrEquals(ServerVersion.V_1_9)
                 && player.getPotionHandler().hasPotionEffect(XPotion.LEVITATION.getPotionEffectType());
 
         player.getInfo().setRiptiding(CompatHandler.getINSTANCE().isRiptiding(player.getBukkitPlayer()));
@@ -584,8 +589,9 @@ it
         }
     }
 
-    private void processBotMove(WPacketPlayInFlying packet) {
-        if (packet.isMoved() || packet.isLooked()) {
+    private void processBotMove(WrapperPlayClientPlayerFlying packet) {
+        if(player.getMob() == null) return;
+        if (packet.hasPositionChanged() || packet.hasRotationChanged()) {
             KLocation origin = to.getLoc().clone().add(0, 1.7, 0);
 
             final double MULTIPLIER = Math.max(-0.5, Math.min(-1, -1 / (Math.abs(deltaYaw) * 0.25)));
@@ -649,18 +655,17 @@ it
         sentPositionUpdate = false;
     }
 
-    private final Set<WPacketPlayOutPosition.EnumPlayerTeleportFlags>
-            relFlags = Sets.newHashSet(WPacketPlayOutPosition.EnumPlayerTeleportFlags.X,
-            WPacketPlayOutPosition.EnumPlayerTeleportFlags.Y,
-            WPacketPlayOutPosition.EnumPlayerTeleportFlags.Z,
-            WPacketPlayOutPosition.EnumPlayerTeleportFlags.X_ROT,
-            WPacketPlayOutPosition.EnumPlayerTeleportFlags.Y_ROT);
+    private final RelativeFlag relFlags = RelativeFlag.X.or(RelativeFlag.Y)
+            .or(RelativeFlag.Z).or(RelativeFlag.YAW).or(RelativeFlag.PITCH);
 
     public void runPositionHackFix() {
         if (sentPositionUpdate) return;
 
-        player.sendPacket(WPacketPlayOutPosition.builder().x(0).y(0).z(0).yaw(0).pitch(0).flags(relFlags)
-                .build());
+        player.sendPacket(new WrapperPlayServerPlayerPositionAndLook(0, Vector3d.zero(), new Vector3d(0,0,0), 0, 0,
+                relFlags));
+
+        player.getBukkitPlayer().sendMessage("§c[Anticheat] §7Position update sent to fix movement issues.");
+
         sentPositionUpdate = true;
     }
 
@@ -678,9 +683,9 @@ it
     }
 
     public double[] getEyeHeights() {
-        if (player.getPlayerVersion().isOrAbove(ProtocolVersion.V1_14)) {
+        if (player.getPlayerVersion().isNewerThanOrEquals(ClientVersion.V_1_14)) {
             return new double[]{0.4f, 1.27f, 1.62f};
-        } else if (player.getPlayerVersion().isOrAbove(ProtocolVersion.V1_9)) {
+        } else if (player.getPlayerVersion().isNewerThanOrEquals(ClientVersion.V_1_9)) {
             return new double[]{0.4f, 1.54f, 1.62f};
         } else return new double[]{1.54f, 1.62f};
     }
@@ -715,22 +720,23 @@ it
         return (pitchDelta / b0) / .15f;
     }
 
-    public void addPosition(WPacketPlayOutPosition packet) {
+    public void addPosition(WrapperPlayServerPlayerPositionAndLook packet) {
         final KLocation loc = new KLocation(packet.getX(), packet.getY(), packet.getZ(),
                 packet.getYaw(), packet.getPitch());
-        if (packet.getFlags().contains(WPacketPlayOutPosition.EnumPlayerTeleportFlags.X)) {
+
+        if (packet.getRelativeFlags().has(RelativeFlag.X)) {
             loc.add(player.getMovement().getTo().getLoc().getX(), 0 ,0);
         }
-        if (packet.getFlags().contains(WPacketPlayOutPosition.EnumPlayerTeleportFlags.Y)) {
+        if (packet.getRelativeFlags().has(RelativeFlag.Y)) {
             loc.add(0, player.getMovement().getTo().getLoc().getY() ,0);
         }
-        if (packet.getFlags().contains(WPacketPlayOutPosition.EnumPlayerTeleportFlags.Z)) {
+        if (packet.getRelativeFlags().has(RelativeFlag.Z)) {
             loc.add(0, 0, player.getMovement().getTo().getLoc().getZ());
         }
-        if (packet.getFlags().contains(WPacketPlayOutPosition.EnumPlayerTeleportFlags.X_ROT)) {
+        if (packet.getRelativeFlags().has(RelativeFlag.YAW)) {
             loc.setPitch(loc.getPitch() + player.getMovement().getTo().getLoc().getPitch());
         }
-        if (packet.getFlags().contains(WPacketPlayOutPosition.EnumPlayerTeleportFlags.Y_ROT)) {
+        if (packet.getRelativeFlags().has(RelativeFlag.PITCH)) {
             loc.setYaw(loc.getYaw() + player.getMovement().getTo().getLoc().getYaw());
         }
 
@@ -771,8 +777,8 @@ it
         //doingTeleport = inventoryOpen  = false;
     }
 
-    private void checkForTeleports(WPacketPlayInFlying packet) {
-        if (packet.isMoved() && packet.isLooked() && !packet.isOnGround()) {
+    private void checkForTeleports(WrapperPlayClientPlayerFlying packet) {
+        if (packet.hasPositionChanged() && packet.hasRotationChanged() && !packet.isOnGround()) {
             synchronized (posLocs) {
                 Iterator<KLocation> iterator = posLocs.iterator();
 
@@ -781,7 +787,9 @@ it
                 while (iterator.hasNext()) {
                     KLocation posLoc = iterator.next();
 
-                    KLocation to = new KLocation(packet.getX(), packet.getY(), packet.getZ());
+                    KLocation to = new KLocation(packet.getLocation().getX(),
+                            packet.getLocation().getY(),
+                            packet.getLocation().getZ());
                     double distance = MathUtils.getDistanceWithoutRoot(to, posLoc);
 
                     if (distance < 1E-9) {
@@ -803,18 +811,18 @@ it
     /**
      * Setting the to and from to current location only if the player either moved or looked.
      *
-     * @param packet WPacketPlayInFlyingh
+     * @param packet WrapperPlayClientPlayerFlyingh
      */
-    private void setTo(WPacketPlayInFlying packet) {
+    private void setTo(WrapperPlayClientPlayerFlying packet) {
         to.setWorld(player.getBukkitPlayer().getWorld());
-        if (packet.isMoved()) {
-            to.getLoc().setX(packet.getX());
-            to.getLoc().setY(packet.getY());
-            to.getLoc().setZ(packet.getZ());
+        if (packet.hasPositionChanged()) {
+            to.getLoc().setX(packet.getLocation().getX());
+            to.getLoc().setY(packet.getLocation().getY());
+            to.getLoc().setZ(packet.getLocation().getZ());
         }
-        if (packet.isLooked()) {
-            to.getLoc().setYaw(packet.getYaw());
-            to.getLoc().setPitch(packet.getPitch());
+        if (packet.hasRotationChanged()) {
+            to.getLoc().setYaw(packet.getLocation().getYaw());
+            to.getLoc().setPitch(packet.getLocation().getPitch());
         }
         to.setBox(new SimpleCollisionBox(to.getLoc(), 0.6, 1.8));
         to.setOnGround(packet.isOnGround());
@@ -824,12 +832,13 @@ it
      * If from location is null, update to loc after to is set, otherwise, update to before from.
      * Updates the location of player and its general delta
      *
-     * @param packet WPacketPlayInFlying
+     * @param packet WrapperPlayClientPlayerFlying
      */
-    private void updateLocations(WPacketPlayInFlying packet) {
+    private void updateLocations(WrapperPlayClientPlayerFlying packet) {
         if (to.getBox().max().lengthSquared() == 0) { //Needs initializing
             setTo(packet);
             from.setLoc(to);
+            player.getBukkitPlayer().sendMessage("Initializing location");
         } else {
             from.setLoc(to);
             setTo(packet);

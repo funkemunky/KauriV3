@@ -1,11 +1,16 @@
 package dev.brighten.ac.utils;
 
-import dev.brighten.ac.packet.ProtocolVersion;
-import dev.brighten.ac.utils.wrapper.Wrapper;
+import com.github.retrooper.packetevents.protocol.world.states.type.StateType;
+import com.github.retrooper.packetevents.protocol.world.states.type.StateTypes;
+import dev.brighten.ac.utils.world.BlockData;
+import dev.brighten.ac.utils.world.types.NoCollisionBox;
 import org.bukkit.Material;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class Materials {
-    private static final int[] MATERIAL_FLAGS = new int[Material.values().length];
+    private static final Map<StateType, Integer> MATERIAL_FLAGS =  new HashMap<>();
 
     public static final int SOLID  = 0b00000000000000000000000000001;
     public static final int LADDER = 0b00000000000000000000000000010;
@@ -20,75 +25,77 @@ public class Materials {
     public static final int COLLIDABLE = 0b00000000000000000010000000000;
 
     static {
-        for (int i = 0; i < MATERIAL_FLAGS.length; i++) {
-            Material mat = Material.values()[i];
+        int i = 0;
+        for (StateType mat : StateTypes.values()) {
+            
+            int flag = MATERIAL_FLAGS.getOrDefault(mat, 0);
 
             //We use the one in BlockUtils also since we can't trust Material to include everything.
-            if (mat.isSolid() || mat.name().contains("COMPARATOR") || mat.name().contains("DIODE")) {
-                MATERIAL_FLAGS[i] |= SOLID;
+            if (mat.isSolid() || mat.getName().contains("COMPARATOR") || mat.getName().contains("DIODE")) {
+                flag |= SOLID;
             }
 
-            if(Wrapper.getInstance().isCollidable(mat)) {
-                MATERIAL_FLAGS[i] |= COLLIDABLE;
+            if(!(BlockData.getData(mat).getDefaultBox() instanceof NoCollisionBox)) {
+                flag |= COLLIDABLE;
             }
 
-            if (mat.name().endsWith("_STAIRS")) {
-                MATERIAL_FLAGS[i] |= STAIRS;
+            if (mat.getName().toUpperCase().contains("STAIR")) {
+                flag |= STAIRS;
             }
 
-            if (mat.name().contains("SLAB") || mat.name().contains("STEP")) {
-                MATERIAL_FLAGS[i] |= SLABS;
+            if (mat.getName().toUpperCase().contains("SLAB") || mat.getName().toUpperCase().contains("STEP")) {
+                flag |= SLABS;
             }
 
-            if(mat.name().contains("SKULL"))
-                MATERIAL_FLAGS[i] |= SOLID;
+            if(mat.getName().contains("SKULL"))
+                flag |= SOLID;
 
-            if(mat.name().contains("STATIONARY") || mat.name().contains("LAVA") || mat.name().contains("WATER")) {
-                if(mat.name().contains("LAVA")) {
-                    MATERIAL_FLAGS[i] |= LIQUID | LAVA;
-                } else MATERIAL_FLAGS[i] |= LIQUID | WATER;
+            if(mat.getName().toUpperCase().contains("STATIONARY")
+                    || mat.getName().toUpperCase().contains("LAVA")
+                    || mat.getName().toUpperCase().contains("WATER")) {
+                if(mat.getName().toUpperCase().contains("LAVA")) {
+                    flag |= LIQUID | LAVA;
+                } else flag |= LIQUID | WATER;
             }
 
-            if (mat.name().contains("FENCE")) {
-                if(!mat.name().contains("GATE")) MATERIAL_FLAGS[mat.ordinal()] |= FENCE;
+            if (mat.getName().toUpperCase().contains("FENCE")) {
+                if(!mat.getName().toUpperCase().contains("GATE")) flag |= FENCE;
             }
-            if(mat.name().contains("WALL")) MATERIAL_FLAGS[mat.ordinal()] |= WALL;
-            if(mat.name().contains("BED") && !mat.name().contains("ROCK")) MATERIAL_FLAGS[mat.ordinal()]  |= SLABS;
-            if(mat.name().contains("ICE")) MATERIAL_FLAGS[mat.ordinal()] |= ICE;
-            if(mat.name().contains("CARPET")) MATERIAL_FLAGS[mat.ordinal()] |= SOLID;
+            if(mat.getName().toUpperCase().contains("WALL")) flag |= WALL;
+            if(mat.getName().toUpperCase().contains("BED") && !mat.getName().contains("ROCK")) flag  |= SLABS;
+            if(mat.getName().toUpperCase().contains("ICE")) flag |= ICE;
+            if(mat.getName().toUpperCase().contains("CARPET")) flag |= SOLID;
             //Signs get set as collidable when they shouldn't
-            if(mat.name().contains("SIGN")) MATERIAL_FLAGS[mat.ordinal()] = 0;
+            if(mat.getName().toUpperCase().contains("SIGN")) flag = 0;
+
+            MATERIAL_FLAGS.put(mat, flag);
+            i++;
         }
 
         // fix some types where isSolid() returns the wrong value
-        MATERIAL_FLAGS[XMaterial.REPEATER.parseMaterial().ordinal()] |= SOLID;
-        MATERIAL_FLAGS[XMaterial.SNOW.parseMaterial().ordinal()] |= SOLID;
-        MATERIAL_FLAGS[XMaterial.ANVIL.parseMaterial().ordinal()] |= SOLID;
-        MATERIAL_FLAGS[XMaterial.LILY_PAD.parseMaterial().ordinal()] |= SOLID;
-
-        if(ProtocolVersion.getGameVersion().isOrAbove(ProtocolVersion.V1_8)) {
-            MATERIAL_FLAGS[XMaterial.SLIME_BLOCK.parseMaterial().ordinal()] |= SOLID;
-
-            if(ProtocolVersion.getGameVersion().isOrAbove(ProtocolVersion.V1_14)) {
-                MATERIAL_FLAGS[XMaterial.SCAFFOLDING.parseMaterial().ordinal()] |= SOLID;
-            }
-        }
-
-        // ladders
-        MATERIAL_FLAGS[XMaterial.LADDER.parseMaterial().ordinal()] |= LADDER | SOLID;
-        MATERIAL_FLAGS[XMaterial.VINE.parseMaterial().ordinal()] |= LADDER | SOLID;
+        MATERIAL_FLAGS.put(StateTypes.REPEATER, (MATERIAL_FLAGS.get(StateTypes.REPEATER)) | SOLID);
+        MATERIAL_FLAGS.put(StateTypes.SNOW, (MATERIAL_FLAGS.get(StateTypes.SNOW)) | SOLID);
+        MATERIAL_FLAGS.put(StateTypes.SNOW_BLOCK, (MATERIAL_FLAGS.get(StateTypes.SNOW_BLOCK)) | SOLID);
+        MATERIAL_FLAGS.put(StateTypes.ANVIL, (MATERIAL_FLAGS.get(StateTypes.COBBLESTONE_WALL)) | WALL);
+        MATERIAL_FLAGS.put(StateTypes.CHIPPED_ANVIL, (MATERIAL_FLAGS.get(StateTypes.COBBLESTONE_WALL)) | WALL);
+        MATERIAL_FLAGS.put(StateTypes.DAMAGED_ANVIL, (MATERIAL_FLAGS.get(StateTypes.COBBLESTONE_WALL)) | WALL);
+        MATERIAL_FLAGS.put(StateTypes.LILY_PAD, (MATERIAL_FLAGS.get(StateTypes.LILY_PAD)) | SOLID);
+        MATERIAL_FLAGS.put(StateTypes.SLIME_BLOCK, (MATERIAL_FLAGS.get(StateTypes.SLIME_BLOCK)) | SOLID);
+        MATERIAL_FLAGS.put(StateTypes.SCAFFOLDING, (MATERIAL_FLAGS.get(StateTypes.SCAFFOLDING)) | SOLID);
+        MATERIAL_FLAGS.put(StateTypes.LADDER, (MATERIAL_FLAGS.get(StateTypes.LADDER)) | LADDER | SOLID);
+        MATERIAL_FLAGS.put(StateTypes.VINE, (MATERIAL_FLAGS.get(StateTypes.VINE)) | LADDER | SOLID);
     }
 
-    public static int getBitmask(Material material) {
-        return MATERIAL_FLAGS[material.ordinal()];
+    public static int getBitmask(StateType material) {
+        return MATERIAL_FLAGS.getOrDefault(material, 0);
     }
 
     private Materials() {
 
     }
 
-    public static boolean checkFlag(Material material, int flag) {
-        return (MATERIAL_FLAGS[material.ordinal()] & flag) == flag;
+    public static boolean checkFlag(StateType material, int flag) {
+        return (MATERIAL_FLAGS.get(material) & flag) == flag;
     }
 
     public static boolean isUsable(Material material) {

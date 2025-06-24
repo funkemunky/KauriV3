@@ -1,13 +1,14 @@
 package dev.brighten.ac.check.impl.world;
 
+import com.github.retrooper.packetevents.util.Vector3d;
+import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerBlockPlacement;
+import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerFlying;
 import dev.brighten.ac.api.check.CheckType;
 import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.data.APlayer;
-import dev.brighten.ac.packet.wrapper.in.WPacketPlayInBlockPlace;
-import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
-import dev.brighten.ac.utils.BlockUtils;
+import dev.brighten.ac.handler.block.WrappedBlock;
 import dev.brighten.ac.utils.KLocation;
 import dev.brighten.ac.utils.MathUtils;
 import dev.brighten.ac.utils.Tuple;
@@ -17,10 +18,7 @@ import dev.brighten.ac.utils.world.BlockData;
 import dev.brighten.ac.utils.world.CollisionBox;
 import dev.brighten.ac.utils.world.types.RayCollision;
 import dev.brighten.ac.utils.world.types.SimpleCollisionBox;
-import org.bukkit.Location;
-import org.bukkit.block.Block;
 
-import java.util.Optional;
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -31,19 +29,17 @@ public class BlockA extends Check {
     }
 
     private final MaxDouble VERBOSE = new MaxDouble(20);
-    private final Queue<Tuple<Block, SimpleCollisionBox>> PLACEMENTS = new LinkedBlockingQueue<>();
+    private final Queue<Tuple<WrappedBlock, SimpleCollisionBox>> PLACEMENTS = new LinkedBlockingQueue<>();
 
     @Bind
-    WAction<WPacketPlayInBlockPlace> blockPlace = packet -> {
-        Location loc = packet.getBlockPos().toBukkitVector().toLocation(player.getBukkitPlayer().getWorld());
-        Optional<Block> optionalBlock = BlockUtils.getBlockAsync(loc);
+    WAction<WrapperPlayClientPlayerBlockPlacement> blockPlace = packet -> {
+        Vector3d loc = packet.getBlockPosition().toVector3d();
 
-        if(optionalBlock.isEmpty()) return;
+        WrappedBlock block = player.getBlockUpdateHandler().getBlock(loc);
 
-        final Block block = optionalBlock.get();
-        CollisionBox box = BlockData.getData(block.getType()).getBox(block, player.getPlayerVersion());
+        CollisionBox box = BlockData.getData(block.getType()).getBox(player, block, player.getPlayerVersion());
 
-        debug(packet.getBlockPos().toString());
+        debug(packet.getBlockPosition().toString());
         if(!(box instanceof final SimpleCollisionBox simpleBox)) {
             debug("Not SimpleCollisionBox: " + box.getClass().getSimpleName() + ";" + block.getType());
             return;
@@ -63,12 +59,12 @@ public class BlockA extends Check {
     };
 
     @Bind
-    WAction<WPacketPlayInFlying> flying = packet -> {
-        Tuple<Block, SimpleCollisionBox> tuple;
+    WAction<WrapperPlayClientPlayerFlying> flying = packet -> {
+        Tuple<WrappedBlock, SimpleCollisionBox> tuple;
 
         while((tuple = PLACEMENTS.poll()) != null) {
             final SimpleCollisionBox box = tuple.two.copy().expand(0.025);
-            final Block block = tuple.one;
+            final WrappedBlock block = tuple.one;
 
             final KLocation to = player.getMovement().getTo().getLoc().clone().add(0, player.getEyeHeight(), 0),
                     from = player.getMovement().getFrom().getLoc().clone().add(0, player.getPreviousEyeHeight(), 0);

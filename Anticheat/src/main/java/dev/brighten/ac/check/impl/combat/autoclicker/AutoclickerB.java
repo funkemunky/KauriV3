@@ -1,12 +1,13 @@
 package dev.brighten.ac.check.impl.combat.autoclicker;
 
+import com.github.retrooper.packetevents.protocol.player.InteractionHand;
+import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientAnimation;
+import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerFlying;
 import dev.brighten.ac.api.check.CheckType;
 import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.WTimedAction;
 import dev.brighten.ac.data.APlayer;
-import dev.brighten.ac.packet.wrapper.in.WPacketPlayInArmAnimation;
-import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
 import dev.brighten.ac.utils.annotation.Bind;
 
 @CheckData(name = "Autoclicker (B)", checkId = "autoclickerb", type = CheckType.AUTOCLICKER)
@@ -19,13 +20,15 @@ public class AutoclickerB extends Check {
     private int buffer;
 
     @Bind
-    WTimedAction<WPacketPlayInFlying> flyingPacket = (packet, timestamp) -> {
+    WTimedAction<WrapperPlayClientPlayerFlying> flyingPacket = (packet, timestamp) -> {
         if(player.getMovement().getLastTeleport().isPassed(1))
             lastFlying = timestamp;
     };
 
     @Bind
-    WTimedAction<WPacketPlayInArmAnimation> animation = (packet, timestamp) -> {
+    WTimedAction<WrapperPlayClientAnimation> animation = (packet, timestamp) -> {
+        if(packet.getHand() != InteractionHand.MAIN_HAND) return;
+
         if(timestamp - lastFlying < 10 && player.getLagInfo().getLastPacketDrop().isPassed(1)) {
             if(++buffer > 4) {
                 flag("delta=%s", timestamp - lastFlying);

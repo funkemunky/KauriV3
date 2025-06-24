@@ -1,12 +1,16 @@
 package dev.brighten.ac.utils;
 
+import com.github.retrooper.packetevents.protocol.entity.type.EntityTypes;
+import com.github.retrooper.packetevents.protocol.item.type.ItemType;
+import com.github.retrooper.packetevents.protocol.player.ClientVersion;
+import com.github.retrooper.packetevents.protocol.world.states.type.StateType;
+import com.github.retrooper.packetevents.protocol.world.states.type.StateTypes;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.handler.block.WrappedBlock;
+import dev.brighten.ac.handler.entity.TrackedEntity;
 import dev.brighten.ac.utils.math.IntVector;
-import org.bukkit.Bukkit;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.World;
+import io.github.retrooper.packetevents.util.SpigotConversionUtil;
+import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Entity;
@@ -19,7 +23,7 @@ import java.util.Optional;
 public class BlockUtils {
     private static final EnumMap<Material, XMaterial> matchMaterial = new EnumMap<>(Material.class);
     private static final EnumSet<Material> SWORDS = EnumSet.allOf(Material.class),
-            STAINED_CLAY =  EnumSet.allOf(Material.class), EDIBLE = EnumSet.allOf(Material.class),
+            EDIBLE = EnumSet.allOf(Material.class),
             DOOR = EnumSet.allOf(Material.class);
     private static final EnumSet<XMaterial> XEDIBLE = EnumSet.allOf(XMaterial.class);
 
@@ -28,9 +32,7 @@ public class BlockUtils {
             XMaterial xmat = XMaterial.matchXMaterial(mat);
             matchMaterial.put(mat, xmat);
 
-            if(mat.toString().contains("STAINED_CLAY")) {
-                STAINED_CLAY.add(mat);
-            } else if(mat.toString().contains("SWORD")) {
+            if(mat.toString().contains("SWORD")) {
                 SWORDS.add(mat);
             } else if(mat.toString().contains("DOOR") && !mat.toString().contains("TRAP")) {
                 DOOR.add(mat);
@@ -47,6 +49,10 @@ public class BlockUtils {
         return matchMaterial.get(material);
     }
 
+    public static XMaterial getXMaterial(ItemType itemType) {
+        return matchMaterial.get(SpigotConversionUtil.toBukkitItemMaterial(itemType));
+    }
+
     @Deprecated
     public static Block getBlock(Location location) {
         if (location.getWorld().isChunkLoaded(location.getBlockX() >> 4, location.getBlockZ() >> 4)) {
@@ -54,10 +60,6 @@ public class BlockUtils {
         } else {
             return null;
         }
-    }
-
-    public static boolean isStainedClay(Material material) {
-        return STAINED_CLAY.contains(material);
     }
 
     public static boolean isSword(Material material) {
@@ -73,51 +75,30 @@ public class BlockUtils {
         return Optional.empty();
     }
 
-    public static Optional<Block> getRelativeAsync(Block block, BlockFace face) {
-        return getRelativeAsync(block, face.getModX(), face.getModY(), face.getModZ());
-    }
-
-    public static Optional<Block> getRelativeAsync(Block block, BlockFace face, int distance) {
-        return getRelativeAsync(block,
-                face.getModX() * distance, face.getModY() * distance, face.getModZ() * distance);
-    }
-
-    public static Optional<Block> getRelativeAsync(Block block, int modX, int modY, int modZ) {
-        if(block == null) return Optional.empty();
-
-        return getBlockAsync(block.getLocation().clone().add(modX, modY, modZ));
-    }
-
-    @SuppressWarnings("deprecation")
-    public static Optional<WrappedBlock> getWrappedBlock(APlayer player, Location location) {
-        if(player == null) {
-            return getBlockAsync(location.clone())
-                    .map(b -> new WrappedBlock(b.getLocation(), b.getType(), b.getData()));
+    public static Optional<Chunk> getChunkAsync(World world, int x, int z) {
+        if(Bukkit.isPrimaryThread()
+                || world.isChunkLoaded(x, z))  {
+            return Optional.of(world.getChunkAt(x, z));
         }
 
-        return Optional.of(player.getBlockUpdateHandler()
-                .getBlock(new IntVector(location.getBlockX(), location.getBlockY(), location.getBlockZ())));
+        return Optional.empty();
     }
 
-    @SuppressWarnings("deprecation")
-    public static Optional<WrappedBlock> getRelative(APlayer player, Location location, int modX, int modY, int modZ) {
-        if(player == null) {
-            return getBlockAsync(location.clone().add(modX, modY, modZ))
-                    .map(b -> new WrappedBlock(b.getLocation(), b.getType(), b.getData()));
-        }
-
+    public static Optional<WrappedBlock> getRelative(APlayer player, IntVector location, int modX, int modY, int modZ) {
         return Optional.of(player.getBlockUpdateHandler()
-                .getRelative(new IntVector(location.getBlockX(), location.getBlockY(), location.getBlockZ()),
+                .getRelative(new IntVector(location.getX(), location.getY(), location.getZ()),
                         modX, modY, modZ));
     }
 
-    public static Optional<WrappedBlock> getRelative(APlayer player, Location location, BlockFace face, int distance) {
+    public static Optional<WrappedBlock> getRelative(APlayer player, IntVector location,
+                                                     com.github.retrooper.packetevents.protocol.world
+                                                             .BlockFace face, int distance) {
         return getRelative(player, location,
                 face.getModX() * distance, face.getModY() * distance, face.getModZ() * distance);
     }
 
-    public static Optional<WrappedBlock> getRelative(APlayer player, Location location, BlockFace face) {
-        return getRelative(player, location,
+    public static Optional<WrappedBlock> getRelative(APlayer player, IntVector vector, BlockFace face) {
+        return getRelative(player, vector,
                 face.getModX(), face.getModY(), face.getModZ());
     }
 
@@ -128,6 +109,25 @@ public class BlockUtils {
             case BLUE_ICE -> 0.989f;
             default -> 0.6f;
         };
+    }
+    public static float getMaterialFriction(APlayer player, StateType material) {
+        float friction = 0.6f;
+
+        if (material == StateTypes.ICE) friction = 0.98f;
+        if (material == StateTypes.SLIME_BLOCK && player.getPlayerVersion().isNewerThanOrEquals(ClientVersion.V_1_8))
+            friction = 0.8f;
+        // ViaVersion honey block replacement
+        if (material == StateTypes.HONEY_BLOCK && player.getPlayerVersion().isOlderThan(ClientVersion.V_1_15))
+            friction = 0.8f;
+        if (material == StateTypes.PACKED_ICE) friction = 0.98f;
+        if (material == StateTypes.FROSTED_ICE) friction = 0.98f;
+        if (material == StateTypes.BLUE_ICE) {
+            friction = 0.98f;
+            if (player.getPlayerVersion().isNewerThanOrEquals(ClientVersion.V_1_13))
+                friction = 0.989f;
+        }
+
+        return friction;
     }
 
     public static boolean isUsable(Material material) {
@@ -142,8 +142,9 @@ public class BlockUtils {
         };
     }
 
-    public static boolean isEntityCollidable(Entity entity) {
-        return entity instanceof Vehicle;
+    public static boolean isEntityCollidable(TrackedEntity entity) {
+        return entity.getEntityType().isInstanceOf(EntityTypes.BOAT) ||
+                entity.getEntityType().isInstanceOf(EntityTypes.MINECART);
     }
 
     public static boolean isSolid(Block block) {
@@ -170,32 +171,8 @@ public class BlockUtils {
         };
     }
 
-    public static boolean isClimbableBlock(Block block) {
+    public static boolean isClimbableBlock(WrappedBlock block) {
         return Materials.checkFlag(block.getType(), Materials.LADDER);
-    }
-
-    public static boolean isDoor(Material type) {
-        return DOOR.contains(type);
-    }
-
-    public static Location findGround(World world, Location point) {
-        for (int y = point.toVector().getBlockY(); y > 0; y--) {
-            Location loc = new Location(world, point.getX(), y, point.getZ());
-            Optional<Block> blockOp = BlockUtils.getBlockAsync(loc);
-
-            if(blockOp.isEmpty()) continue;
-
-            Block block = blockOp.get();
-
-            if (block.getType().isBlock() && block.getType().isSolid() && !block.isEmpty()) {
-                Location toReturn = loc.clone();
-
-                toReturn.setY(y + 1);
-
-                return toReturn;
-            }
-        }
-        return point;
     }
 }
 

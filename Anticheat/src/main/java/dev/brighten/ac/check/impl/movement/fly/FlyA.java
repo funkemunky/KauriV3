@@ -1,12 +1,13 @@
 package dev.brighten.ac.check.impl.movement.fly;
 
+import com.github.retrooper.packetevents.protocol.player.ClientVersion;
+import com.github.retrooper.packetevents.util.Vector3d;
+import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerFlying;
 import dev.brighten.ac.api.check.CheckType;
 import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.data.APlayer;
-import dev.brighten.ac.packet.ProtocolVersion;
-import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
 import dev.brighten.ac.utils.Color;
 import dev.brighten.ac.utils.Helper;
 import dev.brighten.ac.utils.MathUtils;
@@ -16,11 +17,10 @@ import dev.brighten.ac.utils.timer.Timer;
 import dev.brighten.ac.utils.timer.impl.MillisTimer;
 import dev.brighten.ac.utils.timer.impl.TickTimer;
 import dev.brighten.ac.utils.world.types.SimpleCollisionBox;
-import org.bukkit.util.Vector;
 
 import java.util.List;
 
-@CheckData(name = "Fly (Predict)", checkId = "flya", type = CheckType.MOVEMENT, experimental = true, punishVl = 7, maxVersion = ProtocolVersion.V1_21_5)
+@CheckData(name = "Fly (Predict)", checkId = "flya", type = CheckType.MOVEMENT, experimental = true, punishVl = 7, maxVersion = ClientVersion.V_1_21_5)
 public class FlyA extends Check {
 
     public FlyA(APlayer player) {
@@ -33,8 +33,8 @@ public class FlyA extends Check {
     private boolean didNextPrediction = false;
 
     @Bind
-    WAction<WPacketPlayInFlying> flying = packet -> {
-        if(!packet.isMoved() || (player.getMovement().getDeltaXZ() == 0
+    WAction<WrapperPlayClientPlayerFlying> flying = packet -> {
+        if(!packet.hasPositionChanged()|| (player.getMovement().getDeltaXZ() == 0
                 && player.getMovement().getDeltaY() == 0)) {
             return;
         }
@@ -91,8 +91,8 @@ public class FlyA extends Check {
         }
 
         // Vanilla wrapping the deltaY to 0 if it's less than a certain amount.
-        if(player.getPlayerVersion().isBelow(ProtocolVersion.V1_21_1)) {
-            if(player.getPlayerVersion().isBelow(ProtocolVersion.V1_9)) {
+        if(player.getPlayerVersion().isOlderThan(ClientVersion.V_1_21)) {
+            if(player.getPlayerVersion().isOlderThan(ClientVersion.V_1_9)) {
                 if(Math.abs(predicted) < 0.005)
                     predicted = 0;
             } else if(Math.abs(predicted) < 0.003) {
@@ -102,7 +102,7 @@ public class FlyA extends Check {
         }
 
         // Accounting for the potential vertical velocity
-        for (Vector possibleVector : player.getVelocityHandler().getPossibleVectors()) {
+        for (Vector3d possibleVector : player.getVelocityHandler().getPossibleVectors()) {
             double deltaVelocity = MathUtils.getDelta(possibleVector.getY(), player.getMovement().getDeltaY());
 
             if(deltaVelocity < MathUtils.getDelta(predicted, player.getMovement().getDeltaY())) {

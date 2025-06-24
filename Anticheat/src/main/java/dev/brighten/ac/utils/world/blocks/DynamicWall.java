@@ -1,27 +1,23 @@
 package dev.brighten.ac.utils.world.blocks;
 
+import com.github.retrooper.packetevents.protocol.player.ClientVersion;
+import com.github.retrooper.packetevents.protocol.world.BlockFace;
+import com.github.retrooper.packetevents.protocol.world.states.type.StateType;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.handler.block.WrappedBlock;
-import dev.brighten.ac.packet.ProtocolVersion;
 import dev.brighten.ac.utils.BlockUtils;
 import dev.brighten.ac.utils.Materials;
 import dev.brighten.ac.utils.world.CollisionBox;
 import dev.brighten.ac.utils.world.types.CollisionFactory;
 import dev.brighten.ac.utils.world.types.SimpleCollisionBox;
-import org.bukkit.Material;
-import org.bukkit.block.BlockFace;
 
 import java.util.Optional;
 
 @SuppressWarnings("Duplicates")
 public class DynamicWall implements CollisionFactory {
 
-    private static final double width = 0.25;
-    private static final double min = .5 - width;
-    private static final double max = .5 + width;
-
     @Override
-    public CollisionBox fetch(ProtocolVersion version, APlayer player, WrappedBlock b) {
+    public CollisionBox fetch(ClientVersion version, APlayer player, WrappedBlock b) {
         boolean var3 = wallConnects(version, player, b, BlockFace.NORTH);
         boolean var4 = wallConnects(version, player, b, BlockFace.SOUTH);
         boolean var5 = wallConnects(version, player, b, BlockFace.WEST);
@@ -59,38 +55,24 @@ public class DynamicWall implements CollisionFactory {
         return new SimpleCollisionBox(var7, 0.0, var9, var8, 1.5, var10);
     }
 
-    private static boolean wallConnects(ProtocolVersion v, APlayer player, WrappedBlock fenceBlock, BlockFace direction) {
-        Optional<WrappedBlock> targetBlock = BlockUtils.getRelative(player, fenceBlock.getLocation(), direction, 1);
+    private static boolean wallConnects(ClientVersion v, APlayer player, WrappedBlock fenceBlock, BlockFace direction) {
+        Optional<WrappedBlock> targetBlock = player == null ? Optional.empty() : BlockUtils.getRelative(player, fenceBlock.getLocation(), direction, 1);
 
-        if(!targetBlock.isPresent()) return false;
+        if(targetBlock.isEmpty()) return false;
 
-        Material target = targetBlock.get().getType();
+        StateType target = targetBlock.get().getType();
 
         if (!isWall(target)&&DynamicFence.isBlacklisted(target))
             return false;
 
         if(Materials.checkFlag(target, Materials.STAIRS)) {
-            if (v.isBelow(ProtocolVersion.V1_12)) return false;
+            if (v.isOlderThan(ClientVersion.V_1_12)) return false;
 
-            return dir(fenceBlock.getData()).getOppositeFace() == direction;
-        } else return isWall(target) || (target.isSolid() && !target.isTransparent());
+            return fenceBlock.getBlockState().getFacing().getOppositeFace() == direction;
+        } else return isWall(target) || (target.isSolid() && !target.isBlocking());
     }
 
-    private static boolean isWall(Material m) {
+    private static boolean isWall(StateType m) {
         return Materials.checkFlag(m, Materials.WALL);
-    }
-
-    private static BlockFace dir(byte data) {
-        switch(data & 3) {
-            case 0:
-            default:
-                return BlockFace.EAST;
-            case 1:
-                return BlockFace.WEST;
-            case 2:
-                return BlockFace.SOUTH;
-            case 3:
-                return BlockFace.NORTH;
-        }
     }
 }

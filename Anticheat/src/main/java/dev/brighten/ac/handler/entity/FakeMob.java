@@ -1,20 +1,23 @@
 package dev.brighten.ac.handler.entity;
 
+import com.github.retrooper.packetevents.protocol.entity.data.EntityData;
+import com.github.retrooper.packetevents.protocol.entity.data.EntityDataTypes;
+import com.github.retrooper.packetevents.protocol.entity.type.EntityType;
+import com.github.retrooper.packetevents.util.Vector3d;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerDestroyEntities;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityMetadata;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityTeleport;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSpawnLivingEntity;
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.data.APlayer;
-import dev.brighten.ac.packet.wrapper.objects.WrappedWatchableObject;
-import dev.brighten.ac.packet.wrapper.out.WPacketPlayOutEntity;
-import dev.brighten.ac.packet.wrapper.out.WPacketPlayOutEntityMetadata;
-import dev.brighten.ac.packet.wrapper.out.WPacketPlayOutEntityTeleport;
-import dev.brighten.ac.packet.wrapper.out.WPacketPlayOutSpawnEntityLiving;
+import dev.brighten.ac.packet.WPacketPlayOutEntity;
+import dev.brighten.ac.utils.KLocation;
 import lombok.Getter;
-import net.minecraft.server.v1_8_R3.PacketPlayOutEntityDestroy;
-import org.bukkit.Location;
-import org.bukkit.entity.EntityType;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
 @Getter
@@ -29,47 +32,23 @@ public class FakeMob {
         this.type = type;
     }
 
-    /*
-    protected void b(int i, boolean flag) {
-        byte b0 = this.datawatcher.getByte(0);
-        if (flag) {
-            this.datawatcher.watch(0, (byte)(b0 | 1 << i));
-        } else {
-            this.datawatcher.watch(0, (byte)(b0 & ~(1 << i)));
-        }
-
-    }
-     */
-    public void spawn(boolean invisible, Location location, APlayer... players) {
-        spawn(invisible, location, new ArrayList<>(), players);
-    }
-
-    public void spawn(boolean invisible, Location location, List<WrappedWatchableObject> objects, APlayer... players) {
-        if(watching.size() > 0) {
+    public void spawn(boolean invisible, KLocation location, List<EntityData<?>> objects, APlayer... players) {
+        if(!watching.isEmpty()) {
             despawn();
         }
 
         watching = new ArrayList<>();
         for (APlayer player : players) {
             if(invisible) {
-                objects.add(new WrappedWatchableObject(0, 0, (byte)((byte)1 << 5)));
-            }
-            WPacketPlayOutSpawnEntityLiving packet = WPacketPlayOutSpawnEntityLiving.builder()
-                    .entityId(entityId)
-                    .type(type)
-                    .x(location.getX())
-                    .y(location.getY())
-                    .z(location.getZ())
-                    .yaw(location.getYaw())
-                    .pitch(location.getPitch())
-                    .headYaw(location.getYaw())
-                    .motionX(0)
-                    .motionY(0)
-                    .motionZ(0)
-                    .watchedObjects(objects)
-                    .build();
+                EntityData<?> entityData = new EntityData<>(0, EntityDataTypes.BYTE, (byte) 0x20);
 
-            player.sendPacketSilently(packet);
+                objects.add(entityData);
+            }
+            WrapperPlayServerSpawnLivingEntity packet = new WrapperPlayServerSpawnLivingEntity(entityId, UUID.randomUUID(), type,
+                    new Vector3d(location.getX(), location.getY(), location.getZ()), location.getYaw(), location.getPitch(), location.getYaw(),
+                    new Vector3d(0, 0, 0), objects);
+
+            player.sendPacket(packet);
             watching.add(player);
         }
 
@@ -77,27 +56,27 @@ public class FakeMob {
     }
 
     public void setInvisible(boolean invisible) {
-        List<WrappedWatchableObject> objects = new ArrayList<>();
+        List<EntityData<?>> entityMetadata = new ArrayList<>();
 
         if(invisible) {
-            objects.add(new WrappedWatchableObject(0, 0, (byte)((byte)1 << 5)));
+            EntityData<?> entityData = new EntityData<>(0, EntityDataTypes.BYTE, (byte) 0x20);
+
+            entityMetadata.add(entityData);
         } else {
-            objects.add(new WrappedWatchableObject(0, 0, (byte)~((byte)1 << 5)));
+            EntityData<?> entityData = new EntityData<>(0, EntityDataTypes.BYTE, (byte) ~0x20);
+
+            entityMetadata.add(entityData);
         }
 
-        WPacketPlayOutEntityMetadata packet = WPacketPlayOutEntityMetadata.builder()
-                .entityId(entityId)
-                .watchedObjects(objects)
-                .build();
+        WrapperPlayServerEntityMetadata packet = new WrapperPlayServerEntityMetadata(entityId, entityMetadata);
 
-        watching.forEach(player -> player.sendPacketSilently(packet));
+        watching.forEach(player -> player.sendPacket(packet));
     }
 
     public void despawn() {
         for (APlayer aPlayer : watching) {
-            PacketPlayOutEntityDestroy destroyEntity = new PacketPlayOutEntityDestroy(entityId);
-
-            aPlayer.sendPacketSilently(destroyEntity);
+            Anticheat.INSTANCE.getLogger().info("Despawning fake entity with ID: " + entityId);
+            aPlayer.sendPacket(new WrapperPlayServerDestroyEntities(entityId));
         }
         watching = Collections.emptyList();
 
@@ -108,7 +87,7 @@ public class FakeMob {
         WPacketPlayOutEntity packet = WPacketPlayOutEntity.builder().id(entityId).x(dx).y(dy).z(dz).moved(true).build();
 
         for (APlayer player : watching) {
-            player.sendPacketSilently(packet);
+            player.sendPacket(packet.getPacket());
         }
     }
 
@@ -117,7 +96,7 @@ public class FakeMob {
                 .pitch(dpitch).moved(true).looked(true).build();
 
         for (APlayer player : watching) {
-            player.sendPacketSilently(packet);
+            player.sendPacket(packet.getPacket());
         }
     }
 
@@ -126,18 +105,16 @@ public class FakeMob {
                 .looked(true).build();
 
         for (APlayer player : watching) {
-            player.sendPacketSilently(packet);
+            player.sendPacket(packet.getPacket());
         }
     }
 
     public void teleport(double x, double y, double z, float yaw, float pitch) {
-        WPacketPlayOutEntityTeleport packet = WPacketPlayOutEntityTeleport.builder()
-                .entityId(entityId)
-                .x(x).y(y).z(z).yaw(yaw).pitch(pitch).onGround(false)
-                .build();
+        WrapperPlayServerEntityTeleport packet = new WrapperPlayServerEntityTeleport(entityId,
+                new Vector3d(x, y, z), yaw, pitch, false);
 
         for (APlayer player : watching) {
-            player.sendPacketSilently(packet);
+            player.sendPacket(packet);
         }
     }
 }

@@ -1,6 +1,7 @@
 package dev.brighten.ac.utils;
 
-import dev.brighten.ac.packet.ProtocolVersion;
+import com.github.retrooper.packetevents.PacketEvents;
+import com.github.retrooper.packetevents.manager.server.ServerVersion;
 import org.bukkit.ChatColor;
 
 import java.util.regex.Matcher;
@@ -42,7 +43,7 @@ public class Color {
                 } catch (NumberFormatException var7) {
                     throw new IllegalArgumentException("Illegal hex string " + string);
                 }
-                if (ProtocolVersion.getGameVersion().isOrAbove(ProtocolVersion.V1_16)) {
+                if (PacketEvents.getAPI().getServerManager().getVersion().isNewerThanOrEquals(ServerVersion.V_1_16)) {
 
                     StringBuilder magic = new StringBuilder("§x");
                     char[] var3 = string.substring(1).toCharArray();

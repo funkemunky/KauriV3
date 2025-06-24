@@ -58,18 +58,31 @@ public class CheckHandler {
     public void initChecks() {
         // Enabling checks for players on join
 
+        if (!player.isInitialized()) {
+            Anticheat.INSTANCE.alog("Player " + player.getBukkitPlayer().getName() + " is not initialized!");
+            return;
+        }
+
+        Anticheat.INSTANCE.alog("Initializing checks for player %s %s", player.getBukkitPlayer().getName(), TO_HOOK.size());
+
         for (CheckStatic toHook : TO_HOOK) {
             KListener listener = toHook.playerInit(player);
+
+            CheckData data = toHook.getCheckClass().getAnnotation(CheckData.class);
+
+            String checkId = data != null ? data.checkId() : UUID.randomUUID().toString();
             synchronized (EVENTS) {
                 for (Tuple<WrappedField, Class<?>> tuple : toHook.getActions()) {
                     WAction<?> action = tuple.one.get(listener);
 
                     EVENTS.compute(tuple.two, (packetClass, array) -> {
                         if (array == null) {
-                            return new ActionStore[] {new ActionStore(action, toHook.getCheckClass().getParent())};
+                            return new ActionStore[] {new ActionStore(action,
+                                    toHook.getCheckClass().getParent(), checkId)};
                         } else {
                             ActionStore[] newArray = Arrays.copyOf(array, array.length + 1);
-                            newArray[array.length] = new ActionStore(action, toHook.getCheckClass().getParent());
+                            newArray[array.length] = new ActionStore(action,
+                                    toHook.getCheckClass().getParent(), checkId);
                             return newArray;
                         }
                     });
@@ -81,10 +94,12 @@ public class CheckHandler {
 
                     EVENTS_TIMESTAMP.compute(tuple.two, (packetClass, array) -> {
                         if (array == null) {
-                            return new TimedActionStore[] {new TimedActionStore(action, toHook.getCheckClass().getParent())};
+                            return new TimedActionStore[] {new TimedActionStore(action,
+                                    toHook.getCheckClass().getParent(), checkId)};
                         } else {
                             TimedActionStore<?>[] newArray = Arrays.copyOf(array, array.length + 1);
-                            newArray[array.length] = new TimedActionStore(action, toHook.getCheckClass().getParent());
+                            newArray[array.length] = new TimedActionStore(action,
+                                    toHook.getCheckClass().getParent(), checkId);
                             return newArray;
                         }
                     });
@@ -98,10 +113,12 @@ public class CheckHandler {
 
                     EVENTS_CANCELLABLE.compute(tuple.two, (packetClass, array) -> {
                         if (array == null) {
-                            return new CancellableActionStore[] {new CancellableActionStore(action, toHook.getCheckClass().getParent())};
+                            return new CancellableActionStore[] {new CancellableActionStore(action,
+                                    toHook.getCheckClass().getParent(), checkId)};
                         } else {
                             CancellableActionStore[] newArray = Arrays.copyOf(array, array.length + 1);
-                            newArray[array.length] = new CancellableActionStore(action, toHook.getCheckClass().getParent());
+                            newArray[array.length] = new CancellableActionStore(action,
+                                    toHook.getCheckClass().getParent(), checkId);
                             return newArray;
                         }
                     });
@@ -111,9 +128,9 @@ public class CheckHandler {
 
         for (CheckStatic checkClass : Anticheat.INSTANCE.getCheckManager().getCheckClasses().values()) {
             CheckData data = checkClass.getCheckClass().getAnnotation(CheckData.class);
-
+            String checkId = data != null ? data.checkId() : UUID.randomUUID().toString();
             //Version checks
-            if(player.getPlayerVersion().isAbove(data.maxVersion()) || player.getPlayerVersion().isBelow(data.minVersion())) {
+            if(player.getPlayerVersion().isNewerThan(data.maxVersion()) || player.getPlayerVersion().isOlderThan(data.minVersion())) {
                 Anticheat.INSTANCE.alog("Player " + player.getBukkitPlayer().getName() +
                         " is not on the right version for check " + data.name()
                         + " (version: " + player.getPlayerVersion().name() + ")");
@@ -123,7 +140,7 @@ public class CheckHandler {
             Check check = checkClass.playerInit(player);
 
             CheckSettings settings = Anticheat.INSTANCE.getCheckManager()
-                    .getCheckSettings(checkClass.getCheckClass().getParent());
+                    .getCheckSettings(checkId);
 
             if(settings == null) {
                 throw new RuntimeException("Settings for check" + check.getName() + " do not exist!");
@@ -142,10 +159,10 @@ public class CheckHandler {
 
                     EVENTS.compute(tuple.two, (packetClass, array) -> {
                         if (array == null) {
-                            return new ActionStore[] {new ActionStore(action, checkClass.getCheckClass().getParent())};
+                            return new ActionStore[] {new ActionStore(action, checkClass.getCheckClass().getParent(), checkId)};
                         } else {
                             ActionStore[] newArray = Arrays.copyOf(array, array.length + 1);
-                            newArray[array.length] = new ActionStore(action, checkClass.getCheckClass().getParent());
+                            newArray[array.length] = new ActionStore(action, checkClass.getCheckClass().getParent(), checkId);
                             return newArray;
                         }
                     });
@@ -157,10 +174,10 @@ public class CheckHandler {
 
                     EVENTS_TIMESTAMP.compute(tuple.two, (packetClass, array) -> {
                         if (array == null) {
-                            return new TimedActionStore[] {new TimedActionStore(action, checkClass.getCheckClass().getParent())};
+                            return new TimedActionStore[] {new TimedActionStore(action, checkClass.getCheckClass().getParent(), checkId)};
                         } else {
                             TimedActionStore<?>[] newArray = Arrays.copyOf(array, array.length + 1);
-                            newArray[array.length] = new TimedActionStore(action, checkClass.getCheckClass().getParent());
+                            newArray[array.length] = new TimedActionStore(action, checkClass.getCheckClass().getParent(), checkId);
                             return newArray;
                         }
                     });
@@ -174,10 +191,10 @@ public class CheckHandler {
 
                     EVENTS_CANCELLABLE.compute(tuple.two, (packetClass, array) -> {
                         if (array == null) {
-                            return new CancellableActionStore[] {new CancellableActionStore(action, checkClass.getCheckClass().getParent())};
+                            return new CancellableActionStore[] {new CancellableActionStore(action, checkClass.getCheckClass().getParent(), checkId)};
                         } else {
                             CancellableActionStore[] newArray = Arrays.copyOf(array, array.length + 1);
-                            newArray[array.length] = new CancellableActionStore(action, checkClass.getCheckClass().getParent());
+                            newArray[array.length] = new CancellableActionStore(action, checkClass.getCheckClass().getParent(), checkId);
                             return newArray;
                         }
                     });
@@ -208,17 +225,15 @@ public class CheckHandler {
         if(EVENTS.containsKey(event.getClass())) {
             ActionStore<Event>[] actions = (ActionStore<Event>[]) EVENTS.get(event.getClass());
             for (ActionStore<Event> action : actions) {
-                var checkSettings = Anticheat.INSTANCE.getCheckManager().getCheckSettings(action.getCheckClass());
+                var checkSettings = Anticheat.INSTANCE.getCheckManager().getCheckSettings(action.getCheckId());
                 if(checkSettings != null && !Anticheat.INSTANCE.getCheckManager()
-                        .getCheckSettings(action.getCheckClass()).isEnabled())
+                        .getCheckSettings(action.getCheckId()).isEnabled())
                     continue;
 
                 action.getAction().invoke(event);
             }
         }
     }
-
-    //TODO When using WPacket wrappers only, make this strictly WPacket param based only
 
     public boolean callSyncPacket(Object packet, long timestamp) {
         if(!player.isInitialized()) {
@@ -228,9 +243,9 @@ public class CheckHandler {
             synchronized (EVENTS) {
                 ActionStore<Object>[] actions = (ActionStore<Object>[]) EVENTS.get(packet.getClass());
                 for (ActionStore<Object> action : actions) {
-                    var checkSettings = Anticheat.INSTANCE.getCheckManager().getCheckSettings(action.getCheckClass());
+                    var checkSettings = Anticheat.INSTANCE.getCheckManager().getCheckSettings(action.getCheckId());
                     if(checkSettings != null && !Anticheat.INSTANCE.getCheckManager()
-                            .getCheckSettings(action.getCheckClass()).isEnabled())
+                            .getCheckSettings(action.getCheckId()).isEnabled())
                         continue;
                     action.getAction().invoke(packet);
                 }
@@ -241,9 +256,9 @@ public class CheckHandler {
                 TimedActionStore<Object>[] actions = (TimedActionStore<Object>[])
                         EVENTS_TIMESTAMP.get(packet.getClass());
                 for (TimedActionStore<Object> action : actions) {
-                    var checkSettings = Anticheat.INSTANCE.getCheckManager().getCheckSettings(action.getCheckClass());
+                    var checkSettings = Anticheat.INSTANCE.getCheckManager().getCheckSettings(action.getCheckId());
                     if(checkSettings != null && !Anticheat.INSTANCE.getCheckManager()
-                            .getCheckSettings(action.getCheckClass()).isEnabled())
+                            .getCheckSettings(action.getCheckId()).isEnabled())
                         continue;
                     action.getAction().invoke(packet, timestamp);
                 }
@@ -255,9 +270,9 @@ public class CheckHandler {
                 CancellableActionStore<Object>[] actions = (CancellableActionStore<Object>[])
                         EVENTS_CANCELLABLE.get(packet.getClass());
                 for (CancellableActionStore<Object> action : actions) {
-                    var checkSettings = Anticheat.INSTANCE.getCheckManager().getCheckSettings(action.getCheckClass());
+                    var checkSettings = Anticheat.INSTANCE.getCheckManager().getCheckSettings(action.getCheckId());
                     if(checkSettings != null && !Anticheat.INSTANCE.getCheckManager()
-                            .getCheckSettings(action.getCheckClass()).isEnabled())
+                            .getCheckSettings(action.getCheckId()).isEnabled())
                         continue;
 
                     if(action.getAction().invoke(packet)) {

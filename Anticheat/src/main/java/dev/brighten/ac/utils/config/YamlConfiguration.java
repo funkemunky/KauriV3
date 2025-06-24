@@ -1,54 +1,46 @@
 package dev.brighten.ac.utils.config;
 
+import dev.brighten.ac.Anticheat;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
 import org.bukkit.configuration.serialization.ConfigurationSerializable;
 import org.bukkit.configuration.serialization.ConfigurationSerialization;
 import org.yaml.snakeyaml.DumperOptions;
+import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
-import org.yaml.snakeyaml.nodes.Node;
-import org.yaml.snakeyaml.representer.Represent;
 import org.yaml.snakeyaml.representer.Representer;
 
 import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.logging.Level;
 
 @NoArgsConstructor(access = AccessLevel.PACKAGE)
 public class YamlConfiguration extends ConfigurationProvider
 {
 
-    private final ThreadLocal<Yaml> yaml = new ThreadLocal<Yaml>()
-    {
-        @Override
-        protected Yaml initialValue()
-        {
-            Representer representer = new Representer()
+    private final ThreadLocal<Yaml> yaml = ThreadLocal.withInitial(() -> {
+        DumperOptions options = new DumperOptions();
+        options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
+        Representer representer = new Representer(options) {
             {
-                {
-                    representers.put( Configuration.class, data -> represent( ( (Configuration) data ).self ));
-                    representers.put(ConfigurationSerializable.class, new Represent() {
-                        @Override
-                        public Node representData(Object data) {
-                            ConfigurationSerializable serializable = (ConfigurationSerializable)data;
-                            Map<String, Object> values = new LinkedHashMap();
-                            values.put("==", ConfigurationSerialization.getAlias(serializable.getClass()));
-                            values.putAll(serializable.serialize());
-                            return represent(values);
-                        }
-                    });
-                }
-            };
+                representers.put(Configuration.class, data -> represent(((Configuration) data).self));
+                representers.put(ConfigurationSerializable.class, data -> {
+                    ConfigurationSerializable serializable = (ConfigurationSerializable) data;
+                    Map<String, Object> values = new LinkedHashMap<>();
+                    values.put("==", ConfigurationSerialization.getAlias(serializable.getClass()));
+                    values.putAll(serializable.serialize());
+                    return represent(values);
+                });
+            }
+        };
 
-            DumperOptions options = new DumperOptions();
-            options.setDefaultFlowStyle( DumperOptions.FlowStyle.BLOCK );
-            representer.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
-            return new Yaml( new Constructor(), representer, options );
-        }
-    };
+        representer.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
+        return new Yaml(new Constructor(new LoaderOptions()), representer, options);
+    });
 
     @Override
     public void save(Configuration config, File file) throws IOException
@@ -93,7 +85,7 @@ public class YamlConfiguration extends ConfigurationProvider
                     if (currentLayer == 0) {
                         currentPath = new StringBuilder(key);
                     } else {
-                        currentPath.append("." + key);
+                        currentPath.append(".").append(key);
                     }
 
                     String path = currentPath.toString();
@@ -110,7 +102,7 @@ public class YamlConfiguration extends ConfigurationProvider
         try {
             writer.write(sb.toString());
         } catch (IOException e) {
-            e.printStackTrace();
+            Anticheat.INSTANCE.getLogger().log(Level.WARNING, "Failed to save config file", e);
         }
     }
     @Override

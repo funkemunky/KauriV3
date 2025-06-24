@@ -1,13 +1,12 @@
 package dev.brighten.ac.utils.world.types;
 
-import dev.brighten.ac.packet.wrapper.objects.EnumParticle;
+import com.github.retrooper.packetevents.protocol.particle.type.ParticleType;
+import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.utils.Helper;
 import dev.brighten.ac.utils.KLocation;
-import dev.brighten.ac.utils.reflections.impl.MinecraftReflection;
 import dev.brighten.ac.utils.world.CollisionBox;
 import me.hydro.emulator.util.mcp.AxisAlignedBB;
 import org.bukkit.Location;
-import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
 
 import java.util.Arrays;
@@ -77,19 +76,8 @@ public class SimpleCollisionBox implements CollisionBox {
         maxY += height;
     }
 
-    public SimpleCollisionBox(Object aabb) {
-        double[] box = MinecraftReflection.fromAABB(aabb);
-
-        this.minX = box[0];
-        this.minY = box[1];
-        this.minZ = box[2];
-        this.maxX = box[3];
-        this.maxY = box[4];
-        this.maxZ = box[5];
-    }
-
     public void sort() {
-        double temp = 0;
+        double temp;
         if (minX >= maxX) {
             temp = minX;
             this.minX = maxX;
@@ -194,7 +182,7 @@ public class SimpleCollisionBox implements CollisionBox {
     }
 
     @Override
-    public void draw(EnumParticle particle, Player... players) {
+    public void draw(ParticleType<?> particle, APlayer... players) {
         Helper.drawCuboid(copy().expand(0.025), particle, Arrays.asList(players));
     }
 
@@ -336,10 +324,6 @@ public class SimpleCollisionBox implements CollisionBox {
         } else {
             return offsetZ;
         }
-    }
-
-    public <T> T toAxisAlignedBB() {
-        return MinecraftReflection.toAABB(minX, minY, minZ, maxX, maxY, maxZ);
     }
 
     public AxisAlignedBB toNeo() {

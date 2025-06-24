@@ -18,4 +18,14 @@ public class CheckSettings {
                 .punishVl(data.punishVl())
                 .build();
     }
+
+    @Override
+    public String toString() {
+        return "CheckSettings{" +
+                "enabled=" + enabled +
+                ", punishable=" + punishable +
+                ", cancellable=" + cancellable +
+                ", punishVl=" + punishVl +
+                '}';
+    }
 }

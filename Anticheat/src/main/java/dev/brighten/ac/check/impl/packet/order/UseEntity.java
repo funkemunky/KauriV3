@@ -1,12 +1,12 @@
 package dev.brighten.ac.check.impl.packet.order;
 
+import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientInteractEntity;
+import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerFlying;
 import dev.brighten.ac.api.check.CheckType;
 import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.WTimedAction;
 import dev.brighten.ac.data.APlayer;
-import dev.brighten.ac.packet.wrapper.in.WPacketPlayInFlying;
-import dev.brighten.ac.packet.wrapper.in.WPacketPlayInUseEntity;
 import dev.brighten.ac.utils.annotation.Bind;
 
 @CheckData(name = "Order (Use)", checkId = "order_use", type = CheckType.ORDER)
@@ -20,7 +20,7 @@ public class UseEntity extends Check {
     }
 
     @Bind
-    WTimedAction<WPacketPlayInUseEntity> useEntity = (packet, timestamp) -> {
+    WTimedAction<WrapperPlayClientInteractEntity> useEntity = (packet, timestamp) -> {
         if(timestamp - lastFlying < 10 && player.getLagInfo().getLastPacketDrop().isPassed(1)) {
             if(++buffer > 5) {
                 buffer = 6;
@@ -32,7 +32,7 @@ public class UseEntity extends Check {
     };
 
     @Bind
-    WTimedAction<WPacketPlayInFlying> flying = (packet, timestamp) -> {
+    WTimedAction<WrapperPlayClientPlayerFlying> flying = (packet, timestamp) -> {
         if(player.getMovement().getLastTeleport().isPassed(0))
             lastFlying = timestamp;
     };
