@@ -55,10 +55,6 @@
             <id>funkemunky-releases</id>
             <url>https://nexus.funkemunky.cc/repository/releases/</url>
         </repository>
-        <repository>
-            <id>funkemunky-snapshots</id>
-            <url>https://nexus.funkemunky.cc/repository/snapshots/</url>
-        </repository>
     </repositories>
 
     <build>
