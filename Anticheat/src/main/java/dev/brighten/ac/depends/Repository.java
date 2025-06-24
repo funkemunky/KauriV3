@@ -25,7 +25,6 @@
 
 package dev.brighten.ac.depends;
 
-import javax.annotation.Nonnull;
 import java.lang.annotation.*;
 
 /**
@@ -41,7 +40,6 @@ public @interface Repository {
      *
      * @return the base url of the repository
      */
-    @Nonnull
     String url();
 
 }

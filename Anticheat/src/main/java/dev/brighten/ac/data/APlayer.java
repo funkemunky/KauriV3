@@ -259,6 +259,14 @@ public class APlayer {
         }
     }
 
+    public boolean isGlidePossible() {
+        if(PacketEvents.getAPI().getServerManager().getVersion().isOlderThan(ServerVersion.V_1_9)) {
+            return false;
+        }
+
+        return bukkitPlayer.getInventory().getChestplate().getType() == XMaterial.ELYTRA.parseMaterial();
+    }
+
     public void onVelocity(Consumer<Vector3d> runnable) {
         onVelocityTasks.add(runnable);
     }
@@ -324,10 +332,6 @@ public class APlayer {
 
     public DimensionType getDimensionType() {
         return user.getDimensionType();
-    }
-
-    public void writePacket(PacketWrapper<?> packet) {
-        user.writePacket(packet);
     }
 
     public void sendPacket(PacketWrapper<?> packet) {

@@ -37,7 +37,7 @@ public class GeneralInformation {
     public Optional<PotionEffect> groundJumpBoost;
     public boolean serverGround, lastServerGround, canFly, nearGround, worldLoaded, generalCancel, inVehicle, creative,
             sneaking, lsneaking, sprinting, gliding, riptiding, wasOnSlime, onLadder, doingVelocity, breakingBlock,
-               inventoryOpen;
+               inventoryOpen, swimming;
     public List<TrackedEntity> nearbyEntities = Collections.emptyList();
     public PastLocation targetPastLocation = new PastLocation();
     public KLocation lastKnownGoodPosition;

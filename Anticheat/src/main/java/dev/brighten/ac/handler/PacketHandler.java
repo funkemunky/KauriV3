@@ -1,7 +1,9 @@
 package dev.brighten.ac.handler;
 
+import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.event.PacketReceiveEvent;
 import com.github.retrooper.packetevents.event.PacketSendEvent;
+import com.github.retrooper.packetevents.manager.server.ServerVersion;
 import com.github.retrooper.packetevents.protocol.entity.type.EntityTypes;
 import com.github.retrooper.packetevents.protocol.item.ItemStack;
 import com.github.retrooper.packetevents.protocol.packettype.PacketType;
@@ -173,6 +175,12 @@ public class PacketHandler {
                 }
                 case STOP_SPRINTING: {
                     player.getInfo().setSprinting(false);
+                    break;
+                }
+                case START_FLYING_WITH_ELYTRA: {
+                    if(player.isGlidePossible()) {
+                        player.getInfo().setGliding(true);
+                    }
                     break;
                 }
             }
@@ -516,7 +524,53 @@ public class PacketHandler {
                 player.getInfo().setInventoryOpen(true);
                 player.getInfo().lastInventoryOpen.reset();
             });
-        }  else {
+        } else if(event.getPacketType() == PacketType.Play.Server.ENTITY_METADATA) {
+            WrapperPlayServerEntityMetadata packet = new WrapperPlayServerEntityMetadata(event);
+            wrapped = packet;
+
+            if(packet.getEntityId() == player.getBukkitPlayer().getEntityId()) {
+                var serverVersion = PacketEvents.getAPI().getServerManager().getVersion();
+                ripTide: {
+                    if(serverVersion.isNewerThanOrEquals(ServerVersion.V_1_13)
+                            && player.getPlayerVersion().isNewerThanOrEquals(ClientVersion.V_1_9)) {
+                        var entityMetadata = packet.getEntityMetadata().stream()
+                                .filter(entityData -> entityData.getIndex() ==
+                                        (serverVersion.isNewerThanOrEquals(ServerVersion.V_1_17) ? 8 : 7))
+                                .findFirst();
+
+                        if(entityMetadata.isEmpty() || !(entityMetadata.get().getValue() instanceof Byte value)) {
+                            break ripTide;
+                        }
+
+                        boolean isRiptiding = (value & 0x04) == 0x04;
+
+                        player.runKeepaliveAction(ka -> player.getInfo().setRiptiding(isRiptiding));
+                    }
+                }
+
+                action: {
+                    var entityMetadata = packet.getEntityMetadata().stream()
+                            .filter(entityData -> entityData.getIndex() == 0)
+                            .findFirst();
+
+                    if(entityMetadata.isEmpty() || !(entityMetadata.get().getValue() instanceof Byte value)) {
+                        break action;
+                    }
+
+                    boolean isGliding = (value & 0x80) == 0x80
+                            && player.getPlayerVersion().isNewerThanOrEquals(ClientVersion.V_1_9);
+                    boolean isSwimming = (value & 0x10) == 0x10;
+                    boolean isSprinting = (value & 0x8) == 0x8;
+
+                    player.runKeepaliveAction(ka -> {
+                        player.getInfo().setSwimming(isSwimming);
+                        player.getInfo().setGliding(isGliding);
+                        player.getInfo().setSprinting(isSprinting);
+                    });
+                }
+            }
+
+        } else {
             wrapped = new PacketWrapper<>(event);
         }
 

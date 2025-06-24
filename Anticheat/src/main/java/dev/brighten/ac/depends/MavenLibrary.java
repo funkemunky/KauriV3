@@ -25,7 +25,6 @@
 
 package dev.brighten.ac.depends;
 
-import javax.annotation.Nonnull;
 import java.lang.annotation.*;
 
 /**
@@ -42,7 +41,6 @@ public @interface MavenLibrary {
      *
      * @return the group id of the library
      */
-    @Nonnull
     String groupId();
 
     /**
@@ -50,7 +48,6 @@ public @interface MavenLibrary {
      *
      * @return the artifact id of the library
      */
-    @Nonnull
     String artifactId();
 
     /**
@@ -58,7 +55,6 @@ public @interface MavenLibrary {
      *
      * @return the version of the library
      */
-    @Nonnull
     String version();
 
     /**
@@ -66,7 +62,8 @@ public @interface MavenLibrary {
      *
      * @return the repo where the library can be obtained from
      */
-    @Nonnull
     Repository repo() default @Repository(url = "https://repo1.maven.org/maven2");
+
+    Relocate[] relocations() default {}; // Add this line
 
 }

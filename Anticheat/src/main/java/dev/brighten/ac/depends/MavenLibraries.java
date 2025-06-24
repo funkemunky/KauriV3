@@ -25,7 +25,6 @@
 
 package dev.brighten.ac.depends;
 
-import javax.annotation.Nonnull;
 import java.lang.annotation.*;
 
 /**
@@ -36,7 +35,6 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface MavenLibraries {
 
-    @Nonnull
     MavenLibrary[] value() default {};
 
 }
