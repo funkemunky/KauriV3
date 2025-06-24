@@ -19,6 +19,12 @@ jobs:
       with:
         java-version: '17'
         maven-version: '3.9.9'
+    - uses: actions/cache@v4
+      with:
+        path: |
+          ${{ inputs.cache-path }}
+          ${{ inputs.cache-path-add }}
+        key: ${{ inputs.cache-prefix }}${{ runner.os }}-jdk${{ inputs.java-version }}-${{ inputs.java-distribution }}-maven${{ inputs.maven-version }}-${{ hashFiles('**/pom.xml') }}
     - name: Build with Maven
       run: mvn -B package --file pom.xml
 
