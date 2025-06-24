@@ -66,7 +66,7 @@ public class Hitbox extends Check {
 
         while((target = attacks.poll()) != null) {
             //Updating new entity loc
-            
+
             TrackedEntity entity = target.one;
 
             final KLocation to = target.two;
