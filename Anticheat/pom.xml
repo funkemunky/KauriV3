@@ -139,11 +139,6 @@
                                     </shadedPattern>
                                 </relocation>
                                 <relocation>
-                                    <pattern>org.apache</pattern>
-                                    <shadedPattern>dev.brighten.ac.libs.org.apache
-                                    </shadedPattern>
-                                </relocation>
-                                <relocation>
                                     <pattern>org.h2</pattern>
                                     <shadedPattern>dev.brighten.ac.libs.org.h2
                                     </shadedPattern>
