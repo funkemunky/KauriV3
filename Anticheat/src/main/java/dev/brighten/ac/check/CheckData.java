@@ -23,5 +23,5 @@ public @interface CheckData {
     int punishVl() default 10;
 
     ClientVersion minVersion() default ClientVersion.V_1_8;
-    ClientVersion maxVersion() default ClientVersion.V_1_21_5;
+    ClientVersion maxVersion() default ClientVersion.V_1_21_7;
 }
