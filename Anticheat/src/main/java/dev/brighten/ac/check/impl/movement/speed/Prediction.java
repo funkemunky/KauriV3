@@ -37,6 +37,7 @@ public class Prediction extends Check {
         check: {
             if(player.getBlockInfo().onClimbable
                     || !player.getMovement().getPosLocs().isEmpty()
+                    || player.getMovement().getTeleportsToConfirm() > 0
                     || player.getInfo().lastLiquid.isNotPassed(2)
                     || player.getInfo().isGeneralCancel()) break check;
 

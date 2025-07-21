@@ -98,7 +98,7 @@ public class APlayer {
     public final Map<Short, Tuple<InstantAction, Consumer<InstantAction>>> instantTransaction = Collections
             .synchronizedMap(new Short2ObjectLinkedOpenHashMap<>());
     public final Object keepAliveLock = new Object();
-    public final List<NormalAction> keepAliveStamps = new LinkedList<>();
+    public final List<NormalAction> keepAliveStamps = Collections.synchronizedList(new LinkedList<>());
     public final List<String> sniffedPackets = new CopyOnWriteArrayList<>();
     public boolean sniffing;
 

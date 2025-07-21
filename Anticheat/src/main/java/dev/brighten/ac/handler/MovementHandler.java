@@ -8,6 +8,7 @@ import com.github.retrooper.packetevents.util.Vector3d;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerFlying;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerPositionAndLook;
 import dev.brighten.ac.Anticheat;
+import dev.brighten.ac.check.events.ServerPositionEvent;
 import dev.brighten.ac.compat.CompatHandler;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.data.obj.CMove;
@@ -87,7 +88,7 @@ public class MovementHandler {
     private final Timer lastCinematic = new TickTimer(2);
     private final Timer lastReset = new TickTimer(2);
     private final EvictingList<Integer> sensitivitySamples = new EvictingList<>(50);
-    private boolean modernMovement;
+    private final boolean modernMovement;
     public MovementHandler(APlayer player) {
         this.player = player;
 
@@ -162,6 +163,10 @@ public class MovementHandler {
                         break iteration;
                     }
                 }
+            }
+
+            if(!posLocs.isEmpty()) {
+                break iteration;
             }
 
             List<Vector3d> possibleVelocity = new ArrayList<>();
@@ -742,7 +747,12 @@ it
 
         teleportsToConfirm++;
 
-        loc.setTimeStamp(System.currentTimeMillis());
+        long timeStamp = System.currentTimeMillis();
+        loc.setTimeStamp(timeStamp);
+
+        //Calling the event to handle the position change.
+        player.getCheckHandler().callSyncPacket(new ServerPositionEvent(packet.getTeleportId(), loc.getX(), loc.getY(), loc.getZ(),
+                loc.getYaw(), loc.getPitch()), timeStamp);
 
         player.runKeepaliveAction(ka -> {
             teleportsToConfirm--;
@@ -750,7 +760,7 @@ it
             synchronized (posLocs) {
                 posLocs.remove(loc);
             }
-        }, 2);
+        }, 1);
         synchronized (posLocs) {
             posLocs.add(loc);
         }
