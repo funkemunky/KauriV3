@@ -235,7 +235,7 @@ public class CheckHandler {
         }
     }
 
-    public boolean callSyncPacket(Object packet, long timestamp) {
+    public boolean callSyncAction(Object packet, long timestamp) {
         if(!player.isInitialized()) {
             return false;
         }

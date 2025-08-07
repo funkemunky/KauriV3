@@ -6,9 +6,12 @@ import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import com.github.retrooper.packetevents.protocol.teleport.RelativeFlag;
 import com.github.retrooper.packetevents.util.Vector3d;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerFlying;
+import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientTeleportConfirm;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityPositionSync;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerPositionAndLook;
 import dev.brighten.ac.Anticheat;
-import dev.brighten.ac.check.events.ServerPositionEvent;
+import dev.brighten.ac.handler.events.ConfirmedPositionEvent;
+import dev.brighten.ac.handler.events.ServerPositionEvent;
 import dev.brighten.ac.compat.CompatHandler;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.data.obj.CMove;
@@ -20,9 +23,7 @@ import dev.brighten.ac.utils.timer.impl.TickTimer;
 import dev.brighten.ac.utils.world.CollisionBox;
 import dev.brighten.ac.utils.world.types.RayCollision;
 import dev.brighten.ac.utils.world.types.SimpleCollisionBox;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.val;
+import lombok.*;
 import me.hydro.emulator.object.input.IterationInput;
 import me.hydro.emulator.object.iteration.Motion;
 import me.hydro.emulator.object.result.IterationResult;
@@ -57,7 +58,7 @@ public class MovementHandler {
     @Getter
     private int moveTicks;
     @Getter
-    private final List<KLocation> posLocs = Collections.synchronizedList(new ArrayList<>());
+    private final Set<TeleportAction> posLocs = Collections.synchronizedSet(new HashSet<>());
     @Getter
     private final List<CollisionBox> lookingAtBoxes = new ArrayList<>();
     @Getter
@@ -87,6 +88,8 @@ public class MovementHandler {
     @Getter
     private final Timer lastCinematic = new TickTimer(2);
     private final Timer lastReset = new TickTimer(2);
+    @Getter
+    private TeleportAction currentTeleportAction = null;
     private final EvictingList<Integer> sensitivitySamples = new EvictingList<>(50);
     private final boolean modernMovement;
     public MovementHandler(APlayer player) {
@@ -94,15 +97,14 @@ public class MovementHandler {
 
         Player bplayer = player.getBukkitPlayer();
 
-        // Initializing player location
-        to.setWorld(bplayer.getWorld());
+        // Initializing player location<td>${rd.>
         to.getLoc().setX(bplayer.getLocation().getX());
         to.getLoc().setY(bplayer.getLocation().getY());
         to.getLoc().setZ(bplayer.getLocation().getZ());
         to.getLoc().setYaw(bplayer.getLocation().getYaw());
         to.getLoc().setPitch(bplayer.getLocation().getPitch());
         to.setBox(new SimpleCollisionBox(to.getLoc(), 0.6, 1.8));
-        to.setOnGround(bplayer.isOnGround());
+        to.setOnGround(false);
 
         // Setting from as same location as to
         from.setLoc(to);
@@ -110,8 +112,6 @@ public class MovementHandler {
         modernMovement = PacketEvents.getAPI().getServerManager().getVersion().isNewerThanOrEquals(ServerVersion.V_1_21_5);
     }
 
-    private final boolean[] IS_OR_NOT = new boolean[]{true, false};
-    private final boolean[] ALWAYS_FALSE = new boolean[1];
     private final int[] FULL_RANGE = new int[]{-1, 0, 1};
 
 
@@ -149,24 +149,30 @@ public class MovementHandler {
 
         IterationResult minimum = null;
         iteration: {
-            for (KLocation posLoc : new ArrayList<>(posLocs)) {
-                // Resetting to prevent lag issues.
+            synchronized (posLocs) {
+                for (TeleportAction ta : posLocs) {
+                    // Resetting to prevent lag issues.
 
-                IterationResult result = player.EMULATOR
-                        .runTeleportIteration(new Vector(posLoc.getX(), posLoc.getY(), posLoc.getZ()));
+                    if(!ta.movedTo && !ta.confirmed)
+                        continue;
 
-                if (minimum == null || minimum.getOffset() > result.getOffset()) {
-                    minimum = result;
+                    KLocation posLoc = ta.position;
 
-                    if(minimum.getOffset() < 1E-26) {
-                        // The player teleported, therefore we don't need to continue with predictions.
-                        break iteration;
+                    IterationResult result = player.EMULATOR
+                            .runTeleportIteration(new Vector(posLoc.getX(), posLoc.getY(), posLoc.getZ()));
+
+                    if (minimum == null || minimum.getOffset() > result.getOffset()) {
+                        minimum = result;
+
+                        if(minimum.getOffset() < 1E-26) {
+                            // The player teleported, therefore we don't need to continue with predictions.
+                            break iteration;
+                        }
                     }
                 }
-            }
-
-            if(!posLocs.isEmpty()) {
-                break iteration;
+                if(!posLocs.isEmpty()) {
+                    break iteration;
+                }
             }
 
             List<Vector3d> possibleVelocity = new ArrayList<>();
@@ -201,7 +207,7 @@ public class MovementHandler {
                                                     .lastReportedBoundingBox(from.getBox().toNeo())
                                                     .effectSpeed(EFFECTS[0])
                                                     .effectSlow(EFFECTS[1])
-                                                    .waitingForTeleport(!posLocs.isEmpty())
+                                                    .waitingForTeleport(teleportsToConfirm > 0)
                                                     .effectJump(EFFECTS[2]).build();
 
                                             boolean isVelocity = false;
@@ -313,22 +319,38 @@ public class MovementHandler {
     }
 
     private boolean[] getSprintingIterations(int forward) {
-        return forward <= 0 || player.getInfo().isSneaking() ? ALWAYS_FALSE : IS_OR_NOT;
+        return forward <= 0 || player.getInfo().isSneaking() ? new boolean[1] : new boolean[]{true, false};
     }
 
     private boolean[] getHitSlowIterations() {
-        return player.getInfo().lastAttack.isPassed(2) ? ALWAYS_FALSE : IS_OR_NOT;
+        return player.getInfo().lastAttack.isPassed(2) ? new boolean[1] : new boolean[]{true, false};
     }
 
     private boolean[] getUsingItemIterations(int forward, int strafe) {
         return (forward == 0 && strafe == 0 ||
-                !BlockUtils.isUsable(player.getBukkitPlayer().getItemInHand().getType())) ? ALWAYS_FALSE : IS_OR_NOT;
+                !BlockUtils.isUsable(player.getBukkitPlayer().getItemInHand().getType())) ? new boolean[1] : new boolean[]{true, false};
     }
 
     private boolean[] getJumpingIterations() {
-        return IS_OR_NOT;
+        return new boolean[]{true, false};
     }
 
+    public void process(WrapperPlayClientTeleportConfirm packet) {
+        synchronized (posLocs) {
+            posLocs.stream().filter(loc -> loc.teleportId == (long)packet.getTeleportId())
+                    .findAny().ifPresent(loc -> {
+                        loc.confirmed = true;
+
+                        if(loc.movedTo) {
+                            teleportsToConfirm--;
+                            player.getBukkitPlayer().sendMessage("Should have sent confirm event");
+                            player.getCheckHandler().callSyncAction(new ConfirmedPositionEvent(loc), System.currentTimeMillis());
+                        } else {
+                            player.getBukkitPlayer().sendMessage("Action Confirmed, didnt move to");
+                        }
+                    });
+        }
+    }
 
     public void process(WrapperPlayClientPlayerFlying packet) {
 
@@ -340,7 +362,7 @@ public class MovementHandler {
                 && packet.getLocation().getZ() == to.getZ()
                 && player.getPlayerVersion().isNewerThanOrEquals(ClientVersion.V_1_17);
 
-        checkMovement = teleportsToConfirm == 0 && posLocs.isEmpty();
+        checkMovement = teleportsToConfirm == 0;
         
         if (checkMovement) {
             moveTicks++;
@@ -547,29 +569,6 @@ public class MovementHandler {
         lastFlying.reset();
 
         processBotMove(packet);
-
-        /*
-        ata.playerInfo.generalCancel = data.getPlayer().getAllowFlight()
-                || this.creativelastLastY
-                || hasLeviit
-it
-                || data.excuseNextFlying
-                || data.getPlayer().isSleeping()
-                || (this.lastGhostCollision.isNotPassed() && this.lastBlockPlace.isPassed(2))
-                || this.doingTeleport
-                || this.lastTeleportTimer.isNotPassed(1)
-                || this.riptiding
-                || this.gliding
-                || this.vehicleTimer.isNotPassed(3)
-                || this.lastPlaceLiquid.isNotPassed(5)
-                || this.inVehicle
-                || ((this.lastChunkUnloaded.isNotPassed(35) || this.doingBlockUpdate)
-                && MathUtils.getDelta(-0.098, this.deltaY) < 0.0001)
-                || timeStamp - this.lastRespawn < 2500L
-                || this.lastToggleFlight.isNotPassed(40)
-                || timeStamp - data.creation < 4000
-                || Kauri.INSTANCE.lastTickLag.isNotPassed(5);
-         */
     }
 
     // generate a method that processes velocityHistory and compares to current deltaY.
@@ -727,7 +726,7 @@ it
 
     public void addPosition(WrapperPlayServerPlayerPositionAndLook packet) {
         final KLocation loc = new KLocation(packet.getX(), packet.getY(), packet.getZ(),
-                packet.getYaw(), packet.getPitch());
+                packet.getYaw(), packet.getPitch(), packet.getTeleportId());
 
         if (packet.getRelativeFlags().has(RelativeFlag.X)) {
             loc.add(player.getMovement().getTo().getLoc().getX(), 0 ,0);
@@ -751,69 +750,72 @@ it
         loc.setTimeStamp(timeStamp);
 
         //Calling the event to handle the position change.
-        player.getCheckHandler().callSyncPacket(new ServerPositionEvent(packet.getTeleportId(), loc.getX(), loc.getY(), loc.getZ(),
+        player.getCheckHandler().callSyncAction(new ServerPositionEvent(packet.getTeleportId(), loc.getX(), loc.getY(), loc.getZ(),
                 loc.getYaw(), loc.getPitch()), timeStamp);
 
+        final TeleportAction action = new TeleportAction(loc, packet.getTeleportId());
         player.runKeepaliveAction(ka -> {
-            teleportsToConfirm--;
-
-            synchronized (posLocs) {
-                posLocs.remove(loc);
+            if(action.movedTo) {
+                teleportsToConfirm--;
+                action.confirmed = true;
+                player.getCheckHandler().callSyncAction(new ConfirmedPositionEvent(action), System.currentTimeMillis());
+                currentTeleportAction = action;
+                player.getBukkitPlayer().sendMessage("Should have sent confirm event because movedTo");
+            } else {
+                player.getBukkitPlayer().sendMessage("Action Confirmed via keepalive, didnt move to");
             }
-        }, 1);
+        });
+
+        //Ensuring we dont have lingering actions
+        player.runKeepaliveAction(ka -> {
+            synchronized (posLocs) {
+                if(posLocs.contains(action)) {
+                    teleportsToConfirm--;
+                    posLocs.remove(action);
+                }
+            }
+        }, 4);
+
         synchronized (posLocs) {
-            posLocs.add(loc);
+            posLocs.add(action);
         }
-    }
-
-    /**
-     * Updating the "to" and "from" location to current location.
-     * Resetting position tracking; meant primarily for instant teleports.
-     *
-     * @param location Location
-     */
-    public void moveTo(Location location) {
-        KLocation newLoc = new KLocation(location);
-        to.getLoc().setLocation(newLoc);
-        to.getLoc().setLocation(newLoc);
-
-        deltaX = deltaY = deltaZ = deltaXZ
-                = lDeltaX = lDeltaY = lDeltaZ
-                = lDeltaXZ = 0;
-
-        deltaYaw = lDeltaYaw =
-                deltaPitch = lDeltaPitch = 0;
-        moveTicks = 0;
-        //doingTeleport = inventoryOpen  = false;
     }
 
     private void checkForTeleports(WrapperPlayClientPlayerFlying packet) {
         if (packet.hasPositionChanged() && packet.hasRotationChanged() && !packet.isOnGround()) {
-            synchronized (posLocs) {
-                Iterator<KLocation> iterator = posLocs.iterator();
+            positionCheck: {
+                synchronized (posLocs) {
+                    Iterator<TeleportAction> iterator = posLocs.iterator();
 
-                //Iterating through the ArrayList to find a potential teleport. We can't remove from the list
-                //without causing a CME unless we use Iterator#remove().
-                while (iterator.hasNext()) {
-                    KLocation posLoc = iterator.next();
+                    //Iterating through the ArrayList to find a potential teleport. We can't remove from the list
+                    //without causing a CME unless we use Iterator#remove().
+                    while (iterator.hasNext()) {
+                        TeleportAction ta = iterator.next();
+                        KLocation posLoc = ta.position;
 
-                    KLocation to = new KLocation(packet.getLocation().getX(),
-                            packet.getLocation().getY(),
-                            packet.getLocation().getZ());
-                    double distance = MathUtils.getDistanceWithoutRoot(to, posLoc);
+                        KLocation to = new KLocation(packet.getLocation().getX(),
+                                packet.getLocation().getY(),
+                                packet.getLocation().getZ());
+                        double distance = MathUtils.getDistanceWithoutRoot(to, posLoc);
 
-                    if (distance < 1E-9) {
-                        lastTeleport.reset();
-                        from.setLoc(this.to);
-                        iterator.remove();
-                        break;
+                        if (distance < 1E-9) {
+                            from.setLoc(this.to);
+                            lastTeleport.reset();
+                            ta.movedTo = true;
+                            if(ta.confirmed) {
+                                player.getCheckHandler().callSyncAction(new ConfirmedPositionEvent(ta), System.currentTimeMillis());
+                                currentTeleportAction = ta;
+                                player.getBukkitPlayer().sendMessage("Should have sent confirm event because movedTo");
+                                teleportsToConfirm--;
+                                iterator.remove();
+                            } else {
+                                player.getBukkitPlayer().sendMessage("Moved to confirmed, but position not confirmed yet.");
+                            }
+                            break positionCheck;
+                        }
                     }
                 }
-
-                //Ensuring the list doesn't overflow with old locations, a potential crash exploit.
-                if (teleportsToConfirm == 0 && !posLocs.isEmpty()) {
-                    posLocs.clear();
-                }
+                currentTeleportAction = null;
             }
         }
     }
@@ -870,5 +872,17 @@ it
 
         player.getInfo().setClientGroundTicks(packet.isOnGround() ? player.getInfo().getClientGroundTicks() + 1 : 0);
         player.getInfo().setClientAirTicks(!packet.isOnGround() ? player.getInfo().getClientAirTicks() + 1 : 0);
+    }
+
+    @EqualsAndHashCode(callSuper = false)
+    public static class TeleportAction {
+        public final KLocation position;
+        private boolean confirmed, movedTo;
+        private final int teleportId;
+
+        public TeleportAction(KLocation position,int teleportId) {
+            this.position = position;
+            this.teleportId = teleportId;
+        }
     }
 }

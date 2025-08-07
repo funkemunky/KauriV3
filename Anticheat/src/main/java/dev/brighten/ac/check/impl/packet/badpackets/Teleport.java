@@ -7,7 +7,7 @@ import dev.brighten.ac.api.check.CheckType;
 import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.WAction;
-import dev.brighten.ac.check.events.ServerPositionEvent;
+import dev.brighten.ac.handler.events.ServerPositionEvent;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.utils.KLocation;
 import dev.brighten.ac.utils.annotation.Bind;
@@ -44,7 +44,7 @@ public class Teleport extends Check {
         }
 
         Optional<ServerPositionEvent> event = positions.keySet().stream()
-                .filter(pos -> pos.getId() == packet.getTeleportId())
+                .filter(pos -> pos.id() == packet.getTeleportId())
                 .findAny();
 
         if(event.isEmpty()) {

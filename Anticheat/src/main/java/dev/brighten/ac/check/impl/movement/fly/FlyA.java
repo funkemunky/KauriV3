@@ -20,7 +20,7 @@ import dev.brighten.ac.utils.world.types.SimpleCollisionBox;
 
 import java.util.List;
 
-@CheckData(name = "Fly (Predict)", checkId = "flya", type = CheckType.MOVEMENT, experimental = true, punishVl = 7, maxVersion = ClientVersion.V_1_21_5)
+@CheckData(name = "Fly (Emulate)", checkId = "flya", type = CheckType.MOVEMENT, punishVl = 7)
 public class FlyA extends Check {
 
     public FlyA(APlayer player) {
@@ -137,7 +137,7 @@ public class FlyA extends Check {
 
         // These are all things that can cause potential issues.
         if(player.getInfo().isGeneralCancel()
-                || !player.getMovement().getPosLocs().isEmpty()
+                || player.getMovement().getTeleportsToConfirm() > 0
                 || player.getInfo().isOnLadder()
                 || player.getInfo().climbTimer.isNotPassed(2)
                 || player.getBlockInfo().inWeb

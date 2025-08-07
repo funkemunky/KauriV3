@@ -167,7 +167,7 @@ public class APlayer {
                     SimpleCollisionBox sbc = new SimpleCollisionBox(bb.minX, bb.minY, bb.minZ, bb.maxX, bb.maxY, bb.maxZ);
 
                     // Greater than 20? We want to truncate to prevent huge processing cost
-                    if(sbc.min().distanceSquared(sbc.max()) > 400) {
+                    if(sbc.min().distanceSquared(sbc.max()) > 200) {
                         sbc.maxX = sbc.minX + Math.min(sbc.maxX - sbc.minX, 20);
                         sbc.maxY = sbc.minY + Math.max(sbc.maxY - sbc.minY, 20);
                         sbc.maxZ = sbc.minZ + Math.max(sbc.maxZ - sbc.minZ, 20);

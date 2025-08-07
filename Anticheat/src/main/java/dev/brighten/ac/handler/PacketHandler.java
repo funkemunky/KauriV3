@@ -14,8 +14,6 @@ import com.github.retrooper.packetevents.util.Vector3i;
 import com.github.retrooper.packetevents.wrapper.PacketWrapper;
 import com.github.retrooper.packetevents.wrapper.play.client.*;
 import com.github.retrooper.packetevents.wrapper.play.server.*;
-import com.google.common.io.ByteArrayDataInput;
-import com.google.common.io.ByteStreams;
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.handler.entity.FakeMob;
@@ -141,7 +139,7 @@ public class PacketHandler {
 
             player.getMovement().process(packet);
 
-            var result = player.getCheckHandler().callSyncPacket(wrapped, timestamp);
+            var result = player.getCheckHandler().callSyncAction(wrapped, timestamp);
             player.getVelocityHandler().onFlyingPost(packet);
 
             return result;
@@ -262,21 +260,13 @@ public class PacketHandler {
             wrapped = new WrapperPlayClientCloseWindow(event);
             player.getInfo().setInventoryOpen(false);
         } else if(event.getPacketType() == PacketType.Play.Client.PLUGIN_MESSAGE) {
-            WrapperPlayClientPluginMessage packet = new WrapperPlayClientPluginMessage(event);
+            wrapped = new WrapperPlayClientPluginMessage(event);
+        } else if(event.getPacketType() == PacketType.Play.Client.TELEPORT_CONFIRM) {
+            WrapperPlayClientTeleportConfirm packet = new WrapperPlayClientTeleportConfirm(event);
 
             wrapped = packet;
-            if (packet.getChannelName().equals("Time|Receive")) {
-                ByteArrayDataInput serial = ByteStreams.newDataInput(packet.getData());
 
-                long serverTime = serial.readLong();
-                long clientReceivedTime = serial.readLong();
-
-                long serverPing = clientReceivedTime - serverTime;
-                long clientToServer = timestamp - clientReceivedTime;
-                long totalFeedback = timestamp - serverTime;
-
-                player.getBukkitPlayer().sendMessage(String.format("total: %sms client-server: %sms server-client: %sms", totalFeedback, clientToServer, serverPing));
-            }
+            player.getMovement().process(packet);
         } else {
             wrapped = new PacketWrapper<>(event);
         }
@@ -286,7 +276,7 @@ public class PacketHandler {
                     + ": " + wrapped);
         }
 
-        return player.getCheckHandler().callSyncPacket(wrapped, timestamp);
+        return player.getCheckHandler().callSyncAction(wrapped, timestamp);
     }
 
     public boolean processSend(APlayer player, PacketSendEvent event) {
@@ -570,6 +560,11 @@ public class PacketHandler {
                 }
             }
 
+        } else if(event.getPacketType() == PacketType.Play.Server.ENTITY_POSITION_SYNC) {
+            WrapperPlayServerEntityPositionSync packet = new WrapperPlayServerEntityPositionSync(event);
+
+            wrapped = packet;
+
         } else {
             wrapped = new PacketWrapper<>(event);
         }
@@ -579,6 +574,6 @@ public class PacketHandler {
                     + ": " + wrapped);
         }
 
-        return player.getCheckHandler().callSyncPacket(wrapped, timestamp);
+        return player.getCheckHandler().callSyncAction(wrapped, timestamp);
     }
 }

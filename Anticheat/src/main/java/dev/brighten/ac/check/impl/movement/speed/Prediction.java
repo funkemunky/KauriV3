@@ -15,7 +15,7 @@ import dev.brighten.ac.utils.timer.impl.TickTimer;
 import me.hydro.emulator.util.Vector;
 
 @CheckData(name = "Prediction", checkId = "predictiona", type = CheckType.MOVEMENT, experimental = true,
-        punishable = false, maxVersion = ClientVersion.V_1_21_7)
+        punishable = false)
 public class Prediction extends Check {
     private float buffer;
     private int notMoveTicks;
@@ -35,11 +35,12 @@ public class Prediction extends Check {
             }
         } else notMoveTicks = 0;
         check: {
-            if(player.getBlockInfo().onClimbable
-                    || !player.getMovement().getPosLocs().isEmpty()
-                    || player.getMovement().getTeleportsToConfirm() > 0
-                    || player.getInfo().lastLiquid.isNotPassed(2)
-                    || player.getInfo().isGeneralCancel()) break check;
+            synchronized (player.getMovement().getPosLocs()) {
+                if(player.getBlockInfo().onClimbable
+                        || player.getMovement().getTeleportsToConfirm() > 0
+                        || player.getInfo().lastLiquid.isNotPassed(2)
+                        || player.getInfo().isGeneralCancel()) break check;
+            }
 
             if(player.EMULATOR.getInput() == null) {
                 return;

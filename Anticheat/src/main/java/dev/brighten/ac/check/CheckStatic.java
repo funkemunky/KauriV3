@@ -52,13 +52,6 @@ public class CheckStatic {
                 continue;
             }
 
-            if(!PacketWrapper.class.isAssignableFrom((Class<?>) type)
-                    && !Event.class.isAssignableFrom((Class<?>) type)) {
-                Bukkit.getLogger().warning("Type " + ((Class<?>) type).getSimpleName() + " is not a valid type for field "
-                        + field.getField().getName() + " in class " + checkClass.getClass().getSimpleName());
-                continue;
-            }
-
             if(field.getType().equals(WAction.class)) {
                 actions.add(new Tuple<>(field, (Class<?>)type));
             } else if(field.getType().equals(WTimedAction.class)) { //This will always be TimedAction
