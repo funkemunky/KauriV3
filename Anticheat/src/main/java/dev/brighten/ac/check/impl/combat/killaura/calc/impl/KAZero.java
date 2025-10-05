@@ -9,7 +9,7 @@ import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.utils.EntityLocation;
 import dev.brighten.ac.utils.Tuple;
 
-@CheckData(name = "KillAura (Zero)", checkId = "kacalczero", type = CheckType.KILLAURA, maxVersion = ClientVersion.V_1_21_5)
+@CheckData(name = "KillAura (Zero)", checkId = "kacalczero", type = CheckType.KILLAURA)
 public class KAZero extends Check implements RotationCheck {
     public KAZero(APlayer player) {
         super(player);

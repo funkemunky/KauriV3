@@ -15,7 +15,7 @@ import dev.brighten.ac.utils.timer.impl.TickTimer;
 import me.hydro.emulator.util.Vector;
 
 @CheckData(name = "Prediction", checkId = "predictiona", type = CheckType.MOVEMENT, experimental = true,
-        punishable = false, maxVersion = ClientVersion.V_1_21_7)
+        punishable = false)
 public class Prediction extends Check {
     private float buffer;
     private int notMoveTicks;

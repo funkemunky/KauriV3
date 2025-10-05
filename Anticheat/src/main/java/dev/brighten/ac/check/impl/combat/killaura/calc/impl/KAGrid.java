@@ -13,7 +13,7 @@ import dev.brighten.ac.utils.objects.evicting.EvictingList;
 
 import java.util.List;
 
-@CheckData(name = "KillAura (Grid)", checkId = "kacalcgrid", type = CheckType.KILLAURA, maxVersion = ClientVersion.V_1_21_5)
+@CheckData(name = "KillAura (Grid)", checkId = "kacalcgrid", type = CheckType.KILLAURA)
 public class KAGrid extends Check implements RotationCheck {
     public KAGrid(APlayer player) {
         super(player);

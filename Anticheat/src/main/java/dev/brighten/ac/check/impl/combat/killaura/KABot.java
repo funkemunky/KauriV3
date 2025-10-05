@@ -11,7 +11,7 @@ import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.utils.annotation.Bind;
 import lombok.val;
 
-@CheckData(name = "KillAura (Bot)", checkId = "kabot", type = CheckType.KILLAURA, maxVersion = ClientVersion.V_1_21_5)
+@CheckData(name = "KillAura (Bot)", checkId = "kabot", type = CheckType.KILLAURA)
 public class KABot extends Check {
 
     public KABot(APlayer player) {

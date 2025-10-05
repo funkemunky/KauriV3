@@ -6,7 +6,7 @@ import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.data.APlayer;
 
-@CheckData(name = "HealthSpoof", checkId = "healthspoof", type = CheckType.EXPLOIT, maxVersion = ClientVersion.V_1_21_5)
+@CheckData(name = "HealthSpoof", checkId = "healthspoof", type = CheckType.EXPLOIT)
 public class HealthSpoof extends Check {
 
     public HealthSpoof(APlayer player) {

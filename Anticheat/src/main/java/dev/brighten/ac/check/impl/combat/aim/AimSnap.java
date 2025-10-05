@@ -10,7 +10,7 @@ import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.utils.MathUtils;
 import dev.brighten.ac.utils.annotation.Bind;
 
-@CheckData(name = "Aim (Snap)", checkId = "aimsnap", type = CheckType.COMBAT, maxVersion = ClientVersion.V_1_21_5)
+@CheckData(name = "Aim (Snap)", checkId = "aimsnap", type = CheckType.COMBAT)
 public class AimSnap extends Check {
 
     public AimSnap(APlayer player) {

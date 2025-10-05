@@ -10,7 +10,7 @@ import dev.brighten.ac.utils.annotation.Bind;
 import org.bukkit.event.inventory.InventoryAction;
 import org.bukkit.event.inventory.InventoryClickEvent;
 
-@CheckData(name = "Inventory (FastClick)", checkId = "inventoryd", type = CheckType.INVENTORY, maxVersion = ClientVersion.V_1_21_5)
+@CheckData(name = "Inventory (FastClick)", checkId = "inventoryd", type = CheckType.INVENTORY)
 public class InventoryFastClick extends Check {
     public InventoryFastClick(APlayer player) {
         super(player);
