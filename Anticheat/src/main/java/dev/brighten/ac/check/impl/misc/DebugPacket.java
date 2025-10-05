@@ -9,7 +9,7 @@ import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.utils.annotation.Bind;
 
-@CheckData(name = "DebugPacket", description = "To debug packets", checkId = "debugpacket", type = CheckType.EXPLOIT, maxVersion = ClientVersion.V_1_21_5)
+@CheckData(name = "DebugPacket", description = "To debug packets", checkId = "debugpacket", type = CheckType.EXPLOIT)
 public class DebugPacket extends Check {
     public DebugPacket(APlayer player) {
         super(player);

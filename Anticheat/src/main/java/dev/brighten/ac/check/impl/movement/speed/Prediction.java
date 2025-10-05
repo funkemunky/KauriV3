@@ -16,7 +16,7 @@ import lombok.val;
 import me.hydro.emulator.util.Vector;
 
 @CheckData(name = "Prediction", checkId = "predictiona", type = CheckType.MOVEMENT, experimental = true,
-        punishable = false, maxVersion = ClientVersion.V_1_21_5)
+        punishable = false)
 public class Prediction extends Check {
     private float buffer;
     private int notMoveTicks;
