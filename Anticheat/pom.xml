@@ -36,6 +36,10 @@
             <url>https://repo.aikar.co/content/groups/aikar/</url>
         </repository>
         <repository>
+            <id>aikar-snapshots</id>
+            <url>https://repo.aikar.co/nexus/content/repositories/aikar-snapshots/</url>
+        </repository>
+        <repository>
             <id>jitpack.io</id>
             <url>https://jitpack.io</url>
         </repository>
@@ -46,10 +50,6 @@
         <repository>
             <id>codemc-releases</id>
             <url>https://repo.codemc.io/repository/maven-releases/</url>
-        </repository>
-        <repository>
-            <id>codemc-snapshots</id>
-            <url>https://repo.codemc.io/repository/maven-snapshots/</url>
         </repository>
         <repository>
             <id>funkemunky-releases</id>
@@ -89,94 +89,6 @@
                         </goals>
                         <configuration>
                             <minimizeJar>true</minimizeJar>
-                            <relocations>
-                                <relocation>
-                                    <pattern>co.aikar</pattern>
-                                    <shadedPattern>dev.brighten.ac.libs.co.aikar</shadedPattern>
-                                </relocation>
-                                <relocation>
-                                    <pattern>net.jodah</pattern>
-                                    <shadedPattern>dev.brighten.ac.libs.net.jodah</shadedPattern>
-                                </relocation>
-                                <relocation>
-                                    <pattern>com.github.retrooper</pattern>
-                                    <shadedPattern>dev.brighten.ac.libs.com.github.retrooper
-                                    </shadedPattern> <!--relocate packetevents package. choose something unique!-->
-                                </relocation>
-                                <relocation>
-                                    <pattern>io.github.retrooper</pattern>
-                                    <shadedPattern>dev.brighten.ac.libs.io.github.retrooper
-                                    </shadedPattern> <!--relocate packetevents package. choose something unique!-->
-                                </relocation>
-                                <relocation>
-                                    <pattern>net.kyori</pattern>
-                                    <shadedPattern>dev.brighten.ac.libs.com.github.retrooper.packetevents.libs.net.kyori
-                                    </shadedPattern> <!--relocate packetevents package. choose something unique!-->
-                                </relocation>
-                                <relocation>
-                                    <pattern>com.google.common</pattern>
-                                    <shadedPattern>dev.brighten.ac.libs.com.google.common
-                                    </shadedPattern>
-                                </relocation>
-                                <relocation>
-                                    <pattern>com.google.errorprone</pattern>
-                                    <shadedPattern>dev.brighten.ac.libs.com.google.errorprone
-                                    </shadedPattern>
-                                </relocation>
-                                <relocation>
-                                    <pattern>com.google.j2objc</pattern>
-                                    <shadedPattern>dev.brighten.ac.libs.com.google.j2objc
-                                    </shadedPattern>
-                                </relocation>
-                                <relocation>
-                                    <pattern>com.fasterxml</pattern>
-                                    <shadedPattern>dev.brighten.ac.libs.com.fasterxml
-                                    </shadedPattern>
-                                </relocation>
-                                <relocation>
-                                    <pattern>javax.annotation</pattern>
-                                    <shadedPattern>dev.brighten.ac.libs.javax.annotation
-                                    </shadedPattern>
-                                </relocation>
-                                <relocation>
-                                    <pattern>org.h2</pattern>
-                                    <shadedPattern>dev.brighten.ac.libs.org.h2
-                                    </shadedPattern>
-                                </relocation>
-                                <relocation>
-                                    <pattern>org.checkerframework</pattern>
-                                    <shadedPattern>dev.brighten.ac.libs.org.checkerframework
-                                    </shadedPattern>
-                                </relocation>
-                                <relocation>
-                                    <pattern>org.slf4j</pattern>
-                                    <shadedPattern>dev.brighten.ac.libs.org.slf4j
-                                    </shadedPattern>
-                                </relocation>
-                                <relocation>
-                                    <pattern>me.hydro</pattern>
-                                    <shadedPattern>dev.brighten.ac.libs.me.hydro
-                                    </shadedPattern>
-                                </relocation>
-                                <relocation>
-                                    <pattern>it.unimi</pattern>
-                                    <shadedPattern>dev.brighten.ac.libs.it.unimi
-                                    </shadedPattern>
-                                </relocation>
-                                <relocation>
-                                    <pattern>org.objectweb</pattern>
-                                    <shadedPattern>dev.brighten.ac.libs.org.objectweb
-                                    </shadedPattern>
-                                </relocation>
-                                <relocation>
-                                    <pattern>org.yaml.snakeyaml</pattern>
-                                    <shadedPattern>dev.brighten.ac.libs.org.yaml.snakeyaml</shadedPattern>
-                                </relocation>
-                                <relocation>
-                                    <pattern>org.dizitart</pattern>
-                                    <shadedPattern>dev.brighten.ac.libs.org.dizitart</shadedPattern>
-                                </relocation>
-                            </relocations>
                         </configuration>
                     </execution>
                 </executions>
@@ -210,18 +122,7 @@
             <version>LATEST</version>
             <scope>provided</scope>
         </dependency>
-        <dependency>
-            <groupId>com.shevchik.protocolsupport</groupId>
-            <artifactId>protocolsupport</artifactId>
-            <version>1.8</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.spigotmc</groupId>
-            <artifactId>spigot-api</artifactId>
-            <version>1.8.8-R0.1-SNAPSHOT</version>
-            <scope>provided</scope>
-        </dependency>
+
         <dependency>
             <groupId>dev.brighten.ac</groupId>
             <artifactId>API</artifactId>
@@ -266,9 +167,9 @@
         </dependency>
         <dependency>
             <groupId>com.github.retrooper</groupId>
-            <artifactId>packetevents-spigot</artifactId>
-            <version>2.9.4</version>
-            <scope>compile</scope>
+            <artifactId>packetevents-api</artifactId>
+            <version>2.10.0</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>dev.brighten.ac</groupId>
@@ -308,7 +209,7 @@
         </dependency>
         <dependency>
             <groupId>co.aikar</groupId>
-            <artifactId>acf-bukkit</artifactId>
+            <artifactId>acf-core</artifactId>
             <version>0.5.1-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>

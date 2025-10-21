@@ -1,13 +1,13 @@
-package dev.brighten.ac.handler.protocol.impl;
+package dev.brighten.ac.bukkit.protocol;
 
+import dev.brighten.ac.api.KauriPlayer;
 import dev.brighten.ac.handler.protocol.Protocol;
-import org.bukkit.entity.Player;
 import protocolsupport.api.ProtocolSupportAPI;
 
 public class ProtocolSupport implements Protocol {
 
     @Override
-    public int getPlayerVersion(Player player) {
+    public int getPlayerVersion(KauriPlayer player) {
         return ProtocolSupportAPI.getProtocolVersion(player).getId();
     }
 }

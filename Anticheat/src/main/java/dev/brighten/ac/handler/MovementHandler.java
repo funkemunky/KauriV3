@@ -88,6 +88,7 @@ public class MovementHandler {
     private final Timer lastReset = new TickTimer(2);
     private final EvictingList<Integer> sensitivitySamples = new EvictingList<>(50);
     private boolean modernMovement;
+
     public MovementHandler(APlayer player) {
         this.player = player;
 
@@ -142,12 +143,13 @@ public class MovementHandler {
             }
         }
 
-        if(player.EMULATOR.getTags().contains("003") && !isZeroThree) {
+        if (player.EMULATOR.getTags().contains("003") && !isZeroThree) {
             runEmulation(to, true);
         }
 
         IterationResult minimum = null;
-        iteration: {
+        iteration:
+        {
             for (KLocation posLoc : new ArrayList<>(posLocs)) {
                 // Resetting to prevent lag issues.
 
@@ -157,7 +159,7 @@ public class MovementHandler {
                 if (minimum == null || minimum.getOffset() > result.getOffset()) {
                     minimum = result;
 
-                    if(minimum.getOffset() < 1E-26) {
+                    if (minimum.getOffset() < 1E-26) {
                         // The player teleported, therefore we don't need to continue with predictions.
                         break iteration;
                     }
@@ -171,83 +173,180 @@ public class MovementHandler {
 
             Motion previousMotion = player.EMULATOR.getMotion().clone();
 
-            for (int forward : isZeroThree ? new int[] {0} : FULL_RANGE) {
-                for (int strafe : isZeroThree ? new int[] {0} : FULL_RANGE) {
-                    for (boolean jumping : getJumpingIterations()) {
-                        for (boolean sprinting : getSprintingIterations(forward)) {
-                            for (boolean usingItem : getUsingItemIterations(forward, strafe)) {
-                                for (boolean hitSlow : getHitSlowIterations()) {
-                                    for (FastMathType fastMath : getFastMathIterations(forward, strafe)) {
-                                        for(Vector3d possibleVector : possibleVelocity) {
-                                            IterationInput input = IterationInput.builder()
-                                                    .jumping(jumping)
-                                                    .forward(forward)
-                                                    .strafing(strafe)
-                                                    .sprinting(sprinting)
-                                                    .usingItem(usingItem)
-                                                    .modernMovement(modernMovement)
-                                                    .hitSlowdown(hitSlow)
-                                                    .aiMoveSpeed(player.getBukkitPlayer().getWalkSpeed() / 2)
-                                                    .fastMathType(fastMath)
-                                                    .sneaking(player.getInfo().isSneaking())
-                                                    .ground(from.isOnGround())
-                                                    .to(new Vector(to.getX(), to.getY(), to.getZ()))
-                                                    .yaw(to.getYaw())
-                                                    .lastReportedBoundingBox(from.getBox().toNeo())
-                                                    .effectSpeed(EFFECTS[0])
-                                                    .effectSlow(EFFECTS[1])
-                                                    .waitingForTeleport(!posLocs.isEmpty())
-                                                    .effectJump(EFFECTS[2]).build();
 
-                                            boolean isVelocity = false;
-                                            if(possibleVector != null) {
-                                                // Setting the motion to the possible velocity vector.
-                                                player.EMULATOR.getMotion().setMotionX(possibleVector.getX());
-                                                player.EMULATOR.getMotion().setMotionY(possibleVector.getY());
-                                                player.EMULATOR.getMotion().setMotionZ(possibleVector.getZ());
-                                                // Has to be this way because order of operations in the emulator.
-                                                isVelocity = true;
-                                            } else {
-                                                // Resetting the motion to the previous motion.
-                                                player.EMULATOR.getMotion().setMotionX(previousMotion.getMotionX());
-                                                player.EMULATOR.getMotion().setMotionY(previousMotion.getMotionY());
-                                                player.EMULATOR.getMotion().setMotionZ(previousMotion.getMotionZ());
-                                            }
+            if(player.getPlayerVersion().isNewerThanOrEquals(ClientVersion.V_1_21)) {
+                var playerInput = player.getInfo().getPlayerInput();
+                int forward = 0, strafe = 0;
 
-                                            IterationResult result = player.EMULATOR.runIteration(input);
+                if(playerInput.forward()) {
+                    forward = 1;
+                } else if(playerInput.backward()) {
+                    forward = -1;
+                }
 
-                                            if(isVelocity) {
-                                                result.getTags().add("velocity");
-                                            }
+                if(playerInput.left()) {
+                    strafe = -1;
+                } else if(playerInput.right()) {
+                    strafe = 1;
+                }
+                for (boolean usingItem : getUsingItemIterations(forward, strafe)) {
+                    for (boolean hitSlow : getHitSlowIterations()) {
+                        for (FastMathType fastMath : getFastMathIterations(forward, strafe)) {
+                            for (Vector3d possibleVector : possibleVelocity) {
+                                IterationInput input = IterationInput.builder()
+                                        .jumping(playerInput.jump())
+                                        .forward(forward)
+                                        .strafing(strafe)
+                                        .sprinting(playerInput.sprint())
+                                        .usingItem(usingItem)
+                                        .modernMovement(modernMovement)
+                                        .hitSlowdown(hitSlow)
+                                        .aiMoveSpeed(player.getBukkitPlayer().getWalkSpeed() / 2)
+                                        .fastMathType(fastMath)
+                                        .sneaking(player.getInfo().isSneaking())
+                                        .ground(from.isOnGround())
+                                        .to(new Vector(to.getX(), to.getY(), to.getZ()))
+                                        .yaw(to.getYaw())
+                                        .lastReportedBoundingBox(from.getBox().toNeo())
+                                        .effectSpeed(EFFECTS[0])
+                                        .effectSlow(EFFECTS[1])
+                                        .waitingForTeleport(!posLocs.isEmpty())
+                                        .effectJump(EFFECTS[2]).build();
+
+                                boolean isVelocity = false;
+                                if (possibleVector != null) {
+                                    // Setting the motion to the possible velocity vector.
+                                    player.EMULATOR.getMotion().setMotionX(possibleVector.getX());
+                                    player.EMULATOR.getMotion().setMotionY(possibleVector.getY());
+                                    player.EMULATOR.getMotion().setMotionZ(possibleVector.getZ());
+                                    // Has to be this way because order of operations in the emulator.
+                                    isVelocity = true;
+                                } else {
+                                    // Resetting the motion to the previous motion.
+                                    player.EMULATOR.getMotion().setMotionX(previousMotion.getMotionX());
+                                    player.EMULATOR.getMotion().setMotionY(previousMotion.getMotionY());
+                                    player.EMULATOR.getMotion().setMotionZ(previousMotion.getMotionZ());
+                                }
+
+                                IterationResult result = player.EMULATOR.runIteration(input);
+
+                                if (isVelocity) {
+                                    result.getTags().add("velocity");
+                                }
 
 
-                                            if(fastMath == FastMathType.FAST_LEGACY) {
-                                                result.getTags().add("fast_legacy");
-                                            } else if(fastMath == FastMathType.VANILLA) {
-                                                result.getTags().add("vanilla");
-                                            } else if(fastMath == FastMathType.FAST_NEW) {
-                                                result.getTags().add("fast_new");
-                                            } else if(fastMath == FastMathType.MODERN_VANILLA) {
-                                                result.getTags().add("modern_vanilla");
-                                            }
+                                if (fastMath == FastMathType.FAST_LEGACY) {
+                                    result.getTags().add("fast_legacy");
+                                } else if (fastMath == FastMathType.VANILLA) {
+                                    result.getTags().add("vanilla");
+                                } else if (fastMath == FastMathType.FAST_NEW) {
+                                    result.getTags().add("fast_new");
+                                } else if (fastMath == FastMathType.MODERN_VANILLA) {
+                                    result.getTags().add("modern_vanilla");
+                                }
 
-                                            if(forward > 0) {
-                                                result.getTags().add("w-key");
-                                            } else if(forward < 0) {
-                                                result.getTags().add("s-key");
-                                            }
+                                if (forward > 0) {
+                                    result.getTags().add("w-key");
+                                } else if (forward < 0) {
+                                    result.getTags().add("s-key");
+                                }
 
-                                            if(strafe > 0) {
-                                                result.getTags().add("d-key");
-                                            } else if(strafe < 0) {
-                                                result.getTags().add("a-key");
-                                            }
+                                if (strafe > 0) {
+                                    result.getTags().add("d-key");
+                                } else if (strafe < 0) {
+                                    result.getTags().add("a-key");
+                                }
 
-                                            if (minimum == null || minimum.getOffset() > result.getOffset()) {
-                                                minimum = result;
+                                if (minimum == null || minimum.getOffset() > result.getOffset()) {
+                                    minimum = result;
 
-                                                if (minimum.getOffset() < 1E-26) {
-                                                    break iteration;
+                                    if (minimum.getOffset() < 1E-26) {
+                                        break iteration;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            } else {
+                for (int forward : isZeroThree ? new int[]{0} : FULL_RANGE) {
+                    for (int strafe : isZeroThree ? new int[]{0} : FULL_RANGE) {
+                        for (boolean jumping : getJumpingIterations()) {
+                            for (boolean sprinting : getSprintingIterations(forward)) {
+                                for (boolean usingItem : getUsingItemIterations(forward, strafe)) {
+                                    for (boolean hitSlow : getHitSlowIterations()) {
+                                        for (FastMathType fastMath : getFastMathIterations(forward, strafe)) {
+                                            for (Vector3d possibleVector : possibleVelocity) {
+                                                IterationInput input = IterationInput.builder()
+                                                        .jumping(jumping)
+                                                        .forward(forward)
+                                                        .strafing(strafe)
+                                                        .sprinting(sprinting)
+                                                        .usingItem(usingItem)
+                                                        .modernMovement(modernMovement)
+                                                        .hitSlowdown(hitSlow)
+                                                        .aiMoveSpeed(player.getBukkitPlayer().getWalkSpeed() / 2)
+                                                        .fastMathType(fastMath)
+                                                        .sneaking(player.getInfo().isSneaking())
+                                                        .ground(from.isOnGround())
+                                                        .to(new Vector(to.getX(), to.getY(), to.getZ()))
+                                                        .yaw(to.getYaw())
+                                                        .lastReportedBoundingBox(from.getBox().toNeo())
+                                                        .effectSpeed(EFFECTS[0])
+                                                        .effectSlow(EFFECTS[1])
+                                                        .waitingForTeleport(!posLocs.isEmpty())
+                                                        .effectJump(EFFECTS[2]).build();
+
+                                                boolean isVelocity = false;
+                                                if (possibleVector != null) {
+                                                    // Setting the motion to the possible velocity vector.
+                                                    player.EMULATOR.getMotion().setMotionX(possibleVector.getX());
+                                                    player.EMULATOR.getMotion().setMotionY(possibleVector.getY());
+                                                    player.EMULATOR.getMotion().setMotionZ(possibleVector.getZ());
+                                                    // Has to be this way because order of operations in the emulator.
+                                                    isVelocity = true;
+                                                } else {
+                                                    // Resetting the motion to the previous motion.
+                                                    player.EMULATOR.getMotion().setMotionX(previousMotion.getMotionX());
+                                                    player.EMULATOR.getMotion().setMotionY(previousMotion.getMotionY());
+                                                    player.EMULATOR.getMotion().setMotionZ(previousMotion.getMotionZ());
+                                                }
+
+                                                IterationResult result = player.EMULATOR.runIteration(input);
+
+                                                if (isVelocity) {
+                                                    result.getTags().add("velocity");
+                                                }
+
+
+                                                if (fastMath == FastMathType.FAST_LEGACY) {
+                                                    result.getTags().add("fast_legacy");
+                                                } else if (fastMath == FastMathType.VANILLA) {
+                                                    result.getTags().add("vanilla");
+                                                } else if (fastMath == FastMathType.FAST_NEW) {
+                                                    result.getTags().add("fast_new");
+                                                } else if (fastMath == FastMathType.MODERN_VANILLA) {
+                                                    result.getTags().add("modern_vanilla");
+                                                }
+
+                                                if (forward > 0) {
+                                                    result.getTags().add("w-key");
+                                                } else if (forward < 0) {
+                                                    result.getTags().add("s-key");
+                                                }
+
+                                                if (strafe > 0) {
+                                                    result.getTags().add("d-key");
+                                                } else if (strafe < 0) {
+                                                    result.getTags().add("a-key");
+                                                }
+
+                                                if (minimum == null || minimum.getOffset() > result.getOffset()) {
+                                                    minimum = result;
+
+                                                    if (minimum.getOffset() < 1E-26) {
+                                                        break iteration;
+                                                    }
                                                 }
                                             }
                                         }
@@ -259,8 +358,7 @@ public class MovementHandler {
                 }
             }
         }
-
-        if(minimum != null) {
+        if (minimum != null) {
             predicted = minimum.getPredicted();
 
             double mx = player.EMULATOR.getMotion().getMotionX();
@@ -269,7 +367,7 @@ public class MovementHandler {
 
             double total = mx * mx + my * my + mz * mz;
 
-            if(total < 9E-4) {
+            if (total < 9E-4) {
                 player.getInfo().lastCanceledFlying.reset();
                 minimum.getTags().add("003");
             }
@@ -282,11 +380,11 @@ public class MovementHandler {
             }
             player.EMULATOR.confirm(minimum.getIteration());
 
-            if(minimum.getTags().contains("003")) {
+            if (minimum.getTags().contains("003")) {
                 player.EMULATOR.getTags().add("003");
             }
 
-            if(minimum.getTags().contains("bad_offset")) {
+            if (minimum.getTags().contains("bad_offset")) {
                 player.EMULATOR.setLastReportedBoundingBox(getTo().getBox().toNeo());
             }
         }
@@ -294,7 +392,7 @@ public class MovementHandler {
 
     private FastMathType[] getFastMathIterations(int strafe, int forward) {
         // Because no movement is being applied, there is no angle calculation being done
-        if(strafe == 0 && forward == 0) {
+        if (strafe == 0 && forward == 0) {
             return new FastMathType[]{FastMathType.FAST_LEGACY};
         }
 
@@ -336,13 +434,13 @@ public class MovementHandler {
                 && player.getPlayerVersion().isNewerThanOrEquals(ClientVersion.V_1_17);
 
         checkMovement = teleportsToConfirm == 0 && posLocs.isEmpty();
-        
+
         if (checkMovement) {
             moveTicks++;
             if (!packet.hasPositionChanged()) moveTicks = 1;
         } else moveTicks = 0;
 
-        if(excuseNextFlying) {
+        if (excuseNextFlying) {
             return;
         }
 
@@ -570,7 +668,7 @@ it
     // generate a method that processes velocityHistory and compares to current deltaY.
     private void processVelocity() {
         //Iterate through player.getInfo().getVelocityHistory() and compare to current deltaY.
-        if(player.getInfo().isDoingVelocity()) {
+        if (player.getInfo().isDoingVelocity()) {
             player.getInfo().getVelocity().reset();
         }
         synchronized (player.getInfo().getVelocityHistory()) {
@@ -590,7 +688,7 @@ it
     }
 
     private void processBotMove(WrapperPlayClientPlayerFlying packet) {
-        if(player.getMob() == null) return;
+        if (player.getMob() == null) return;
         if (packet.hasPositionChanged() || packet.hasRotationChanged()) {
             KLocation origin = to.getLoc().clone().add(0, 1.7, 0);
 
@@ -605,7 +703,7 @@ it
                 player.getMob().teleport(loc1.getX(), loc1.getY(), loc1.getZ(), loc1.getYaw(), loc1.getPitch());
             } else {
                 loc1.setY(Math.max(origin.getY() + 0.6, loc1.getY()));
-                if(Math.random() > 0.2)
+                if (Math.random() > 0.2)
                     Anticheat.INSTANCE.getRunUtils().taskLaterAsync(() -> player.getMob()
                             .teleport(loc1.getX(), loc1.getY(), loc1.getZ(), loc1.getYaw(), loc1.getPitch()), 5);
             }
@@ -661,7 +759,7 @@ it
     public void runPositionHackFix() {
         if (sentPositionUpdate) return;
 
-        player.sendPacket(new WrapperPlayServerPlayerPositionAndLook(0, Vector3d.zero(), new Vector3d(0,0,0), 0, 0,
+        player.sendPacket(new WrapperPlayServerPlayerPositionAndLook(0, Vector3d.zero(), new Vector3d(0, 0, 0), 0, 0,
                 relFlags));
 
         player.getBukkitPlayer().sendMessage("§c[Anticheat] §7Position update sent to fix movement issues.");
@@ -725,10 +823,10 @@ it
                 packet.getYaw(), packet.getPitch());
 
         if (packet.getRelativeFlags().has(RelativeFlag.X)) {
-            loc.add(player.getMovement().getTo().getLoc().getX(), 0 ,0);
+            loc.add(player.getMovement().getTo().getLoc().getX(), 0, 0);
         }
         if (packet.getRelativeFlags().has(RelativeFlag.Y)) {
-            loc.add(0, player.getMovement().getTo().getLoc().getY() ,0);
+            loc.add(0, player.getMovement().getTo().getLoc().getY(), 0);
         }
         if (packet.getRelativeFlags().has(RelativeFlag.Z)) {
             loc.add(0, 0, player.getMovement().getTo().getLoc().getZ());

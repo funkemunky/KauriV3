@@ -13,6 +13,7 @@ import com.github.retrooper.packetevents.protocol.world.states.type.StateTypes;
 import com.github.retrooper.packetevents.util.Vector3d;
 import com.github.retrooper.packetevents.wrapper.PacketWrapper;
 import dev.brighten.ac.Anticheat;
+import dev.brighten.ac.api.KauriPlayer;
 import dev.brighten.ac.api.spigot.impl.LegacyPlayer;
 import dev.brighten.ac.api.spigot.impl.ModernPlayer;
 import dev.brighten.ac.check.Check;
@@ -48,8 +49,6 @@ import me.hydro.emulator.collision.impl.*;
 import me.hydro.emulator.object.input.DataSupplier;
 import me.hydro.emulator.util.mcp.AxisAlignedBB;
 import me.hydro.emulator.util.mcp.BlockPos;
-import org.bukkit.entity.Player;
-import org.bukkit.util.Vector;
 
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -60,7 +59,7 @@ import java.util.function.Consumer;
 
 public class APlayer {
     @Getter
-    private final Player bukkitPlayer;
+    private final KauriPlayer bukkitPlayer;
     @Getter
     private final UUID uuid;
     @Getter
@@ -123,7 +122,7 @@ public class APlayer {
 
     private final User user;
 
-    public APlayer(Player player, User user) {
+    public APlayer(KauriPlayer player, User user) {
         this.bukkitPlayer = player;
         this.uuid = player.getUniqueId();
         this.user = user;

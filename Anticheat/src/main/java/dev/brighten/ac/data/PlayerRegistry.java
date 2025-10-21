@@ -1,6 +1,7 @@
 package dev.brighten.ac.data;
 
 import com.github.retrooper.packetevents.PacketEvents;
+import dev.brighten.ac.api.KauriPlayer;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
@@ -17,7 +18,7 @@ public class PlayerRegistry {
         return Optional.ofNullable(aplayerMap.get(uuid.hashCode()));
     }
 
-    public APlayer generate(Player player) {
+    public APlayer generate(KauriPlayer player) {
         if(aplayerMap.containsKey(player.getUniqueId().hashCode())) {
             unregister(player.getUniqueId());
         }

@@ -18,6 +18,7 @@ import com.google.common.io.ByteArrayDataInput;
 import com.google.common.io.ByteStreams;
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.data.APlayer;
+import dev.brighten.ac.data.info.PlayerInput;
 import dev.brighten.ac.handler.entity.FakeMob;
 import dev.brighten.ac.handler.entity.TrackedEntity;
 import dev.brighten.ac.packet.PlayerCapabilities;
@@ -110,6 +111,16 @@ public class PacketHandler {
                 Optional.ofNullable(player.instantTransaction.remove(packet.getAction()))
                         .ifPresent(t -> t.two.accept(t.one));
             }
+        } else if(event.getPacketType().equals(PacketType.Play.Client.PLAYER_INPUT)) {
+            WrapperPlayClientPlayerInput packet = new WrapperPlayClientPlayerInput(event);
+
+            wrapped = packet;
+
+            player.getInfo().setSprinting(packet.isSprint());
+            player.getInfo().setSneaking(packet.isShift());
+            player.getInfo().setPlayerInput(PlayerInput.getFromPacket(packet));
+
+            player.getBukkitPlayer().sendMessage("packet: " + packet.isForward());
         } else if(event.getPacketType().equals(PacketType.Play.Client.PLAYER_POSITION_AND_ROTATION)
                 || event.getPacketType().equals(PacketType.Play.Client.PLAYER_POSITION)
                 || event.getPacketType().equals(PacketType.Play.Client.PLAYER_ROTATION)

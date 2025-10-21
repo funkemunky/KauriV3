@@ -3,6 +3,8 @@ package dev.brighten.ac;
 import co.aikar.commands.*;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import dev.brighten.ac.api.AnticheatAPI;
+import dev.brighten.ac.api.KauriPlayer;
+import dev.brighten.ac.api.KauriPluginExecutor;
 import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.CheckManager;
@@ -17,6 +19,8 @@ import dev.brighten.ac.handler.PacketHandler;
 import dev.brighten.ac.handler.entity.FakeEntityTracker;
 import dev.brighten.ac.handler.keepalive.KeepaliveProcessor;
 import dev.brighten.ac.handler.keepalive.actions.ActionManager;
+import dev.brighten.ac.handler.protocol.Protocol;
+import dev.brighten.ac.handler.protocol.impl.NoAPI;
 import dev.brighten.ac.logging.LoggerManager;
 import dev.brighten.ac.utils.*;
 import dev.brighten.ac.utils.annotation.ConfigSetting;
@@ -29,28 +33,26 @@ import dev.brighten.ac.utils.timer.Timer;
 import dev.brighten.ac.utils.timer.impl.TickTimer;
 import dev.brighten.ac.utils.world.WorldInfo;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.experimental.PackagePrivate;
-import org.bukkit.Bukkit;
-import org.bukkit.World;
-import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
-import org.bukkit.event.HandlerList;
-import org.bukkit.plugin.java.JavaPlugin;
+import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nonnull;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 @Getter
-@NoArgsConstructor
 @Init
 @MavenLibrary(groupId = "it\\.unimi\\.dsi", artifactId = "fastutil", version = "8.5.11", relocations = {
         @Relocate(from = "it\\.unimi", to = "dev.brighten.ac.libs.it.unimi")
@@ -90,12 +92,12 @@ import java.util.stream.Collectors;
         @Relocate(from = "com\\.fasterxml", to = "dev.brighten.ac.libs.com.fasterxml"),
         @Relocate(from = "org\\.slf4j", to = "dev.brighten.ac.libs.org.slf4j"),
 })
-public class Anticheat extends JavaPlugin {
+public class Anticheat{
 
     public static Anticheat INSTANCE;
 
     private ScheduledExecutorService scheduler;
-    private BukkitCommandManager commandManager;
+    private CommandManager commandManager;
     private ActionManager actionManager;
     private CheckManager checkManager;
     private PlayerRegistry playerRegistry;
@@ -103,7 +105,7 @@ public class Anticheat extends JavaPlugin {
     private PacketHandler packetHandler;
     private LoggerManager logManager;
     private CommandPropertiesManager commandPropertiesManager;
-    private RunUtils runUtils;
+    private final RunUtils runUtils;
     private ServerInjector serverInjector;
 
     private FakeEntityTracker fakeTracker;
@@ -116,28 +118,43 @@ public class Anticheat extends JavaPlugin {
     private final RollingAverageDouble tps = new RollingAverageDouble(4, 20);
     private final Map<UUID, WorldInfo> worldInfoMap = new HashMap<>();
 
+    private final Logger logger;
+    private final KauriPluginExecutor playerExecutor;
+    private final File dataFolder;
+
     private final List<BaseCommand> commands = new ArrayList<>();
 
     public static boolean allowDebug = true;
+
+    @Setter
+    private Protocol protocol = new NoAPI();
 
     @ConfigSetting(path = "logging", name = "verbose")
     private static boolean verboseLogging = true;
 
     private Configuration anticheatConfig;
 
-    @Override
-    public void onLoad() {
+    public Anticheat(CommandManager commandManager, Logger logger, KauriPluginExecutor playerExecutor, File dataFolder, RunUtils runUtils) {
+        this.playerExecutor = playerExecutor;
+        this.dataFolder = dataFolder;
         INSTANCE = this;
-        getLogger().info("Loading Anticheat...");
+        this.commandManager = commandManager;
+        this.logger = logger;
+        this.runUtils = runUtils;
         LibraryLoader.loadAll(INSTANCE);
 
         PacketEventsRegister.register();
     }
 
+    public Anticheat() {
+        this.dataFolder = null;
+        this.logger = null;
+        this.playerExecutor = null;
+        throw new RuntimeException("Do not use this constructor");
+    }
+
     @SuppressWarnings("deprecation")
     public void onEnable() {
-
-        runUtils = new RunUtils();
 
         scheduler = Executors.newScheduledThreadPool(2, new ThreadFactoryBuilder()
                 .setNameFormat("Anticheat Schedular")
@@ -151,7 +168,7 @@ public class Anticheat extends JavaPlugin {
 
         PacketEventsRegister.init();
 
-        commandManager = new BukkitCommandManager(this);
+
         commandManager.enableUnstableAPI("help");
 
         Anticheat.INSTANCE.getCommandManager()
@@ -164,7 +181,7 @@ public class Anticheat extends JavaPlugin {
                 .stream().map(s -> s.getCheckClass().getAnnotation(CheckData.class).checkId())
                 .sorted(Comparator.naturalOrder()).collect(Collectors.toList()));
 
-        BukkitCommandContexts contexts = (BukkitCommandContexts) Anticheat.INSTANCE.getCommandManager()
+        CommandContexts contexts = Anticheat.INSTANCE.getCommandManager()
                 .getCommandContexts();
 
         contexts.registerOptionalContext(Integer.class, c -> {
@@ -183,17 +200,17 @@ public class Anticheat extends JavaPlugin {
             if(c.hasFlag("other")) {
                 String arg = c.popFirstArg();
 
-                Player onlinePlayer = Bukkit.getPlayer(arg);
+                KauriPlayer onlinePlayer = Anticheat.INSTANCE.playerExecutor.getPlayer(arg);
 
                 if(onlinePlayer != null) {
                     return Anticheat.INSTANCE.getPlayerRegistry().getPlayer(onlinePlayer.getUniqueId())
                             .orElse(null);
                 } else return null;
             } else {
-                CommandSender sender = c.getSender();
+                CommandIssuer sender = c.getIssuer();
 
-                if(sender instanceof Player) {
-                    return Anticheat.INSTANCE.getPlayerRegistry().getPlayer(((Player) sender).getUniqueId())
+                if(sender.isPlayer()) {
+                    return Anticheat.INSTANCE.getPlayerRegistry().getPlayer(sender.getUniqueId())
                             .orElse(null);
                 }
                 else if(!c.isOptional()) throw new InvalidCommandArgument(MessageKeys.NOT_ALLOWED_ON_CONSOLE,
@@ -226,7 +243,7 @@ public class Anticheat extends JavaPlugin {
 
         this.keepaliveProcessor = new KeepaliveProcessor();
 
-        Bukkit.getOnlinePlayers().forEach(playerRegistry::generate);
+        playerExecutor.getOnlinePlayers().forEach(playerRegistry::generate);
         this.packetHandler = new PacketHandler();
         logManager = new LoggerManager();
         this.actionManager = new ActionManager();
@@ -234,9 +251,23 @@ public class Anticheat extends JavaPlugin {
         logManager.init();
 
         alog(Color.Green + "Loading WorldInfo system...");
-        Bukkit.getWorlds().forEach(w -> worldInfoMap.put(w.getUID(), new WorldInfo(w)));
 
         PacketEventsRegister.registerListener();
+    }
+
+    public InputStream getResource(@NotNull String filename) {
+        try {
+            URL url = Anticheat.class.getClassLoader().getResource(filename);
+            if (url == null) {
+                return null;
+            } else {
+                URLConnection connection = url.openConnection();
+                connection.setUseCaches(false);
+                return connection.getInputStream();
+            }
+        } catch (IOException var4) {
+            return null;
+        }
     }
 
     public void onDisable() {
@@ -244,15 +275,13 @@ public class Anticheat extends JavaPlugin {
 
         // Unregistering APlayer objects
         playerRegistry.unregisterAll();
-        commands.forEach(commandManager::unregisterCommand);
-        commandManager.unregisterCommands();
         commandManager.getCommandCompletions().unregisterCompletion("@checks");
         try {
             commandManager.getCommandCompletions().unregisterCompletion("@checkIds");
         } catch (IllegalStateException e) {
             Anticheat.INSTANCE.getLogger().log(Level.SEVERE, "Check ID unregister failed", e);
         }
-        commandManager.getScheduler().cancelLocaleTask();
+
         commandPropertiesManager = null;
 
         try {
@@ -276,8 +305,6 @@ public class Anticheat extends JavaPlugin {
 
         logManager.shutDown();
 
-        Bukkit.getScheduler().cancelTasks(this);
-
         fakeTracker.despawnAll();
 
         CheckHandler.TO_HOOK.clear();
@@ -285,9 +312,6 @@ public class Anticheat extends JavaPlugin {
         fakeTracker.despawnAll();
 
         worldInfoMap.clear();
-
-        // Unregistering packet listeners for players
-        HandlerList.unregisterAll(this);
 
         onTickEnd.clear();
 
@@ -337,10 +361,6 @@ public class Anticheat extends JavaPlugin {
         } catch(IOException e) {
             throw new RuntimeException("Could not load \"anticheat.yml\"!", e);
         }
-    }
-
-    public WorldInfo getWorldInfo(World world) {
-        return worldInfoMap.computeIfAbsent(world.getUID(), key -> new WorldInfo(world));
     }
 
     public void alog(String log, Object... values) {

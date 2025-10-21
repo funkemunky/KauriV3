@@ -11,9 +11,6 @@ import dev.brighten.ac.utils.reflections.Reflections;
 import dev.brighten.ac.utils.reflections.types.WrappedClass;
 import dev.brighten.ac.utils.reflections.types.WrappedField;
 import dev.brighten.ac.utils.reflections.types.WrappedMethod;
-import org.bukkit.Bukkit;
-import org.bukkit.event.Listener;
-import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.AnnotationNode;
@@ -40,11 +37,11 @@ public class ClassScanner {
     private final PathMatcher CLASS_FILE = create("glob:*.class");
     private final PathMatcher ARCHIVE = create("glob:*.{jar}");
 
-    public void initializeScanner(Class<? extends Plugin> mainClass, Plugin plugin, ClassLoader loader) {
+    public void initializeScanner(Class<?> mainClass, Anticheat plugin, ClassLoader loader) {
         initializeScanner(mainClass, plugin, loader, scanFile(null, mainClass));
     }
 
-    public void initializeScanner(Class<? extends Plugin> mainClass, Plugin plugin, ClassLoader loader, Set<String> names) {
+    public void initializeScanner(Class<?> mainClass, Anticheat plugin, ClassLoader loader, Set<String> names) {
         names.stream()
                 .map(name -> {
                     if(loader != null) {
@@ -61,36 +58,11 @@ public class ClassScanner {
                         return Reflections.getClass(name);
                     }
                 })
-                .filter(c -> {
-                    if(c == null) return false;
-                    Init init = c.getAnnotation(Init.class);
-
-                    String[] required = init.requirePlugins();
-
-                    if(required.length > 0) {
-                        return Arrays.stream(required)
-                                .anyMatch(name -> {
-                                    if(name.contains("||")) {
-                                        return Arrays.stream(name.split("\\|\\|"))
-                                                .anyMatch(n2 -> Bukkit.getPluginManager().isPluginEnabled(n2));
-                                    } else if(name.contains("&&")) {
-                                        return Arrays.stream(name.split("\\|\\|"))
-                                                .allMatch(n2 -> Bukkit.getPluginManager().isPluginEnabled(n2));
-                                    } else return Bukkit.getPluginManager().isPluginEnabled(name);
-                                });
-                    }
-                    return true;
-                })
+                .filter(Objects::nonNull)
                 .sorted(Comparator.comparing(c ->
                         c.getAnnotation(Init.class).priority().getPriority(), Comparator.reverseOrder()))
                 .forEach(c -> {
                     Object obj = c.getParent().equals(mainClass) ? plugin : c.getConstructor().newInstance();
-
-                    if(obj instanceof Listener listener) {
-                        Bukkit.getPluginManager().registerEvents(listener, plugin);
-                        Anticheat.INSTANCE.alog(true,"&7Registered Bukkit listener &e"
-                                + c.getParent().getSimpleName() + "&7.");
-                    }
 
                     if(obj instanceof BaseCommand command) {
                         Anticheat.INSTANCE.alog(true,"&7Found BaseCommand for class &e"
@@ -174,7 +146,7 @@ public class ClassScanner {
     }
 
     public Set<String> scanFile2(String file, Class<?> clazz) {
-        Bukkit.getLogger().info("Found file: " + clazz.getProtectionDomain().getCodeSource().getLocation().toString());
+        Anticheat.INSTANCE.getLogger().info("Found file: " + clazz.getProtectionDomain().getCodeSource().getLocation().toString());
         return scanFile2(file, new URL[]{clazz.getProtectionDomain().getCodeSource().getLocation()});
     }
 
@@ -245,7 +217,7 @@ public class ClassScanner {
             return classNode.name.replace('/', '.');
         } catch (Exception e) {
             e.printStackTrace();
-            Bukkit.getLogger().severe("Failed to scan: " + in.toString());
+            Anticheat.INSTANCE.getLogger().severe("Failed to scan: " + in.toString());
         }
         return null;
     }

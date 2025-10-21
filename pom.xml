@@ -17,6 +17,7 @@
         <module>Compat</module>
         <module>Compat-1_19_R3</module>
         <module>Neo/neo</module>
+        <module>BukkitPlugin</module>
     </modules>
 
     <build>

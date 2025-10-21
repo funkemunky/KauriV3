@@ -21,7 +21,7 @@
  */
 package dev.brighten.ac.utils;
 
-import co.aikar.commands.BukkitCommandManager;
+import co.aikar.commands.CommandManager;
 import co.aikar.commands.Locales;
 import co.aikar.locales.MessageKey;
 
@@ -33,7 +33,7 @@ public class CommandPropertiesManager {
     private final File configPath;
     private final InputStream inputStream;
 
-    public CommandPropertiesManager(BukkitCommandManager manager, File configPath, InputStream inputStream) {
+    public CommandPropertiesManager(CommandManager manager, File configPath, InputStream inputStream) {
         this.configPath = configPath;
         this.inputStream = inputStream;
         copyFile();
