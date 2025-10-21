@@ -3,8 +3,8 @@ package dev.brighten.ac;
 import co.aikar.commands.*;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import dev.brighten.ac.api.AnticheatAPI;
-import dev.brighten.ac.platform.KauriPlayer;
-import dev.brighten.ac.platform.KauriPluginExecutor;
+import dev.brighten.ac.api.platform.KauriPlayer;
+import dev.brighten.ac.api.platform.KauriPluginExecutor;
 import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.CheckManager;
@@ -31,7 +31,6 @@ import dev.brighten.ac.utils.config.YamlConfiguration;
 import dev.brighten.ac.utils.math.RollingAverageDouble;
 import dev.brighten.ac.utils.timer.Timer;
 import dev.brighten.ac.utils.timer.impl.TickTimer;
-import dev.brighten.ac.utils.world.WorldInfo;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.PackagePrivate;
@@ -116,7 +115,6 @@ public class Anticheat{
     private long lastTick;
     @PackagePrivate
     private final RollingAverageDouble tps = new RollingAverageDouble(4, 20);
-    private final Map<UUID, WorldInfo> worldInfoMap = new HashMap<>();
 
     private final Logger logger;
     private final KauriPluginExecutor playerExecutor;
@@ -310,8 +308,6 @@ public class Anticheat{
         CheckHandler.TO_HOOK.clear();
 
         fakeTracker.despawnAll();
-
-        worldInfoMap.clear();
 
         onTickEnd.clear();
 

@@ -1,7 +1,7 @@
 package dev.brighten.ac.bukkit;
 
 import com.github.retrooper.packetevents.protocol.item.ItemStack;
-import dev.brighten.ac.platform.KauriInventory;
+import dev.brighten.ac.api.platform.KauriInventory;
 import io.github.retrooper.packetevents.util.SpigotConversionUtil;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.entity.Player;

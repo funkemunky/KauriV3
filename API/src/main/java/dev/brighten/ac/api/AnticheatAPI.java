@@ -1,7 +1,6 @@
 package dev.brighten.ac.api;
 
 import dev.brighten.ac.api.event.AnticheatEvent;
-import org.bukkit.plugin.Plugin;
 
 import java.util.*;
 
@@ -9,7 +8,7 @@ import java.util.*;
 public class AnticheatAPI {
 
     public static AnticheatAPI INSTANCE;
-    private final Map<String, List<AnticheatEvent>> registeredEvents = new HashMap<>();
+    private final Map<Integer, List<AnticheatEvent>> registeredEvents = new HashMap<>();
     public AnticheatAPI() {
         INSTANCE = this;
     }
@@ -19,8 +18,8 @@ public class AnticheatAPI {
      * @param plugin org.bukkit.plugin.Plugin
      * @param event dev.brighten.ac.api.event.AnticheatEvent
      */
-    public void registerEvent(Plugin plugin, AnticheatEvent event) {
-        registeredEvents.compute(plugin.getName(), (key, list) -> {
+    public void registerEvent(Object plugin, AnticheatEvent event) {
+        registeredEvents.compute(plugin.hashCode(), (key, list) -> {
             if(list == null) {
                 list = new ArrayList<>();
             }
@@ -36,8 +35,8 @@ public class AnticheatAPI {
     }
 
     
-    public void unregisterEvents(Plugin plugin) {
-        registeredEvents.remove(plugin.getName());
+    public void unregisterEvents(Object plugin) {
+        registeredEvents.remove(plugin.hashCode());
     }
 
     public List<AnticheatEvent> getAllEvents() {

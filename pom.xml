@@ -12,8 +12,6 @@
     <modules>
         <module>Anticheat</module>
         <module>API</module>
-        <module>LegacyAPI</module>
-        <module>ModernAPI</module>
         <module>Compat</module>
         <module>Compat-1_19_R3</module>
         <module>Neo/neo</module>
@@ -34,6 +32,10 @@
         <repository>
             <id>spigot-repo</id>
             <url>https://hub.spigotmc.org/nexus/content/repositories/snapshots/</url>
+        </repository>
+        <repository>
+            <id>funkemunky-mixed</id>
+            <url>https://nexus.funkemunky.cc/repository/mixed/</url>
         </repository>
     </repositories>
 

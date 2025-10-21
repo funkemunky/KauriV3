@@ -13,9 +13,7 @@ import com.github.retrooper.packetevents.protocol.world.states.type.StateTypes;
 import com.github.retrooper.packetevents.util.Vector3d;
 import com.github.retrooper.packetevents.wrapper.PacketWrapper;
 import dev.brighten.ac.Anticheat;
-import dev.brighten.ac.platform.KauriPlayer;
-import dev.brighten.ac.api.spigot.impl.LegacyPlayer;
-import dev.brighten.ac.api.spigot.impl.ModernPlayer;
+import dev.brighten.ac.api.platform.KauriPlayer;
 import dev.brighten.ac.check.Check;
 import dev.brighten.ac.data.info.BlockInformation;
 import dev.brighten.ac.data.info.CheckHandler;
@@ -103,9 +101,6 @@ public class APlayer {
     public boolean sniffing;
 
     @Getter
-    private dev.brighten.ac.api.spigot.Player wrappedPlayer;
-
-    @Getter
     private final Deque<Object> packetQueue = new LinkedList<>();
     @Getter
     private final List<Consumer<Vector3d>> onVelocityTasks = new ArrayList<>();
@@ -151,15 +146,11 @@ public class APlayer {
             // Grabbing the protocol version of the player.
             Anticheat.INSTANCE.getLogger().info("Attempting Getting player version for " + getBukkitPlayer().getName());
 
-            ClientVersion version = ClientVersion.getById(Protocol.getProtocol().getPlayerVersion(getBukkitPlayer()));
+            ClientVersion version = ClientVersion.getById(Anticheat.INSTANCE.getProtocol().getPlayerVersion(getBukkitPlayer()));
 
             this.playerVersion = version;
 
             Anticheat.INSTANCE.getLogger().info("Got player version " + version.name() + " for " + getBukkitPlayer().getName());
-
-            if(PacketEvents.getAPI().getServerManager().getVersion().isOlderThan(ServerVersion.V_1_9)) {
-                this.wrappedPlayer = new LegacyPlayer(getBukkitPlayer());
-            } else this.wrappedPlayer = new ModernPlayer(getBukkitPlayer());
 
             EMULATOR = new Emulator(new DataSupplier() {
                 @Override

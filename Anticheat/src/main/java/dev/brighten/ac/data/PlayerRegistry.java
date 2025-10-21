@@ -1,7 +1,7 @@
 package dev.brighten.ac.data;
 
 import com.github.retrooper.packetevents.PacketEvents;
-import dev.brighten.ac.platform.KauriPlayer;
+import dev.brighten.ac.api.platform.KauriPlayer;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;

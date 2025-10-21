@@ -1,4 +1,4 @@
-package dev.brighten.ac.platform;
+package dev.brighten.ac.api.platform;
 
 import com.github.retrooper.packetevents.protocol.item.ItemStack;
 
