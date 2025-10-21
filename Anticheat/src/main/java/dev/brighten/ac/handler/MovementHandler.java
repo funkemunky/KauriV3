@@ -27,13 +27,10 @@ import me.hydro.emulator.object.input.IterationInput;
 import me.hydro.emulator.object.iteration.Motion;
 import me.hydro.emulator.object.result.IterationResult;
 import me.hydro.emulator.util.PotionEffect;
+import me.hydro.emulator.util.PotionEffectType;
 import me.hydro.emulator.util.Vector;
 import me.hydro.emulator.util.mcp.MathHelper;
 import me.hydro.emulator.util.mcp.MathHelper.FastMathType;
-import org.bukkit.GameMode;
-import org.bukkit.Location;
-import org.bukkit.entity.Player;
-import org.bukkit.potion.PotionEffectType;
 
 import java.util.*;
 
