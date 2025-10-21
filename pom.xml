@@ -34,6 +34,10 @@
             <id>spigot-repo</id>
             <url>https://hub.spigotmc.org/nexus/content/repositories/snapshots/</url>
         </repository>
+        <repository>
+            <id>funkemunky-mixed</id>
+            <url>https://nexus.funkemunky.cc/repository/mixed/</url>
+        </repository>
     </repositories>
 
     <properties>
