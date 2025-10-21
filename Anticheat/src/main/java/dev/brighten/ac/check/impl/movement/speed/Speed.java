@@ -14,7 +14,7 @@ import dev.brighten.ac.utils.XMaterial;
 import dev.brighten.ac.utils.annotation.Bind;
 import org.bukkit.potion.PotionEffectType;
 
-@CheckData(name = "Speed", checkId = "speeda", type = CheckType.MOVEMENT, maxVersion = ClientVersion.V_1_21_5)
+@CheckData(name = "Speed", checkId = "speeda", type = CheckType.MOVEMENT)
 public class Speed extends Check {
 
     private double ldxz = .12f;

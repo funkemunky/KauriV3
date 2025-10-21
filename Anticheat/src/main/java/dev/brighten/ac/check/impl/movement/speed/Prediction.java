@@ -12,11 +12,10 @@ import dev.brighten.ac.utils.KLocation;
 import dev.brighten.ac.utils.annotation.Bind;
 import dev.brighten.ac.utils.timer.Timer;
 import dev.brighten.ac.utils.timer.impl.TickTimer;
-import lombok.val;
 import me.hydro.emulator.util.Vector;
 
 @CheckData(name = "Prediction", checkId = "predictiona", type = CheckType.MOVEMENT, experimental = true,
-        punishable = false, maxVersion = ClientVersion.V_1_21_5)
+        punishable = false, maxVersion = ClientVersion.V_1_21_7)
 public class Prediction extends Check {
     private float buffer;
     private int notMoveTicks;
@@ -51,7 +50,7 @@ public class Prediction extends Check {
             String tags = String.join(", ", player.EMULATOR.getTags());
             Vector predicted = player.getMovement().getPredicted();
             
-            val from = player.getMovement().getFrom();
+            var from = player.getMovement().getFrom();
             
             double px = predicted.getX() - from.getX(),
                     py = predicted.getY() - from.getY(),
@@ -97,7 +96,7 @@ public class Prediction extends Check {
                 if(++buffer > 2) {
                     flag("%s [tags=%s]", offset, tags);
                     correctMovement(loc);
-                    buffer = 4;
+                    buffer = Math.min(4, buffer);
                 }
             } else if(buffer > 0) buffer-= 0.05f;
             debug((badOffset ? Color.Red : "") + "offset=%s skip_pos=%s f=%s s=%s dy=%.4f dpy=%.4f x=%s px=%s [%s] tags=[%s]",
