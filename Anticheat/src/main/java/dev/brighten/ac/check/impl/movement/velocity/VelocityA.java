@@ -10,7 +10,7 @@ import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.utils.annotation.Bind;
 import org.bukkit.util.Vector;
 
-@CheckData(name = "Velocity (Vertical)", checkId = "velocitya", type = CheckType.MOVEMENT, maxVersion = ClientVersion.V_1_21_5)
+@CheckData(name = "Velocity (Vertical)", checkId = "velocitya", type = CheckType.MOVEMENT)
 public class VelocityA extends Check {
 
     private Vector currentVelocity = null;

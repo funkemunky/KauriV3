@@ -23,6 +23,10 @@
             <id>funkemunky-releases</id>
             <url>https://nexus.funkemunky.cc/content/repositories/releases/</url>
         </repository>
+        <repository>
+            <id>funkemunky-mixed</id>
+            <url>https://nexus.funkemunky.cc/repository/mixed/</url>
+        </repository>
     </repositories>
 
     <build>

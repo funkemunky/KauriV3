@@ -96,11 +96,12 @@ public class BlockUpdateHandler {
         int y = pos.getY();
         int z = pos.getZ();
 
-        if(place.getItemStack().isEmpty() || place.getItemStack().get().getType().getPlacedType() == null) {
+        var placedType = place.getItemStack().get().getType().getPlacedType();
+        if(place.getItemStack().isEmpty() || placedType == null) {
             return;
         }
 
-        updateBlock(x, y, z, WrappedBlockState.getDefaultState(place.getItemStack().get().getType().getPlacedType()));
+        updateBlock(x, y, z, WrappedBlockState.getDefaultState(placedType));
     }
 
     /**
@@ -221,7 +222,24 @@ public class BlockUpdateHandler {
 
         y -= minHeight;
 
-        BaseChunk chunk = col.chunks().length - 1 < (y >> 4) ? null : col.chunks()[y >> 4];
+        final int worldY = y;
+
+        // Fast bounds check for absurd/invalid Y before chunk indexing
+        if (y < 0 || y >= (maxHeight - minHeight)) {
+            return new WrappedBlock(new IntVector(x, worldY, z),
+                    StateTypes.AIR,
+                    airBlockState);
+        }
+
+        // Also ensure the section index is within the cached column bounds
+        final int sectionIndex = y >> 4;
+        if (sectionIndex >= col.chunks().length) {
+            return new WrappedBlock(new IntVector(x, worldY, z),
+                    StateTypes.AIR,
+                    airBlockState);
+        }
+
+        BaseChunk chunk = col.chunks()[sectionIndex];
 
         if(chunk == null) {
             //Get Bukkit Block
@@ -345,7 +363,7 @@ public class BlockUpdateHandler {
             chunk = create();
             col.chunks()[offset >> 4] = chunk;
 
-            chunk.set(null, 0, 0, 0, 0);
+            chunk.set(player.getPlayerVersion(), 0, 0, 0, 0);
         }
 
         chunk.set(x & 15, offset & 15, z & 15,

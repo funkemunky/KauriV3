@@ -10,7 +10,7 @@ import dev.brighten.ac.utils.annotation.Bind;
 import lombok.val;
 import org.bukkit.event.player.PlayerEditBookEvent;
 
-@CheckData(name = "BookOp", checkId = "bookop", type = CheckType.EXPLOIT, maxVersion = ClientVersion.V_1_21_5)
+@CheckData(name = "BookOp", checkId = "bookop", type = CheckType.EXPLOIT)
 public class BookOp extends Check {
     public BookOp(APlayer player) {
         super(player);

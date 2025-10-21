@@ -21,7 +21,7 @@ import org.bukkit.util.Vector;
  * This check is designed to detect an attack through solid blocks, which would be impossible under normal
  * circumstances.
  */
-@CheckData(name = "KillAura (Trace)", checkId = "katrace", type = CheckType.KILLAURA, maxVersion = ClientVersion.V_1_21_5)
+@CheckData(name = "KillAura (Trace)", checkId = "katrace", type = CheckType.KILLAURA)
 public class KATrace extends Check {
 
     public KATrace(APlayer player) {
