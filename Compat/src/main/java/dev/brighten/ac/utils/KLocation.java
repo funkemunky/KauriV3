@@ -1,5 +1,6 @@
 package dev.brighten.ac.utils;
 
+import com.github.retrooper.packetevents.util.Vector3d;
 import lombok.Data;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -55,8 +56,8 @@ public class KLocation implements Cloneable {
         this.timeStamp = System.currentTimeMillis();
     }
 
-    public Vector toVector() {
-        return new Vector(x, y, z);
+    public Vector3d toVector() {
+        return new Vector3d(x, y, z);
     }
 
     public Location toLocation(World world) {

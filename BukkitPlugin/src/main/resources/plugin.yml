@@ -1,5 +1,5 @@
 name: Kauri
 version: 3.0
-main : dev.brighten.ac.Anticheat
+main : dev.brighten.ac.bukkit.AnticheatBukkit
 author: funkemunky
 softdepend: [ViaVersion, ProtocolSupport]

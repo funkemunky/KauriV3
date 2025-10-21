@@ -2,7 +2,7 @@ package dev.brighten.ac.handler.protocol.impl;
 
 import com.viaversion.viaversion.api.Via;
 import dev.brighten.ac.Anticheat;
-import dev.brighten.ac.api.KauriPlayer;
+import dev.brighten.ac.platform.KauriPlayer;
 import dev.brighten.ac.handler.protocol.Protocol;
 
 public class ViaVersionAPI implements Protocol {

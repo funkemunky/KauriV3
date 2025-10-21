@@ -1,6 +1,7 @@
 package dev.brighten.ac.data.info;
 
 import com.github.retrooper.packetevents.util.Vector3d;
+import dev.brighten.ac.data.obj.Pose;
 import dev.brighten.ac.handler.block.WrappedBlock;
 import dev.brighten.ac.handler.entity.TrackedEntity;
 import dev.brighten.ac.packet.PlayerCapabilities;
@@ -47,4 +48,5 @@ public class GeneralInformation {
     public List<PlayerCapabilities> possibleCapabilities = new ArrayList<>();
     private int clientGroundTicks, clientAirTicks;
     private PlayerInput playerInput = PlayerInput.NONE;
+    private Pose pose = Pose.STANDING;
 }

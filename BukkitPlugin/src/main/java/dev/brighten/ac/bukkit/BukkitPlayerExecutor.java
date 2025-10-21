@@ -1,7 +1,7 @@
 package dev.brighten.ac.bukkit;
 
-import dev.brighten.ac.api.KauriPlayer;
-import dev.brighten.ac.api.KauriPluginExecutor;
+import dev.brighten.ac.platform.KauriPlayer;
+import dev.brighten.ac.platform.KauriPluginExecutor;
 import org.bukkit.Bukkit;
 
 import java.util.Collection;

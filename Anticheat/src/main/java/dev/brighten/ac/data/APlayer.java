@@ -13,7 +13,7 @@ import com.github.retrooper.packetevents.protocol.world.states.type.StateTypes;
 import com.github.retrooper.packetevents.util.Vector3d;
 import com.github.retrooper.packetevents.wrapper.PacketWrapper;
 import dev.brighten.ac.Anticheat;
-import dev.brighten.ac.api.KauriPlayer;
+import dev.brighten.ac.platform.KauriPlayer;
 import dev.brighten.ac.api.spigot.impl.LegacyPlayer;
 import dev.brighten.ac.api.spigot.impl.ModernPlayer;
 import dev.brighten.ac.check.Check;
@@ -23,6 +23,7 @@ import dev.brighten.ac.data.info.GeneralInformation;
 import dev.brighten.ac.data.info.LagInformation;
 import dev.brighten.ac.data.obj.InstantAction;
 import dev.brighten.ac.data.obj.NormalAction;
+import dev.brighten.ac.data.obj.Pose;
 import dev.brighten.ac.handler.EntityLocationHandler;
 import dev.brighten.ac.handler.MovementHandler;
 import dev.brighten.ac.handler.PotionHandler;
@@ -264,6 +265,18 @@ public class APlayer {
         }
 
         return bukkitPlayer.getInventory().getChestplate().getType() == XMaterial.ELYTRA.parseMaterial();
+    }
+
+    public void updatePlayerPosition() {
+
+    }
+
+    private static SimpleCollisionBox getBoundingBoxForPose(APlayer player, Pose pose, double x, double y, double z) {
+        final float scale = 1.0f;
+        final float width = pose.width * scale;
+        final float height = pose.height * scale;
+        float radius = width / 2.0F;
+        return new SimpleCollisionBox(x - radius, y, z - radius, x + radius, y + height, z + radius);
     }
 
     public void onVelocity(Consumer<Vector3d> runnable) {

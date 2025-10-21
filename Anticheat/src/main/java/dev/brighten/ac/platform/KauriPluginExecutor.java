@@ -1,4 +1,4 @@
-package dev.brighten.ac.api;
+package dev.brighten.ac.platform;
 
 import java.util.Collection;
 import java.util.UUID;

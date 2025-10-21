@@ -29,35 +29,42 @@ import dev.brighten.ac.utils.Materials;
 import dev.brighten.ac.utils.XMaterial;
 import dev.brighten.ac.utils.math.IntVector;
 import dev.brighten.ac.utils.world.types.RayCollision;
-import io.github.retrooper.packetevents.util.SpigotConversionUtil;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import me.hydro.emulator.collision.Block;
 import me.hydro.emulator.util.mcp.MathHelper;
-import org.bukkit.Chunk;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.World;
-import org.bukkit.block.Block;
-import org.bukkit.block.BlockFace;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 @Slf4j
 @SuppressWarnings("unused")
 @RequiredArgsConstructor
 public class BlockUpdateHandler {
-    private final Long2ObjectOpenHashMap<KColumn> chunks = new Long2ObjectOpenHashMap<>(1000);
+
 
     private final APlayer player;
-
+    private List<AtomicReference<World>> worlds = new ArrayList<>();
+    private World currentWorld;
     /**
      * Clear all chunks when the player changes worlds
      */
     public void onWorldChange() {
-        synchronized (chunks) {
-            chunks.clear();
-        }
-
         setMinHeight(player.getDimensionType());
+    }
+
+    private AtomicReference<World> getWorldByName(String name) {
+        return worlds.stream()
+                .filter(world -> world.get().getName().equals(name))
+                .findFirst()
+                .orElseGet(() -> {
+            var world = new AtomicReference<>(new World(null, name));
+
+            worlds.add(world);
+            return world;
+        });
     }
 
     /**
@@ -73,8 +80,8 @@ public class BlockUpdateHandler {
         // Some dumbass shit I have to do because Minecraft with Lilypads
         if (place.getItemStack().isPresent()
                 && BlockUtils.getXMaterial(place.getItemStack().get().getType()).equals(XMaterial.LILY_PAD)) {
-            RayCollision rayCollision = new RayCollision(player.getBukkitPlayer().getEyeLocation().toVector(),
-                    player.getBukkitPlayer().getLocation().getDirection());
+            RayCollision rayCollision = new RayCollision(player.getMovement().getTo().getLoc().add(0, player.getEyeHeight(), 0),
+                    player.getMovement().getTo().getLoc().getDirection());
             WrappedBlock block = rayCollision.getClosestBlockOfType(player, Materials.LIQUID, 5);
 
             if (block != null) {

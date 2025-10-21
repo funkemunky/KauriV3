@@ -19,6 +19,7 @@ import com.google.common.io.ByteStreams;
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.data.info.PlayerInput;
+import dev.brighten.ac.data.obj.Pose;
 import dev.brighten.ac.handler.entity.FakeMob;
 import dev.brighten.ac.handler.entity.TrackedEntity;
 import dev.brighten.ac.packet.PlayerCapabilities;
@@ -27,10 +28,7 @@ import dev.brighten.ac.packet.WPacketPlayOutEntity;
 import dev.brighten.ac.utils.BlockUtils;
 import dev.brighten.ac.utils.KLocation;
 import dev.brighten.ac.utils.MovementUtils;
-import io.github.retrooper.packetevents.util.SpigotConversionUtil;
 import lombok.val;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.LivingEntity;
 
 import java.util.Optional;
 
@@ -162,7 +160,7 @@ public class PacketHandler {
             wrapped = packet;
 
             // Check for isUnmount()
-            if (player.getBukkitPlayer().isInsideVehicle() && packet.isUnmount()) {
+            if (player.getInfo().isInVehicle() && packet.isUnmount()) {
                 player.getInfo().getVehicleSwitch().reset();
                 player.getInfo().setInVehicle(false);
             }
@@ -407,7 +405,10 @@ public class PacketHandler {
             if(player.getPlayerVersion().isOlderThan(ClientVersion.V_1_14)) {
                 player.runKeepaliveAction(k -> player.getBukkitPlayer().setSprinting(false), 1);
             }
-            player.runKeepaliveAction(ka -> player.getInfo().lastRespawn.reset());
+            player.runKeepaliveAction(ka -> {
+                player.getInfo().lastRespawn.reset();
+                player.getInfo().setPose(Pose.STANDING);
+            });
             player.runKeepaliveAction(ka -> player.getBlockUpdateHandler()
                     .setMinHeight(player.getDimensionType()));
         } else if(event.getPacketType() == PacketType.Play.Server.PLAYER_POSITION_AND_LOOK) {
