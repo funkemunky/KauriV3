@@ -221,7 +221,27 @@ public class BlockUpdateHandler {
 
         y -= minHeight;
 
-        BaseChunk chunk = col.chunks().length - 1 < (y >> 4) ? null : col.chunks()[y >> 4];
+        final int worldY = y;
+
+        // Convert to internal offset relative to minHeight
+        y -= minHeight;
+
+        // Fast bounds check for absurd/invalid Y before chunk indexing
+        if (y < 0 || y >= (maxHeight - minHeight)) {
+            return new WrappedBlock(new IntVector(x, worldY, z),
+                    StateTypes.AIR,
+                    airBlockState);
+        }
+
+        // Also ensure the section index is within the cached column bounds
+        final int sectionIndex = y >> 4;
+        if (sectionIndex >= col.chunks().length) {
+            return new WrappedBlock(new IntVector(x, worldY, z),
+                    StateTypes.AIR,
+                    airBlockState);
+        }
+
+        BaseChunk chunk = col.chunks()[sectionIndex];
 
         if(chunk == null) {
             //Get Bukkit Block
