@@ -139,13 +139,6 @@ public class PacketHandler {
                 player.getMovement().setExcuseNextFlying(true);
             }
 
-            if(player.getMovement().getPosLocs().stream()
-                    .noneMatch(tpLoc -> tpLoc.toVector3d().distanceSquared(packet.getLocation().getPosition()) < 2)
-                    && player.getMovement().getFrom().getLoc().toVector3d().distanceSquared(packet.getLocation().getPosition()) > 2500) {
-                Anticheat.INSTANCE.alog("Player moved more than 50 blocks illegally! Cancelled...");
-                return true;
-            }
-
             player.getMovement().process(packet);
 
             var result = player.getCheckHandler().callSyncPacket(wrapped, timestamp);
