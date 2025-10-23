@@ -1,6 +1,7 @@
 package dev.brighten.ac.check.impl.combat.killaura;
 
 import com.github.retrooper.packetevents.protocol.player.ClientVersion;
+import com.github.retrooper.packetevents.util.Vector3d;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientInteractEntity;
 import dev.brighten.ac.api.check.CheckType;
 import dev.brighten.ac.check.Check;
@@ -13,7 +14,6 @@ import dev.brighten.ac.utils.world.CollisionBox;
 import dev.brighten.ac.utils.world.EntityData;
 import dev.brighten.ac.utils.world.types.RayCollision;
 import dev.brighten.ac.utils.world.types.SimpleCollisionBox;
-import org.bukkit.util.Vector;
 
 /**
  * @author funkemunky
@@ -43,7 +43,7 @@ public class KATrace extends Check {
             return;
         }
 
-        var trackedEntity = player.getEntityLocationHandler().getTrackedEntity(player.getInfo().getTarget().getEntityId());
+        var trackedEntity = player.getWorldTracker().getCurrentWorld().get().getTrackedEntity(player.getInfo().getTarget().getEntityId());
 
         if(trackedEntity.isEmpty()) {
             return;
@@ -59,12 +59,12 @@ public class KATrace extends Check {
         // Setting the player's eye height based on their sneak status
         origin.add(0, player.getEyeHeight(), 0);
 
-        final Vector originVec = origin.toVector();
+        final Vector3d originVec = origin.toVector();
 
         // Setting a trace based on their view direction
         RayCollision collision = new RayCollision(originVec, origin.getDirection());
 
-        Vector targetPoint = collision.collisionPoint(targetBox);
+        Vector3d targetPoint = collision.collisionPoint(targetBox);
         //If the ray isn't collided, we might as well not run this check. Just a simple boxes on array check
         if(targetPoint == null) return;
 
@@ -84,7 +84,7 @@ public class KATrace extends Check {
                         continue;
 
                     // We want to shrink the box slightly since there is a bit of a margin of error in the ray trace.
-                    Vector point = collision.collisionPoint(box.copy().shrink(0.005f, 0.005f, 0.005f));
+                    Vector3d point = collision.collisionPoint(box.copy().shrink(0.005f, 0.005f, 0.005f));
 
                     if (point != null && originVec.distanceSquared(point) < dist - 0.2) {
                         rayCollidedOnBlock = true;

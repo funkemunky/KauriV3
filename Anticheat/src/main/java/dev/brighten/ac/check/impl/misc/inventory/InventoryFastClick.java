@@ -1,14 +1,13 @@
 package dev.brighten.ac.check.impl.misc.inventory;
 
 import com.github.retrooper.packetevents.protocol.player.ClientVersion;
+import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientClickWindow;
 import dev.brighten.ac.api.check.CheckType;
 import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.utils.annotation.Bind;
-import org.bukkit.event.inventory.InventoryAction;
-import org.bukkit.event.inventory.InventoryClickEvent;
 
 @CheckData(name = "Inventory (FastClick)", checkId = "inventoryd", type = CheckType.INVENTORY, maxVersion = ClientVersion.V_1_21_5)
 public class InventoryFastClick extends Check {
@@ -20,11 +19,11 @@ public class InventoryFastClick extends Check {
     private float buffer = 0;
 
     @Bind
-    WAction<InventoryClickEvent> windowClick = (event) -> {
+    WAction<WrapperPlayClientClickWindow> windowClick = (event) -> {
         int playerTick = player.getPlayerTick();
 
         check: {
-            if(event.getAction() != InventoryAction.MOVE_TO_OTHER_INVENTORY
+            if(event.getWindowClickType() != WrapperPlayClientClickWindow.WindowClickType.QUICK_MOVE
                     || lastClick == 0 || lastClickPT == 0) {
                 break check;
             }

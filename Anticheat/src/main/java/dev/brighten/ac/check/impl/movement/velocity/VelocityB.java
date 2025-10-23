@@ -1,6 +1,8 @@
 package dev.brighten.ac.check.impl.movement.velocity;
 
 import com.github.retrooper.packetevents.protocol.player.ClientVersion;
+import com.github.retrooper.packetevents.protocol.potion.PotionTypes;
+import com.github.retrooper.packetevents.util.Vector3i;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerFlying;
 import dev.brighten.ac.api.check.CheckType;
 import dev.brighten.ac.check.Check;
@@ -12,12 +14,10 @@ import dev.brighten.ac.utils.BlockUtils;
 import dev.brighten.ac.utils.KLocation;
 import dev.brighten.ac.utils.MathUtils;
 import dev.brighten.ac.utils.annotation.Bind;
-import com.github.retrooper.packetevents.util.Vector3i;
 import dev.brighten.ac.utils.timer.Timer;
 import dev.brighten.ac.utils.timer.impl.TickTimer;
 import lombok.val;
 import me.hydro.emulator.util.mcp.MathHelper;
-import org.bukkit.potion.PotionEffectType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -61,7 +61,7 @@ public class VelocityB extends Check {
             val underBlockLoc = previousFrom != null
                     ? player.getMovement().getFrom().getLoc() : player.getMovement().getTo().getLoc();
 
-            WrappedBlock underMaterial = player.getBlockUpdateHandler()
+            WrappedBlock underMaterial = player.getWorldTracker()
                     .getBlock(new Vector3i(MathHelper.floor_double(underBlockLoc.getX()),
                             MathHelper.floor_double(underBlockLoc.getY() - 1),
                             MathHelper.floor_double(underBlockLoc.getZ())));
@@ -87,8 +87,8 @@ public class VelocityB extends Check {
             double pmotionx = 0, pmotionz = 0;
             boolean onGround = player.getMovement().getFrom().isOnGround();
 
-            val speed = player.getPotionHandler().getEffectByType(PotionEffectType.SPEED);
-            val slow = player.getPotionHandler().getEffectByType(PotionEffectType.SLOW);
+            val speed = player.getPotionHandler().getEffectByType(PotionTypes.SPEED);
+            val slow = player.getPotionHandler().getEffectByType(PotionTypes.SLOWNESS);
 
             for (Iteration iteration : iterations) {
                 float forward = iteration.f, strafe = iteration.s;
@@ -98,7 +98,8 @@ public class VelocityB extends Check {
                     strafe *= 0.3F;
                 }
 
-                float friction = BlockUtils.getMaterialFriction(player, underMaterial.getBlockState().getType());
+                float friction = BlockUtils.getFriction(player.getPlayerVersion(),
+                        underMaterial.getBlockState().getType());
 
                 if (iteration.using) {
                     forward *= 0.2F;
@@ -109,7 +110,7 @@ public class VelocityB extends Check {
                 forward *= 0.9800000190734863F;
                 strafe *= 0.9800000190734863F;
 
-                double aiMoveSpeed = player.getBukkitPlayer().getWalkSpeed() / 2;
+                double aiMoveSpeed = player.getInfo().getWalkSpeed() / 2;
 
                 float drag = 0.91f;
                 double lmotionX = pvX,
@@ -138,9 +139,9 @@ public class VelocityB extends Check {
                     aiMoveSpeed += aiMoveSpeed * 0.30000001192092896D;
 
                 if (speed.isPresent())
-                    aiMoveSpeed += (speed.get().getAmplifier() + 1) * 0.20000000298023224D * aiMoveSpeed;
+                    aiMoveSpeed += (speed.get().properties().amplifier() + 1) * 0.20000000298023224D * aiMoveSpeed;
                 if (slow.isPresent())
-                    aiMoveSpeed += (slow.get().getAmplifier() + 1) * -0.15000000596046448D * aiMoveSpeed;
+                    aiMoveSpeed += (slow.get().properties().amplifier() + 1) * -0.15000000596046448D * aiMoveSpeed;
 
                 float f5;
                 if (onGround) {

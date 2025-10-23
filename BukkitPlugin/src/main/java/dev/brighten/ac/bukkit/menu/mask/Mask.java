@@ -1,0 +1,17 @@
+package dev.brighten.ac.bukkit.menu.mask;
+
+import dev.brighten.ac.bukkit.menu.Menu;
+import dev.brighten.ac.bukkit.menu.button.Button;
+
+/**
+ * @author Missionary (missionarymc@gmail.com)
+ * @since 5/17/2018
+ */
+public interface Mask {
+
+    Mask setButton(char key, Button button);
+
+    Mask setMaskPattern(String... maskPattern);
+
+    void applyTo(Menu menu);
+}

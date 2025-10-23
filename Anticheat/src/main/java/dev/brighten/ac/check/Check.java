@@ -1,5 +1,6 @@
 package dev.brighten.ac.check;
 
+import com.viaversion.viaversion.libs.mcstructs.text.events.hover.HoverEvent;
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.api.AnticheatAPI;
 import dev.brighten.ac.api.check.CheckType;
@@ -13,10 +14,11 @@ import dev.brighten.ac.utils.*;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.val;
-import net.md_5.bungee.api.ChatColor;
-import net.md_5.bungee.api.chat.*;
-import org.bukkit.Bukkit;
-import org.bukkit.Location;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.ComponentBuilder;
+import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextColor;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -86,11 +88,9 @@ public class Check implements ECheck {
         } else {
             player.getInfo().getLastCancel().reset();
 
-            final Location ground = player.getInfo().isServerGround()
+            final KLocation ground = player.getInfo().isServerGround()
                     ? player.getMovement().getFrom().getLoc()
-                    .toLocation(player.getBukkitPlayer().getWorld())
-                    : MovementUtils.findGroundLocation(player.getMovement().getFrom().getLoc()
-                    .toLocation(player.getBukkitPlayer().getWorld()), 10);
+                    : MovementUtils.findGroundLocation(player, player.getMovement().getFrom().getLoc(), 10);
 
             Anticheat.INSTANCE.getRunUtils().task(() -> player.getBukkitPlayer().teleport(ground));
         }
@@ -109,7 +109,7 @@ public class Check implements ECheck {
 
         player.getInfo().getLastCancel().reset();
 
-        final Location CORRECTED = toLoc.toLocation(player.getBukkitPlayer().getWorld());
+        final Location CORRECTED = toLoc;
 
         Anticheat.INSTANCE.getRunUtils().task(() -> player.getBukkitPlayer().teleport(CORRECTED));
     }
@@ -126,10 +126,10 @@ public class Check implements ECheck {
                 if(!toDebug.equals(player.getUuid())) continue;
 
                 ComponentBuilder builder = new ComponentBuilder("[ " + getName() + ": " + player.getBukkitPlayer().getName() + "] ")
-                        .color(ChatColor.RED);
+                        .color(NamedTextColor.RED);
 
                 BaseComponent[] message =
-                        builder.append(String.format(information, variables)).color(ChatColor.GRAY).create();
+                        builder.append(String.format(information, variables)).color(NamedTextColor.GRAY).create();
 
                 Anticheat.INSTANCE.getPlayerRegistry().getPlayer(tuple.two)
                         .ifPresent(player -> player.getBukkitPlayer().spigot().sendMessage(message));
@@ -147,27 +147,23 @@ public class Check implements ECheck {
         return Optional.empty();
     }
 
-    static final TextComponent[] devComponents, components;
+    static final Component devComponents, components;
     static {
-        List<TextComponent> devList = new ArrayList<>(), flagList = new ArrayList<>();
-        for (BaseComponent dev : new ComponentBuilder("[").color(ChatColor.DARK_GRAY).append("Dev")
-                .color(ChatColor.RED).append("]").color(ChatColor.DARK_GRAY).create()) {
-            devList.add((TextComponent)dev);
-        }
+        Component textComp = Component.text("[").color(NamedTextColor.DARK_GRAY)
+                .append(Component.text("!").color(NamedTextColor.DARK_RED))
+                .append(Component.text("]").color(NamedTextColor.DARK_GRAY))
+                .append(Component.text(" %player%").color(NamedTextColor.WHITE))
+                .append(Component.text(" flagged").color(NamedTextColor.GRAY))
+                .append(Component.text(" %check%").color(NamedTextColor.WHITE))
+                .append(Component.text(" (").color(NamedTextColor.DARK_GRAY))
+                .append(Component.text("x%vl%").color(NamedTextColor.YELLOW))
+                .append(Component.text(")").color(NamedTextColor.DARK_GRAY));
 
-        BaseComponent[] textComp = new ComponentBuilder("[").color(ChatColor.DARK_GRAY).append("!")
-                .color(ChatColor.DARK_RED).append("]").color(ChatColor.DARK_GRAY).append(" %player%")
-                .color(ChatColor.WHITE).append(" flagged").color(ChatColor.GRAY).append(" %check%")
-                .color(ChatColor.WHITE).append(" (").color(ChatColor.DARK_GRAY).append("x%vl%")
-                .color(ChatColor.YELLOW).append(")").color(ChatColor.DARK_GRAY).create();
+        devComponents = Component.text("[").color(NamedTextColor.DARK_GRAY)
+                .append(Component.text("Dev").color(NamedTextColor.RED))
+                .append(Component.text("] ").color(NamedTextColor.DARK_GRAY)).append(textComp);
 
-        for (BaseComponent bc : textComp) {
-            devList.add(new TextComponent((TextComponent)bc));
-            flagList.add(new TextComponent((TextComponent)bc));
-        }
-
-        devComponents = devList.toArray(new TextComponent[0]);
-        components = flagList.toArray(new TextComponent[0]);
+        components = textComp;
     }
 
     public void flag(String information, Object... variables) {
@@ -201,17 +197,15 @@ public class Check implements ECheck {
            if(player.getCheckHandler().getAlertCount().incrementAndGet() < 80) {
                //Sending Discord webhook alert
 
-               List<BaseComponent> toSend = new ArrayList<>();
-
                for (TextComponent tc : components) {
                    TextComponent ntc = new TextComponent(tc);
                    ntc.setText(formatAlert(tc.getText(), info));
 
                    ntc.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder("Description:")
-                           .color(ChatColor.YELLOW)
-                           .append(formatAlert(" %desc%\n", info)).color(ChatColor.WHITE).append("Info:")
-                           .color(ChatColor.YELLOW)
-                           .append(formatAlert(" %info%\n", info)).color(ChatColor.WHITE)
+                           .color(NamedTextColor.YELLOW)
+                           .append(formatAlert(" %desc%\n", info)).color(NamedTextColor.WHITE).append("Info:")
+                           .color(NamedTextColor.YELLOW)
+                           .append(formatAlert(" %info%\n", info)).color(NamedTextColor.WHITE)
                            .append("\n").append("Click to teleport to player")
                            .create()));
                    ntc.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND,

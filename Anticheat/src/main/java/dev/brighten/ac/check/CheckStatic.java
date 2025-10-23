@@ -1,6 +1,5 @@
 package dev.brighten.ac.check;
 
-import com.github.retrooper.packetevents.wrapper.PacketWrapper;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.utils.Tuple;
 import dev.brighten.ac.utils.annotation.Bind;
@@ -8,8 +7,6 @@ import dev.brighten.ac.utils.reflections.types.WrappedClass;
 import dev.brighten.ac.utils.reflections.types.WrappedConstructor;
 import dev.brighten.ac.utils.reflections.types.WrappedField;
 import lombok.Getter;
-import org.bukkit.Bukkit;
-import org.bukkit.event.Event;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -39,25 +36,11 @@ public class CheckStatic {
                     && !WTimedAction.class.isAssignableFrom(field.getType())) continue;
 
             Type genericType = field.getField().getGenericType();
-            Type type = null;
+            Type type;
 
             if(genericType instanceof ParameterizedType) {
                 type = ((ParameterizedType) genericType).getActualTypeArguments()[0];
             } else type = genericType;
-
-            if(type == null) {
-                Bukkit.getLogger().warning("Could not get type for field " + field.getField().getName()
-                        + " in class " + checkClass.getClass().getSimpleName());
-
-                continue;
-            }
-
-            if(!PacketWrapper.class.isAssignableFrom((Class<?>) type)
-                    && !Event.class.isAssignableFrom((Class<?>) type)) {
-                Bukkit.getLogger().warning("Type " + ((Class<?>) type).getSimpleName() + " is not a valid type for field "
-                        + field.getField().getName() + " in class " + checkClass.getClass().getSimpleName());
-                continue;
-            }
 
             if(field.getType().equals(WAction.class)) {
                 actions.add(new Tuple<>(field, (Class<?>)type));

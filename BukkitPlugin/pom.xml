@@ -171,6 +171,10 @@
             <id>funkemunky-releases</id>
             <url>https://nexus.funkemunky.cc/repository/releases/</url>
         </repository>
+        <repository>
+            <id>aikar</id>
+            <url>https://repo.aikar.co/content/groups/aikar/</url>
+        </repository>
     </repositories>
 
     <dependencies>
@@ -180,6 +184,12 @@
             <artifactId>spigot-api</artifactId>
             <version>1.21.5-R0.1-SNAPSHOT</version>
             <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>net.kyori</groupId>
+            <artifactId>adventure-platform-bukkit</artifactId>
+            <version>4.4.1</version>
+            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>com.github.retrooper</groupId>

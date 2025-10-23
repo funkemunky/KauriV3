@@ -4,6 +4,7 @@ import com.github.retrooper.packetevents.protocol.entity.type.EntityType;
 import com.github.retrooper.packetevents.protocol.entity.type.EntityTypes;
 import com.github.retrooper.packetevents.protocol.particle.type.ParticleTypes;
 import com.github.retrooper.packetevents.protocol.player.ClientVersion;
+import com.github.retrooper.packetevents.util.Vector3d;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientInteractEntity;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerFlying;
 import dev.brighten.ac.Anticheat;
@@ -19,7 +20,6 @@ import dev.brighten.ac.utils.timer.Timer;
 import dev.brighten.ac.utils.timer.impl.TickTimer;
 import dev.brighten.ac.utils.world.EntityData;
 import dev.brighten.ac.utils.world.types.SimpleCollisionBox;
-import org.bukkit.util.Vector;
 
 import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -46,7 +46,7 @@ public class Hitbox extends Check {
         if(packet.getAction() != WrapperPlayClientInteractEntity.InteractAction.ATTACK)
             return;
 
-        Optional<TrackedEntity> entity = player.getEntityLocationHandler().getTrackedEntity(packet.getEntityId());
+        Optional<TrackedEntity> entity = player.getWorldTracker().getCurrentWorld().get().getTrackedEntity(packet.getEntityId());
         if(entity.isEmpty() || !allowedEntityTypes.contains(entity.get().getEntityType())) return;
 
         attacks.add(new Tuple<>(entity.get(),
@@ -92,20 +92,20 @@ public class Hitbox extends Check {
             if(entity.getOldEntityLocation() != null) {
                 for (KLocation oldLocation : entity.getNewEntityLocation().interpolatedLocations) {
                     SimpleCollisionBox box = (SimpleCollisionBox)
-                            EntityData.getEntityBox(oldLocation.toLocation(player.getBukkitPlayer().getWorld()), target.one);
+                            EntityData.getEntityBox(oldLocation, target.one);
 
                     boxes.add(box.expand(expand));
                 }
                 for (KLocation oldLocation : entity.getOldEntityLocation().interpolatedLocations) {
                     SimpleCollisionBox box = (SimpleCollisionBox)
-                            EntityData.getEntityBox(oldLocation.toLocation(player.getBukkitPlayer().getWorld()), target.one);
+                            EntityData.getEntityBox(oldLocation, target.one);
 
                     boxes.add(box.expand(expand));
                 }
             } else {
                 for (KLocation oldLocation : entity.getNewEntityLocation().interpolatedLocations) {
                     SimpleCollisionBox box = (SimpleCollisionBox)
-                            EntityData.getEntityBox(oldLocation.toLocation(player.getBukkitPlayer().getWorld()), target.one);
+                            EntityData.getEntityBox(oldLocation, target.one);
 
                     boxes.add(box.expand(expand));
                 }
@@ -118,7 +118,7 @@ public class Hitbox extends Check {
             boolean didSneakOrElytra = player.getInfo().getLastSneak().isNotPassed(40)
                     || player.getInfo().getLastElytra().isNotPassed(40);
 
-            List<Vector> directions = new ArrayList<>(Arrays.asList(MathUtils.getDirection(
+            List<Vector3d> directions = new ArrayList<>(Arrays.asList(MathUtils.getDirection(
                             player.getMovement().getTo().getLoc().getYaw(),
                             player.getMovement().getTo().getLoc().getPitch()),
                     MathUtils.getDirection(player.getMovement().getFrom().getLoc().getYaw(),
@@ -126,7 +126,7 @@ public class Hitbox extends Check {
 
             if(!didSneakOrElytra) {
                 to.add(0, 1.62f, 0);
-                for (Vector direction : directions) {
+                for (Vector3d direction : directions) {
                     for (SimpleCollisionBox targetBox : boxes) {
                         final AxisAlignedBB vanillaBox = new AxisAlignedBB(targetBox);
 
@@ -143,7 +143,7 @@ public class Hitbox extends Check {
                 }
                 //Checking all possible eyeheights since client actions notoriously desync from the server side
             } else {
-                for (Vector direction : directions) {
+                for (Vector3d direction : directions) {
                     for (double eyeHeight : player.getMovement().getEyeHeights()) {
                         for (SimpleCollisionBox targetBox : boxes) {
                             final AxisAlignedBB vanillaBox = new AxisAlignedBB(targetBox);
@@ -180,7 +180,7 @@ public class Hitbox extends Check {
 
                 debug("buffer: %.3f distance=%.2f hits=%s sneaking=%s", buffer, distance, hits,
                         player.getInfo().isSneaking());
-            } else if(player.getEntityLocationHandler().streak > 1) {
+            } else if(player.getEntityTrackHandler().streak > 1) {
                 if (++hbuffer > 5) {
                     flag("%.1f;%.1f;%.1f", entity.getNewEntityLocation().x, entity.getNewEntityLocation().y, entity.getNewEntityLocation().z);
                 }

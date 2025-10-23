@@ -53,7 +53,7 @@ public class DoorHandler implements CollisionFactory {
                 Vector3i aboveVec = door.getLocation().clone();
 
                 aboveVec.setY(aboveVec.getY() + 1);
-                WrappedBlockState above = player.getBlockUpdateHandler().getBlock(aboveVec).getBlockState();
+                WrappedBlockState above = player.getWorldTracker().getBlock(aboveVec).getBlockState();
 
                 facingDirection = door.getBlockState().getFacing();
                 isClosed = !door.getBlockState().isOpen();
@@ -70,7 +70,7 @@ public class DoorHandler implements CollisionFactory {
                 Vector3i belowVec = door.getLocation().clone();
 
                 belowVec.setY(belowVec.getY() - 1);
-                WrappedBlockState below = player.getBlockUpdateHandler().getBlock(belowVec).getBlockState();
+                WrappedBlockState below = player.getWorldTracker().getBlock(belowVec).getBlockState();
 
                 if (below.getType() == door.getBlockState().getType() && below.getHalf() == Half.LOWER) {
                     isClosed = !below.isOpen();

@@ -1,6 +1,7 @@
 package dev.brighten.ac.check.impl.movement;
 
 import com.github.retrooper.packetevents.protocol.teleport.RelativeFlag;
+import com.github.retrooper.packetevents.util.Vector3d;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerFlying;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerPositionAndLook;
 import dev.brighten.ac.Anticheat;
@@ -13,12 +14,9 @@ import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.utils.Helper;
 import dev.brighten.ac.utils.KLocation;
 import dev.brighten.ac.utils.Materials;
-import dev.brighten.ac.utils.MiscUtils;
 import dev.brighten.ac.utils.annotation.Bind;
 import dev.brighten.ac.utils.objects.evicting.EvictingSet;
 import dev.brighten.ac.utils.world.types.SimpleCollisionBox;
-import org.bukkit.Location;
-import org.bukkit.util.Vector;
 
 import java.util.List;
 import java.util.Set;
@@ -32,8 +30,8 @@ public class Phase extends Check {
     }
 
     private int ticks;
-    private final Set<Vector> POSITIONS = new EvictingSet<>(10);
-    private Location teleportLoc = null;
+    private final Set<Vector3d> POSITIONS = new EvictingSet<>(10);
+    private KLocation teleportLoc = null;
 
     @Bind
     WAction<WrapperPlayServerPlayerPositionAndLook> positionOut = packet -> {
@@ -87,9 +85,10 @@ public class Phase extends Check {
         } else if(player.getMovement().getMoveTicks() > 0 && player.getMovement().getTeleportsToConfirm() == 0) {
             POSITIONS.clear();
         } else if(teleportLoc != null) {
-            final Location finalLoc = teleportLoc.clone(); // This is to make sure it isn't set null later.
+            final KLocation finalLoc = teleportLoc.clone(); // This is to make sure it isn't set null later.
             if(isCancellable()) {
-                Anticheat.INSTANCE.getRunUtils().task(() -> player.getBukkitPlayer().teleport(finalLoc));
+                Anticheat.INSTANCE.getRunUtils().task(() -> player.getBukkitPlayer()
+                        .teleport(finalLoc));
             }
             return true;
         }
@@ -97,11 +96,11 @@ public class Phase extends Check {
         if(player.getMovement().getFrom().getLoc().distanceSquared(player.getMovement().getTo().getLoc()) > 400) {
             Anticheat.INSTANCE.getLogger().log(Level.INFO, player.getBukkitPlayer().getName() + " moved too fast!");
             // This is to make sure it isn't set null later.
-            final Location fromLoc = player.getMovement().getFrom().getLoc()
-                    .toLocation(player.getBukkitPlayer().getWorld());
+            final KLocation fromLoc = player.getMovement().getFrom().getLoc();
 
             if(isCancellable()) {
-                Anticheat.INSTANCE.getRunUtils().task(() -> player.getBukkitPlayer().teleport(fromLoc));
+                Anticheat.INSTANCE.getRunUtils().task(() -> player.getBukkitPlayer()
+                        .teleport(fromLoc));
             }
             return true;
         }
@@ -142,11 +141,7 @@ public class Phase extends Check {
 
         if(totalDelta > 0.0001) {
             if(isCancellable()) {
-                Anticheat.INSTANCE.getRunUtils().task(() -> {
-                    teleportLoc = calculatedTo
-                            .toLocation(player.getBukkitPlayer().getWorld());
-                    player.getBukkitPlayer().teleport(teleportLoc);
-                });
+                Anticheat.INSTANCE.getRunUtils().task(() -> player.getBukkitPlayer().teleport(calculatedTo));
             }
             flag("x=%.4f, y=%.4f, z=%.4f", dx, dy, dz);
         }

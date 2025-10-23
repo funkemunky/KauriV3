@@ -10,7 +10,6 @@ import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.handler.block.WrappedBlock;
 import dev.brighten.ac.utils.KLocation;
-import dev.brighten.ac.utils.MathUtils;
 import dev.brighten.ac.utils.Tuple;
 import dev.brighten.ac.utils.annotation.Bind;
 import dev.brighten.ac.utils.math.cond.MaxDouble;
@@ -35,7 +34,7 @@ public class BlockA extends Check {
     WAction<WrapperPlayClientPlayerBlockPlacement> blockPlace = packet -> {
         Vector3d loc = packet.getBlockPosition().toVector3d();
 
-        WrappedBlock block = player.getBlockUpdateHandler().getBlock(loc);
+        WrappedBlock block = player.getWorldTracker().getBlock(loc);
 
         CollisionBox box = BlockData.getData(block.getType()).getBox(player, block, player.getPlayerVersion());
 

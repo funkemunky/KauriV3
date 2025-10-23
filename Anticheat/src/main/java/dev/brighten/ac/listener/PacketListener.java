@@ -2,6 +2,7 @@ package dev.brighten.ac.listener;
 
 import com.github.retrooper.packetevents.event.PacketReceiveEvent;
 import com.github.retrooper.packetevents.event.PacketSendEvent;
+import com.github.retrooper.packetevents.event.UserDisconnectEvent;
 import com.github.retrooper.packetevents.event.UserLoginEvent;
 import com.github.retrooper.packetevents.protocol.player.User;
 import dev.brighten.ac.Anticheat;
@@ -15,6 +16,11 @@ public class PacketListener implements com.github.retrooper.packetevents.event.P
     @Override
     public void onUserLogin(UserLoginEvent event) {
         APlayer player = Anticheat.INSTANCE.getPlayerRegistry().generate(event.getPlayer());
+    }
+
+    @Override
+    public void onUserDisconnect(UserDisconnectEvent event) {
+        Anticheat.INSTANCE.getPlayerRegistry().unregister(event.getUser().getUUID());
     }
 
     @Override

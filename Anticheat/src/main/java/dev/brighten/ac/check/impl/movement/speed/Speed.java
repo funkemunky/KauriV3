@@ -1,6 +1,7 @@
 package dev.brighten.ac.check.impl.movement.speed;
 
 import com.github.retrooper.packetevents.protocol.player.ClientVersion;
+import com.github.retrooper.packetevents.protocol.potion.PotionTypes;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerFlying;
 import dev.brighten.ac.api.check.CheckType;
 import dev.brighten.ac.check.Check;
@@ -10,9 +11,7 @@ import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.utils.BlockUtils;
 import dev.brighten.ac.utils.PlayerUtils;
 import dev.brighten.ac.utils.TagsBuilder;
-import dev.brighten.ac.utils.XMaterial;
 import dev.brighten.ac.utils.annotation.Bind;
-import org.bukkit.potion.PotionEffectType;
 
 @CheckData(name = "Speed", checkId = "speeda", type = CheckType.MOVEMENT)
 public class Speed extends Check {
@@ -32,16 +31,16 @@ public class Speed extends Check {
             float drag = friction;
 
             TagsBuilder tags = new TagsBuilder();
-            float moveFactor = player.getBukkitPlayer().getWalkSpeed() / 2f;
+            float moveFactor = (float)player.getInfo().getWalkSpeed() / 2f;
 
             moveFactor+= (float) (moveFactor * 0.30000001192092896D);
 
-            if(player.getPotionHandler().hasPotionEffect(PotionEffectType.SPEED))
-                moveFactor += (float) ((PlayerUtils.getPotionEffectLevel(player.getBukkitPlayer(), PotionEffectType.SPEED)
+            if(player.getPotionHandler().hasPotionEffect(PotionTypes.SPEED))
+                moveFactor += (float) ((PlayerUtils.getPotionEffectLevel(player.getBukkitPlayer(), PotionTypes.SPEED)
                                         * (0.200000000298023224D)) * moveFactor);
 
-            if(player.getPotionHandler().hasPotionEffect(PotionEffectType.SLOW))
-                moveFactor += (float) ((PlayerUtils.getPotionEffectLevel(player.getBukkitPlayer(), PotionEffectType.SLOW)
+            if(player.getPotionHandler().hasPotionEffect(PotionTypes.SLOWNESS))
+                moveFactor += (float) ((PlayerUtils.getPotionEffectLevel(player.getBukkitPlayer(), PotionTypes.SLOWNESS)
                                         * (-0.15000000596046448D)) * moveFactor);
 
             if (player.getMovement().getFrom().isOnGround()) {
@@ -134,12 +133,8 @@ public class Speed extends Check {
             ldxz = player.getMovement().getDeltaXZ() * drag;
         }
         friction = BlockUtils
-                .getFriction(
-                        BlockUtils.getBlockAsync(player.getMovement()
-                                .getTo().getLoc().clone().subtract(0, 1, 0).toLocation(
-                                        player.getBukkitPlayer().getWorld()))
-                                .map(b -> XMaterial.matchXMaterial(b.getType()))
-                                .orElse(XMaterial.STONE));
+                .getFriction(player.getPlayerVersion(), player.getWorldTracker().getBlock(player.getMovement()
+                                .getTo().getLoc().clone().subtract(0, 1, 0)).getType());
     };
 
     public Speed(APlayer player) {

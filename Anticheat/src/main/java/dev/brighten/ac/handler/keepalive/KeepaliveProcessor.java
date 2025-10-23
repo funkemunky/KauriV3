@@ -49,7 +49,7 @@ public class KeepaliveProcessor {
                 double dh = Math.min(value.getMovement().getDeltaXZ(), 1),
                         dy = Math.min(1, Math.abs(value.getMovement().getDeltaY()));
 
-                value.getInfo().nearbyEntities = value.getEntityLocationHandler().getTrackedEntities().values()
+                value.getInfo().nearbyEntities = value.getEntityTrackHandler().getTrackedEntities().values()
                         .stream()
                         .filter(te ->
                                 te.getLocation().distance(value.getMovement().getTo().getLoc()) < (2 + (dh + dy) / 2))

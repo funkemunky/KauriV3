@@ -1,17 +1,14 @@
 package dev.brighten.ac.gui;
 
+import com.github.retrooper.packetevents.protocol.item.ItemStack;
 import dev.brighten.ac.Anticheat;
+import dev.brighten.ac.api.platform.KauriPlayer;
 import dev.brighten.ac.logging.Log;
 import dev.brighten.ac.utils.*;
 import dev.brighten.ac.utils.menu.button.Button;
 import dev.brighten.ac.utils.menu.button.UpdatingButton;
 import dev.brighten.ac.utils.menu.type.impl.ChestMenu;
 import dev.brighten.ac.utils.menu.type.impl.PagedMenu;
-import org.apache.commons.lang.time.DateFormatUtils;
-import org.bukkit.Material;
-import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.*;
 
@@ -47,7 +44,7 @@ public class Logs extends PagedMenu {
 
     private final List<Log> logs = new ArrayList<>();
 
-    private void showFilterMenu(Player player) {
+    private void showFilterMenu(KauriPlayer player) {
         ChestMenu filterMenu = new ChestMenu(Color.Gold + "Filter Logs", 4);
 
         this.close(player);

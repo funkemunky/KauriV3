@@ -6,6 +6,7 @@ import com.github.retrooper.packetevents.util.Vector3i;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerBlockPlacement;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerFlying;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerBlockChange;
+import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.api.check.CheckType;
 import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
@@ -14,12 +15,12 @@ import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.handler.block.WrappedBlock;
 import dev.brighten.ac.utils.KLocation;
 import dev.brighten.ac.utils.annotation.Bind;
-import com.github.retrooper.packetevents.util.Vector3i;
 import dev.brighten.ac.utils.timer.Timer;
 import dev.brighten.ac.utils.timer.impl.TickTimer;
 import dev.brighten.ac.utils.world.BlockData;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 @CheckData(name = "Block (D)", checkId = "blockc", type = CheckType.INTERACT)
 public class BlockD extends Check {
@@ -45,7 +46,7 @@ public class BlockD extends Check {
                 packet.getFace().getModY(),
                 packet.getFace().getModZ());
 
-        WrappedBlock block = new WrappedBlock(new Vector3i(packet.getBlockPosition()),
+        WrappedBlock block = new WrappedBlock(packet.getBlockPosition(),
                 placedType,
                 WrappedBlockState.getDefaultState(placedType));
         blockPlaceLocations.put(blockpos, block);
@@ -99,7 +100,7 @@ public class BlockD extends Check {
 
             if(flags++ > 5) {
                 debug("Flagging!");
-                player.getBukkitPlayer().teleport(originalLocation.toLocation(player.getBukkitPlayer().getWorld()));
+                Anticheat.INSTANCE.getRunUtils().task(() -> player.getBukkitPlayer().teleport(originalLocation));
                 reset();
             }
             debug("vl=%s | Movement: %.3f | Block Overwritten: %d | Collided: %b",

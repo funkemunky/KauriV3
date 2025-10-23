@@ -63,7 +63,7 @@ public class BBRevealHandler implements Listener {
                         .create());
             } else {
                 blocksToShow.add(blockLoc);
-                WrappedBlock block = player.getBlockUpdateHandler().getBlock(blockLoc);
+                WrappedBlock block = player.getWorldTracker().getBlock(blockLoc);
                 event.getPlayer().spigot().sendMessage(new ComponentBuilder("Now showing block: ")
                         .color(ChatColor.GREEN).color(ChatColor.WHITE).append(event.getClickedBlock().getType().name())
                         .color(ChatColor.GRAY)
@@ -107,7 +107,7 @@ public class BBRevealHandler implements Listener {
                 if(player.isEmpty()) return;
 
                 blocks.forEach(blockLoc -> {
-                    var block = player.get().getBlockUpdateHandler().getBlock(blockLoc);
+                    var block = player.get().getWorldTracker().getBlock(blockLoc);
 
                     var blockBox = BlockData.getData(block.getType())
                             .getBox(player.get(), blockLoc, player.get().getPlayerVersion());

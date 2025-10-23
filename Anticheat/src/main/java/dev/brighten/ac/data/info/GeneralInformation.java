@@ -46,6 +46,7 @@ public class GeneralInformation {
     public List<Vector3d> velocityHistory = Collections.synchronizedList(new EvictingList<>(5));
     public List<PlayerCapabilities> possibleCapabilities = new ArrayList<>();
     private int clientGroundTicks, clientAirTicks;
+    private double walkSpeed;
     private PlayerInput playerInput = PlayerInput.NONE;
     private Pose pose = Pose.STANDING;
 }

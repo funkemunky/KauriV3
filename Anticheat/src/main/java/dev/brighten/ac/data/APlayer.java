@@ -22,7 +22,7 @@ import dev.brighten.ac.data.info.LagInformation;
 import dev.brighten.ac.data.obj.InstantAction;
 import dev.brighten.ac.data.obj.NormalAction;
 import dev.brighten.ac.data.obj.Pose;
-import dev.brighten.ac.handler.EntityLocationHandler;
+import dev.brighten.ac.handler.EntityTrackHandler;
 import dev.brighten.ac.handler.MovementHandler;
 import dev.brighten.ac.handler.PotionHandler;
 import dev.brighten.ac.handler.VelocityHandler;
@@ -69,10 +69,10 @@ public class APlayer {
     private VelocityHandler velocityHandler;
 
     @Getter
-    private EntityLocationHandler entityLocationHandler;
+    private EntityTrackHandler entityTrackHandler;
 
     @Getter
-    private BlockUpdateHandler blockUpdateHandler;
+    private BlockUpdateHandler worldTracker;
 
     @Getter
     private CheckHandler checkHandler;
@@ -132,8 +132,8 @@ public class APlayer {
         this.movement = new MovementHandler(this);
         this.potionHandler = new PotionHandler(this);
         this.velocityHandler = new VelocityHandler(this);
-        this.entityLocationHandler = new EntityLocationHandler(this);
-        this.blockUpdateHandler = new BlockUpdateHandler(this);
+        this.entityTrackHandler = new EntityTrackHandler(this);
+        this.worldTracker = new BlockUpdateHandler(this);
         this.checkHandler = new CheckHandler(this);
         this.info = new GeneralInformation();
         this.lagInfo = new LagInformation();
@@ -177,8 +177,7 @@ public class APlayer {
                 @Override
                 public Block getBlockAt(BlockPos blockPos) {
                     //Optional<org.bukkit.block.Block>
-                    var block = APlayer.this.getBlockUpdateHandler()
-                            .getBlock(blockPos.getX(), blockPos.getY(), blockPos.getZ());
+                    var block = APlayer.this.getWorldTracker().getBlock(blockPos.getX(), blockPos.getY(), blockPos.getZ());
 
                     StateType type = block.getType();
 

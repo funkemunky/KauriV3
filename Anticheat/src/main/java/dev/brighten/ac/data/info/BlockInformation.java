@@ -128,7 +128,7 @@ public class BlockInformation {
                         }
 
                         final StateType type =
-                                player.getBlockUpdateHandler().getBlock(new Vector3i(x, y, z)).getType();
+                                player.getWorldTracker().getBlock(new Vector3i(x, y, z)).getType();
 
                         if (type != StateTypes.AIR) {
 

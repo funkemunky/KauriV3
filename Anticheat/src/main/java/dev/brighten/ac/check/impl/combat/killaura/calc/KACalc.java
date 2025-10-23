@@ -14,7 +14,7 @@ import dev.brighten.ac.utils.MathUtils;
 import dev.brighten.ac.utils.Tuple;
 import dev.brighten.ac.utils.annotation.Bind;
 import dev.brighten.ac.utils.objects.evicting.EvictingList;
-import org.bukkit.util.Vector;
+import com.github.retrooper.packetevents.util.Vector3d;
 
 import java.util.List;
 import java.util.Optional;
@@ -31,7 +31,7 @@ public class KACalc extends KListener {
     @Bind
     WAction<WrapperPlayClientPlayerFlying> flying = packet -> {
         if(player.getInfo().getTarget() == null || player.getInfo().lastAttack.isPassed(40)) return;
-        Optional<TrackedEntity> optional = player.getEntityLocationHandler()
+        Optional<TrackedEntity> optional = player.getWorldTracker().getCurrentWorld().get()
                 .getTrackedEntity(player.getInfo().getTarget().getEntityId());
 
         if(optional.isEmpty()) return;
@@ -41,12 +41,12 @@ public class KACalc extends KListener {
         if(location == null) {
             return;
         }
-        Vector current = location.getCurrentIteration();
+        Vector3d current = location.getCurrentIteration();
 
         KLocation originKLoc = player.getMovement().getTo().getLoc().clone()
                 .add(0, player.getInfo().isSneaking() ? 1.54f : 1.62f, 0);
 
-        double halfHeight = player.getInfo().getTarget().getEyeHeight() / 2;
+        double halfHeight = player.getInfo().getTarget().getPose().eyeHeight / 2;
         KLocation targetLocation = new KLocation(current.getX(), current.getY(), current.getZ());
         var rotations = MathUtils
                 .getRotation(originKLoc, targetLocation.clone().add(0, halfHeight, 0));

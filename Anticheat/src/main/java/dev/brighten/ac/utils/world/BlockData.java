@@ -364,7 +364,7 @@ public enum BlockData {
     public CollisionBox getBox(APlayer player, Vector3i block, ClientVersion version) {
         if (this.box != null)
             return this.box.copy().offset(block.getX(), block.getY(), block.getZ());
-        return new DynamicCollisionBox(dynamic, player, player.getBlockUpdateHandler().getBlock(block), version)
+        return new DynamicCollisionBox(dynamic, player, player.getWorldTracker().getBlock(block), version)
                 .offset(block.getX(), block.getY(), block.getZ());
     }
 

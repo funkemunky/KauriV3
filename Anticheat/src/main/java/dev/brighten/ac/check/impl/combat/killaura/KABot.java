@@ -29,10 +29,10 @@ public class KABot extends Check {
 
     @Bind
     WAction<WrapperPlayClientInteractEntity> packet = packet -> {
-        val optional = player.getEntityLocationHandler().getTrackedEntity(packet.getEntityId());
+        val optional = player.getEntityTrackHandler().getTrackedEntity(packet.getEntityId());
 
         if(optional.isPresent()
-                && (player.getEntityLocationHandler().clientHasEntity.get()
+                && (player.getEntityTrackHandler().clientHasEntity.get()
                 || !optional.get().getFakeMobs().isEmpty()))  {
             if(++buffer > 3) {
                 flag("Attacked player without attacking bot!");

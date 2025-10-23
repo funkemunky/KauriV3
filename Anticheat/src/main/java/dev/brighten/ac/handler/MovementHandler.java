@@ -3,6 +3,7 @@ package dev.brighten.ac.handler;
 import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.manager.server.ServerVersion;
 import com.github.retrooper.packetevents.protocol.player.ClientVersion;
+import com.github.retrooper.packetevents.protocol.potion.PotionTypes;
 import com.github.retrooper.packetevents.protocol.teleport.RelativeFlag;
 import com.github.retrooper.packetevents.util.Vector3d;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerFlying;
@@ -93,14 +94,8 @@ public class MovementHandler {
         KauriPlayer bplayer = player.getBukkitPlayer();
 
         // Initializing player location
-        to.setWorld(bplayer.getWorld());
-        to.getLoc().setX(bplayer.getLocation().getX());
-        to.getLoc().setY(bplayer.getLocation().getY());
-        to.getLoc().setZ(bplayer.getLocation().getZ());
-        to.getLoc().setYaw(bplayer.getLocation().getYaw());
-        to.getLoc().setPitch(bplayer.getLocation().getPitch());
         to.setBox(new SimpleCollisionBox(to.getLoc(), 0.6, 1.8));
-        to.setOnGround(bplayer.isOnGround());
+        to.setOnGround(false);
 
         // Setting from as same location as to
         from.setLoc(to);
@@ -122,20 +117,20 @@ public class MovementHandler {
          */
         final PotionEffect[] EFFECTS = new PotionEffect[3];
 
-        for (org.bukkit.potion.PotionEffect potionEffect : player.getPotionHandler().getPotionEffects()) {
-            if (potionEffect.getType().equals(PotionEffectType.SPEED)) {
+        for (KPotionEffect potionEffect : player.getPotionHandler().getPotionEffects()) {
+            if (potionEffect.potionType().equals(PotionTypes.SPEED)) {
                 EFFECTS[0] = PotionEffect.builder()
-                        .amplifier(potionEffect.getAmplifier())
+                        .amplifier(potionEffect.properties().amplifier())
                         .type(me.hydro.emulator.util.PotionEffectType.SPEED)
                         .build();
-            } else if (potionEffect.getType().equals(PotionEffectType.SLOW)) {
+            } else if (potionEffect.potionType().equals(PotionTypes.SLOWNESS)) {
                 EFFECTS[1] = PotionEffect.builder()
-                        .amplifier(potionEffect.getAmplifier())
+                        .amplifier(potionEffect.properties().amplifier())
                         .type(me.hydro.emulator.util.PotionEffectType.SLOW)
                         .build();
-            } else if (potionEffect.getType().equals(PotionEffectType.JUMP)) {
+            } else if (potionEffect.potionType().equals(PotionTypes.JUMP_BOOST)) {
                 EFFECTS[2] = PotionEffect.builder()
-                        .amplifier(potionEffect.getAmplifier())
+                        .amplifier(potionEffect.properties().amplifier())
                         .type(me.hydro.emulator.util.PotionEffectType.JUMP)
                         .build();
             }
@@ -199,7 +194,7 @@ public class MovementHandler {
                                         .usingItem(usingItem)
                                         .modernMovement(modernMovement)
                                         .hitSlowdown(hitSlow)
-                                        .aiMoveSpeed(player.getBukkitPlayer().getWalkSpeed() / 2)
+                                        .aiMoveSpeed(player.getInfo() / 2)
                                         .fastMathType(fastMath)
                                         .sneaking(player.getInfo().isSneaking())
                                         .ground(from.isOnGround())
@@ -283,7 +278,7 @@ public class MovementHandler {
                                                         .usingItem(usingItem)
                                                         .modernMovement(modernMovement)
                                                         .hitSlowdown(hitSlow)
-                                                        .aiMoveSpeed(player.getBukkitPlayer().getWalkSpeed() / 2)
+                                                        .aiMoveSpeed(player / 2)
                                                         .fastMathType(fastMath)
                                                         .sneaking(player.getInfo().isSneaking())
                                                         .ground(from.isOnGround())
@@ -413,7 +408,8 @@ public class MovementHandler {
 
     private boolean[] getUsingItemIterations(int forward, int strafe) {
         return (forward == 0 && strafe == 0 ||
-                !BlockUtils.isUsable(player.getBukkitPlayer().getItemInHand().getType())) ? ALWAYS_FALSE : IS_OR_NOT;
+                !BlockUtils.isUsable(player.getPlayerVersion(),
+                        player.getBukkitPlayer().getInventory().getItemInHand().getType())) ? ALWAYS_FALSE : IS_OR_NOT;
     }
 
     private boolean[] getJumpingIterations() {
@@ -455,9 +451,9 @@ public class MovementHandler {
         if (moveTicks > 0) {
 
             // Updating block locations
-            player.getInfo().setBlockOnTo(Optional.of(player.getBlockUpdateHandler()
+            player.getInfo().setBlockOnTo(Optional.of(player.getWorldTracker()
                     .getBlock(new Vector3i(to.getLoc()))));
-            player.getInfo().setBlockBelow(Optional.of(player.getBlockUpdateHandler()
+            player.getInfo().setBlockBelow(Optional.of(player.getWorldTracker()
                     .getBlock(new Vector3i(to.getLoc().clone().subtract(0, 1, 0)))));
 
             if (packet.hasPositionChanged()) {
@@ -692,9 +688,9 @@ it
 
             final double MULTIPLIER = Math.max(-0.5, Math.min(-1, -1 / (Math.abs(deltaYaw) * 0.25)));
             RayCollision coll = new RayCollision(origin.toVector(), origin.getDirection()
-                    .multiply(MULTIPLIER).setY(0));
+                    .multiply(MULTIPLIER).withY(0));
 
-            Location loc1 = coll.collisionPoint(1.5).toLocation(player.getBukkitPlayer().getWorld());
+            KLocation loc1 = coll.collisionPoint(1.5);
 
             if (player.getInfo().botAttack.isNotPassed(7)) {
                 loc1.setY(Math.max(origin.getY() + 2, loc1.getY()));
@@ -839,7 +835,6 @@ it
         teleportsToConfirm++;
 
         loc.setTimeStamp(System.currentTimeMillis());
-
         player.runKeepaliveAction(ka -> {
             teleportsToConfirm--;
 
@@ -858,7 +853,7 @@ it
      *
      * @param location Location
      */
-    public void moveTo(Location location) {
+    public void moveTo(KLocation location) {
         KLocation newLoc = new KLocation(location);
         to.getLoc().setLocation(newLoc);
         to.getLoc().setLocation(newLoc);
@@ -910,7 +905,7 @@ it
      * @param packet WrapperPlayClientPlayerFlyingh
      */
     private void setTo(WrapperPlayClientPlayerFlying packet) {
-        to.setWorld(player.getBukkitPlayer().getWorld());
+        to.setWorld(player.getWorldTracker().getCurrentWorld().get());
         if (packet.hasPositionChanged()) {
             to.getLoc().setX(packet.getLocation().getX());
             to.getLoc().setY(packet.getLocation().getY());

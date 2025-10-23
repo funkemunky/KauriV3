@@ -1,6 +1,5 @@
 package dev.brighten.ac.utils;
 
-import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.protocol.particle.Particle;
 import com.github.retrooper.packetevents.protocol.particle.type.ParticleType;
 import com.github.retrooper.packetevents.protocol.world.states.type.StateType;
@@ -16,7 +15,7 @@ import dev.brighten.ac.utils.world.CollisionBox;
 import dev.brighten.ac.utils.world.EntityData;
 import dev.brighten.ac.utils.world.types.RayCollision;
 import dev.brighten.ac.utils.world.types.SimpleCollisionBox;
-import org.bukkit.util.Vector;
+import com.github.retrooper.packetevents.util.Vector3d;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -115,7 +114,7 @@ public class Helper {
                 if (!BlockUtils.isEntityCollidable(entity)) continue;
 
                 CollisionBox entityCollisionBox = EntityData.getEntityBox(entity.getLocation()
-                        .toLocation(player.getBukkitPlayer().getWorld()), entity);
+                        , entity);
 
                 if (entityCollisionBox.isIntersected(collisionBox))
                     entityCollisionBox.downCast(collisionBoxes);
@@ -138,7 +137,7 @@ public class Helper {
             for (int y = y1 - 1; y < y2; ++y)
                 for (int z = z1; z < z2; ++z) {
                     Vector3i vec = new Vector3i(x, y, z);
-                    StateType type = player.getBlockUpdateHandler().getBlock(vec).getType();
+                    StateType type = player.getWorldTracker().getBlock(vec).getType();
 
                     if (type != StateTypes.AIR && (mask == -100 || Materials.checkFlag(type, mask))) {
                         CollisionBox box = BlockData.getData(type)

@@ -23,17 +23,15 @@ import lombok.Getter;
 import me.hydro.emulator.util.mcp.MathHelper;
 
 import java.util.Map;
-import java.util.UUID;
+import java.util.Optional;
 
 @Getter
 public class World {
-    private final UUID uuid;
     private final String name;
     private final Long2ObjectOpenHashMap<BlockUpdateHandler.KColumn> chunks = new Long2ObjectOpenHashMap<>(1000);
     private final Map<Integer, TrackedEntity> trackedEntities = new Int2ObjectOpenHashMap<>();
 
-    public World(UUID uuid, String name) {
-        this.uuid = uuid;
+    public World(String name) {
         this.name = name;
     }
 
@@ -157,5 +155,15 @@ public class World {
                 MathHelper.floor_double(vec.getY()),
                 MathHelper.floor_double(vec.getZ())
         );
+    }
+
+    public Optional<TrackedEntity> getTrackedEntity(int entityId) {
+        TrackedEntity trackedEntity = trackedEntities.get(entityId);
+
+        if(trackedEntity == null) {
+            return Optional.empty();
+        }
+
+        return Optional.of(trackedEntity);
     }
 }

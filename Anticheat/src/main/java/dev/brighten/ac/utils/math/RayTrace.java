@@ -6,7 +6,7 @@ import dev.brighten.ac.utils.world.types.SimpleCollisionBox;
 import org.bukkit.Effect;
 import org.bukkit.World;
 import org.bukkit.block.Block;
-import org.bukkit.util.Vector;
+import com.github.retrooper.packetevents.util.Vector3d;
 
 import java.util.ArrayList;
 import java.util.List;

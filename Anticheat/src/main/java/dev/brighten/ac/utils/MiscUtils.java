@@ -41,7 +41,7 @@ public class MiscUtils {
         for(int x = startX ; x < endX ; x++) {
             for(int y = startY ; y < endY ; y++) {
                 for(int z = startZ ; z < endZ ; z++) {
-                    StateType type = player.getBlockUpdateHandler().getBlock(x, y, z).getType();
+                    StateType type = player.getWorldTracker().getBlock(x, y, z).getType();
 
                     if(Materials.checkFlag(type, bitmask))
                         return true;

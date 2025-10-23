@@ -152,7 +152,7 @@ public class RayCollision implements CollisionBox {
             int fy = MathHelper.floor_double(originY + (directionY * ix));
             int fz = MathHelper.floor_double(originZ + (directionZ * ix));
 
-            WrappedBlock block = player.getBlockUpdateHandler().getBlock(fx, fy, fz);
+            WrappedBlock block = player.getWorldTracker().getBlock(fx, fy, fz);
 
             if (block == null) continue;
 
@@ -183,7 +183,7 @@ public class RayCollision implements CollisionBox {
             int fy = MathHelper.floor_double(originY + (directionY * ix));
             int fz = MathHelper.floor_double(originZ + (directionZ * ix));
 
-            WrappedBlock block = player.getBlockUpdateHandler().getBlock(fx, fy, fz);
+            WrappedBlock block = player.getWorldTracker().getBlock(fx, fy, fz);
 
             if(block == null || !Materials.checkFlag(block.getType(), bitmask)) continue;
 

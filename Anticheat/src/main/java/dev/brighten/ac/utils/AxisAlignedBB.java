@@ -1,10 +1,11 @@
 package dev.brighten.ac.utils;
 
 import com.github.retrooper.packetevents.protocol.world.Direction;
+import com.github.retrooper.packetevents.util.Vector3d;
 import dev.brighten.ac.utils.world.types.RayCollision;
 import dev.brighten.ac.utils.world.types.SimpleCollisionBox;
 import org.bukkit.Location;
-import org.bukkit.util.Vector;
+import com.github.retrooper.packetevents.util.Vector3d;
 
 public class AxisAlignedBB {
 
@@ -203,9 +204,9 @@ public class AxisAlignedBB {
         return rayTrace(origin, dir);
     }
 
-    public Vec3D rayTrace(Vector vorigin, Vector vdirection, double distance) {
+    public Vec3D rayTrace(Vector3d vorigin, Vector3d vdirection, double distance) {
         Vec3D origin = new Vec3D(vorigin.getX(), vorigin.getY(), vorigin.getZ());
-        Vector direction = vdirection.clone().multiply(distance);
+        Vector3d direction = vdirection.multiply(distance);
         Vec3D dir = origin.clone().add(direction.getX(), direction.getY(), direction.getZ());
 
         return rayTrace(origin, dir);

@@ -5,6 +5,7 @@
 
 package dev.brighten.ac.utils;
 
+import com.github.retrooper.packetevents.util.Vector3d;
 import lombok.SneakyThrows;
 import me.hydro.emulator.util.mcp.MathHelper;
 
@@ -16,6 +17,12 @@ public class Vec3D implements Cloneable {
     public final double x;
     public final double y;
     public final double z;
+
+    public Vec3D(Vector3d vec) {
+        this.x = vec.getX();
+        this.y = vec.getY();
+        this.z = vec.getZ();
+    }
 
     public Vec3D(double var1, double var3, double var5) {
         if (var1 == -0.0D) {

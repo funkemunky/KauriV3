@@ -18,7 +18,7 @@ import java.util.Optional;
 public class BlockUtils {
 
     public static Optional<WrappedBlock> getRelative(APlayer player, Vector3i location, int modX, int modY, int modZ) {
-        return Optional.of(player.getBlockUpdateHandler()
+        return Optional.of(player.getWorldTracker()
                 .getRelative(new Vector3i(location.getX(), location.getY(), location.getZ()),
                         modX, modY, modZ));
     }
@@ -55,7 +55,7 @@ public class BlockUtils {
     }
 
 
-    public static float getMaterialFriction(ClientVersion version, StateType material) {
+    public static float getFriction(ClientVersion version, StateType material) {
 
         if (material == StateTypes.BLUE_ICE) {
             if (version.isNewerThanOrEquals(ClientVersion.V_1_13))
@@ -70,6 +70,12 @@ public class BlockUtils {
     public static boolean isEntityCollidable(TrackedEntity entity) {
         return entity.getEntityType().isInstanceOf(EntityTypes.BOAT) ||
                 entity.getEntityType().isInstanceOf(EntityTypes.MINECART);
+    }
+
+    public static boolean isUsable(ClientVersion version, ItemType type) {
+        return type.hasAttribute(ItemTypes.ItemAttribute.EDIBLE)
+                || (version.isOlderThan(ClientVersion.V_1_9) && type.hasAttribute(ItemTypes.ItemAttribute.SWORD))
+                || type.equals(ItemTypes.SHIELD);
     }
 
     @SuppressWarnings("deprecation")

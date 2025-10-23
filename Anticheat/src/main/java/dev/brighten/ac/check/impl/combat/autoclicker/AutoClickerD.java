@@ -1,5 +1,6 @@
 package dev.brighten.ac.check.impl.combat.autoclicker;
 
+import com.github.retrooper.packetevents.protocol.item.type.ItemTypes;
 import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientAnimation;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerBlockPlacement;
@@ -10,10 +11,8 @@ import dev.brighten.ac.check.CheckData;
 import dev.brighten.ac.check.WAction;
 import dev.brighten.ac.check.WTimedAction;
 import dev.brighten.ac.data.APlayer;
-import dev.brighten.ac.utils.BlockUtils;
 import dev.brighten.ac.utils.annotation.Bind;
 import dev.brighten.ac.utils.math.cond.MaxDouble;
-import io.github.retrooper.packetevents.util.SpigotConversionUtil;
 
 @CheckData(name = "Autoclicker (D)", checkId = "autoclickerd", type = CheckType.AUTOCLICKER, punishVl = 15,
         maxVersion = ClientVersion.V_1_8)
@@ -57,8 +56,7 @@ public class AutoClickerD extends Check {
 
     WAction<WrapperPlayClientPlayerBlockPlacement> place = packet -> {
         if(packet.getItemStack().isEmpty()
-                || !BlockUtils.isSword(SpigotConversionUtil
-                .toBukkitItemMaterial(packet.getItemStack().get().getType())))
+                || !packet.getItemStack().get().getType().hasAttribute(ItemTypes.ItemAttribute.SWORD))
             return;
 
         blocked = true;
