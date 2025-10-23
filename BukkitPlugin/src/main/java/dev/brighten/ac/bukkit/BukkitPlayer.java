@@ -1,10 +1,9 @@
 package dev.brighten.ac.bukkit;
 
-import com.github.retrooper.packetevents.protocol.potion.PotionEffect;
 import com.github.retrooper.packetevents.protocol.potion.PotionType;
 import dev.brighten.ac.api.platform.KauriInventory;
 import dev.brighten.ac.api.platform.KauriPlayer;
-import dev.brighten.ac.utils.Tuple;
+import dev.brighten.ac.utils.KPotionEffect;
 import io.github.retrooper.packetevents.util.SpigotConversionUtil;
 import org.bukkit.entity.Player;
 
@@ -51,7 +50,7 @@ public class BukkitPlayer implements KauriPlayer {
     }
 
     @Override
-    public List<Tuple<PotionType, PotionEffect.Properties>> getActivePotionEffects() {
+    public List<KPotionEffect> getActivePotionEffects() {
         return player.getActivePotionEffects().stream()
                 .map(BukkitUtils::convertBukkitPotionEffect)
                 .toList();

@@ -1,9 +1,11 @@
 package dev.brighten.ac.handler.block;
 
-import dev.brighten.ac.utils.math.IntVector;
+import com.github.retrooper.packetevents.util.Vector3i;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
+import java.util.Arrays;
+import java.util.Objects;
 import java.util.Optional;
 
 @RequiredArgsConstructor
@@ -17,7 +19,7 @@ public class Chunk {
      * @param location - Location of the block
      * @return Optional of the block at the specified location
      */
-    public Optional<WrappedBlock> getBlockAt(IntVector location) {
+    public Optional<WrappedBlock> getBlockAt(Vector3i location) {
         return getBlockAt(location.getX(), location.getY(), location.getZ());
     }
 
@@ -64,7 +66,18 @@ public class Chunk {
      * @param location - Location of the block
      * @param block - Block to update to
      */
-    public void updateBlock(IntVector location, WrappedBlock block) {
+    public void updateBlock(Vector3i location, WrappedBlock block) {
         updateBlock(location.getX(), location.getY(), location.getZ(), block);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof Chunk chunk)) return false;
+        return x == chunk.x && z == chunk.z && Objects.deepEquals(blocks, chunk.blocks);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(x, z, Arrays.deepHashCode(blocks));
     }
 }

@@ -12,7 +12,7 @@ import dev.brighten.ac.utils.BlockUtils;
 import dev.brighten.ac.utils.KLocation;
 import dev.brighten.ac.utils.MathUtils;
 import dev.brighten.ac.utils.annotation.Bind;
-import dev.brighten.ac.utils.math.IntVector;
+import com.github.retrooper.packetevents.util.Vector3i;
 import dev.brighten.ac.utils.timer.Timer;
 import dev.brighten.ac.utils.timer.impl.TickTimer;
 import lombok.val;
@@ -62,7 +62,7 @@ public class VelocityB extends Check {
                     ? player.getMovement().getFrom().getLoc() : player.getMovement().getTo().getLoc();
 
             WrappedBlock underMaterial = player.getBlockUpdateHandler()
-                    .getBlock(new IntVector(MathHelper.floor_double(underBlockLoc.getX()),
+                    .getBlock(new Vector3i(MathHelper.floor_double(underBlockLoc.getX()),
                             MathHelper.floor_double(underBlockLoc.getY() - 1),
                             MathHelper.floor_double(underBlockLoc.getZ())));
 

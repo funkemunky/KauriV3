@@ -1,11 +1,10 @@
 package dev.brighten.ac.utils;
 
+import com.github.retrooper.packetevents.util.Vector3d;
+import dev.brighten.ac.api.platform.KauriPlayer;
+import dev.brighten.ac.handler.entity.TrackedEntity;
 import lombok.val;
 import me.hydro.emulator.util.mcp.MathHelper;
-import org.bukkit.Location;
-import org.bukkit.entity.LivingEntity;
-import org.bukkit.entity.Player;
-import org.bukkit.util.Vector;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -20,9 +19,9 @@ public class MathUtils {
 
     public static double GROUND_DIVISOR = 0.015625;
 
-    public static double offset(Vector from, Vector to) {
-        from.setY(0);
-        to.setY(0);
+    public static double offset(Vector3d from, Vector3d to) {
+        from = from.withY(0);
+        to = to.withY(0);
 
         return to.subtract(from).length();
     }
@@ -78,7 +77,7 @@ public class MathUtils {
         double phi = Math.abs(beta - alpha) % 360;
         return (int) (phi > 180 ? 360 - phi : phi);
     }
-    public static boolean playerMoved(Location from, Location to) {
+    public static boolean playerMoved(KLocation from, KLocation to) {
         return playerMoved(from.toVector(), to.toVector());
     }
 
@@ -186,13 +185,13 @@ public class MathUtils {
     }
 
     //Skidded from Luke.
-    public static double getAngle(Location loc1, Location loc2) {
+    public static double getAngle(KLocation loc1, KLocation loc2) {
         if (loc1 == null || loc2 == null) return -1;
-        Vector playerRotation = new Vector(loc1.getYaw(), loc1.getPitch(), 0.0f);
+        Vector3d playerRotation = new Vector3d(loc1.getYaw(), loc1.getPitch(), 0.0f);
         loc1.setY(0);
         loc2.setY(0);
         val rot = MathUtils.getRotation(loc1, loc2);
-        Vector expectedRotation = new Vector(rot[0], rot[1], 0);
+        Vector3d expectedRotation = new Vector3d(rot[0], rot[1], 0);
         return MathUtils.yawTo180D(playerRotation.getX() - expectedRotation.getX());
     }
 
@@ -545,8 +544,8 @@ public class MathUtils {
     }
 
     /* Stolen from Bukkit */
-    public static Vector getDirection(KLocation loc) {
-        Vector vector = new Vector();
+    public static Vector3d getDirection(KLocation loc) {
+        Vector3d vector = new Vector3d();
         double rotX = loc.getYaw();
         double rotY = loc.getPitch();
         vector.setY(-Math.sin(Math.toRadians(rotY)));
@@ -607,15 +606,15 @@ public class MathUtils {
         return (left * left) + (right * right);
     }
 
-    public static double get3DDistance(Vector one, Vector two) {
+    public static double get3DDistance(Vector3d one, Vector3d two) {
         return hypot(one.getX() - two.getX(), one.getY() - two.getY(), one.getZ() - two.getZ());
     }
 
-    public static boolean playerMoved(Vector from, Vector to) {
+    public static boolean playerMoved(Vector3d from, Vector3d to) {
         return from.distance(to) > 0;
     }
 
-    public static boolean playerLooked(Location from, Location to) {
+    public static boolean playerLooked(KLocation from, KLocation to) {
         return (from.getYaw() - to.getYaw() != 0) || (from.getPitch() - to.getPitch() != 0);
     }
     public static boolean elapsed(long time, long needed) {
@@ -704,12 +703,12 @@ public class MathUtils {
         return squareRoot;
     }
 
-    public static Vector getDirection(float yaw, float pitch) {
+    public static Vector3d getDirection(float yaw, float pitch) {
         float f = MathHelper.cos(MathHelper.FastMathType.VANILLA, -yaw * 0.017453292F - (float)Math.PI);
         float f1 = MathHelper.sin(MathHelper.FastMathType.VANILLA, -yaw * 0.017453292F - (float)Math.PI);
         float f2 = -MathHelper.cos(MathHelper.FastMathType.VANILLA, -pitch * 0.017453292F);
         float f3 = MathHelper.sin(MathHelper.FastMathType.VANILLA, -pitch * 0.017453292F);
-        return new Vector(f1 * f2, f3, f * f2);
+        return new Vector3d(f1 * f2, f3, f * f2);
     }
 
     public static float sqrt(float number) {
@@ -775,7 +774,7 @@ public class MathUtils {
         return Math.abs(System.currentTimeMillis() - time);
     }
 
-    public static double getHorizontalDistance(Location from, Location to) {
+    public static double getHorizontalDistance(KLocation from, KLocation to) {
         double deltaX = to.getX() - from.getX(), deltaZ = to.getZ() - from.getZ();
         return Math.sqrt(deltaX * deltaX + deltaZ * deltaZ);
     }
@@ -804,7 +803,7 @@ public class MathUtils {
         return (int) Math.ceil(millis / 50D);
     }
 
-    public static double getVerticalDistance(Location from, Location to) {
+    public static double getVerticalDistance(KLocation from, KLocation to) {
         return Math.abs(from.getY() - to.getY());
     }
 
@@ -818,7 +817,7 @@ public class MathUtils {
         return Float.parseFloat(twoDForm.format(d).replaceAll(",", "."));
     }
 
-    public static double getYawDifference(Location one, Location two) {
+    public static double getYawDifference(KLocation one, KLocation two) {
         return Math.abs(one.getYaw() - two.getYaw());
     }
 
@@ -916,7 +915,7 @@ public class MathUtils {
         return dub;
     }
 
-    public static double getDirection(Location from, Location to) {
+    public static double getDirection(KLocation from, KLocation to) {
         if (from == null || to == null) {
             return 0.0;
         }
@@ -925,7 +924,7 @@ public class MathUtils {
         return MathUtils.yawTo180F((float) (FastTrig.fast_atan2(difZ, difX) * 180.0 / 3.141592653589793) - 90.0f);
     }
 
-    public static float[] getRotation(Location one, Location two) {
+    public static float[] getRotation(Vector3d one, Vector3d two) {
         return getRotation(new KLocation(one), new KLocation(two));
     }
 
@@ -939,30 +938,16 @@ public class MathUtils {
         return new float[]{yaw, pitch};
     }
 
-    public static float[] getRotation(LivingEntity origin, LivingEntity point) {
+    public static float[] getRotation(TrackedEntity origin, TrackedEntity point) {
         return getRotation(origin.getLocation(), point.getLocation());
     }
 
-    public static boolean isLookingTowardsEntity(Location from, Location to, LivingEntity entity) {
+    public static boolean isLookingTowardsEntity(KLocation from, KLocation to, TrackedEntity entity) {
         float[] rotFrom = getRotation(from, entity.getLocation()), rotTo = getRotation(to, entity.getLocation());
         float deltaOne = getDelta(from.getYaw(), rotTo[0]), deltaTwo = getDelta(to.getYaw(), rotTo[1]);
         float offsetFrom = getDelta(yawTo180F(from.getYaw()), yawTo180F(rotFrom[0])), offsetTo = getDelta(yawTo180F(to.getYaw()), yawTo180F(rotTo[0]));
 
         return (deltaOne > deltaTwo && offsetTo > 15) || (MathUtils.getDelta(offsetFrom, offsetTo) < 1 && offsetTo < 10);
-    }
-
-    public static double[] getOffsetFromEntity(Player player, LivingEntity entity) {
-        double yawOffset = Math.abs(MathUtils.yawTo180F(player.getEyeLocation().getYaw()) - MathUtils.yawTo180F(MathUtils.getRotation(player.getLocation(), entity.getLocation())[0]));
-        double pitchOffset = Math.abs(Math.abs(player.getEyeLocation().getPitch()) - Math.abs(MathUtils.getRotation(player.getLocation(), entity.getLocation())[1]));
-        return new double[]{yawOffset, pitchOffset};
-    }
-
-    public static double[] getOffsetFromLocation(Location one, Location two) {
-        double yaw = MathUtils.getRotation(one, two)[0];
-        double pitch = MathUtils.getRotation(one, two)[1];
-        double yawOffset = Math.abs(yaw - MathUtils.yawTo180F(one.getYaw()));
-        double pitchOffset = Math.abs(pitch - one.getPitch());
-        return new double[]{yawOffset, pitchOffset};
     }
 
     public static double[] getOffsetFromLocation(KLocation one, KLocation two) {

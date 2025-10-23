@@ -70,9 +70,9 @@ public class BlockA extends Check {
                     from = player.getMovement().getFrom().getLoc().clone().add(0, player.getPreviousEyeHeight(), 0);
 
             final RayCollision rayTo = new RayCollision(to.toVector(),
-                    MathUtils.getDirection(to)),
+                    to.getDirection()),
                     rayFrom = new RayCollision(from.toVector(),
-                            MathUtils.getDirection(from));
+                            from.getDirection());
 
             final boolean collided = rayTo.isCollided(box) || rayFrom.isCollided(box);
 

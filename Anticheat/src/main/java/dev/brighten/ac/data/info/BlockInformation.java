@@ -1,5 +1,6 @@
 package dev.brighten.ac.data.info;
 
+import com.github.retrooper.packetevents.protocol.entity.type.EntityTypes;
 import com.github.retrooper.packetevents.protocol.particle.type.ParticleTypes;
 import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import com.github.retrooper.packetevents.protocol.world.states.type.StateType;
@@ -7,18 +8,13 @@ import com.github.retrooper.packetevents.protocol.world.states.type.StateTypes;
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.handler.entity.TrackedEntity;
-import dev.brighten.ac.utils.BlockUtils;
-import dev.brighten.ac.utils.Helper;
-import dev.brighten.ac.utils.Materials;
-import dev.brighten.ac.utils.MiscUtils;
-import dev.brighten.ac.utils.math.IntVector;
+import dev.brighten.ac.utils.*;
+import com.github.retrooper.packetevents.util.Vector3i;
 import dev.brighten.ac.utils.world.BlockData;
 import dev.brighten.ac.utils.world.CollisionBox;
 import dev.brighten.ac.utils.world.EntityData;
 import dev.brighten.ac.utils.world.types.SimpleCollisionBox;
 import me.hydro.emulator.util.mcp.MathHelper;
-import org.bukkit.Location;
-import org.bukkit.entity.LivingEntity;
 
 import java.util.*;
 
@@ -63,12 +59,12 @@ public class BlockInformation {
         if (dy > 10) dy = 10;
         if (dh > 10) dh = 10;
 
-        int startX = Location.locToBlock(player.getMovement().getTo().getLoc().getX() - 1 - dh);
-        int endX = Location.locToBlock(player.getMovement().getTo().getLoc().getX() + 1 + dh);
-        int startY = Location.locToBlock(player.getMovement().getTo().getLoc().getY() - 1 - dy);
-        int endY = Location.locToBlock(player.getMovement().getTo().getLoc().getY() + 2.82 + dy);
-        int startZ = Location.locToBlock(player.getMovement().getTo().getLoc().getZ() - 1 - dh);
-        int endZ = Location.locToBlock(player.getMovement().getTo().getLoc().getZ() + 1 + dh);
+        int startX = MathHelper.floor_double(player.getMovement().getTo().getLoc().getX() - 1 - dh);
+        int endX = MathHelper.floor_double(player.getMovement().getTo().getLoc().getX() + 1 + dh);
+        int startY = MathHelper.floor_double(player.getMovement().getTo().getLoc().getY() - 1 - dy);
+        int endY = MathHelper.floor_double(player.getMovement().getTo().getLoc().getY() + 2.82 + dy);
+        int startZ = MathHelper.floor_double(player.getMovement().getTo().getLoc().getZ() - 1 - dh);
+        int endZ = MathHelper.floor_double(player.getMovement().getTo().getLoc().getZ() + 1 + dh);
 
         SimpleCollisionBox waterBox = player.getMovement().getTo().getBox().copy().expand(0, -.38, 0);
 
@@ -111,15 +107,15 @@ public class BlockInformation {
                 ? player.getMovement().getFrom().getBox().copy().shrink(0.001D, 0.001D, 0.001D)
                 : null;
 
-        IntVector min;
-        IntVector max;
+        Vector3i min;
+        Vector3i max;
 
         if (boundsForCollision != null) {
-            min = new IntVector((int) boundsForCollision.minX, (int) boundsForCollision.minY, (int) boundsForCollision.minZ);
-            max = new IntVector((int) boundsForCollision.maxX, (int) boundsForCollision.maxY, (int) boundsForCollision.maxZ);
+            min = new Vector3i((int) boundsForCollision.minX, (int) boundsForCollision.minY, (int) boundsForCollision.minZ);
+            max = new Vector3i((int) boundsForCollision.maxX, (int) boundsForCollision.maxY, (int) boundsForCollision.maxZ);
         } else {
-            min = new IntVector(Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE);
-            max = new IntVector(Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE);
+            min = new Vector3i(Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE);
+            max = new Vector3i(Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE);
         }
 
         loop:
@@ -132,11 +128,11 @@ public class BlockInformation {
                         }
 
                         final StateType type =
-                                player.getBlockUpdateHandler().getBlock(new IntVector(x, y, z)).getType();
+                                player.getBlockUpdateHandler().getBlock(new Vector3i(x, y, z)).getType();
 
                         if (type != StateTypes.AIR) {
 
-                            IntVector vec = new IntVector(x, y, z);
+                            Vector3i vec = new Vector3i(x, y, z);
                             CollisionBox blockBox = BlockData.getData(type)
                                     .getBox(player, vec, player.getPlayerVersion());
 
@@ -311,13 +307,12 @@ public class BlockInformation {
                 return;
 
             for (TrackedEntity entity : player.getInfo().getNearbyEntities()) {
-                boolean isBlockEntity = !(entity instanceof LivingEntity);
+                boolean isBlockEntity = (!entity.getEntityType().isInstanceOf(EntityTypes.LIVINGENTITY));
 
                 if (!isBlockEntity) continue;
 
 
-                CollisionBox entityBox = EntityData.getEntityBox(entity.getLocation()
-                        .toLocation(player.getBukkitPlayer().getWorld()), entity);
+                CollisionBox entityBox = EntityData.getEntityBox(entity.getLocation(), entity);
 
                 if (entityBox == null) continue;
 

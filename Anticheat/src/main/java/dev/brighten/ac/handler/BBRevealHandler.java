@@ -7,7 +7,7 @@ import dev.brighten.ac.handler.block.WrappedBlock;
 import dev.brighten.ac.utils.ItemBuilder;
 import dev.brighten.ac.utils.Materials;
 import dev.brighten.ac.utils.annotation.Init;
-import dev.brighten.ac.utils.math.IntVector;
+import com.github.retrooper.packetevents.util.Vector3i;
 import dev.brighten.ac.utils.world.BlockData;
 import dev.brighten.ac.utils.world.EntityData;
 import dev.brighten.ac.utils.world.types.SimpleCollisionBox;
@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
 @Init
 public class BBRevealHandler implements Listener {
 
-    private final Map<UUID, Set<IntVector>> blocksToShow = new HashMap<>();
+    private final Map<UUID, Set<Vector3i>> blocksToShow = new HashMap<>();
     private final Set<Entity> entitiesToShow = new HashSet<>();
 
     public static BBRevealHandler INSTANCE;
@@ -52,9 +52,9 @@ public class BBRevealHandler implements Listener {
         if(player == null || !player.getWrappedPlayer().getItemInHand().isSimilar(wand)) return;
 
         if(event.getAction() == Action.RIGHT_CLICK_BLOCK) {
-            IntVector blockLoc = new IntVector(event.getClickedBlock().getX(),
+            Vector3i blockLoc = new Vector3i(event.getClickedBlock().getX(),
                     event.getClickedBlock().getY(), event.getClickedBlock().getZ());
-            Set<IntVector> blocksToShow = this.blocksToShow
+            Set<Vector3i> blocksToShow = this.blocksToShow
                     .computeIfAbsent(event.getPlayer().getUniqueId(), k -> new HashSet<>());
             if(blocksToShow.contains(blockLoc)) {
                 blocksToShow.remove(blockLoc);

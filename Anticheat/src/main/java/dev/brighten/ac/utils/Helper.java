@@ -10,7 +10,7 @@ import com.github.retrooper.packetevents.util.Vector3f;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerParticle;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.handler.entity.TrackedEntity;
-import dev.brighten.ac.utils.math.IntVector;
+import com.github.retrooper.packetevents.util.Vector3i;
 import dev.brighten.ac.utils.world.BlockData;
 import dev.brighten.ac.utils.world.CollisionBox;
 import dev.brighten.ac.utils.world.EntityData;
@@ -137,7 +137,7 @@ public class Helper {
         for (int x = x1; x < x2; ++x)
             for (int y = y1 - 1; y < y2; ++y)
                 for (int z = z1; z < z2; ++z) {
-                    IntVector vec = new IntVector(x, y, z);
+                    Vector3i vec = new Vector3i(x, y, z);
                     StateType type = player.getBlockUpdateHandler().getBlock(vec).getType();
 
                     if (type != StateTypes.AIR && (mask == -100 || Materials.checkFlag(type, mask))) {

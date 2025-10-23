@@ -1,8 +1,8 @@
 package dev.brighten.ac.api.platform;
 
-import com.github.retrooper.packetevents.protocol.potion.PotionEffect;
+import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.protocol.potion.PotionType;
-import dev.brighten.ac.utils.Tuple;
+import dev.brighten.ac.utils.KPotionEffect;
 
 import java.util.List;
 import java.util.UUID;
@@ -20,5 +20,9 @@ public interface KauriPlayer {
 
     boolean hasPositionEffect(PotionType type);
 
-    List<Tuple<PotionType, PotionEffect.Properties>> getActivePotionEffects();
+    List<KPotionEffect> getActivePotionEffects();
+
+    default int getEntityId() {
+        return PacketEvents.getAPI().getPlayerManager().getUser(getUniqueId()).getEntityId();
+    }
 }

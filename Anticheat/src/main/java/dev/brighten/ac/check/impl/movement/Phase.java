@@ -22,6 +22,7 @@ import org.bukkit.util.Vector;
 
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Level;
 
 @CheckData(name = "Phase", checkId = "phase", type = CheckType.MOVEMENT)
 public class Phase extends Check {
@@ -94,7 +95,7 @@ public class Phase extends Check {
         }
 
         if(player.getMovement().getFrom().getLoc().distanceSquared(player.getMovement().getTo().getLoc()) > 400) {
-            MiscUtils.printToConsole(player.getBukkitPlayer().getName() + " moved too fast!");
+            Anticheat.INSTANCE.getLogger().log(Level.INFO, player.getBukkitPlayer().getName() + " moved too fast!");
             // This is to make sure it isn't set null later.
             final Location fromLoc = player.getMovement().getFrom().getLoc()
                     .toLocation(player.getBukkitPlayer().getWorld());

@@ -108,6 +108,7 @@ public class Anticheat{
     private ServerInjector serverInjector;
 
     private FakeEntityTracker fakeTracker;
+    private boolean enabled;
     private int currentTick;
     private final Deque<Runnable> onTickEnd = new LinkedList<>();
     //Lag Information
@@ -251,6 +252,7 @@ public class Anticheat{
         alog(Color.Green + "Loading WorldInfo system...");
 
         PacketEventsRegister.registerListener();
+        enabled = true;
     }
 
     public InputStream getResource(@NotNull String filename) {
@@ -315,7 +317,7 @@ public class Anticheat{
 
         BBRevealHandler.INSTANCE = null;
         INSTANCE = null;
-
+        enabled = false;
     }
 
     public void info(@Nonnull String s) {
@@ -365,9 +367,7 @@ public class Anticheat{
 
     public void alog(boolean verbose, String log, Object... values) {
         if(!verbose || verboseLogging) {
-            if(values.length > 0)
-                MiscUtils.printToConsole(log, values);
-            else MiscUtils.printToConsole(log);
+            getLogger().log(Level.INFO, log, values);
         }
     }
 

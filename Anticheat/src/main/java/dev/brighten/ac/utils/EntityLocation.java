@@ -1,10 +1,10 @@
 package dev.brighten.ac.utils;
 
+import com.github.retrooper.packetevents.util.Vector3d;
 import dev.brighten.ac.handler.entity.TrackedEntity;
 import dev.brighten.ac.utils.objects.evicting.EvictingList;
 import lombok.RequiredArgsConstructor;
 import me.hydro.emulator.util.mcp.MathHelper;
-import org.bukkit.util.Vector;
 
 import java.util.Deque;
 
@@ -59,7 +59,7 @@ public class EntityLocation {
         return loc;
     }
 
-    public Vector getCurrentIteration() {
-        return new Vector(x, y, z);
+    public Vector3d getCurrentIteration() {
+        return new Vector3d(x, y, z);
     }
 }

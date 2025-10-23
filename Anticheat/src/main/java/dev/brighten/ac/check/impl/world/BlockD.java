@@ -14,7 +14,7 @@ import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.handler.block.WrappedBlock;
 import dev.brighten.ac.utils.KLocation;
 import dev.brighten.ac.utils.annotation.Bind;
-import dev.brighten.ac.utils.math.IntVector;
+import com.github.retrooper.packetevents.util.Vector3i;
 import dev.brighten.ac.utils.timer.Timer;
 import dev.brighten.ac.utils.timer.impl.TickTimer;
 import dev.brighten.ac.utils.world.BlockData;
@@ -45,7 +45,7 @@ public class BlockD extends Check {
                 packet.getFace().getModY(),
                 packet.getFace().getModZ());
 
-        WrappedBlock block = new WrappedBlock(new IntVector(packet.getBlockPosition()),
+        WrappedBlock block = new WrappedBlock(new Vector3i(packet.getBlockPosition()),
                 placedType,
                 WrappedBlockState.getDefaultState(placedType));
         blockPlaceLocations.put(blockpos, block);

@@ -31,4 +31,9 @@ public class TrackedEntity {
         newEntityLocation.yaw = location.getYaw();
         newEntityLocation.pitch = location.getPitch();
     }
+    
+    public KLocation getEyeLocation() {
+        return new KLocation(location.getX(), location.getY() + eyeHeight, location.getZ(),
+                location.getYaw(), location.getPitch());
+    }
 }

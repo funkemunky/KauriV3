@@ -1,11 +1,11 @@
 package dev.brighten.ac.handler;
 
-import com.github.retrooper.packetevents.protocol.potion.PotionEffect;
 import com.github.retrooper.packetevents.protocol.potion.PotionType;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerFlying;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityEffect;
 import dev.brighten.ac.data.APlayer;
-import dev.brighten.ac.utils.Tuple;
+import dev.brighten.ac.utils.KPotionEffect;
+import dev.brighten.ac.utils.KProperties;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,7 +16,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class PotionHandler {
     private final APlayer data;
 
-    private final List<Tuple<PotionType, PotionEffect.Properties>> potionEffects = new ArrayList<>();
+    private final List<KPotionEffect> potionEffects = new ArrayList<>();
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
     public PotionHandler(APlayer data) {
@@ -34,11 +34,11 @@ public class PotionHandler {
     public void onFlying(WrapperPlayClientPlayerFlying packet) {
         lock.readLock().lock();
         try {
-            for (Tuple<PotionType, PotionEffect.Properties> effect : potionEffects) {
+            for (KPotionEffect effect : potionEffects) {
                 lock.readLock().lock();
 
                 try {
-                    if (data.getBukkitPlayer().hasPositionEffect(effect.one)) continue;
+                    if (data.getBukkitPlayer().hasPositionEffect(effect.potionType())) continue;
 
                     data.runKeepaliveAction(d -> {
                         lock.writeLock().lock();
@@ -62,9 +62,9 @@ public class PotionHandler {
             var type = packet.getPotionType();
             lock.writeLock().lock();
             try {
-                data.getPotionHandler().potionEffects.removeIf(pe -> pe.one.equals(type));
+                data.getPotionHandler().potionEffects.removeIf(pe -> pe.potionType().equals(type));
                 data.getPotionHandler().potionEffects
-                        .add(new Tuple<>(type, new PotionEffect.Properties(packet.getEffectAmplifier()
+                        .add(new KPotionEffect(type, new KProperties(packet.getEffectAmplifier()
                                 , packet.getEffectDurationTicks(),
                                 packet.isAmbient(), packet.isVisible(), packet.isShowIcon(), null)));
             } finally {
@@ -76,8 +76,8 @@ public class PotionHandler {
     public boolean hasPotionEffect(PotionType type) {
         lock.readLock().lock();
         try {
-            for (Tuple<PotionType, PotionEffect.Properties> potionEffect : potionEffects) {
-                if (potionEffect.one.equals(type))
+            for (KPotionEffect potionEffect : potionEffects) {
+                if (potionEffect.potionType().equals(type))
                     return true;
             }
             return false;
@@ -86,14 +86,24 @@ public class PotionHandler {
         }
     }
 
-    public Optional<Tuple<PotionType, PotionEffect.Properties>> getEffectByType(PotionType type) {
+    public Optional<KPotionEffect> getEffectByType(PotionType type) {
         lock.readLock().lock();
         try {
-            for (Tuple<PotionType, PotionEffect.Properties> potionEffect : potionEffects) {
-                if (potionEffect.one.equals(type))
+            for (KPotionEffect potionEffect : potionEffects) {
+                if (potionEffect.potionType().equals(type))
                     return Optional.of(potionEffect);
             }
             return Optional.empty();
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+
+    public List<KPotionEffect> getPotionEffects() {
+        lock.readLock().lock();
+
+        try {
+            return new ArrayList<>(potionEffects);
         } finally {
             lock.readLock().unlock();
         }

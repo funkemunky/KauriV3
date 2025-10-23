@@ -2,31 +2,25 @@ package dev.brighten.ac.utils;
 
 import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.manager.server.ServerVersion;
+import com.github.retrooper.packetevents.protocol.item.enchantment.Enchantment;
+import com.github.retrooper.packetevents.protocol.item.enchantment.type.EnchantmentTypes;
+import com.github.retrooper.packetevents.protocol.potion.PotionType;
+import dev.brighten.ac.api.platform.KauriPlayer;
 import lombok.val;
-import org.bukkit.Location;
-import org.bukkit.enchantments.Enchantment;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.LivingEntity;
-import org.bukkit.entity.Player;
-import org.bukkit.potion.PotionEffect;
-import org.bukkit.potion.PotionEffectType;
+import me.hydro.emulator.util.PotionEffectType;
 
 public class PlayerUtils {
 
-    private static Enchantment DEPTH;
-
-    public static int getDepthStriderLevel(Player player) {
-        if(DEPTH == null) return 0;
-
+    public static int getDepthStriderLevel(KauriPlayer player) {
         val boots = player.getInventory().getBoots();
 
         if(boots == null) return 0;
 
-        return boots.getEnchantmentLevel(DEPTH);
+        return boots.getEnchantmentLevel(EnchantmentTypes.DEPTH_STRIDER);
     }
 
-    public static boolean hasBlocksAround(Location loc) {
-        Location one = loc.clone().subtract(1, 0, 1), two = loc.clone().add(1, 1, 1);
+    public static boolean hasBlocksAround(KLocation loc) {
+        KLocation one = loc.clone().subtract(1, 0, 1), two = loc.clone().add(1, 1, 1);
 
         int minX = Math.min(one.getBlockX(), two.getBlockX()), minY = Math.min(one.getBlockY(), two.getBlockY()), minZ = Math.min(one.getBlockZ(), two.getBlockZ());
         int maxX = Math.max(one.getBlockX(), two.getBlockX()), maxY = Math.max(one.getBlockY(), two.getBlockY()), maxZ = Math.max(one.getBlockZ(), two.getBlockZ());
@@ -34,7 +28,7 @@ public class PlayerUtils {
         for (int x = minX; x < maxX; x++) {
             for (int y = minY; y < maxY; y++) {
                 for (int z = minZ; z < maxZ; z++) {
-                    Location blockLoc = new Location(loc.getWorld(), x, y, z);
+                    KLocation blockLoc = new KLocation(loc.getWorld(), x, y, z);
 
                     if (BlockUtils.isSolid(BlockUtils.getBlock(blockLoc))) {
                         return true;
@@ -62,7 +56,7 @@ public class PlayerUtils {
     }
 
     public static double getAccurateDistance(LivingEntity attacked, LivingEntity entity) {
-        Location origin = attacked.getEyeLocation(), point;
+        KLocation origin = attacked.getEyeLocation(), point;
         if (entity.getLocation().getY() > attacked.getLocation().getBlockY()) {
             point = entity.getLocation();
         } else {
@@ -73,14 +67,14 @@ public class PlayerUtils {
         return origin.distance(point);
     }
 
-    public static double getAccurateDistance(Location origin, Location point) {
+    public static double getAccurateDistance(KLocation origin, KLocation point) {
         return origin.distance(point) * Math.cos(origin.getPitch());
     }
 
-    public static int getPotionEffectLevel(Player player, PotionEffectType pet) {
-        for (PotionEffect pe : player.getActivePotionEffects()) {
-            if (!pe.getType().getName().equals(pet.getName())) continue;
-            return pe.getAmplifier() + 1;
+    public static int getPotionEffectLevel(KauriPlayer player, PotionType pet) {
+        for (KPotionEffect pe : player.getActivePotionEffects()) {
+            if (!pe.potionType().equals(pet)) continue;
+            return pe.properties().amplifier() + 1;
         }
         return 0;
     }

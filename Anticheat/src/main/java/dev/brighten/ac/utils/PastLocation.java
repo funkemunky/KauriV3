@@ -1,7 +1,6 @@
 package dev.brighten.ac.utils;
 
 import dev.brighten.ac.Anticheat;
-import org.bukkit.Location;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -65,17 +64,6 @@ public class PastLocation {
             return this.previousLocations.stream()
                     .filter(loc -> stamp - loc.getTimeStamp() < delta)
                     .collect(Collectors.toList());
-        }
-    }
-
-    public void addLocation(Location location) {
-        synchronized (previousLocations) {
-            if (previousLocations.size() >= 20)
-                previousLocations.removeFirst();
-
-            KLocation loc = new KLocation(location);
-            loc.setTimeStamp(Anticheat.INSTANCE.getKeepaliveProcessor().tick);
-            previousLocations.add(loc);
         }
     }
 

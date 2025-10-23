@@ -8,11 +8,12 @@ import com.github.retrooper.packetevents.util.Vector3d;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerFlying;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerPositionAndLook;
 import dev.brighten.ac.Anticheat;
+import dev.brighten.ac.api.platform.KauriPlayer;
 import dev.brighten.ac.compat.CompatHandler;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.data.obj.CMove;
 import dev.brighten.ac.utils.*;
-import dev.brighten.ac.utils.math.IntVector;
+import com.github.retrooper.packetevents.util.Vector3i;
 import dev.brighten.ac.utils.objects.evicting.EvictingList;
 import dev.brighten.ac.utils.timer.Timer;
 import dev.brighten.ac.utils.timer.impl.TickTimer;
@@ -121,7 +122,7 @@ public class MovementHandler {
          */
         final PotionEffect[] EFFECTS = new PotionEffect[3];
 
-        for (org.bukkit.potion.PotionEffect potionEffect : player.getPotionHandler().potionEffects) {
+        for (org.bukkit.potion.PotionEffect potionEffect : player.getPotionHandler().getPotionEffects()) {
             if (potionEffect.getType().equals(PotionEffectType.SPEED)) {
                 EFFECTS[0] = PotionEffect.builder()
                         .amplifier(potionEffect.getAmplifier())
@@ -455,9 +456,9 @@ public class MovementHandler {
 
             // Updating block locations
             player.getInfo().setBlockOnTo(Optional.of(player.getBlockUpdateHandler()
-                    .getBlock(new IntVector(to.getLoc()))));
+                    .getBlock(new Vector3i(to.getLoc()))));
             player.getInfo().setBlockBelow(Optional.of(player.getBlockUpdateHandler()
-                    .getBlock(new IntVector(to.getLoc().clone().subtract(0, 1, 0)))));
+                    .getBlock(new Vector3i(to.getLoc().clone().subtract(0, 1, 0)))));
 
             if (packet.hasPositionChanged()) {
                 // Updating player bounding box

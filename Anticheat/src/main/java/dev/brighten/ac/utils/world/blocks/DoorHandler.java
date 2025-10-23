@@ -9,7 +9,7 @@ import com.github.retrooper.packetevents.protocol.world.states.enums.Half;
 import com.github.retrooper.packetevents.protocol.world.states.enums.Hinge;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.handler.block.WrappedBlock;
-import dev.brighten.ac.utils.math.IntVector;
+import com.github.retrooper.packetevents.util.Vector3i;
 import dev.brighten.ac.utils.world.CollisionBox;
 import dev.brighten.ac.utils.world.types.CollisionFactory;
 import dev.brighten.ac.utils.world.types.HexCollisionBox;
@@ -50,7 +50,7 @@ public class DoorHandler implements CollisionFactory {
         if (PacketEvents.getAPI().getServerManager().getVersion().isOlderThanOrEquals(ServerVersion.V_1_12_2)
                 || version.isOlderThanOrEquals(ClientVersion.V_1_12_2)) {
             if (door.getBlockState().getHalf() == Half.LOWER) {
-                IntVector aboveVec = door.getLocation().clone();
+                Vector3i aboveVec = door.getLocation().clone();
 
                 aboveVec.setY(aboveVec.getY() + 1);
                 WrappedBlockState above = player.getBlockUpdateHandler().getBlock(aboveVec).getBlockState();
@@ -67,7 +67,7 @@ public class DoorHandler implements CollisionFactory {
                     isRightHinge = false;
                 }
             } else {
-                IntVector belowVec = door.getLocation().clone();
+                Vector3i belowVec = door.getLocation().clone();
 
                 belowVec.setY(belowVec.getY() - 1);
                 WrappedBlockState below = player.getBlockUpdateHandler().getBlock(belowVec).getBlockState();

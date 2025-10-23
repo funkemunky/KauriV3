@@ -2,144 +2,69 @@ package dev.brighten.ac.utils;
 
 import com.github.retrooper.packetevents.protocol.entity.type.EntityTypes;
 import com.github.retrooper.packetevents.protocol.item.type.ItemType;
+import com.github.retrooper.packetevents.protocol.item.type.ItemTypes;
 import com.github.retrooper.packetevents.protocol.player.ClientVersion;
+import com.github.retrooper.packetevents.protocol.world.BlockFace;
 import com.github.retrooper.packetevents.protocol.world.states.type.StateType;
 import com.github.retrooper.packetevents.protocol.world.states.type.StateTypes;
+import com.github.retrooper.packetevents.util.Vector3i;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.handler.block.WrappedBlock;
 import dev.brighten.ac.handler.entity.TrackedEntity;
-import dev.brighten.ac.utils.math.IntVector;
-import io.github.retrooper.packetevents.util.SpigotConversionUtil;
-import org.bukkit.*;
-import org.bukkit.block.Block;
-import org.bukkit.block.BlockFace;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.Vehicle;
 
-import java.util.EnumMap;
-import java.util.EnumSet;
+import java.util.Map;
 import java.util.Optional;
 
 public class BlockUtils {
-    private static final EnumMap<Material, XMaterial> matchMaterial = new EnumMap<>(Material.class);
-    private static final EnumSet<Material> SWORDS = EnumSet.allOf(Material.class),
-            EDIBLE = EnumSet.allOf(Material.class),
-            DOOR = EnumSet.allOf(Material.class);
-    private static final EnumSet<XMaterial> XEDIBLE = EnumSet.allOf(XMaterial.class);
 
-    static {
-        for (Material mat : Material.values()) {
-            XMaterial xmat = XMaterial.matchXMaterial(mat);
-            matchMaterial.put(mat, xmat);
-
-            if(mat.toString().contains("SWORD")) {
-                SWORDS.add(mat);
-            } else if(mat.toString().contains("DOOR") && !mat.toString().contains("TRAP")) {
-                DOOR.add(mat);
-            }
-
-            if(mat.isEdible()) {
-                EDIBLE.add(mat);
-                XEDIBLE.add(xmat);
-            }
-        }
-    }
-
-    public static XMaterial getXMaterial(Material material) {
-        return matchMaterial.get(material);
-    }
-
-    public static XMaterial getXMaterial(ItemType itemType) {
-        return matchMaterial.get(SpigotConversionUtil.toBukkitItemMaterial(itemType));
-    }
-
-    @Deprecated
-    public static Block getBlock(Location location) {
-        if (location.getWorld().isChunkLoaded(location.getBlockX() >> 4, location.getBlockZ() >> 4)) {
-            return location.getBlock();
-        } else {
-            return null;
-        }
-    }
-
-    public static boolean isSword(Material material) {
-        return SWORDS.contains(material);
-    }
-
-    public static Optional<Block> getBlockAsync(Location location) {
-        if(Bukkit.isPrimaryThread()
-                || location.getWorld().isChunkLoaded(location.getBlockX() >> 4, location.getBlockZ() >> 4))  {
-            return Optional.of(location.getBlock());
-        }
-
-        return Optional.empty();
-    }
-
-    public static Optional<Chunk> getChunkAsync(World world, int x, int z) {
-        if(Bukkit.isPrimaryThread()
-                || world.isChunkLoaded(x, z))  {
-            return Optional.of(world.getChunkAt(x, z));
-        }
-
-        return Optional.empty();
-    }
-
-    public static Optional<WrappedBlock> getRelative(APlayer player, IntVector location, int modX, int modY, int modZ) {
+    public static Optional<WrappedBlock> getRelative(APlayer player, Vector3i location, int modX, int modY, int modZ) {
         return Optional.of(player.getBlockUpdateHandler()
-                .getRelative(new IntVector(location.getX(), location.getY(), location.getZ()),
+                .getRelative(new Vector3i(location.getX(), location.getY(), location.getZ()),
                         modX, modY, modZ));
     }
 
-    public static Optional<WrappedBlock> getRelative(APlayer player, IntVector location,
+    public static Optional<WrappedBlock> getRelative(APlayer player, Vector3i location,
                                                      com.github.retrooper.packetevents.protocol.world
                                                              .BlockFace face, int distance) {
         return getRelative(player, location,
                 face.getModX() * distance, face.getModY() * distance, face.getModZ() * distance);
     }
 
-    public static Optional<WrappedBlock> getRelative(APlayer player, IntVector vector, BlockFace face) {
+    public static Optional<WrappedBlock> getRelative(APlayer player, Vector3i vector, BlockFace face) {
         return getRelative(player, vector,
                 face.getModX(), face.getModY(), face.getModZ());
     }
 
-    public static float getFriction(XMaterial material) {
-        return switch (material) {
-            case SLIME_BLOCK -> 0.8f;
-            case ICE, PACKED_ICE, FROSTED_ICE -> 0.98f;
-            case BLUE_ICE -> 0.989f;
-            default -> 0.6f;
-        };
-    }
-    public static float getMaterialFriction(APlayer player, StateType material) {
-        float friction = 0.6f;
+    private static final Map<ItemType, Float> FRICTION = Map.of(
+            ItemTypes.SLIME_BLOCK, 0.8f,
+            ItemTypes.ICE, 0.98f,
+            ItemTypes.PACKED_ICE, 0.98f,
+            ItemTypes.BLUE_ICE, 0.989f
+    );
 
-        if (material == StateTypes.ICE) friction = 0.98f;
-        if (material == StateTypes.SLIME_BLOCK && player.getPlayerVersion().isNewerThanOrEquals(ClientVersion.V_1_8))
-            friction = 0.8f;
-        // ViaVersion honey block replacement
-        if (material == StateTypes.HONEY_BLOCK && player.getPlayerVersion().isOlderThan(ClientVersion.V_1_15))
-            friction = 0.8f;
-        if (material == StateTypes.PACKED_ICE) friction = 0.98f;
-        if (material == StateTypes.FROSTED_ICE) friction = 0.98f;
+    private static final Map<StateType, Float> STATE_FRICTION = Map.of(
+            StateTypes.ICE, 0.98f,
+            StateTypes.PACKED_ICE, 0.98f,
+            StateTypes.FROSTED_ICE, 0.98f,
+            StateTypes.SLIME_BLOCK, 0.8f,
+            StateTypes.HONEY_BLOCK, 0.8f
+    );
+
+    public static float getFriction(ItemType material) {
+        return FRICTION.getOrDefault(material, 0.6f);
+    }
+
+
+    public static float getMaterialFriction(ClientVersion version, StateType material) {
+
         if (material == StateTypes.BLUE_ICE) {
-            friction = 0.98f;
-            if (player.getPlayerVersion().isNewerThanOrEquals(ClientVersion.V_1_13))
-                friction = 0.989f;
+            if (version.isNewerThanOrEquals(ClientVersion.V_1_13))
+                return 0.98f;
+
+            return 0.98f;
         }
 
-        return friction;
-    }
-
-    public static boolean isUsable(Material material) {
-        return isUsable(getXMaterial(material));
-    }
-
-    public static boolean isUsable(XMaterial xmaterial) {
-        if(XEDIBLE.contains(xmaterial)) return true;
-        return switch (xmaterial) {
-            case STONE_SWORD, DIAMOND_SWORD, GOLDEN_SWORD, IRON_SWORD, WOODEN_SWORD, SHIELD, BOW -> true;
-            default -> false;
-        };
+        return STATE_FRICTION.getOrDefault(material, 0.6f);
     }
 
     public static boolean isEntityCollidable(TrackedEntity entity) {
@@ -147,13 +72,9 @@ public class BlockUtils {
                 entity.getEntityType().isInstanceOf(EntityTypes.MINECART);
     }
 
-    public static boolean isSolid(Block block) {
-        return isSolid(block.getType());
-    }
-
     @SuppressWarnings("deprecation")
-    public static boolean isSolid(Material material) {
-        int type = material.getId();
+    public static boolean isSolid(ItemType material, ClientVersion version) {
+        int type = material.getId(version);
 
         return switch (type) {
             case 1, 2, 3, 4, 5, 7, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 29, 34, 33, 35, 36, 41,

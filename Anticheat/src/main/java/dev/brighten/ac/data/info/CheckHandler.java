@@ -14,7 +14,6 @@ import dev.brighten.ac.utils.timer.Timer;
 import dev.brighten.ac.utils.timer.impl.TickTimer;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import org.bukkit.event.Event;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -218,13 +217,13 @@ public class CheckHandler {
 
     }
 
-    public void callEvent(Event event) {
+    public void callEvent(Object event) {
         if(!player.isInitialized()) {
             return;
         }
         if(EVENTS.containsKey(event.getClass())) {
-            ActionStore<Event>[] actions = (ActionStore<Event>[]) EVENTS.get(event.getClass());
-            for (ActionStore<Event> action : actions) {
+            ActionStore<Object>[] actions = (ActionStore<Object>[]) EVENTS.get(event.getClass());
+            for (ActionStore<Object> action : actions) {
                 var checkSettings = Anticheat.INSTANCE.getCheckManager().getCheckSettings(action.getCheckId());
                 if(checkSettings != null && !Anticheat.INSTANCE.getCheckManager()
                         .getCheckSettings(action.getCheckId()).isEnabled())

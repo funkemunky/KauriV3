@@ -11,7 +11,7 @@ import com.github.retrooper.packetevents.protocol.world.states.type.StateTypes;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.handler.block.WrappedBlock;
 import dev.brighten.ac.utils.BlockUtils;
-import dev.brighten.ac.utils.math.IntVector;
+import com.github.retrooper.packetevents.util.Vector3i;
 import dev.brighten.ac.utils.world.blocks.*;
 import dev.brighten.ac.utils.world.types.*;
 
@@ -361,7 +361,7 @@ public enum BlockData {
         return getBox(player, block.getLocation(), version);
     }
 
-    public CollisionBox getBox(APlayer player, IntVector block, ClientVersion version) {
+    public CollisionBox getBox(APlayer player, Vector3i block, ClientVersion version) {
         if (this.box != null)
             return this.box.copy().offset(block.getX(), block.getY(), block.getZ());
         return new DynamicCollisionBox(dynamic, player, player.getBlockUpdateHandler().getBlock(block), version)

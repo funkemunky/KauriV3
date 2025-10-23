@@ -1,24 +1,11 @@
 package dev.brighten.ac.utils;
 
-import com.github.retrooper.packetevents.PacketEvents;
-import com.github.retrooper.packetevents.manager.server.ServerVersion;
+import com.github.retrooper.packetevents.protocol.entity.type.EntityType;
 import com.github.retrooper.packetevents.protocol.world.states.type.StateType;
+import com.github.retrooper.packetevents.util.Vector3d;
 import dev.brighten.ac.data.APlayer;
-import dev.brighten.ac.utils.reflections.types.WrappedClass;
 import dev.brighten.ac.utils.world.types.SimpleCollisionBox;
 import me.hydro.emulator.util.mcp.MathHelper;
-import net.md_5.bungee.api.chat.BaseComponent;
-import net.md_5.bungee.api.chat.TextComponent;
-import org.bukkit.Bukkit;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.command.CommandSender;
-import org.bukkit.entity.EntityType;
-import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.util.Vector;
 
 import java.io.*;
 import java.text.SimpleDateFormat;
@@ -29,11 +16,7 @@ import java.util.stream.LongStream;
 
 public class MiscUtils {
 
-    public static Material[] array = Arrays.stream(Material.values())
-            .filter(mat -> mat.name().contains("LEGACY"))
-            .toArray(Material[]::new);
-
-    public static Map<EntityType, Vector> entityDimensions = new HashMap<>();
+    public static Map<EntityType, Vector3d> entityDimensions = new HashMap<>();
 
     public static boolean containsIgnoreCase(String toCheck, String contains) {
         return toCheck.toLowerCase().contains(contains.toLowerCase());
@@ -78,13 +61,6 @@ public class MiscUtils {
     }
     public static boolean endsWith(double value, String string) {
         return String.valueOf(value).endsWith(string);
-    }
-
-    public static void sendMessage(CommandSender player, String message, Object... objects) {
-        String toSend = String.format(Color.translate(message), objects);
-        if(player instanceof Player) {
-            ((Player)player).spigot().sendMessage(TextComponent.fromLegacyText(toSend));
-        } else player.sendMessage(toSend);
     }
 
 
@@ -142,30 +118,10 @@ public class MiscUtils {
         }
     }
 
-    public static int getOridinal(Material material) {
-        int i = 0;
-        for (Material mat : array) {
-            if(mat.getId() == material.getId()) {
-                return i;
-            }
-            i++;
-        }
-        return -1;
-    }
-
-    public static BaseComponent[] toComponentArray(TextComponent message) {
-        return TextComponent.fromLegacyText(message.toLegacyText());
-    }
-
     public static String injectColor(String string, String color) {
         String[] split = string.split("");
 
         return Arrays.stream(split).map(s -> color + s).collect(Collectors.joining());
-    }
-
-    public static Material getById(int id) {
-        return Arrays.stream(Material.values()).filter(mat -> mat.getId() == id).findFirst()
-                .orElse(Material.getMaterial("AIR"));
     }
 
     public static String line(String color) {
@@ -194,19 +150,6 @@ public class MiscUtils {
         return total;
     }
 
-    private static final WrappedClass materialClass = new WrappedClass(Material.class);
-    public static Material match(String material) {
-        if(PacketEvents.getAPI().getServerManager().getVersion().isNewerThanOrEquals(ServerVersion.V_1_13)) {
-            return materialClass
-                    .getMethod("matchMaterial", String.class, boolean.class)
-                    .invoke(null, material, material.contains("LEGACY_"));
-        } return Material.getMaterial(material.replace("LEGACY_", ""));
-    }
-
-    public static Material match(StateType type) {
-        return match(type.getName());
-    }
-
     public static <T> List<T> combine(List<T> one, List<T> two) {
         List<T> newList = new ArrayList<>();
         if(one != null)
@@ -215,14 +158,6 @@ public class MiscUtils {
             newList.addAll(two);
 
         return newList;
-    }
-
-    public static void printToConsole(String string, Object... objects) {
-        Bukkit.getConsoleSender().sendMessage(Color.translate(String.format(string, objects)));
-    }
-
-    public static void printToConsole(String string) {
-        Bukkit.getConsoleSender().sendMessage(Color.translate(string));
     }
 
     public static String trimEnd(String string) {
@@ -277,24 +212,6 @@ public class MiscUtils {
         return clazz.getConstructor(new Class[] {String.class}).newInstance(s);
     }
 
-    /* MAKE SURE TO ONLY RUN THIS METHOD IN onLoad() AND NO WHERE ELSE */
-    public static void registerCommand(String name, JavaPlugin plugin) {
-        plugin.getDescription().getCommands().put(name, new HashMap<>());
-    }
-
-    public static ItemStack createItem(Material material, int amount, String name, String... lore) {
-        ItemStack thing = new ItemStack(material, amount);
-        ItemMeta thingm = thing.getItemMeta();
-        thingm.setDisplayName(Color.translate(name));
-        ArrayList<String> loreList = new ArrayList<>();
-        for (String string : lore) {
-            loreList.add(Color.translate(string));
-        }
-        thingm.setLore(loreList);
-        thing.setItemMeta(thingm);
-        return thing;
-    }
-
     public static boolean arraysSimilar(String[] one, String[] two) {
         if(one.length != two.length) return false;
 
@@ -306,18 +223,6 @@ public class MiscUtils {
             }
         }
         return true;
-    }
-
-    public static int getDistanceToGround(Player p) {
-        Location loc = p.getLocation().clone();
-        double y = loc.getBlockY();
-        int distance = 0;
-        for (double i = y; i >= 0.0; i -= 1.0) {
-            loc.setY(i);
-            if (BlockUtils.getBlock(loc).getType().isSolid() || BlockUtils.getBlock(loc).isLiquid()) break;
-            ++distance;
-        }
-        return distance;
     }
 
     public static <T> T getArgOrNull(T[] array, int index) {
