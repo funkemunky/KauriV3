@@ -4,7 +4,7 @@ package dev.brighten.ac.bukkit.menu.preset.button;
 import dev.brighten.ac.utils.Color;
 import dev.brighten.ac.utils.ItemBuilder;
 import dev.brighten.ac.utils.Setting;
-import dev.brighten.ac.bukkit.menu.button.Button;
+import dev.brighten.ac.utils.menu.button.Button;
 import lombok.val;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;

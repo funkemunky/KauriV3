@@ -7,8 +7,8 @@ import co.aikar.commands.bukkit.contexts.OnlinePlayer;
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.check.Check;
 import dev.brighten.ac.data.APlayer;
-import dev.brighten.ac.handler.BBRevealHandler;
-import dev.brighten.ac.bukkit.messages.Messages;
+import dev.brighten.ac.bukkit.listener.BBRevealHandler;
+import dev.brighten.ac.messages.Messages;
 import dev.brighten.ac.utils.*;
 import dev.brighten.ac.utils.annotation.Init;
 import dev.brighten.ac.utils.msg.ChatBuilder;
@@ -44,16 +44,16 @@ public class AnticheatCommand extends BaseCommand {
         APlayer player = Anticheat.INSTANCE.getPlayerRegistry().getPlayer(pl.getUniqueId()).orElse(null);
 
         if(player == null) {
-            pl.spigot().sendMessage(Messages.NULL_APLAYER);
+            player.getBukkitPlayer().sendMessage(Messages.NULL_APLAYER);
             return;
         }
 
         if(Check.alertsEnabled.contains(player.getBukkitPlayer().getUniqueId())) {
             Check.alertsEnabled.remove(player.getBukkitPlayer().getUniqueId());
-            pl.spigot().sendMessage(Messages.ALERTS_OFF);
+            player.getBukkitPlayer().sendMessage(Messages.ALERTS_OFF);
         } else {
             Check.alertsEnabled.add(player.getBukkitPlayer().getUniqueId());
-            pl.spigot().sendMessage(Messages.ALERTS_ON);
+            player.getBukkitPlayer().sendMessage(Messages.ALERTS_ON);
         }
     }
     @Subcommand("wand")

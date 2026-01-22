@@ -1,10 +1,11 @@
 package dev.brighten.ac.utils;
 
+import com.github.retrooper.packetevents.protocol.item.type.ItemType;
+import com.github.retrooper.packetevents.protocol.item.type.ItemTypes;
 import com.github.retrooper.packetevents.protocol.world.states.type.StateType;
 import com.github.retrooper.packetevents.protocol.world.states.type.StateTypes;
 import dev.brighten.ac.utils.world.BlockData;
 import dev.brighten.ac.utils.world.types.NoCollisionBox;
-import org.bukkit.Material;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -90,20 +91,15 @@ public class Materials {
         return MATERIAL_FLAGS.getOrDefault(material, 0);
     }
 
-    private Materials() {
-
-    }
-
     public static boolean checkFlag(StateType material, int flag) {
         return (MATERIAL_FLAGS.get(material) & flag) == flag;
     }
 
-    public static boolean isUsable(Material material) {
-        String nameLower = material.name().toLowerCase();
-        return material.isEdible()
-                || nameLower.contains("bow")
-                || nameLower.contains("sword")
-                || nameLower.contains("trident");
+    public static boolean isUsable(ItemType material) {
+        return material.hasAttribute(ItemTypes.ItemAttribute.EDIBLE)
+                || material == ItemTypes.BOW
+                || material == ItemTypes.CROSSBOW
+                || material.hasAttribute(ItemTypes.ItemAttribute.SWORD)
+                || material == ItemTypes.TRIDENT;
     }
-
 }

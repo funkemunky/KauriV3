@@ -1,8 +1,8 @@
 package dev.brighten.ac.bukkit.menu.button;
 
 import dev.brighten.ac.Anticheat;
-import dev.brighten.ac.bukkit.menu.Menu;
-import dev.brighten.ac.bukkit.menu.type.impl.ChestMenu;
+import dev.brighten.ac.utils.menu.Menu;
+import dev.brighten.ac.utils.menu.type.impl.ChestMenu;
 import lombok.Setter;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitTask;

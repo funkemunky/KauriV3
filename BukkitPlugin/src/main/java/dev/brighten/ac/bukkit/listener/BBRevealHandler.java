@@ -1,10 +1,10 @@
-package dev.brighten.ac.handler;
+package dev.brighten.ac.bukkit.listener;
 
 import com.github.retrooper.packetevents.protocol.particle.type.ParticleTypes;
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.handler.block.WrappedBlock;
-import dev.brighten.ac.utils.ItemBuilder;
+import dev.brighten.ac.bukkit.utils.ItemBuilder;
 import dev.brighten.ac.utils.Materials;
 import dev.brighten.ac.utils.annotation.Init;
 import com.github.retrooper.packetevents.util.Vector3i;
@@ -20,6 +20,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
+import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
@@ -49,7 +50,7 @@ public class BBRevealHandler implements Listener {
         APlayer player = Anticheat.INSTANCE.getPlayerRegistry()
                 .getPlayer(event.getPlayer().getUniqueId()).orElse(null);
 
-        if(player == null || !player.getWrappedPlayer().getItemInHand().isSimilar(wand)) return;
+        if(player == null || !player.getBukkitPlayer().getInventory().getItemInHand().isSimilar(wand)) return;
 
         if(event.getAction() == Action.RIGHT_CLICK_BLOCK) {
             Vector3i blockLoc = new Vector3i(event.getClickedBlock().getX(),

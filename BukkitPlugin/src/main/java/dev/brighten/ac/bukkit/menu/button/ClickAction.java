@@ -1,6 +1,6 @@
 package dev.brighten.ac.bukkit.menu.button;
 
-import dev.brighten.ac.bukkit.menu.Menu;
+import dev.brighten.ac.utils.menu.Menu;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;

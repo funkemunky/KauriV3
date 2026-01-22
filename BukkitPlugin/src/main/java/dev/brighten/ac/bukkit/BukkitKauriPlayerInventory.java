@@ -1,7 +1,7 @@
 package dev.brighten.ac.bukkit;
 
 import com.github.retrooper.packetevents.protocol.item.ItemStack;
-import dev.brighten.ac.api.platform.KauriInventory;
+import dev.brighten.ac.api.platform.KauriPlayerInventory;
 import io.github.retrooper.packetevents.util.SpigotConversionUtil;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.entity.Player;
@@ -9,7 +9,7 @@ import org.bukkit.entity.Player;
 import java.util.Arrays;
 
 @RequiredArgsConstructor
-public class BukkitKauriInventory implements KauriInventory {
+public class BukkitKauriPlayerInventory implements KauriPlayerInventory {
 
     private final Player player;
 

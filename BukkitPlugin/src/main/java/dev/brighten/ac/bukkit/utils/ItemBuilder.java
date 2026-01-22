@@ -1,13 +1,11 @@
-package dev.brighten.ac.utils;
+package dev.brighten.ac.bukkit.utils;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
-import org.bukkit.Color;
 import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.inventory.meta.LeatherArmorMeta;
 import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.material.MaterialData;
 
@@ -208,28 +206,6 @@ public class ItemBuilder {
     public ItemBuilder clearEnchantments() {
         is.getEnchantments().keySet().forEach(e -> is.removeEnchantment(e));
         return this;
-    }
-
-    /**
-     * Sets the {@link Color} of a part of leather armor
-     *
-     * @param color the {@link Color} to use
-     * @return this builder for chaining
-     * @since 1.1
-     */
-    public ItemBuilder color(Color color) {
-        XMaterial type = BlockUtils.getXMaterial(is.getType());
-        if (type == XMaterial.LEATHER_BOOTS
-                || type == XMaterial.LEATHER_CHESTPLATE
-                || type == XMaterial.LEATHER_HELMET
-                || type == XMaterial.LEATHER_LEGGINGS) {
-            LeatherArmorMeta meta = (LeatherArmorMeta) is.getItemMeta();
-            meta.setColor(color);
-            is.setItemMeta(meta);
-            return this;
-        } else {
-            throw new IllegalArgumentException("color() only applicable for leather armor!");
-        }
     }
 
     /**

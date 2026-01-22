@@ -29,7 +29,6 @@ import dev.brighten.ac.handler.VelocityHandler;
 import dev.brighten.ac.handler.block.BlockUpdateHandler;
 import dev.brighten.ac.handler.entity.FakeMob;
 import dev.brighten.ac.handler.keepalive.KeepAlive;
-import dev.brighten.ac.messages.Messages;
 import dev.brighten.ac.packet.TransactionServerWrapper;
 import dev.brighten.ac.utils.*;
 import dev.brighten.ac.utils.objects.evicting.EvictingList;

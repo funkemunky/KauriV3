@@ -2,9 +2,9 @@ package dev.brighten.ac.bukkit.menu.preset;
 
 import dev.brighten.ac.utils.ItemBuilder;
 import dev.brighten.ac.utils.XMaterial;
-import dev.brighten.ac.bukkit.menu.button.Button;
-import dev.brighten.ac.bukkit.menu.preset.button.FillerButton;
-import dev.brighten.ac.bukkit.menu.type.impl.ChestMenu;
+import dev.brighten.ac.utils.menu.button.Button;
+import dev.brighten.ac.utils.menu.preset.button.FillerButton;
+import dev.brighten.ac.utils.menu.type.impl.ChestMenu;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 

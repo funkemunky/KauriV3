@@ -1,7 +1,7 @@
 package dev.brighten.ac.bukkit;
 
 import com.github.retrooper.packetevents.protocol.potion.PotionType;
-import dev.brighten.ac.api.platform.KauriInventory;
+import dev.brighten.ac.api.platform.KauriPlayerInventory;
 import dev.brighten.ac.api.platform.KauriPlayer;
 import dev.brighten.ac.utils.KLocation;
 import dev.brighten.ac.utils.KPotionEffect;
@@ -17,11 +17,11 @@ import java.util.UUID;
 
 public class BukkitPlayer implements KauriPlayer {
     private final Player player;
-    private final BukkitKauriInventory inventory;
+    private final BukkitKauriPlayerInventory inventory;
 
     public BukkitPlayer(Player player) {
         this.player = player;
-        this.inventory = new BukkitKauriInventory(player);
+        this.inventory = new BukkitKauriPlayerInventory(player);
     }
 
     @Override
@@ -45,7 +45,7 @@ public class BukkitPlayer implements KauriPlayer {
     }
 
     @Override
-    public KauriInventory getInventory() {
+    public KauriPlayerInventory getInventory() {
         return inventory;
     }
 
@@ -80,5 +80,10 @@ public class BukkitPlayer implements KauriPlayer {
         Location loc =  new Location(player.getWorld(), location.getX(), location.getY(), location.getZ(),
                 location.getYaw(), location.getPitch());
         player.teleport(loc);
+    }
+
+    @Override
+    public void openInventory(KauriPlayerInventory inventory) {
+
     }
 }

@@ -2,11 +2,11 @@ package dev.brighten.ac.bukkit.menu.type.impl;
 
 import dev.brighten.ac.utils.BlockUtils;
 import dev.brighten.ac.utils.XMaterial;
-import dev.brighten.ac.bukkit.menu.Menu;
-import dev.brighten.ac.bukkit.menu.button.Button;
-import dev.brighten.ac.bukkit.menu.button.UpdatingButton;
-import dev.brighten.ac.bukkit.menu.type.BukkitInventoryHolder;
-import dev.brighten.ac.bukkit.menu.util.ArrayIterator;
+import dev.brighten.ac.utils.menu.Menu;
+import dev.brighten.ac.utils.menu.button.Button;
+import dev.brighten.ac.utils.menu.button.UpdatingButton;
+import dev.brighten.ac.utils.menu.type.BukkitInventoryHolder;
+import dev.brighten.ac.utils.menu.util.ArrayIterator;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;

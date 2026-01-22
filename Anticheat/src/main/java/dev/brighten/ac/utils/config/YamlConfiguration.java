@@ -4,8 +4,6 @@ import dev.brighten.ac.Anticheat;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
-import org.bukkit.configuration.serialization.ConfigurationSerializable;
-import org.bukkit.configuration.serialization.ConfigurationSerialization;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.Yaml;
@@ -22,19 +20,12 @@ import java.util.logging.Level;
 public class YamlConfiguration extends ConfigurationProvider
 {
 
-    private final ThreadLocal<Yaml> yaml = ThreadLocal.withInitial(() -> {
+    public ThreadLocal<Yaml> yaml = ThreadLocal.withInitial(() -> {
         DumperOptions options = new DumperOptions();
         options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
         Representer representer = new Representer(options) {
             {
                 representers.put(Configuration.class, data -> represent(((Configuration) data).self));
-                representers.put(ConfigurationSerializable.class, data -> {
-                    ConfigurationSerializable serializable = (ConfigurationSerializable) data;
-                    Map<String, Object> values = new LinkedHashMap<>();
-                    values.put("==", ConfigurationSerialization.getAlias(serializable.getClass()));
-                    values.putAll(serializable.serialize());
-                    return represent(values);
-                });
             }
         };
 

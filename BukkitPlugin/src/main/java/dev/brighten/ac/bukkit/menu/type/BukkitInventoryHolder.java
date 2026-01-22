@@ -1,6 +1,6 @@
 package dev.brighten.ac.bukkit.menu.type;
 
-import dev.brighten.ac.bukkit.menu.Menu;
+import dev.brighten.ac.utils.menu.Menu;
 import lombok.NonNull;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;

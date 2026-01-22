@@ -2,7 +2,7 @@ package dev.brighten.ac.bukkit.menu.preset.button;
 
 import dev.brighten.ac.utils.ItemBuilder;
 import dev.brighten.ac.utils.XMaterial;
-import dev.brighten.ac.bukkit.menu.button.Button;
+import dev.brighten.ac.utils.menu.button.Button;
 
 public class FillerButton extends Button {
 

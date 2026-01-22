@@ -5,7 +5,7 @@ import co.aikar.commands.annotation.*;
 import co.aikar.commands.annotation.Optional;
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.check.CheckSettings;
-import dev.brighten.ac.gui.Logs;
+import dev.brighten.ac.bukkit.gui.Logs;
 import dev.brighten.ac.logging.Log;
 import dev.brighten.ac.utils.Color;
 import dev.brighten.ac.utils.MojangAPI;

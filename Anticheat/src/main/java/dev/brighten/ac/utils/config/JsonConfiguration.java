@@ -1,12 +1,13 @@
 package dev.brighten.ac.utils.config;
 
 import com.google.common.base.Charsets;
-import com.google.gson.*;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonSerializer;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
 import java.io.*;
-import java.lang.reflect.Type;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -14,14 +15,9 @@ import java.util.Map;
 public class JsonConfiguration extends ConfigurationProvider
 {
 
-    private final Gson json = new GsonBuilder().serializeNulls().setPrettyPrinting().registerTypeAdapter( Configuration.class, new JsonSerializer<Configuration>()
-    {
-        @Override
-        public JsonElement serialize(Configuration src, Type typeOfSrc, JsonSerializationContext context)
-        {
-            return context.serialize( src.self );
-        }
-    } ).create();
+    private final Gson json = new GsonBuilder().serializeNulls().setPrettyPrinting().registerTypeAdapter( Configuration.class,
+            (JsonSerializer<Configuration>) (src, typeOfSrc, context) ->
+                    context.serialize( src.self )).create();
 
     @Override
     public void save(Configuration config, File file) throws IOException

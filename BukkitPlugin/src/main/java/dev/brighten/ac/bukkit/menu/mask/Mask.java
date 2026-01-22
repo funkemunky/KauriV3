@@ -1,7 +1,7 @@
 package dev.brighten.ac.bukkit.menu.mask;
 
-import dev.brighten.ac.bukkit.menu.Menu;
-import dev.brighten.ac.bukkit.menu.button.Button;
+import dev.brighten.ac.utils.menu.Menu;
+import dev.brighten.ac.utils.menu.button.Button;
 
 /**
  * @author Missionary (missionarymc@gmail.com)

@@ -1,7 +1,7 @@
 package dev.brighten.ac.bukkit.menu;
 
-import dev.brighten.ac.bukkit.menu.button.Button;
-import dev.brighten.ac.bukkit.menu.type.BukkitInventoryHolder;
+import dev.brighten.ac.utils.menu.button.Button;
+import dev.brighten.ac.utils.menu.type.BukkitInventoryHolder;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;

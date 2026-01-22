@@ -2,8 +2,8 @@ package dev.brighten.ac.bukkit.menu.type.impl;
 
 import dev.brighten.ac.utils.ItemBuilder;
 import dev.brighten.ac.utils.XMaterial;
-import dev.brighten.ac.bukkit.menu.MenuListener;
-import dev.brighten.ac.bukkit.menu.button.Button;
+import dev.brighten.ac.utils.menu.MenuListener;
+import dev.brighten.ac.utils.menu.button.Button;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryType;

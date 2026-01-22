@@ -1,7 +1,6 @@
 package dev.brighten.ac.utils;
 
 import com.github.retrooper.packetevents.util.Vector3d;
-import dev.brighten.ac.api.platform.KauriPlayer;
 import dev.brighten.ac.handler.entity.TrackedEntity;
 import lombok.val;
 import me.hydro.emulator.util.mcp.MathHelper;
@@ -14,7 +13,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 //
-@SuppressWarnings("unused")
 public class MathUtils {
 
     public static double GROUND_DIVISOR = 0.015625;
@@ -77,19 +75,12 @@ public class MathUtils {
         double phi = Math.abs(beta - alpha) % 360;
         return (int) (phi > 180 ? 360 - phi : phi);
     }
-    public static boolean playerMoved(KLocation from, KLocation to) {
-        return playerMoved(from.toVector(), to.toVector());
-    }
 
     public static float gcdSmall(float current, float previous) {
         if(current < previous) return gcdSmall(Math.abs(previous), Math.abs(current));
         //The larger number has to be first.
         return (Math.abs(previous) <= 0.001f) ? current : gcdSmall(previous,
                 current - (float)Math.floor(current / previous) * previous);
-    }
-
-    public static double lerp(double lerpAmount, double start, double end) {
-        return start + lerpAmount * (end - start);
     }
 
     public static boolean isScientificNotation(double value) {
@@ -102,22 +93,9 @@ public class MathUtils {
         return (deltaX * deltaX) + (deltaY * deltaY) + (deltaZ * deltaZ);
     }
 
-    public static boolean isSameLocation(KLocation one, KLocation two) {
-        return one.getX() == two.getX() && one.getY() == two.getY() && one.getZ() == two.getZ();
-    }
-
 
     public static double max(double... values) {
         return Arrays.stream(values).max().orElse(Double.MAX_VALUE);
-    }
-
-    public static boolean isInteger(String string) {
-        try {
-            Integer.parseInt(string);
-            return true;
-        } catch(NumberFormatException e) {
-            return false;
-        }
     }
 
     public static int length(double value) {
@@ -139,21 +117,6 @@ public class MathUtils {
         return (max - average) - min;
     }
 
-    public static double getGrid(final float[] entry) {
-        double average = 0.0;
-        double min = 0.0, max = 0.0;
-
-        for (final double number : entry) {
-            if (number < min) min = number;
-            if (number > max) max = number;
-            average += number;
-        }
-
-        average /= entry.length;
-
-        return (max - average) - min;
-    }
-
     public static double getGridDouble(final Collection<Double> entry) {
         double average = 0.0;
         double min = 0.0, max = 0.0;
@@ -169,21 +132,6 @@ public class MathUtils {
         return (max - average) - min;
     }
 
-    public static double getGridDouble(final double[] entry) {
-        double average = 0.0;
-        double min = 0.0, max = 0.0;
-
-        for (final double number : entry) {
-            if (number < min) min = number;
-            if (number > max) max = number;
-            average += number;
-        }
-
-        average /= entry.length;
-
-        return (max - average) - min;
-    }
-
     //Skidded from Luke.
     public static double getAngle(KLocation loc1, KLocation loc2) {
         if (loc1 == null || loc2 == null) return -1;
@@ -193,10 +141,6 @@ public class MathUtils {
         val rot = MathUtils.getRotation(loc1, loc2);
         Vector3d expectedRotation = new Vector3d(rot[0], rot[1], 0);
         return MathUtils.yawTo180D(playerRotation.getX() - expectedRotation.getX());
-    }
-
-    public static double getAngle(KLocation loc1, KLocation loc2) {
-        return getAngle(loc1.toLocation(null), loc2.toLocation(null));
     }
 
     public static float distanceBetweenAngles(float a, float b) {
@@ -313,37 +257,6 @@ public class MathUtils {
         return 0;
     }
 
-    //Copied from apache math Kurtosis class.
-    public static double getKurtosisApache(Iterable<? extends Number> iterable) {
-        List<Double> values = new ArrayList<>();
-
-        double total = 0;
-        double kurt = Double.NaN;
-        for (Number number : iterable) {
-            double v = number.doubleValue();
-            total+= v;
-            values.add(v);
-        }
-
-        if(values.size() < 2) return kurt;
-
-        double mean = total / values.size();
-        double stdDev = MathUtils.stdev(values);
-        double accum3 = 0.0D;
-
-        for (Double value : values) {
-            accum3 += Math.pow(value - mean, 4.0D);
-        }
-
-        accum3 /= Math.pow(stdDev, 4.0D);
-        double n0 = values.size();
-        double coefficientOne = n0 * (n0 + 1.0D) / ((n0 - 1.0D) * (n0 - 2.0D) * (n0 - 3.0D));
-        double termTwo = 3.0D * Math.pow(n0 - 1.0D, 2.0D) / ((n0 - 2.0D) * (n0 - 3.0D));
-        kurt = coefficientOne * accum3 - termTwo;
-
-        return kurt;
-    }
-
     public static double getKurtosis(final Iterable<? extends Number> iterable) {
         double n = 0.0;
         double n2 = 0.0;
@@ -411,45 +324,6 @@ public class MathUtils {
                 .collect(Collectors.toList());
     }
 
-    //Copied from apache math Skewness class.
-    public static double getSkewnessApache(Iterable<? extends Number> iterable) {
-        List<Double> values = new ArrayList<>();
-
-        double total = 0;
-        double skew = Double.NaN;
-        for (Number number : iterable) {
-            double v = number.doubleValue();
-            total+= v;
-            values.add(v);
-        }
-
-        if(values.size() < 2) return skew;
-
-        double m = total / values.size();
-        double accum = 0.0D;
-        double accum2 = 0.0D;
-
-        for (Double value : values) {
-            double d = value - m;
-            accum += d * d;
-            accum2 += d;
-        }
-
-        double variance = (accum - accum2 * accum2 / values.size()) / (values.size() - 1);
-        double accum3 = 0.0D;
-
-        for (Double value : values) {
-            double d = value - m;
-            accum3 += d * d * d;
-        }
-
-        accum3 /= variance * Math.sqrt(variance);
-        double n0 = values.size();
-        skew = n0 / ((n0 - 1.0D) * (n0 - 2.0D)) * accum3;
-
-        return skew;
-    }
-
     public static double getSkewness(final Iterable<? extends Number> iterable) {
         double sum = 0;
         int buffer = 0;
@@ -511,36 +385,10 @@ public class MathUtils {
 
         return (n4 == 0.0) ? 0.0 : (n4 / (n2 - 1));
     }
-
-    public static int getDecimalCount(float number) {
-        return String.valueOf(number).split("\\.")[1].length();
-    }
-
-    public static int getDecimalCount(double number) {
-        return String.valueOf(number).split("\\.")[1].length();
-    }
-
     public static float clampToVanilla(float s, float angle) {
         float f = (s * 0.6f + .2f);
         float f2 = f * f * f * 1.2f;
         return angle - (angle % f2);
-    }
-
-    public static byte getByte(int num) {
-        if(num > Byte.MAX_VALUE || num < Byte.MIN_VALUE) {
-            throw new NumberFormatException("Integer " + num + " too large to cast to data format byte!"
-                    + " (max=" + Byte.MAX_VALUE + " min=" + Byte.MIN_VALUE + ")");
-        }
-
-        return (byte) num;
-    }
-
-    public static short getShort(int num) {
-        if(num > Short.MAX_VALUE || num < Short.MIN_VALUE) {
-            throw new NumberFormatException("Integer " + num + " too large to cast to data format short!"
-                    + " (max=" + Short.MAX_VALUE + " min=" + Short.MIN_VALUE + ")");
-        }
-        return (short) num;
     }
 
     /* Stolen from Bukkit */
@@ -548,24 +396,10 @@ public class MathUtils {
         Vector3d vector = new Vector3d();
         double rotX = loc.getYaw();
         double rotY = loc.getPitch();
-        vector.setY(-Math.sin(Math.toRadians(rotY)));
         double xz = Math.cos(Math.toRadians(rotY));
-        vector.setX(-xz * Math.sin(Math.toRadians(rotX)));
-        vector.setZ(xz * Math.cos(Math.toRadians(rotX)));
-        return vector;
-    }
-
-
-    public static boolean approxEquals(double accuracy, double equalTo, double... equals) {
-        return Arrays.stream(equals).allMatch(equal -> MathUtils.getDelta(equalTo, equal) < accuracy);
-    }
-
-    public static boolean approxEquals(double accuracy, int equalTo, int... equals) {
-        return Arrays.stream(equals).allMatch(equal -> MathUtils.getDelta(equalTo, equal) < accuracy);
-    }
-
-    public static boolean approxEquals(double accuracy, long equalTo, long... equals) {
-        return Arrays.stream(equals).allMatch(equal -> MathUtils.getDelta(equalTo, equal) < accuracy);
+        return new Vector3d(-xz * Math.sin(Math.toRadians(rotX)),
+                -Math.sin(Math.toRadians(rotY)),
+                xz * Math.cos(Math.toRadians(rotX)));
     }
 
     //Returns -1 if fails.
@@ -588,37 +422,12 @@ public class MathUtils {
         return Math.sqrt(total);
     }
 
-    public static float hypot(float... value) {
-        float total = 0;
-
-        for (float val : value) {
-            total += (val * val);
-        }
-
-        return (float) Math.sqrt(total);
-    }
-
     public static double hypotSqrt(double left, double right) {
-        return (left * left) + (right * right);
-    }
-
-    public static float hypotSqrt(float left, float right) {
         return (left * left) + (right * right);
     }
 
     public static double get3DDistance(Vector3d one, Vector3d two) {
         return hypot(one.getX() - two.getX(), one.getY() - two.getY(), one.getZ() - two.getZ());
-    }
-
-    public static boolean playerMoved(Vector3d from, Vector3d to) {
-        return from.distance(to) > 0;
-    }
-
-    public static boolean playerLooked(KLocation from, KLocation to) {
-        return (from.getYaw() - to.getYaw() != 0) || (from.getPitch() - to.getPitch() != 0);
-    }
-    public static boolean elapsed(long time, long needed) {
-        return Math.abs(System.currentTimeMillis() - time) >= needed;
     }
 
     //Euclid's algorithim
@@ -631,14 +440,6 @@ public class MathUtils {
             a = temp;
         }
         return a;
-    }
-
-    //Euclid's algorithim
-    public static long gcd(long... input)
-    {
-        long result = input[0];
-        for(int i = 1; i < input.length; i++) result = gcd(result, input[i]);
-        return result;
     }
 
     // Returns the absolute value of n-mid*mid*mid
@@ -711,20 +512,6 @@ public class MathUtils {
         return new Vector3d(f1 * f2, f3, f * f2);
     }
 
-    public static float sqrt(float number) {
-        if(number == 0) return 0;
-        float t;
-
-        float squareRoot = number / 2;
-
-        do {
-            t = squareRoot;
-            squareRoot = (t + (number / t)) / 2;
-        } while ((t - squareRoot) != 0);
-
-        return squareRoot;
-    }
-
     public static float normalizeAngle(float yaw) {
         return yaw % 360;
     }
@@ -746,37 +533,12 @@ public class MathUtils {
         return a * (b / gcd(a, b));
     }
 
-    //Euclid's algorithim
-    public static long lcm(long... input)
-    {
-        long result = input[0];
-        for(int i = 1; i < input.length; i++) result = lcm(result, input[i]);
-        return result;
-    }
-
     public static float getDelta(float one, float two) {
         return Math.abs(one - two);
     }
 
     public static double getDelta(double one, double two) {
         return Math.abs(one - two);
-    }
-
-    public static long getDelta(long one, long two) {
-        return Math.abs(one - two);
-    }
-
-    public static long getDelta(int one, int two) {
-        return Math.abs(one - two);
-    }
-
-    public static long elapsed(long time) {
-        return Math.abs(System.currentTimeMillis() - time);
-    }
-
-    public static double getHorizontalDistance(KLocation from, KLocation to) {
-        double deltaX = to.getX() - from.getX(), deltaZ = to.getZ() - from.getZ();
-        return Math.sqrt(deltaX * deltaX + deltaZ * deltaZ);
     }
 
     public static double stdev(Collection<Double> list) {
@@ -803,10 +565,6 @@ public class MathUtils {
         return (int) Math.ceil(millis / 50D);
     }
 
-    public static double getVerticalDistance(KLocation from, KLocation to) {
-        return Math.abs(from.getY() - to.getY());
-    }
-
     public static double trim(int degree, double d) {
         DecimalFormat twoDForm = new DecimalFormat("#.#" + "#".repeat(Math.max(0, degree - 1)));
         return Double.parseDouble(twoDForm.format(d).replaceAll(",", "."));
@@ -815,10 +573,6 @@ public class MathUtils {
     public static float trimFloat(int degree, float d) {
         DecimalFormat twoDForm = new DecimalFormat("#.#" + "#".repeat(Math.max(0, degree - 1)));
         return Float.parseFloat(twoDForm.format(d).replaceAll(",", "."));
-    }
-
-    public static double getYawDifference(KLocation one, KLocation two) {
-        return Math.abs(one.getYaw() - two.getYaw());
     }
 
     public static double round(double value, int places) {
@@ -890,11 +644,6 @@ public class MathUtils {
         return bd.floatValue();
     }
 
-    public static int floor(double var0) {
-        int var2 = (int) var0;
-        return var0 < var2 ? var2 - 1 : var2;
-    }
-
     public static float yawTo180F(float flub) {
         if ((flub %= 360.0f) >= 180.0f) {
             flub -= 360.0f;
@@ -913,15 +662,6 @@ public class MathUtils {
             dub += 360.0;
         }
         return dub;
-    }
-
-    public static double getDirection(KLocation from, KLocation to) {
-        if (from == null || to == null) {
-            return 0.0;
-        }
-        double difX = to.getX() - from.getX();
-        double difZ = to.getZ() - from.getZ();
-        return MathUtils.yawTo180F((float) (FastTrig.fast_atan2(difZ, difX) * 180.0 / 3.141592653589793) - 90.0f);
     }
 
     public static float[] getRotation(Vector3d one, Vector3d two) {
