@@ -31,7 +31,7 @@ public class KACalc extends KListener {
     @Bind
     WAction<WrapperPlayClientPlayerFlying> flying = packet -> {
         if(player.getInfo().getTarget() == null || player.getInfo().lastAttack.isPassed(40)) return;
-        Optional<TrackedEntity> optional = player.getEntityLocationHandler()
+        Optional<TrackedEntity> optional = player.getWorldTracker().getCurrentWorld().get()
                 .getTrackedEntity(player.getInfo().getTarget().getEntityId());
 
         if(optional.isEmpty()) return;
@@ -46,7 +46,7 @@ public class KACalc extends KListener {
         KLocation originKLoc = player.getMovement().getTo().getLoc().clone()
                 .add(0, player.getInfo().isSneaking() ? 1.54f : 1.62f, 0);
 
-        double halfHeight = player.getInfo().getTarget().getEyeHeight() / 2;
+        double halfHeight = player.getInfo().getTarget().getPose().eyeHeight / 2;
         KLocation targetLocation = new KLocation(current.getX(), current.getY(), current.getZ());
         var rotations = MathUtils
                 .getRotation(originKLoc, targetLocation.clone().add(0, halfHeight, 0));

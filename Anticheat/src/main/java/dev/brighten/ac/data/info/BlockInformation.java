@@ -4,6 +4,7 @@ import com.github.retrooper.packetevents.protocol.particle.type.ParticleTypes;
 import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import com.github.retrooper.packetevents.protocol.world.states.type.StateType;
 import com.github.retrooper.packetevents.protocol.world.states.type.StateTypes;
+import com.github.retrooper.packetevents.util.Vector3i;
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.handler.entity.TrackedEntity;
@@ -132,11 +133,11 @@ public class BlockInformation {
                         }
 
                         final StateType type =
-                                player.getBlockUpdateHandler().getBlock(new IntVector(x, y, z)).getType();
+                                player.getWorldTracker().getBlock(new Vector3i(x, y, z)).getType();
 
                         if (type != StateTypes.AIR) {
 
-                            IntVector vec = new IntVector(x, y, z);
+                            Vector3i vec = new Vector3i(x, y, z);
                             CollisionBox blockBox = BlockData.getData(type)
                                     .getBox(player, vec, player.getPlayerVersion());
 

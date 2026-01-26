@@ -1,11 +1,11 @@
 package dev.brighten.ac.utils;
 
+import com.github.retrooper.packetevents.util.MathUtil;
 import com.github.retrooper.packetevents.util.Vector3d;
+import com.github.retrooper.packetevents.util.Vector3i;
 import lombok.Data;
 import org.bukkit.Location;
 import org.bukkit.World;
-import org.bukkit.util.Vector;
-import org.joml.Vector2d;
 
 import java.util.Objects;
 
@@ -41,14 +41,18 @@ public class KLocation implements Cloneable {
         this.timeStamp = System.currentTimeMillis();
     }
 
-    public KLocation(Vector vector) {
+    public KLocation(Location location) {
+        this(location.getX(), location.getY(), location.getZ(), location.getYaw(), location.getPitch());
+    }
+
+    public KLocation(Vector3d vector) {
         this.x = vector.getX();
         this.y = vector.getY();
         this.z = vector.getZ();
         this.timeStamp = System.currentTimeMillis();
     }
 
-    public KLocation(Location location) {
+    public KLocation(KLocation location) {
         this.x = location.getX();
         this.y = location.getY();
         this.z = location.getZ();
@@ -57,12 +61,12 @@ public class KLocation implements Cloneable {
         this.timeStamp = System.currentTimeMillis();
     }
 
-    public Vector toVector() {
-        return new Vector(x, y, z);
+    public Vector3d toVector() {
+        return new Vector3d(x, y, z);
     }
 
-    public Vector3d toVector3d() {
-        return new Vector3d(x, y, z);
+    public Vector3i toVector3i() {
+        return new Vector3i((int) x, (int) y, (int) z);
     }
 
     public Location toLocation(World world) {
@@ -112,8 +116,27 @@ public class KLocation implements Cloneable {
         return this;
     }
 
-    public Vector getDirection() {
-        return MathUtils.getDirection(this);
+    public Vector3d getDirection() {
+        double rotX = this.getYaw();
+        double rotY = this.getPitch();
+        double x, y, z;
+        y = -Math.sin(Math.toRadians(rotY));
+        double xz = Math.cos(Math.toRadians(rotY));
+        x = -xz * Math.sin(Math.toRadians(rotX));
+        z = xz * Math.cos(Math.toRadians(rotX));
+        return new Vector3d(x, y, z);
+    }
+
+    public int getBlockX() {
+        return MathUtil.floor(x);
+    }
+
+    public int getBlockY() {
+        return MathUtil.floor(y);
+    }
+
+    public int getBlockZ() {
+        return MathUtil.floor(z);
     }
 
     @Override

@@ -44,7 +44,7 @@ public class DynamicStair implements CollisionFactory {
                 z = originalStairs.getLocation().getZ();
         WrappedBlock offsetOne = player == null
                 ? null
-                : player.getBlockUpdateHandler().getBlock(
+                : player.getWorldTracker().getBlock(
                 x + facing.getModX(),
                 y + facing.getModY(),
                 z + facing.getModZ());
@@ -64,7 +64,7 @@ public class DynamicStair implements CollisionFactory {
             }
         }
 
-        WrappedBlock offsetTwo = player.getBlockUpdateHandler()
+        WrappedBlock offsetTwo = player.getWorldTracker()
                 .getBlock(x + facing.getOppositeFace().getModX(),
                         y + facing.getOppositeFace().getModY(), z
                                 + facing.getOppositeFace().getModZ());

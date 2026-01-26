@@ -14,12 +14,12 @@ import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.handler.block.WrappedBlock;
 import dev.brighten.ac.utils.KLocation;
 import dev.brighten.ac.utils.annotation.Bind;
-import dev.brighten.ac.utils.math.IntVector;
 import dev.brighten.ac.utils.timer.Timer;
 import dev.brighten.ac.utils.timer.impl.TickTimer;
 import dev.brighten.ac.utils.world.BlockData;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 @CheckData(name = "Block (D)", checkId = "blockc", type = CheckType.INTERACT)
 public class BlockD extends Check {
@@ -45,7 +45,7 @@ public class BlockD extends Check {
                 packet.getFace().getModY(),
                 packet.getFace().getModZ());
 
-        WrappedBlock block = new WrappedBlock(new IntVector(packet.getBlockPosition()),
+        WrappedBlock block = new WrappedBlock(packet.getBlockPosition(),
                 placedType,
                 WrappedBlockState.getDefaultState(placedType));
         blockPlaceLocations.put(blockpos, block);

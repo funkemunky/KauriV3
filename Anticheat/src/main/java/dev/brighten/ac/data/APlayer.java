@@ -22,17 +22,19 @@ import dev.brighten.ac.data.info.GeneralInformation;
 import dev.brighten.ac.data.info.LagInformation;
 import dev.brighten.ac.data.obj.InstantAction;
 import dev.brighten.ac.data.obj.NormalAction;
-import dev.brighten.ac.handler.EntityLocationHandler;
+import dev.brighten.ac.handler.EntityTrackHandler;
 import dev.brighten.ac.handler.MovementHandler;
 import dev.brighten.ac.handler.PotionHandler;
 import dev.brighten.ac.handler.VelocityHandler;
 import dev.brighten.ac.handler.block.BlockUpdateHandler;
 import dev.brighten.ac.handler.entity.FakeMob;
 import dev.brighten.ac.handler.keepalive.KeepAlive;
-import dev.brighten.ac.handler.protocol.Protocol;
 import dev.brighten.ac.messages.Messages;
 import dev.brighten.ac.packet.TransactionServerWrapper;
-import dev.brighten.ac.utils.*;
+import dev.brighten.ac.utils.Helper;
+import dev.brighten.ac.utils.KLocation;
+import dev.brighten.ac.utils.Tuple;
+import dev.brighten.ac.utils.XMaterial;
 import dev.brighten.ac.utils.objects.evicting.EvictingList;
 import dev.brighten.ac.utils.timer.Timer;
 import dev.brighten.ac.utils.timer.impl.MillisTimer;
@@ -49,7 +51,6 @@ import me.hydro.emulator.object.input.DataSupplier;
 import me.hydro.emulator.util.mcp.AxisAlignedBB;
 import me.hydro.emulator.util.mcp.BlockPos;
 import org.bukkit.entity.Player;
-import org.bukkit.util.Vector;
 
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -72,10 +73,10 @@ public class APlayer {
     private VelocityHandler velocityHandler;
 
     @Getter
-    private EntityLocationHandler entityLocationHandler;
+    private EntityTrackHandler entityTrackHandler;
 
     @Getter
-    private BlockUpdateHandler blockUpdateHandler;
+    private BlockUpdateHandler worldTracker;
 
     @Getter
     private CheckHandler checkHandler;
@@ -138,8 +139,8 @@ public class APlayer {
         this.movement = new MovementHandler(this);
         this.potionHandler = new PotionHandler(this);
         this.velocityHandler = new VelocityHandler(this);
-        this.entityLocationHandler = new EntityLocationHandler(this);
-        this.blockUpdateHandler = new BlockUpdateHandler(this);
+        this.entityTrackHandler = new EntityTrackHandler(this);
+        this.worldTracker = new BlockUpdateHandler(this);
         this.checkHandler = new CheckHandler(this);
         this.info = new GeneralInformation();
         this.lagInfo = new LagInformation();
@@ -151,7 +152,7 @@ public class APlayer {
             // Grabbing the protocol version of the player.
             Anticheat.INSTANCE.getLogger().info("Attempting Getting player version for " + getBukkitPlayer().getName());
 
-            ClientVersion version = ClientVersion.getById(Protocol.getProtocol().getPlayerVersion(getBukkitPlayer()));
+            ClientVersion version = ClientVersion.getById(Anticheat.INSTANCE.getProtocol().getPlayerVersion(this));
 
             this.playerVersion = version;
 
@@ -187,7 +188,7 @@ public class APlayer {
                 @Override
                 public Block getBlockAt(BlockPos blockPos) {
                     //Optional<org.bukkit.block.Block>
-                    var block = APlayer.this.getBlockUpdateHandler()
+                    var block = APlayer.this.getWorldTracker()
                             .getBlock(blockPos.getX(), blockPos.getY(), blockPos.getZ());
 
                     StateType type = block.getType();
@@ -228,7 +229,7 @@ public class APlayer {
 
         RayCollision coll = new RayCollision(origin.toVector(), origin.getDirection().multiply(-1));
 
-        Vector loc1 = coll.collisionPoint(2);
+        Vector3d loc1 = coll.collisionPoint(2);
 
         List<EntityData<?>> dataList = new ArrayList<>();
 

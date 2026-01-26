@@ -1,10 +1,12 @@
 package dev.brighten.ac.data.info;
 
 import com.github.retrooper.packetevents.util.Vector3d;
+import dev.brighten.ac.data.obj.Pose;
 import dev.brighten.ac.handler.block.WrappedBlock;
 import dev.brighten.ac.handler.entity.TrackedEntity;
 import dev.brighten.ac.packet.PlayerCapabilities;
 import dev.brighten.ac.utils.KLocation;
+import dev.brighten.ac.utils.KPotionEffect;
 import dev.brighten.ac.utils.PastLocation;
 import dev.brighten.ac.utils.math.RollingAverage;
 import dev.brighten.ac.utils.objects.evicting.EvictingList;
@@ -12,8 +14,6 @@ import dev.brighten.ac.utils.timer.Timer;
 import dev.brighten.ac.utils.timer.impl.TickTimer;
 import lombok.Getter;
 import lombok.Setter;
-import org.bukkit.entity.LivingEntity;
-import org.bukkit.potion.PotionEffect;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -33,8 +33,8 @@ public class GeneralInformation {
             lastBlockUpdate = new TickTimer(), lastMiscNear = new TickTimer(), lastHalfBlock = new TickTimer(),
             lastFence = new TickTimer(), lastFakeBotHit = new TickTimer(), lastInventoryOpen = new TickTimer(),
             botAttack = new TickTimer(), lastAttack = new TickTimer(), lastCanceledFlying = new TickTimer();
-    public LivingEntity target;
-    public Optional<PotionEffect> groundJumpBoost;
+    public TrackedEntity target;
+    public Optional<KPotionEffect> groundJumpBoost;
     public boolean serverGround, lastServerGround, canFly, nearGround, worldLoaded, generalCancel, inVehicle, creative,
             sneaking, lsneaking, sprinting, gliding, riptiding, wasOnSlime, onLadder, doingVelocity, breakingBlock,
                inventoryOpen, swimming;
@@ -46,4 +46,7 @@ public class GeneralInformation {
     public List<Vector3d> velocityHistory = Collections.synchronizedList(new EvictingList<>(5));
     public List<PlayerCapabilities> possibleCapabilities = new ArrayList<>();
     private int clientGroundTicks, clientAirTicks;
+    private double walkSpeed, flySpeed;
+    private PlayerInput playerInput;
+    private Pose pose;
 }

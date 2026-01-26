@@ -1,6 +1,7 @@
 package dev.brighten.ac.utils.world.types;
 
 import com.github.retrooper.packetevents.protocol.particle.type.ParticleType;
+import com.github.retrooper.packetevents.util.Vector3d;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.utils.Helper;
 import dev.brighten.ac.utils.KLocation;
@@ -54,7 +55,7 @@ public class SimpleCollisionBox implements CollisionBox {
         maxZ = width / 2;
     }
 
-    public SimpleCollisionBox(Vector min, Vector max) {
+    public SimpleCollisionBox(Vector3d min, Vector3d max) {
         this(min.getX(), min.getY(), min.getZ(), max.getX(), max.getY(), max.getZ());
     }
 
@@ -70,6 +71,13 @@ public class SimpleCollisionBox implements CollisionBox {
     }
 
     public SimpleCollisionBox(Vector vec, double width, double height) {
+        this(vec.getX(), vec.getY(), vec.getZ(), vec.getX(), vec.getY(), vec.getZ());
+
+        expand(width / 2, 0, width / 2);
+        maxY += height;
+    }
+
+    public SimpleCollisionBox(Vector3d vec, double width, double height) {
         this(vec.getX(), vec.getY(), vec.getZ(), vec.getX(), vec.getY(), vec.getZ());
 
         expand(width / 2, 0, width / 2);
@@ -196,26 +204,26 @@ public class SimpleCollisionBox implements CollisionBox {
         return this;
     }
 
-    public Vector[] corners() {
+    public Vector3d[] corners() {
         sort();
-        Vector[] vectors = new Vector[8];
-        vectors[0] = new Vector(minX, minY, minZ);
-        vectors[1] = new Vector(minX, minY, maxZ);
-        vectors[2] = new Vector(maxX, minY, minZ);
-        vectors[3] = new Vector(maxX, minY, maxZ);
-        vectors[4] = new Vector(minX, maxY, minZ);
-        vectors[5] = new Vector(minX, maxY, maxZ);
-        vectors[6] = new Vector(maxX, maxY, minZ);
-        vectors[7] = new Vector(maxX, maxY, maxZ);
+        Vector3d[] vectors = new Vector3d[8];
+        vectors[0] = new Vector3d(minX, minY, minZ);
+        vectors[1] = new Vector3d(minX, minY, maxZ);
+        vectors[2] = new Vector3d(maxX, minY, minZ);
+        vectors[3] = new Vector3d(maxX, minY, maxZ);
+        vectors[4] = new Vector3d(minX, maxY, minZ);
+        vectors[5] = new Vector3d(minX, maxY, maxZ);
+        vectors[6] = new Vector3d(maxX, maxY, minZ);
+        vectors[7] = new Vector3d(maxX, maxY, maxZ);
         return vectors;
     }
 
-    public Vector min() {
-        return new Vector(minX, minY, minZ);
+    public Vector3d min() {
+        return new Vector3d(minX, minY, minZ);
     }
 
-    public Vector max() {
-        return new Vector(maxX, maxY, maxZ);
+    public Vector3d max() {
+        return new Vector3d(maxX, maxY, maxZ);
     }
 
     @Override

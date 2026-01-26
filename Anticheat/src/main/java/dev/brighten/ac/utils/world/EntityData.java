@@ -3,6 +3,7 @@ package dev.brighten.ac.utils.world;
 import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.protocol.entity.type.EntityTypes;
 import dev.brighten.ac.handler.entity.TrackedEntity;
+import dev.brighten.ac.utils.KLocation;
 import dev.brighten.ac.utils.world.types.NoCollisionBox;
 import dev.brighten.ac.utils.world.types.SimpleCollisionBox;
 import org.bukkit.Location;
@@ -20,6 +21,10 @@ public class EntityData {
     }
 
     public static CollisionBox getEntityBox(Location location, TrackedEntity entity) {
+        return bounds(entity.getEntityType()).offset(location.getX(), location.getY(), location.getZ());
+    }
+
+    public static CollisionBox getEntityBox(KLocation location, TrackedEntity entity) {
         return bounds(entity.getEntityType()).offset(location.getX(), location.getY(), location.getZ());
     }
 
