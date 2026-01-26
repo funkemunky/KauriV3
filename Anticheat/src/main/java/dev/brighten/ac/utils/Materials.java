@@ -9,6 +9,7 @@ import org.bukkit.Material;
 import java.util.HashMap;
 import java.util.Map;
 
+//TODO Refactor this system to use just packetevents instead of this class
 public class Materials {
     private static final Map<StateType, Integer> MATERIAL_FLAGS =  new HashMap<>();
 

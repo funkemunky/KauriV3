@@ -81,6 +81,7 @@ public class BlockUpdateHandler {
             RayCollision rayCollision = new RayCollision(player.getMovement().getTo().getLoc()
                     .add(0, player.getEyeHeight(), 0).toVector(),
                     player.getMovement().getTo().getLoc().getDirection());
+            //TODO Refactor this system to use just packetevents instead of this class
             WrappedBlock block = rayCollision.getClosestBlockOfType(player, Materials.LIQUID, 5);
 
             if (block != null) {
