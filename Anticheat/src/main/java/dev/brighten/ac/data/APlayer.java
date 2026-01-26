@@ -7,7 +7,6 @@ import com.github.retrooper.packetevents.protocol.entity.data.EntityDataTypes;
 import com.github.retrooper.packetevents.protocol.entity.type.EntityTypes;
 import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import com.github.retrooper.packetevents.protocol.player.User;
-import com.github.retrooper.packetevents.protocol.world.dimension.DimensionType;
 import com.github.retrooper.packetevents.protocol.world.states.type.StateType;
 import com.github.retrooper.packetevents.protocol.world.states.type.StateTypes;
 import com.github.retrooper.packetevents.util.Vector3d;
@@ -27,6 +26,7 @@ import dev.brighten.ac.handler.MovementHandler;
 import dev.brighten.ac.handler.PotionHandler;
 import dev.brighten.ac.handler.VelocityHandler;
 import dev.brighten.ac.handler.block.BlockUpdateHandler;
+import dev.brighten.ac.handler.block.World;
 import dev.brighten.ac.handler.entity.FakeMob;
 import dev.brighten.ac.handler.keepalive.KeepAlive;
 import dev.brighten.ac.messages.Messages;
@@ -146,7 +146,11 @@ public class APlayer {
         this.lagInfo = new LagInformation();
         this.blockInfo = new BlockInformation(this);
 
+        worldTracker.getCurrentWorld().set(new World(bukkitPlayer.getWorld().getName()));
+
         creation.reset();
+
+        playerVersion = ClientVersion.getById(Anticheat.INSTANCE.getProtocol().getPlayerVersion(this));
 
         Anticheat.INSTANCE.getScheduler().schedule(() -> {
             // Grabbing the protocol version of the player.
@@ -329,10 +333,6 @@ public class APlayer {
         }
 
        user.writePacketSilently(packet);
-    }
-
-    public DimensionType getDimensionType() {
-        return user.getDimensionType();
     }
 
     public void sendPacket(PacketWrapper<?> packet) {

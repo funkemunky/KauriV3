@@ -102,6 +102,12 @@ public class World {
 
         y -= minHeight;
 
+        if(col == null) {
+            return new WrappedBlock(new Vector3i(x, y, z),
+                    StateTypes.AIR,
+                    BlockUpdateHandler.airBlockState);
+        }
+
         BaseChunk chunk = col.chunks().length - 1 < (y >> 4) ? null : col.chunks()[y >> 4];
 
         if(chunk == null) {

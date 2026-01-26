@@ -8,6 +8,6 @@ public class NoAPI implements Protocol {
 
     @Override
     public int getPlayerVersion(APlayer player) {
-        return PacketEvents.getAPI().getPlayerManager().getClientVersion(player).getProtocolVersion();
+        return PacketEvents.getAPI().getPlayerManager().getClientVersion(player.getBukkitPlayer()).getProtocolVersion();
     }
 }

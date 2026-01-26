@@ -35,7 +35,7 @@ public class BlockUpdateHandler {
     private final APlayer player;
     private final Map<String, World> worlds = new HashMap<>();
     @Getter
-    private AtomicReference<World> currentWorld;
+    private AtomicReference<World> currentWorld = new AtomicReference<>();
 
     /**
      * Clear all chunks when the player changes worlds

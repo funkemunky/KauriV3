@@ -47,6 +47,6 @@ public class GeneralInformation {
     public List<PlayerCapabilities> possibleCapabilities = new ArrayList<>();
     private int clientGroundTicks, clientAirTicks;
     private double walkSpeed, flySpeed;
-    private PlayerInput playerInput;
+    private PlayerInput playerInput = PlayerInput.NONE;
     private Pose pose;
 }
