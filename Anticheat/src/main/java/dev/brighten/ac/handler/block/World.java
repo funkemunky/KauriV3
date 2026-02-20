@@ -108,7 +108,7 @@ public class World {
                     BlockUpdateHandler.airBlockState);
         }
 
-        BaseChunk chunk = col.chunks().length - 1 < (y >> 4) ? null : col.chunks()[y >> 4];
+        BaseChunk chunk = col.chunks().length - 1 < (y >> 4) ? null : col.chunks()[Math.max(0, (y >> 4))];
 
         if(chunk == null) {
             //Get Bukkit Block

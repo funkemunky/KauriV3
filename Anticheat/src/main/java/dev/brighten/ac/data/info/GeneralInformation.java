@@ -34,7 +34,7 @@ public class GeneralInformation {
             lastFence = new TickTimer(), lastFakeBotHit = new TickTimer(), lastInventoryOpen = new TickTimer(),
             botAttack = new TickTimer(), lastAttack = new TickTimer(), lastCanceledFlying = new TickTimer();
     public TrackedEntity target;
-    public Optional<KPotionEffect> groundJumpBoost;
+    public Optional<KPotionEffect> groundJumpBoost = Optional.empty();
     public boolean serverGround, lastServerGround, canFly, nearGround, worldLoaded, generalCancel, inVehicle, creative,
             sneaking, lsneaking, sprinting, gliding, riptiding, wasOnSlime, onLadder, doingVelocity, breakingBlock,
                inventoryOpen, swimming;

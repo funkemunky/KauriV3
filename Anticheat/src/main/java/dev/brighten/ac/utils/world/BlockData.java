@@ -110,12 +110,58 @@ public enum BlockData {
 
     _DOOR(new DoorHandler(), BlockTags.DOORS.getStates().toArray(new StateType[0])),
 
-    _HOPPER(new HopperBounding(), StateTypes.HOPPER),
+    _HOPPER((version, player, block) -> {
+        if(version.isOlderThan(ClientVersion.V_1_13)) {
+            double thickness = 0.125;
+            return new ComplexCollisionBox(
+                    new SimpleCollisionBox(0,0,0,1, 0.125*5,1),
+                    new SimpleCollisionBox(0, 0.125*5, 0, thickness, 1, 1),
+                    new SimpleCollisionBox(1-thickness, 0.125*5, 0, 1, 1, 1),
+                    new SimpleCollisionBox(0, 0.125*5, 0, 1, 1, thickness),
+                    new SimpleCollisionBox(0, 0.125*5, 1-thickness, 1, 1, 1)
+            );
+        } else {
+            ComplexCollisionBox hopperBox = new ComplexCollisionBox();
+
+            switch (block.getBlockState().getFacing()) {
+                case DOWN:
+                    hopperBox.add(new HexCollisionBox(6.0D, 0.0D, 6.0D, 10.0D, 4.0D, 10.0D));
+                    break;
+                case EAST:
+                    hopperBox.add(new HexCollisionBox(12.0D, 4.0D, 6.0D, 16.0D, 8.0D, 10.0D));
+                    break;
+                case NORTH:
+                    hopperBox.add(new HexCollisionBox(6.0D, 4.0D, 0.0D, 10.0D, 8.0D, 4.0D));
+                    break;
+                case SOUTH:
+                    hopperBox.add(new HexCollisionBox(6.0D, 4.0D, 12.0D, 10.0D, 8.0D, 16.0D));
+                    break;
+                case WEST:
+                    hopperBox.add(new HexCollisionBox(0.0D, 4.0D, 6.0D, 4.0D, 8.0D, 10.0D));
+                    break;
+            }
+
+            hopperBox.add(new SimpleCollisionBox(0, 0.625, 0, 1.0, 0.6875, 1.0));
+            hopperBox.add(new SimpleCollisionBox(0, 0.6875, 0, 0.125, 1, 1));
+            hopperBox.add(new SimpleCollisionBox(0.125, 0.6875, 0, 1, 1, 0.125));
+            hopperBox.add(new SimpleCollisionBox(0.125, 0.6875, 0.875, 1, 1, 1));
+            hopperBox.add(new SimpleCollisionBox(0.25, 0.25, 0.25, 0.75, 0.625, 0.75));
+            hopperBox.add(new SimpleCollisionBox(0.875, 0.6875, 0.125, 1, 1, 0.875));
+
+            return hopperBox;
+        }
+    }, StateTypes.HOPPER),
     _CAKE((protocol, player, block) -> {
         double f1 = (1 + block.getBlockState().getBites() * 2) / 16D;
 
         return new SimpleCollisionBox(f1, 0, 0.0625, 1 - 0.0625, 0.5, 1 - 0.0625);
     }, StateTypes.CAKE),
+    STONE_CUTTER((version, player, block) -> {
+        if (version.isOlderThanOrEquals(ClientVersion.V_1_13_2))
+            return new SimpleCollisionBox(0, 0, 0, 1, 1, 1);
+
+        return new HexCollisionBox(0.0D, 0.0D, 0.0D, 16.0D, 9.0D, 16.0D);
+    }, StateTypes.STONECUTTER),
     _COCOA_BEAN((protocol, player, block) -> {
         int age = block.getBlockState().getAge();
         if (protocol.isNewerThanOrEquals(ClientVersion.V_1_9_1) && protocol.isOlderThan(ClientVersion.V_1_11))
@@ -282,7 +328,34 @@ public enum BlockData {
             StateTypes.STRUCTURE_VOID),
 
     _END_ROD(new DynamicRod(), StateTypes.END_ROD),
-    _CAULDRON(new CouldronBounding(), StateTypes.CAULDRON),
+    _CAULDRON((version, player, block) -> {
+        if(version.isOlderThanOrEquals(ClientVersion.V_1_13_2)) {
+            double thickness = 0.125;
+
+            return new ComplexCollisionBox(new SimpleCollisionBox(0,0,0,1, 0.3125,1),
+                    new SimpleCollisionBox(0, 0.3125, 0, thickness, 1, 1),
+                    new SimpleCollisionBox(1-thickness, 0.3125, 0, 1, 1, 1),
+                    new SimpleCollisionBox(0, 0.3125, 0, 1, 1, thickness),
+                    new SimpleCollisionBox(0, 0.3125, 1-thickness, 1, 1, 1));
+        } else {
+            return new ComplexCollisionBox(new SimpleCollisionBox(0.0, 0.0, 0.0, 0.125, 1.0, 0.25),
+                    new SimpleCollisionBox(0.0, 0.0, 0.75, 0.125, 1.0, 1.0),
+                    new SimpleCollisionBox(0.125, 0.0, 0.0, 0.25, 1.0, 0.125),
+                    new SimpleCollisionBox(0.125, 0.0, 0.875, 0.25, 1.0, 1.0),
+                    new SimpleCollisionBox(0.75, 0.0, 0.0, 1.0, 1.0, 0.125),
+                    new SimpleCollisionBox(0.75, 0.0, 0.875, 1.0, 1.0, 1.0),
+                    new SimpleCollisionBox(0.875, 0.0, 0.125, 1.0, 1.0, 0.25),
+                    new SimpleCollisionBox(0.875, 0.0, 0.75, 1.0, 1.0, 0.875),
+                    new SimpleCollisionBox(0.0, 0.1875, 0.25, 1.0, 0.25, 0.75),
+                    new SimpleCollisionBox(0.125, 0.1875, 0.125, 0.875, 0.25, 0.25),
+                    new SimpleCollisionBox(0.125, 0.1875, 0.75, 0.875, 0.25, 0.875),
+                    new SimpleCollisionBox(0.25, 0.1875, 0.0, 0.75, 1.0, 0.125),
+                    new SimpleCollisionBox(0.25, 0.1875, 0.875, 0.75, 1.0, 1.0),
+                    new SimpleCollisionBox(0.0, 0.25, 0.25, 0.125, 1.0, 0.75),
+                    new SimpleCollisionBox(0.875, 0.25, 0.25, 1.0, 1.0, 0.75)
+            );
+        }
+    }, StateTypes.CAULDRON),
     _CACTUS(new SimpleCollisionBox(0.0625, 0, 0.0625,
             1 - 0.0625, 1 - 0.0625, 1 - 0.0625), StateTypes.CACTUS),
     _PISTON_BASE(new PistonBaseCollision(), StateTypes.PISTON, StateTypes.STICKY_PISTON),
@@ -304,6 +377,67 @@ public enum BlockData {
     }, StateTypes.LECTERN),
     _POT(new SimpleCollisionBox(0.3125, 0.0, 0.3125, 0.6875, 0.375, 0.6875),
             StateTypes.FLOWER_POT),
+    KELP(new HexCollisionBox(0.0D, 0.0D, 0.0D, 16.0D, 9.0D, 16.0D), StateTypes.KELP),
+    // Kelp block is a full block, so it by default is correct
+
+    BELL((version, player, block) -> {
+        if (version.isOlderThanOrEquals(ClientVersion.V_1_13_2))
+            return new SimpleCollisionBox(0, 0, 0, 1, 1, 1);
+
+        BlockFace direction = block.getBlockState().getFacing();
+
+        if (block.getBlockState().getAttachment() == Attachment.FLOOR) {
+            return direction != BlockFace.NORTH && direction != BlockFace.SOUTH ?
+                    new HexCollisionBox(4.0D, 0.0D, 0.0D, 12.0D, 16.0D, 16.0D) :
+                    new HexCollisionBox(0.0D, 0.0D, 4.0D, 16.0D, 16.0D, 12.0D);
+
+        }
+
+        ComplexCollisionBox complex = new ComplexCollisionBox(
+                new HexCollisionBox(5.0D, 6.0D, 5.0D, 11.0D, 13.0D, 11.0D),
+                new HexCollisionBox(4.0D, 4.0D, 4.0D, 12.0D, 6.0D, 12.0D));
+
+        if (block.getBlockState().getAttachment() == Attachment.CEILING) {
+            complex.add(new HexCollisionBox(7.0D, 13.0D, 7.0D, 9.0D, 16.0D, 9.0D));
+        } else if (block.getBlockState().getAttachment() == Attachment.DOUBLE_WALL) {
+            if (direction != BlockFace.NORTH && direction != BlockFace.SOUTH) {
+                complex.add(new HexCollisionBox(0.0D, 13.0D, 7.0D, 16.0D, 15.0D, 9.0D));
+            } else {
+                complex.add(new HexCollisionBox(7.0D, 13.0D, 0.0D, 9.0D, 15.0D, 16.0D));
+            }
+        } else if (direction == BlockFace.NORTH) {
+            complex.add(new HexCollisionBox(7.0D, 13.0D, 0.0D, 9.0D, 15.0D, 13.0D));
+        } else if (direction == BlockFace.SOUTH) {
+            complex.add(new HexCollisionBox(7.0D, 13.0D, 3.0D, 9.0D, 15.0D, 16.0D));
+        } else {
+            if (direction == BlockFace.EAST) {
+                complex.add(new HexCollisionBox(3.0D, 13.0D, 7.0D, 16.0D, 15.0D, 9.0D));
+            } else {
+                complex.add(new HexCollisionBox(0.0D, 13.0D, 7.0D, 13.0D, 15.0D, 9.0D));
+            }
+        }
+
+        return complex;
+
+    }, StateTypes.BELL),
+
+    SCAFFOLDING((version, player, block) -> {
+        // ViaVersion replacement block - hay block
+        if (version.isOlderThanOrEquals(ClientVersion.V_1_13_2))
+            return new SimpleCollisionBox(0, 0, 0, 1, 1, 1);
+
+        if (player.getMovement().getFrom().getY() > player.getMovement().getTo().getY() + 1 - 1e-5 && !player.getInfo().sneaking) {
+            return new ComplexCollisionBox(new HexCollisionBox(0.0D, 14.0D, 0.0D, 16.0D, 16.0D, 16.0D),
+                    new HexCollisionBox(0.0D, 0.0D, 0.0D, 2.0D, 16.0D, 2.0D),
+                    new HexCollisionBox(14.0D, 0.0D, 0.0D, 16.0D, 16.0D, 2.0D),
+                    new HexCollisionBox(0.0D, 0.0D, 14.0D, 2.0D, 16.0D, 16.0),
+                    new HexCollisionBox(14.0D, 0.0D, 14.0D, 16.0D, 16.0D, 16.0D));
+        }
+
+        return block.getBlockState().getDistance() != 0 && block.getBlockState().isBottom() && player.getMovement().getFrom().getY() > player.getMovement().getTo().getY() - 1e-5 ?
+                new HexCollisionBox(0.0D, 0.0D, 0.0D, 16.0D, 2.0D, 16.0D) :
+                NoCollisionBox.INSTANCE;
+    }, StateTypes.SCAFFOLDING),
 
     _NONE(NoCollisionBox.INSTANCE, Stream.of(StateTypes.TORCH, StateTypes.REDSTONE_TORCH,
                     StateTypes.REDSTONE_WIRE, StateTypes.REDSTONE_WALL_TORCH, StateTypes.POWERED_RAIL, StateTypes.WALL_TORCH,

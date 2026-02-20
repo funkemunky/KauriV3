@@ -32,11 +32,11 @@ public class Materials {
             int flag = MATERIAL_FLAGS.getOrDefault(mat, 0);
 
             //We use the one in BlockUtils also since we can't trust Material to include everything.
-            if (mat.isSolid() || mat.getName().contains("COMPARATOR") || mat.getName().contains("DIODE")) {
+            if (mat.isSolid() || mat.getName().contains("COMPARATOR") || mat.getName().contains("DIODE") || mat.isBlocking()) {
                 flag |= SOLID;
             }
 
-            if(!(BlockData.getData(mat).getDefaultBox() instanceof NoCollisionBox)) {
+            if(!(BlockData.getData(mat).getDefaultBox() instanceof NoCollisionBox) || mat.isBlocking()) {
                 flag |= COLLIDABLE;
             }
 

@@ -258,7 +258,7 @@ public class Anticheat extends JavaPlugin {
         } catch (IllegalStateException e) {
             Anticheat.INSTANCE.getLogger().log(Level.SEVERE, "Check ID unregister failed", e);
         }
-        commandManager.getScheduler().cancelLocaleTask();
+
         commandPropertiesManager = null;
 
         try {

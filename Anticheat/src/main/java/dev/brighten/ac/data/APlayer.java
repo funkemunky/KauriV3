@@ -11,6 +11,8 @@ import com.github.retrooper.packetevents.protocol.world.states.type.StateType;
 import com.github.retrooper.packetevents.protocol.world.states.type.StateTypes;
 import com.github.retrooper.packetevents.util.Vector3d;
 import com.github.retrooper.packetevents.wrapper.PacketWrapper;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.api.spigot.impl.LegacyPlayer;
 import dev.brighten.ac.api.spigot.impl.ModernPlayer;
@@ -161,69 +163,81 @@ public class APlayer {
             this.playerVersion = version;
 
             Anticheat.INSTANCE.getLogger().info("Got player version " + version.name() + " for " + getBukkitPlayer().getName());
-
-            if(PacketEvents.getAPI().getServerManager().getVersion().isOlderThan(ServerVersion.V_1_9)) {
-                this.wrappedPlayer = new LegacyPlayer(getBukkitPlayer());
-            } else this.wrappedPlayer = new ModernPlayer(getBukkitPlayer());
-
-            EMULATOR = new Emulator(new DataSupplier() {
-                @Override
-                public List<AxisAlignedBB> getCollidingBoxes(AxisAlignedBB bb) {
-                    SimpleCollisionBox sbc = new SimpleCollisionBox(bb.minX, bb.minY, bb.minZ, bb.maxX, bb.maxY, bb.maxZ);
-
-                    // Greater than 20? We want to truncate to prevent huge processing cost
-                    if(sbc.min().distanceSquared(sbc.max()) > 400) {
-                        sbc.maxX = sbc.minX + Math.min(sbc.maxX - sbc.minX, 20);
-                        sbc.maxY = sbc.minY + Math.max(sbc.maxY - sbc.minY, 20);
-                        sbc.maxZ = sbc.minZ + Math.max(sbc.maxZ - sbc.minZ, 20);
-                    }
-
-                    List<AxisAlignedBB> axisAlignedBBs = new ArrayList<>();
-
-                    for (SimpleCollisionBox bb2 : Helper.getCollisions(APlayer.this,
-                            sbc)) {
-                        axisAlignedBBs
-                                .add(new AxisAlignedBB(bb2.minX, bb2.minY, bb2.minZ, bb2.maxX, bb2.maxY, bb2.maxZ));
-                    }
-
-                    return axisAlignedBBs;
-                }
-
-                @Override
-                public Block getBlockAt(BlockPos blockPos) {
-                    //Optional<org.bukkit.block.Block>
-                    var block = APlayer.this.getWorldTracker()
-                            .getBlock(blockPos.getX(), blockPos.getY(), blockPos.getZ());
-
-                    StateType type = block.getType();
-
-                    if(type == StateTypes.SLIME_BLOCK) {
-                        return new BlockSlime();
-                    } else if(type == StateTypes.SOUL_SAND) {
-                        return new BlockSoulSand();
-                    } else if(type == StateTypes.COBWEB) {
-                        return new BlockWeb();
-                    } else if(type == StateTypes.ICE || type == StateTypes.PACKED_ICE || type == StateTypes.FROSTED_ICE) {
-                        return new BlockIce();
-                    } else if(type == StateTypes.BLUE_ICE) {
-                        return new BlockBlueIce();
-                    }
-
-                    return new Block();
-                }
-            }, getPlayerVersion().getProtocolVersion());
-
-            generateEntities();
-
-            // Enabling alerts for players on join if they have the permissions to
-            if(getBukkitPlayer().hasPermission("anticheat.command.alerts")
-                    || getBukkitPlayer().hasPermission("anticheat.alerts")) {
-                Check.alertsEnabled.add(getUuid());
-                getBukkitPlayer().spigot().sendMessage(Messages.ALERTS_ON);
-            }
-            initialized = true;
-            Anticheat.INSTANCE.getRunUtils().task(() -> checkHandler.initChecks());
         }, 100, TimeUnit.MILLISECONDS);
+
+        if(PacketEvents.getAPI().getServerManager().getVersion().isOlderThan(ServerVersion.V_1_9)) {
+            this.wrappedPlayer = new LegacyPlayer(getBukkitPlayer());
+        } else this.wrappedPlayer = new ModernPlayer(getBukkitPlayer());
+
+        Cache<AxisAlignedBB, List<AxisAlignedBB>> collisionCache = CacheBuilder.newBuilder()
+                .maximumSize(200)
+                .expireAfterWrite(100, TimeUnit.MILLISECONDS)
+                .build();
+
+        EMULATOR = new Emulator(new DataSupplier() {
+            @Override
+            public List<AxisAlignedBB> getCollidingBoxes(AxisAlignedBB bb) {
+
+                var cacheIfPresent = collisionCache.getIfPresent(bb);
+
+                if(cacheIfPresent != null) return cacheIfPresent;
+
+                SimpleCollisionBox sbc = new SimpleCollisionBox(bb.minX, bb.minY, bb.minZ, bb.maxX, bb.maxY, bb.maxZ);
+
+                // Greater than 20? We want to truncate to prevent huge processing cost
+                if(sbc.min().distanceSquared(sbc.max()) > 400) {
+                    sbc.maxX = sbc.minX + Math.min(sbc.maxX - sbc.minX, 20);
+                    sbc.maxY = sbc.minY + Math.max(sbc.maxY - sbc.minY, 20);
+                    sbc.maxZ = sbc.minZ + Math.max(sbc.maxZ - sbc.minZ, 20);
+                }
+
+                List<AxisAlignedBB> axisAlignedBBs = new ArrayList<>();
+
+                for (SimpleCollisionBox bb2 : Helper.getCollisions(APlayer.this,
+                        sbc)) {
+                    axisAlignedBBs
+                            .add(new AxisAlignedBB(bb2.minX, bb2.minY, bb2.minZ, bb2.maxX, bb2.maxY, bb2.maxZ));
+                }
+
+                collisionCache.put(bb, axisAlignedBBs);
+
+                return axisAlignedBBs;
+            }
+
+            @Override
+            public Block getBlockAt(BlockPos blockPos) {
+                //Optional<org.bukkit.block.Block>
+                var block = APlayer.this.getWorldTracker()
+                        .getBlock(blockPos.getX(), blockPos.getY(), blockPos.getZ());
+
+                StateType type = block.getType();
+
+                if(type == StateTypes.SLIME_BLOCK) {
+                    return new BlockSlime();
+                } else if(type == StateTypes.SOUL_SAND) {
+                    return new BlockSoulSand();
+                } else if(type == StateTypes.COBWEB) {
+                    return new BlockWeb();
+                } else if(type == StateTypes.ICE || type == StateTypes.PACKED_ICE || type == StateTypes.FROSTED_ICE) {
+                    return new BlockIce();
+                } else if(type == StateTypes.BLUE_ICE) {
+                    return new BlockBlueIce();
+                }
+
+                return new Block();
+            }
+        }, getPlayerVersion().getProtocolVersion());
+
+        generateEntities();
+
+        // Enabling alerts for players on join if they have the permissions to
+        if(getBukkitPlayer().hasPermission("anticheat.command.alerts")
+                || getBukkitPlayer().hasPermission("anticheat.alerts")) {
+            Check.alertsEnabled.add(getUuid());
+            getBukkitPlayer().spigot().sendMessage(Messages.ALERTS_ON);
+        }
+        initialized = true;
+        Anticheat.INSTANCE.getRunUtils().task(() -> checkHandler.initChecks());
     }
 
     private void generateEntities() {

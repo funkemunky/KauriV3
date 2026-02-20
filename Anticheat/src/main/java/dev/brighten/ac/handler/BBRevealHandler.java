@@ -67,7 +67,7 @@ public class BBRevealHandler implements Listener {
                 event.getPlayer().spigot().sendMessage(new ComponentBuilder("Now showing block: ")
                         .color(ChatColor.GREEN).color(ChatColor.WHITE).append(event.getClickedBlock().getType().name())
                         .color(ChatColor.GRAY)
-                                .append(" flags: " + block.getBlockState().getType() + " | " + block.getBlockState().getType().isSolid() + "," +
+                                .append(" flags: " + block.getType() + " | " + block.getType().isSolid() + "," +
                                         Materials.checkFlag(block.getType(), Materials.SOLID) + "," + Materials.checkFlag(block.getType(), Materials.LIQUID))
                                 .color(ChatColor.RED)
                                 .append(" | box=" + BlockData.getData(block.getType()).getBox(player, blockLoc, player.getPlayerVersion()).downCast().stream().map(SimpleCollisionBox::toString).collect(Collectors.joining(", ")))

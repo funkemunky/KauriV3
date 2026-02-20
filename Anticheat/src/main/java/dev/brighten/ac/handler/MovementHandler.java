@@ -167,84 +167,84 @@ public class MovementHandler {
                 for (int strafe : isZeroThree ? new int[]{0} : FULL_RANGE) {
                     for (boolean jumping : getJumpingIterations()) {
                         for (boolean sprinting : getSprintingIterations(forward)) {
-                            for (boolean usingItem : getUsingItemIterations(forward, strafe)) {
-                                for (boolean hitSlow : getHitSlowIterations()) {
-                                    for (FastMathType fastMath : getFastMathIterations(forward, strafe)) {
-                                        for (Vector3d possibleVector : possibleVelocity) {
-                                            IterationInput input = IterationInput.builder()
-                                                    .jumping(jumping)
-                                                    .forward(forward)
-                                                    .strafing(strafe)
-                                                    .sprinting(sprinting)
-                                                    .usingItem(usingItem)
-                                                    .modernMovement(modernMovement)
-                                                    .hitSlowdown(hitSlow)
-                                                    .aiMoveSpeed(player.getBukkitPlayer().getWalkSpeed() / 2)
-                                                    .fastMathType(fastMath)
-                                                    .sneaking(player.getInfo().isSneaking())
-                                                    .ground(from.isOnGround())
-                                                    .to(new Vector(to.getX(), to.getY(), to.getZ()))
-                                                    .yaw(to.getYaw())
-                                                    .lastReportedBoundingBox(from.getBox().toNeo())
-                                                    .effectSpeed(EFFECTS[0])
-                                                    .effectSlow(EFFECTS[1])
-                                                    .waitingForTeleport(!posLocs.isEmpty())
-                                                    .effectJump(EFFECTS[2]).build();
+                                for (boolean usingItem : getUsingItemIterations(forward, strafe)) {
+                                    for (boolean hitSlow : getHitSlowIterations()) {
+                                        for (FastMathType fastMath : getFastMathIterations(forward, strafe)) {
+                                            for (Vector3d possibleVector : possibleVelocity) {
+                                                IterationInput input = IterationInput.builder()
+                                                        .jumping(jumping)
+                                                        .forward(forward)
+                                                        .strafing(strafe)
+                                                        .sprinting(sprinting)
+                                                        .usingItem(usingItem)
+                                                        .modernMovement(modernMovement)
+                                                        .hitSlowdown(hitSlow)
+                                                        .aiMoveSpeed(player.getBukkitPlayer().getWalkSpeed() / 2)
+                                                        .fastMathType(fastMath)
+                                                        .sneaking(player.getInfo().sneaking)
+                                                        .ground(from.isOnGround())
+                                                        .to(new Vector(to.getX(), to.getY(), to.getZ()))
+                                                        .yaw(to.getYaw())
+                                                        .lastReportedBoundingBox(from.getBox().toNeo())
+                                                        .effectSpeed(EFFECTS[0])
+                                                        .effectSlow(EFFECTS[1])
+                                                        .waitingForTeleport(!posLocs.isEmpty())
+                                                        .effectJump(EFFECTS[2]).build();
 
-                                            boolean isVelocity = false;
-                                            if (possibleVector != null) {
-                                                // Setting the motion to the possible velocity vector.
-                                                player.EMULATOR.getMotion().setMotionX(possibleVector.getX());
-                                                player.EMULATOR.getMotion().setMotionY(possibleVector.getY());
-                                                player.EMULATOR.getMotion().setMotionZ(possibleVector.getZ());
-                                                // Has to be this way because order of operations in the emulator.
-                                                isVelocity = true;
-                                            } else {
-                                                // Resetting the motion to the previous motion.
-                                                player.EMULATOR.getMotion().setMotionX(previousMotion.getMotionX());
-                                                player.EMULATOR.getMotion().setMotionY(previousMotion.getMotionY());
-                                                player.EMULATOR.getMotion().setMotionZ(previousMotion.getMotionZ());
-                                            }
+                                                boolean isVelocity = false;
+                                                if (possibleVector != null) {
+                                                    // Setting the motion to the possible velocity vector.
+                                                    player.EMULATOR.getMotion().setMotionX(possibleVector.getX());
+                                                    player.EMULATOR.getMotion().setMotionY(possibleVector.getY());
+                                                    player.EMULATOR.getMotion().setMotionZ(possibleVector.getZ());
+                                                    // Has to be this way because order of operations in the emulator.
+                                                    isVelocity = true;
+                                                } else {
+                                                    // Resetting the motion to the previous motion.
+                                                    player.EMULATOR.getMotion().setMotionX(previousMotion.getMotionX());
+                                                    player.EMULATOR.getMotion().setMotionY(previousMotion.getMotionY());
+                                                    player.EMULATOR.getMotion().setMotionZ(previousMotion.getMotionZ());
+                                                }
 
-                                            IterationResult result = player.EMULATOR.runIteration(input);
+                                                IterationResult result = player.EMULATOR.runIteration(input);
 
-                                            if (isVelocity) {
-                                                result.getTags().add("velocity");
-                                            }
+                                                if (isVelocity) {
+                                                    result.getTags().add("velocity");
+                                                }
 
 
-                                            if (fastMath == FastMathType.FAST_LEGACY) {
-                                                result.getTags().add("fast_legacy");
-                                            } else if (fastMath == FastMathType.VANILLA) {
-                                                result.getTags().add("vanilla");
-                                            } else if (fastMath == FastMathType.FAST_NEW) {
-                                                result.getTags().add("fast_new");
-                                            } else if (fastMath == FastMathType.MODERN_VANILLA) {
-                                                result.getTags().add("modern_vanilla");
-                                            }
+                                                if (fastMath == FastMathType.FAST_LEGACY) {
+                                                    result.getTags().add("fast_legacy");
+                                                } else if (fastMath == FastMathType.VANILLA) {
+                                                    result.getTags().add("vanilla");
+                                                } else if (fastMath == FastMathType.FAST_NEW) {
+                                                    result.getTags().add("fast_new");
+                                                } else if (fastMath == FastMathType.MODERN_VANILLA) {
+                                                    result.getTags().add("modern_vanilla");
+                                                }
 
-                                            if (forward > 0) {
-                                                result.getTags().add("w-key");
-                                            } else if (forward < 0) {
-                                                result.getTags().add("s-key");
-                                            }
+                                                if (forward > 0) {
+                                                    result.getTags().add("w-key");
+                                                } else if (forward < 0) {
+                                                    result.getTags().add("s-key");
+                                                }
 
-                                            if (strafe > 0) {
-                                                result.getTags().add("d-key");
-                                            } else if (strafe < 0) {
-                                                result.getTags().add("a-key");
-                                            }
+                                                if (strafe > 0) {
+                                                    result.getTags().add("d-key");
+                                                } else if (strafe < 0) {
+                                                    result.getTags().add("a-key");
+                                                }
 
-                                            if (minimum == null || minimum.getOffset() > result.getOffset()) {
-                                                minimum = result;
+                                                if (minimum == null || minimum.getOffset() > result.getOffset()) {
+                                                    minimum = result;
 
-                                                if (minimum.getOffset() < 1E-26) {
-                                                    break iteration;
+                                                    if (minimum.getOffset() < 1E-26) {
+                                                        break iteration;
+                                                    }
                                                 }
                                             }
                                         }
                                     }
-                                }
                             }
                         }
                     }
