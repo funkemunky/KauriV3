@@ -16,9 +16,7 @@ import com.github.retrooper.packetevents.util.Vector3d;
 import com.github.retrooper.packetevents.util.Vector3i;
 import dev.brighten.ac.handler.entity.TrackedEntity;
 import dev.brighten.ac.utils.KLocation;
-import dev.brighten.ac.utils.LongHash;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import lombok.Getter;
 import me.hydro.emulator.util.mcp.MathHelper;
 
@@ -28,7 +26,13 @@ import java.util.Optional;
 @Getter
 public class World {
     private final String name;
-    private final Long2ObjectOpenHashMap<BlockUpdateHandler.KColumn> chunks = new Long2ObjectOpenHashMap<>(1000);
+    // Array dimensions: 64×64 covers a render distance of up to 32 chunks without
+    // collision. Index = (chunkX & MASK) * SIZE + (chunkZ & MASK); stored KColumn
+    // x/z are chunk coordinates and are validated on every lookup.
+    private static final int CHUNK_ARRAY_BITS = 6;                         // 2^6 = 64 per axis
+    private static final int CHUNK_ARRAY_SIZE = 1 << CHUNK_ARRAY_BITS;    // 64
+    private static final int CHUNK_ARRAY_MASK = CHUNK_ARRAY_SIZE - 1;     // 63
+    private final BlockUpdateHandler.KColumn[] chunks = new BlockUpdateHandler.KColumn[CHUNK_ARRAY_SIZE * CHUNK_ARRAY_SIZE];
     private final Map<Integer, TrackedEntity> trackedEntities = new Int2ObjectOpenHashMap<>();
 
     public World(String name) {
@@ -49,23 +53,30 @@ public class World {
      * @return the chunk at the specified coordinates
      */
     public BlockUpdateHandler.KColumn getChunk(int x, int z) {
+        int chunkX = x >> 4;
+        int chunkZ = z >> 4;
         synchronized (chunks) {
-            long hash = LongHash.toLong(x >> 4, z >> 4);
-            BlockUpdateHandler.KColumn chunk = chunks.get(hash);
+            int index = chunkIndex(chunkX, chunkZ);
+            BlockUpdateHandler.KColumn chunk = chunks[index];
 
-            // If the chunk is null, create a new one
-            if(chunk == null) {
-                return chunks.put(hash, new BlockUpdateHandler.KColumn(x, z, new BaseChunk[maxHeight / 16]));
+            // Validate that the stored entry belongs to this chunk position
+            if (chunk == null || chunk.x() != chunkX || chunk.z() != chunkZ) {
+                chunk = new BlockUpdateHandler.KColumn(chunkX, chunkZ, new BaseChunk[maxHeight / 16]);
+                chunks[index] = chunk;
             }
 
             return chunk;
         }
     }
 
+    private static int chunkIndex(int chunkX, int chunkZ) {
+        return ((chunkX & CHUNK_ARRAY_MASK) << CHUNK_ARRAY_BITS) | (chunkZ & CHUNK_ARRAY_MASK);
+    }
+
     void updateChunk(Column chunk) {
         synchronized (chunks) {
-            BlockUpdateHandler.KColumn column = new BlockUpdateHandler.KColumn(chunk.getX(), chunk.getZ(), chunk.getChunks());
-            chunks.put(LongHash.toLong(column.x(), column.z()), column);
+            int index = chunkIndex(chunk.getX(), chunk.getZ());
+            chunks[index] = new BlockUpdateHandler.KColumn(chunk.getX(), chunk.getZ(), chunk.getChunks());
         }
     }
 
