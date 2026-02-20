@@ -54,6 +54,10 @@ public class IntVector implements Cloneable {
         return new Vector(x, y, z);
     }
 
+    public Vector3i toVector3i() {
+        return new Vector3i(x, y, z);
+    }
+
     @Override
     public String toString() {
         return "[" + x + ", " +  y + ", " + z + "]";

@@ -1,13 +1,13 @@
 package dev.brighten.ac.handler;
 
 import com.github.retrooper.packetevents.protocol.particle.type.ParticleTypes;
+import com.github.retrooper.packetevents.util.Vector3i;
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.handler.block.WrappedBlock;
 import dev.brighten.ac.utils.ItemBuilder;
 import dev.brighten.ac.utils.Materials;
 import dev.brighten.ac.utils.annotation.Init;
-import dev.brighten.ac.utils.math.IntVector;
 import dev.brighten.ac.utils.world.BlockData;
 import dev.brighten.ac.utils.world.EntityData;
 import dev.brighten.ac.utils.world.types.SimpleCollisionBox;
@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
 @Init
 public class BBRevealHandler implements Listener {
 
-    private final Map<UUID, Set<IntVector>> blocksToShow = new HashMap<>();
+    private final Map<UUID, Set<Vector3i>> blocksToShow = new HashMap<>();
     private final Set<Entity> entitiesToShow = new HashSet<>();
 
     public static BBRevealHandler INSTANCE;
@@ -52,9 +52,9 @@ public class BBRevealHandler implements Listener {
         if(player == null || !player.getWrappedPlayer().getItemInHand().isSimilar(wand)) return;
 
         if(event.getAction() == Action.RIGHT_CLICK_BLOCK) {
-            IntVector blockLoc = new IntVector(event.getClickedBlock().getX(),
+            Vector3i blockLoc = new Vector3i(event.getClickedBlock().getX(),
                     event.getClickedBlock().getY(), event.getClickedBlock().getZ());
-            Set<IntVector> blocksToShow = this.blocksToShow
+            Set<Vector3i> blocksToShow = this.blocksToShow
                     .computeIfAbsent(event.getPlayer().getUniqueId(), k -> new HashSet<>());
             if(blocksToShow.contains(blockLoc)) {
                 blocksToShow.remove(blockLoc);
@@ -63,11 +63,11 @@ public class BBRevealHandler implements Listener {
                         .create());
             } else {
                 blocksToShow.add(blockLoc);
-                WrappedBlock block = player.getBlockUpdateHandler().getBlock(blockLoc);
+                WrappedBlock block = player.getWorldTracker().getCurrentWorld().get().getBlock(blockLoc);
                 event.getPlayer().spigot().sendMessage(new ComponentBuilder("Now showing block: ")
                         .color(ChatColor.GREEN).color(ChatColor.WHITE).append(event.getClickedBlock().getType().name())
                         .color(ChatColor.GRAY)
-                                .append(" flags: " + block.getBlockState().getType() + " | " + Materials.checkFlag(block.getType(), Materials.COLLIDABLE) + "," +
+                                .append(" flags: " + block.getType() + " | " + block.getType().isSolid() + "," +
                                         Materials.checkFlag(block.getType(), Materials.SOLID) + "," + Materials.checkFlag(block.getType(), Materials.LIQUID))
                                 .color(ChatColor.RED)
                                 .append(" | box=" + BlockData.getData(block.getType()).getBox(player, blockLoc, player.getPlayerVersion()).downCast().stream().map(SimpleCollisionBox::toString).collect(Collectors.joining(", ")))
@@ -107,7 +107,7 @@ public class BBRevealHandler implements Listener {
                 if(player.isEmpty()) return;
 
                 blocks.forEach(blockLoc -> {
-                    var block = player.get().getBlockUpdateHandler().getBlock(blockLoc);
+                    var block = player.get().getWorldTracker().getCurrentWorld().get().getBlock(blockLoc);
 
                     var blockBox = BlockData.getData(block.getType())
                             .getBox(player.get(), blockLoc, player.get().getPlayerVersion());

@@ -3,6 +3,7 @@ package dev.brighten.ac.handler;
 import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.manager.server.ServerVersion;
 import com.github.retrooper.packetevents.protocol.player.ClientVersion;
+import com.github.retrooper.packetevents.protocol.potion.PotionTypes;
 import com.github.retrooper.packetevents.protocol.teleport.RelativeFlag;
 import com.github.retrooper.packetevents.util.Vector3d;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerFlying;
@@ -12,13 +13,13 @@ import dev.brighten.ac.compat.CompatHandler;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.data.obj.CMove;
 import dev.brighten.ac.utils.*;
-import dev.brighten.ac.utils.math.IntVector;
 import dev.brighten.ac.utils.objects.evicting.EvictingList;
 import dev.brighten.ac.utils.timer.Timer;
 import dev.brighten.ac.utils.timer.impl.TickTimer;
 import dev.brighten.ac.utils.world.CollisionBox;
 import dev.brighten.ac.utils.world.types.RayCollision;
 import dev.brighten.ac.utils.world.types.SimpleCollisionBox;
+import io.github.retrooper.packetevents.util.SpigotConversionUtil;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.val;
@@ -30,9 +31,6 @@ import me.hydro.emulator.util.Vector;
 import me.hydro.emulator.util.mcp.MathHelper;
 import me.hydro.emulator.util.mcp.MathHelper.FastMathType;
 import org.bukkit.GameMode;
-import org.bukkit.Location;
-import org.bukkit.entity.Player;
-import org.bukkit.potion.PotionEffectType;
 
 import java.util.*;
 
@@ -87,21 +85,14 @@ public class MovementHandler {
     private final Timer lastCinematic = new TickTimer(2);
     private final Timer lastReset = new TickTimer(2);
     private final EvictingList<Integer> sensitivitySamples = new EvictingList<>(50);
-    private boolean modernMovement;
+    private final boolean modernMovement;
+
     public MovementHandler(APlayer player) {
         this.player = player;
 
-        Player bplayer = player.getBukkitPlayer();
-
         // Initializing player location
-        to.setWorld(bplayer.getWorld());
-        to.getLoc().setX(bplayer.getLocation().getX());
-        to.getLoc().setY(bplayer.getLocation().getY());
-        to.getLoc().setZ(bplayer.getLocation().getZ());
-        to.getLoc().setYaw(bplayer.getLocation().getYaw());
-        to.getLoc().setPitch(bplayer.getLocation().getPitch());
         to.setBox(new SimpleCollisionBox(to.getLoc(), 0.6, 1.8));
-        to.setOnGround(bplayer.isOnGround());
+        to.setOnGround(false);
 
         // Setting from as same location as to
         from.setLoc(to);
@@ -123,31 +114,32 @@ public class MovementHandler {
          */
         final PotionEffect[] EFFECTS = new PotionEffect[3];
 
-        for (org.bukkit.potion.PotionEffect potionEffect : player.getPotionHandler().potionEffects) {
-            if (potionEffect.getType().equals(PotionEffectType.SPEED)) {
+        for (KPotionEffect potionEffect : player.getPotionHandler().getPotionEffects()) {
+            if (potionEffect.potionType().equals(PotionTypes.SPEED)) {
                 EFFECTS[0] = PotionEffect.builder()
-                        .amplifier(potionEffect.getAmplifier())
+                        .amplifier(potionEffect.properties().amplifier())
                         .type(me.hydro.emulator.util.PotionEffectType.SPEED)
                         .build();
-            } else if (potionEffect.getType().equals(PotionEffectType.SLOW)) {
+            } else if (potionEffect.potionType().equals(PotionTypes.SLOWNESS)) {
                 EFFECTS[1] = PotionEffect.builder()
-                        .amplifier(potionEffect.getAmplifier())
+                        .amplifier(potionEffect.properties().amplifier())
                         .type(me.hydro.emulator.util.PotionEffectType.SLOW)
                         .build();
-            } else if (potionEffect.getType().equals(PotionEffectType.JUMP)) {
+            } else if (potionEffect.potionType().equals(PotionTypes.JUMP_BOOST)) {
                 EFFECTS[2] = PotionEffect.builder()
-                        .amplifier(potionEffect.getAmplifier())
+                        .amplifier(potionEffect.properties().amplifier())
                         .type(me.hydro.emulator.util.PotionEffectType.JUMP)
                         .build();
             }
         }
 
-        if(player.EMULATOR.getTags().contains("003") && !isZeroThree) {
+        if (player.EMULATOR.getTags().contains("003") && !isZeroThree) {
             runEmulation(to, true);
         }
 
         IterationResult minimum = null;
-        iteration: {
+        iteration:
+        {
             for (KLocation posLoc : new ArrayList<>(posLocs)) {
                 // Resetting to prevent lag issues.
 
@@ -157,7 +149,7 @@ public class MovementHandler {
                 if (minimum == null || minimum.getOffset() > result.getOffset()) {
                     minimum = result;
 
-                    if(minimum.getOffset() < 1E-26) {
+                    if (minimum.getOffset() < 1E-26) {
                         // The player teleported, therefore we don't need to continue with predictions.
                         break iteration;
                     }
@@ -171,96 +163,95 @@ public class MovementHandler {
 
             Motion previousMotion = player.EMULATOR.getMotion().clone();
 
-            for (int forward : isZeroThree ? new int[] {0} : FULL_RANGE) {
-                for (int strafe : isZeroThree ? new int[] {0} : FULL_RANGE) {
+            for (int forward : isZeroThree ? new int[]{0} : FULL_RANGE) {
+                for (int strafe : isZeroThree ? new int[]{0} : FULL_RANGE) {
                     for (boolean jumping : getJumpingIterations()) {
                         for (boolean sprinting : getSprintingIterations(forward)) {
-                            for (boolean usingItem : getUsingItemIterations(forward, strafe)) {
-                                for (boolean hitSlow : getHitSlowIterations()) {
-                                    for (FastMathType fastMath : getFastMathIterations(forward, strafe)) {
-                                        for(Vector3d possibleVector : possibleVelocity) {
-                                            IterationInput input = IterationInput.builder()
-                                                    .jumping(jumping)
-                                                    .forward(forward)
-                                                    .strafing(strafe)
-                                                    .sprinting(sprinting)
-                                                    .usingItem(usingItem)
-                                                    .modernMovement(modernMovement)
-                                                    .hitSlowdown(hitSlow)
-                                                    .aiMoveSpeed(player.getBukkitPlayer().getWalkSpeed() / 2)
-                                                    .fastMathType(fastMath)
-                                                    .sneaking(player.getInfo().isSneaking())
-                                                    .ground(from.isOnGround())
-                                                    .to(new Vector(to.getX(), to.getY(), to.getZ()))
-                                                    .yaw(to.getYaw())
-                                                    .lastReportedBoundingBox(from.getBox().toNeo())
-                                                    .effectSpeed(EFFECTS[0])
-                                                    .effectSlow(EFFECTS[1])
-                                                    .waitingForTeleport(!posLocs.isEmpty())
-                                                    .effectJump(EFFECTS[2]).build();
+                                for (boolean usingItem : getUsingItemIterations(forward, strafe)) {
+                                    for (boolean hitSlow : getHitSlowIterations()) {
+                                        for (FastMathType fastMath : getFastMathIterations(forward, strafe)) {
+                                            for (Vector3d possibleVector : possibleVelocity) {
+                                                IterationInput input = IterationInput.builder()
+                                                        .jumping(jumping)
+                                                        .forward(forward)
+                                                        .strafing(strafe)
+                                                        .sprinting(sprinting)
+                                                        .usingItem(usingItem)
+                                                        .modernMovement(modernMovement)
+                                                        .hitSlowdown(hitSlow)
+                                                        .aiMoveSpeed(player.getBukkitPlayer().getWalkSpeed() / 2)
+                                                        .fastMathType(fastMath)
+                                                        .sneaking(player.getInfo().sneaking)
+                                                        .ground(from.isOnGround())
+                                                        .to(new Vector(to.getX(), to.getY(), to.getZ()))
+                                                        .yaw(to.getYaw())
+                                                        .lastReportedBoundingBox(from.getBox().toNeo())
+                                                        .effectSpeed(EFFECTS[0])
+                                                        .effectSlow(EFFECTS[1])
+                                                        .waitingForTeleport(!posLocs.isEmpty())
+                                                        .effectJump(EFFECTS[2]).build();
 
-                                            boolean isVelocity = false;
-                                            if(possibleVector != null) {
-                                                // Setting the motion to the possible velocity vector.
-                                                player.EMULATOR.getMotion().setMotionX(possibleVector.getX());
-                                                player.EMULATOR.getMotion().setMotionY(possibleVector.getY());
-                                                player.EMULATOR.getMotion().setMotionZ(possibleVector.getZ());
-                                                // Has to be this way because order of operations in the emulator.
-                                                isVelocity = true;
-                                            } else {
-                                                // Resetting the motion to the previous motion.
-                                                player.EMULATOR.getMotion().setMotionX(previousMotion.getMotionX());
-                                                player.EMULATOR.getMotion().setMotionY(previousMotion.getMotionY());
-                                                player.EMULATOR.getMotion().setMotionZ(previousMotion.getMotionZ());
-                                            }
+                                                boolean isVelocity = false;
+                                                if (possibleVector != null) {
+                                                    // Setting the motion to the possible velocity vector.
+                                                    player.EMULATOR.getMotion().setMotionX(possibleVector.getX());
+                                                    player.EMULATOR.getMotion().setMotionY(possibleVector.getY());
+                                                    player.EMULATOR.getMotion().setMotionZ(possibleVector.getZ());
+                                                    // Has to be this way because order of operations in the emulator.
+                                                    isVelocity = true;
+                                                } else {
+                                                    // Resetting the motion to the previous motion.
+                                                    player.EMULATOR.getMotion().setMotionX(previousMotion.getMotionX());
+                                                    player.EMULATOR.getMotion().setMotionY(previousMotion.getMotionY());
+                                                    player.EMULATOR.getMotion().setMotionZ(previousMotion.getMotionZ());
+                                                }
 
-                                            IterationResult result = player.EMULATOR.runIteration(input);
+                                                IterationResult result = player.EMULATOR.runIteration(input);
 
-                                            if(isVelocity) {
-                                                result.getTags().add("velocity");
-                                            }
+                                                if (isVelocity) {
+                                                    result.getTags().add("velocity");
+                                                }
 
 
-                                            if(fastMath == FastMathType.FAST_LEGACY) {
-                                                result.getTags().add("fast_legacy");
-                                            } else if(fastMath == FastMathType.VANILLA) {
-                                                result.getTags().add("vanilla");
-                                            } else if(fastMath == FastMathType.FAST_NEW) {
-                                                result.getTags().add("fast_new");
-                                            } else if(fastMath == FastMathType.MODERN_VANILLA) {
-                                                result.getTags().add("modern_vanilla");
-                                            }
+                                                if (fastMath == FastMathType.FAST_LEGACY) {
+                                                    result.getTags().add("fast_legacy");
+                                                } else if (fastMath == FastMathType.VANILLA) {
+                                                    result.getTags().add("vanilla");
+                                                } else if (fastMath == FastMathType.FAST_NEW) {
+                                                    result.getTags().add("fast_new");
+                                                } else if (fastMath == FastMathType.MODERN_VANILLA) {
+                                                    result.getTags().add("modern_vanilla");
+                                                }
 
-                                            if(forward > 0) {
-                                                result.getTags().add("w-key");
-                                            } else if(forward < 0) {
-                                                result.getTags().add("s-key");
-                                            }
+                                                if (forward > 0) {
+                                                    result.getTags().add("w-key");
+                                                } else if (forward < 0) {
+                                                    result.getTags().add("s-key");
+                                                }
 
-                                            if(strafe > 0) {
-                                                result.getTags().add("d-key");
-                                            } else if(strafe < 0) {
-                                                result.getTags().add("a-key");
-                                            }
+                                                if (strafe > 0) {
+                                                    result.getTags().add("d-key");
+                                                } else if (strafe < 0) {
+                                                    result.getTags().add("a-key");
+                                                }
 
-                                            if (minimum == null || minimum.getOffset() > result.getOffset()) {
-                                                minimum = result;
+                                                if (minimum == null || minimum.getOffset() > result.getOffset()) {
+                                                    minimum = result;
 
-                                                if (minimum.getOffset() < 1E-26) {
-                                                    break iteration;
+                                                    if (minimum.getOffset() < 1E-26) {
+                                                        break iteration;
+                                                    }
                                                 }
                                             }
                                         }
                                     }
-                                }
                             }
                         }
                     }
                 }
             }
         }
-
-        if(minimum != null) {
+        if (minimum != null) {
             predicted = minimum.getPredicted();
 
             double mx = player.EMULATOR.getMotion().getMotionX();
@@ -269,7 +260,7 @@ public class MovementHandler {
 
             double total = mx * mx + my * my + mz * mz;
 
-            if(total < 9E-4) {
+            if (total < 9E-4) {
                 player.getInfo().lastCanceledFlying.reset();
                 minimum.getTags().add("003");
             }
@@ -282,11 +273,11 @@ public class MovementHandler {
             }
             player.EMULATOR.confirm(minimum.getIteration());
 
-            if(minimum.getTags().contains("003")) {
+            if (minimum.getTags().contains("003")) {
                 player.EMULATOR.getTags().add("003");
             }
 
-            if(minimum.getTags().contains("bad_offset")) {
+            if (minimum.getTags().contains("bad_offset")) {
                 player.EMULATOR.setLastReportedBoundingBox(getTo().getBox().toNeo());
             }
         }
@@ -294,7 +285,7 @@ public class MovementHandler {
 
     private FastMathType[] getFastMathIterations(int strafe, int forward) {
         // Because no movement is being applied, there is no angle calculation being done
-        if(strafe == 0 && forward == 0) {
+        if (strafe == 0 && forward == 0) {
             return new FastMathType[]{FastMathType.FAST_LEGACY};
         }
 
@@ -317,7 +308,9 @@ public class MovementHandler {
 
     private boolean[] getUsingItemIterations(int forward, int strafe) {
         return (forward == 0 && strafe == 0 ||
-                !BlockUtils.isUsable(player.getBukkitPlayer().getItemInHand().getType())) ? ALWAYS_FALSE : IS_OR_NOT;
+                !BlockUtils.isUsable(player.getPlayerVersion(),
+                        SpigotConversionUtil.fromBukkitItemMaterial(player.getBukkitPlayer().getInventory().getItemInHand().getType())))
+                ? ALWAYS_FALSE : IS_OR_NOT;
     }
 
     private boolean[] getJumpingIterations() {
@@ -336,13 +329,13 @@ public class MovementHandler {
                 && player.getPlayerVersion().isNewerThanOrEquals(ClientVersion.V_1_17);
 
         checkMovement = teleportsToConfirm == 0 && posLocs.isEmpty();
-        
+
         if (checkMovement) {
             moveTicks++;
             if (!packet.hasPositionChanged()) moveTicks = 1;
         } else moveTicks = 0;
 
-        if(excuseNextFlying) {
+        if (excuseNextFlying) {
             return;
         }
 
@@ -359,10 +352,10 @@ public class MovementHandler {
         if (moveTicks > 0) {
 
             // Updating block locations
-            player.getInfo().setBlockOnTo(Optional.of(player.getBlockUpdateHandler()
-                    .getBlock(new IntVector(to.getLoc()))));
-            player.getInfo().setBlockBelow(Optional.of(player.getBlockUpdateHandler()
-                    .getBlock(new IntVector(to.getLoc().clone().subtract(0, 1, 0)))));
+            player.getInfo().setBlockOnTo(Optional.of(player.getWorldTracker()
+                    .getBlock(to.getLoc().toVector3i())));
+            player.getInfo().setBlockBelow(Optional.of(player.getWorldTracker()
+                    .getBlock(to.getLoc().clone().subtract(0, 1, 0).clone().toVector3i())));
 
             if (packet.hasPositionChanged()) {
                 // Updating player bounding box
@@ -486,7 +479,7 @@ public class MovementHandler {
             player.getInfo().setWasOnSlime(player.getBlockInfo().onSlime);
             groundTicks++;
             airTicks = 0;
-            player.getInfo().groundJumpBoost = player.getPotionHandler().getEffectByType(PotionEffectType.JUMP);
+            player.getInfo().groundJumpBoost = player.getPotionHandler().getEffectByType(PotionTypes.JUMP_BOOST);
         } else {
             player.getInfo().groundJumpBoost = Optional.empty();
             airTicks++;
@@ -503,7 +496,7 @@ public class MovementHandler {
                 .anyMatch(capability -> capability.canFly));
 
         boolean hasLevitation = PacketEvents.getAPI().getServerManager().getVersion().isNewerThanOrEquals(ServerVersion.V_1_9)
-                && player.getPotionHandler().hasPotionEffect(XPotion.LEVITATION.getPotionEffectType());
+                && player.getPotionHandler().hasPotionEffect(PotionTypes.LEVITATION);
 
         player.getInfo().setRiptiding(CompatHandler.getINSTANCE().isRiptiding(player.getBukkitPlayer()));
         player.getInfo().setGliding(CompatHandler.getINSTANCE().isGliding(player.getBukkitPlayer()));
@@ -570,7 +563,7 @@ it
     // generate a method that processes velocityHistory and compares to current deltaY.
     private void processVelocity() {
         //Iterate through player.getInfo().getVelocityHistory() and compare to current deltaY.
-        if(player.getInfo().isDoingVelocity()) {
+        if (player.getInfo().isDoingVelocity()) {
             player.getInfo().getVelocity().reset();
         }
         synchronized (player.getInfo().getVelocityHistory()) {
@@ -590,22 +583,22 @@ it
     }
 
     private void processBotMove(WrapperPlayClientPlayerFlying packet) {
-        if(player.getMob() == null) return;
+        if (player.getMob() == null) return;
         if (packet.hasPositionChanged() || packet.hasRotationChanged()) {
             KLocation origin = to.getLoc().clone().add(0, 1.7, 0);
 
             final double MULTIPLIER = Math.max(-0.5, Math.min(-1, -1 / (Math.abs(deltaYaw) * 0.25)));
             RayCollision coll = new RayCollision(origin.toVector(), origin.getDirection()
-                    .multiply(MULTIPLIER).setY(0));
+                    .multiply(MULTIPLIER).withY(0));
 
-            Location loc1 = coll.collisionPoint(1.5).toLocation(player.getBukkitPlayer().getWorld());
+            KLocation loc1 = new KLocation(coll.collisionPoint(1.5));
 
             if (player.getInfo().botAttack.isNotPassed(7)) {
                 loc1.setY(Math.max(origin.getY() + 2, loc1.getY()));
                 player.getMob().teleport(loc1.getX(), loc1.getY(), loc1.getZ(), loc1.getYaw(), loc1.getPitch());
             } else {
                 loc1.setY(Math.max(origin.getY() + 0.6, loc1.getY()));
-                if(Math.random() > 0.2)
+                if (Math.random() > 0.2)
                     Anticheat.INSTANCE.getRunUtils().taskLaterAsync(() -> player.getMob()
                             .teleport(loc1.getX(), loc1.getY(), loc1.getZ(), loc1.getYaw(), loc1.getPitch()), 5);
             }
@@ -661,7 +654,7 @@ it
     public void runPositionHackFix() {
         if (sentPositionUpdate) return;
 
-        player.sendPacket(new WrapperPlayServerPlayerPositionAndLook(0, Vector3d.zero(), new Vector3d(0,0,0), 0, 0,
+        player.sendPacket(new WrapperPlayServerPlayerPositionAndLook(0, Vector3d.zero(), new Vector3d(0, 0, 0), 0, 0,
                 relFlags));
 
         player.getBukkitPlayer().sendMessage("§c[Anticheat] §7Position update sent to fix movement issues.");
@@ -725,10 +718,10 @@ it
                 packet.getYaw(), packet.getPitch());
 
         if (packet.getRelativeFlags().has(RelativeFlag.X)) {
-            loc.add(player.getMovement().getTo().getLoc().getX(), 0 ,0);
+            loc.add(player.getMovement().getTo().getLoc().getX(), 0, 0);
         }
         if (packet.getRelativeFlags().has(RelativeFlag.Y)) {
-            loc.add(0, player.getMovement().getTo().getLoc().getY() ,0);
+            loc.add(0, player.getMovement().getTo().getLoc().getY(), 0);
         }
         if (packet.getRelativeFlags().has(RelativeFlag.Z)) {
             loc.add(0, 0, player.getMovement().getTo().getLoc().getZ());
@@ -743,7 +736,6 @@ it
         teleportsToConfirm++;
 
         loc.setTimeStamp(System.currentTimeMillis());
-
         player.runKeepaliveAction(ka -> {
             teleportsToConfirm--;
 
@@ -762,7 +754,7 @@ it
      *
      * @param location Location
      */
-    public void moveTo(Location location) {
+    public void moveTo(KLocation location) {
         KLocation newLoc = new KLocation(location);
         to.getLoc().setLocation(newLoc);
         to.getLoc().setLocation(newLoc);
@@ -814,7 +806,7 @@ it
      * @param packet WrapperPlayClientPlayerFlyingh
      */
     private void setTo(WrapperPlayClientPlayerFlying packet) {
-        to.setWorld(player.getBukkitPlayer().getWorld());
+        to.setWorld(player.getWorldTracker().getCurrentWorld().get());
         if (packet.hasPositionChanged()) {
             to.getLoc().setX(packet.getLocation().getX());
             to.getLoc().setY(packet.getLocation().getY());

@@ -31,6 +31,10 @@
 
     <repositories>
         <repository>
+            <id>maven-central</id>
+            <url>https://nexus.funkemunky.cc/repository/maven-central/</url>
+        </repository>
+        <repository>
             <id>spigot-repo</id>
             <url>https://hub.spigotmc.org/nexus/content/repositories/snapshots/</url>
         </repository>

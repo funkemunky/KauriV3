@@ -1,5 +1,6 @@
 package dev.brighten.ac.listener;
 
+import com.github.retrooper.packetevents.util.Vector3d;
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.utils.KLocation;
@@ -68,14 +69,15 @@ public class GeneralListener implements Listener {
 
         Anticheat.INSTANCE.getPlayerRegistry().getPlayer(event.getPlayer().getUniqueId())
                 .ifPresent(player -> {
-                    player.getBlockUpdateHandler().onWorldChange();
 
                     // Updating bot loc when changing worlds
                     Location origin = event.getTo().clone().add(0, 1.7, 0);
+                    Vector mult = origin.getDirection().multiply(-1);
 
-                    RayCollision coll = new RayCollision(origin.toVector(), origin.getDirection().multiply(-1));
+                    RayCollision coll = new RayCollision(new Vector3d(origin.getX(), origin.getY(), origin.getZ()),
+                            new Vector3d(mult.getX(), mult.getY(), mult.getZ()));
 
-                    Vector loc1 = coll.collisionPoint(1.2);
+                    Vector3d loc1 = coll.collisionPoint(1.2);
 
                     Anticheat.INSTANCE.getRunUtils().taskLater(() -> {
                         player.getMob().despawn();

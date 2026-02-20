@@ -4,18 +4,18 @@ import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.protocol.particle.type.ParticleType;
 import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import com.github.retrooper.packetevents.protocol.world.states.type.StateType;
+import com.github.retrooper.packetevents.util.Vector3d;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.handler.block.WrappedBlock;
+import dev.brighten.ac.handler.entity.TrackedEntity;
 import dev.brighten.ac.utils.Helper;
+import dev.brighten.ac.utils.KLocation;
 import dev.brighten.ac.utils.Materials;
 import dev.brighten.ac.utils.Tuple;
 import dev.brighten.ac.utils.math.RayTrace;
 import dev.brighten.ac.utils.world.BlockData;
 import dev.brighten.ac.utils.world.CollisionBox;
 import me.hydro.emulator.util.mcp.MathHelper;
-import org.bukkit.Location;
-import org.bukkit.entity.LivingEntity;
-import org.bukkit.util.Vector;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -58,15 +58,15 @@ public class RayCollision implements CollisionBox {
         directionZ = 0;
     }
 
-    public RayCollision(LivingEntity e) {
+    public RayCollision(TrackedEntity e) {
         this(e.getEyeLocation());
     }
 
-    public RayCollision(Location l) {
+    public RayCollision(KLocation l) {
         this(l.toVector(),l.getDirection());
     }
 
-    public RayCollision(Vector position, Vector direction) {
+    public RayCollision(Vector3d position, Vector3d direction) {
         this.originX = position.getX();
         this.originY = position.getY();
         this.originZ = position.getZ();
@@ -75,17 +75,17 @@ public class RayCollision implements CollisionBox {
         this.directionZ = direction.getZ();
     }
 
-    public Vector getOrigin() {
-        return new Vector(originX, originY, originZ);
+    public Vector3d getOrigin() {
+        return new Vector3d(originX, originY, originZ);
     }
 
-    public Vector getDirection() {
-        return new Vector(directionX, directionY, directionZ);
+    public Vector3d getDirection() {
+        return new Vector3d(directionX, directionY, directionZ);
     }
 
     @Override
     public boolean isCollided(CollisionBox other) {
-       if (other instanceof RayCollision) {
+        if (other instanceof RayCollision) {
             return false; // lol no support
         } else {
             List<SimpleCollisionBox> boxes = new ArrayList<>();
@@ -141,7 +141,7 @@ public class RayCollision implements CollisionBox {
     public List<CollisionBox> boxesOnRay(APlayer player, double distance) {
         int amount = Math.round((float) (distance / 0.5));
 
-        Location[] locs = new Location[Math.max(2, amount)]; //We do a max to prevent NegativeArraySizeException.
+        KLocation[] locs = new KLocation[Math.max(2, amount)]; //We do a max to prevent NegativeArraySizeException.
         List<CollisionBox> boxes = new ArrayList<>();
         ClientVersion version = PacketEvents.getAPI().getServerManager().getVersion().toClientVersion();
 
@@ -152,7 +152,7 @@ public class RayCollision implements CollisionBox {
             int fy = MathHelper.floor_double(originY + (directionY * ix));
             int fz = MathHelper.floor_double(originZ + (directionZ * ix));
 
-            WrappedBlock block = player.getBlockUpdateHandler().getBlock(fx, fy, fz);
+            WrappedBlock block = player.getWorldTracker().getBlock(fx, fy, fz);
 
             if (block == null) continue;
 
@@ -173,7 +173,7 @@ public class RayCollision implements CollisionBox {
     public WrappedBlock getClosestBlockOfType(APlayer player, int bitmask, double distance) {
         int amount = Math.round((float) (distance / 0.5));
 
-        Location[] locs = new Location[Math.max(2, amount)]; //We do a max
+        KLocation[] locs = new KLocation[Math.max(2, amount)]; //We do a max
         ClientVersion version = PacketEvents.getAPI().getServerManager().getVersion().toClientVersion();
 
         for (int i = 0; i < locs.length; i++) {
@@ -183,7 +183,7 @@ public class RayCollision implements CollisionBox {
             int fy = MathHelper.floor_double(originY + (directionY * ix));
             int fz = MathHelper.floor_double(originZ + (directionZ * ix));
 
-            WrappedBlock block = player.getBlockUpdateHandler().getBlock(fx, fy, fz);
+            WrappedBlock block = player.getWorldTracker().getBlock(fx, fy, fz);
 
             if(block == null || !Materials.checkFlag(block.getType(), bitmask)) continue;
 
@@ -228,7 +228,7 @@ public class RayCollision implements CollisionBox {
 
         RayTrace trace = new RayTrace(ray.getOrigin(), ray.getDirection());
 
-        Vector point = trace.positionOfIntersection(box, Math.max(0, dist - range), 0.01);
+        Vector3d point = trace.positionOfIntersection(box, Math.max(0, dist - range), 0.01);
 
         return ray.getOrigin().distance(point);
     }
@@ -347,23 +347,23 @@ public class RayCollision implements CollisionBox {
         }
     }
 
-    public Vector collisionPoint(SimpleCollisionBox box) {
+    public Vector3d collisionPoint(SimpleCollisionBox box) {
         Tuple<Double, Double> p = new Tuple<>();
         if (box==null||!intersect(this,box,p))
             return null;
-        Vector vector = new Vector(directionX,directionY,directionZ);
+        Vector3d vector = new Vector3d(directionX,directionY,directionZ);
         vector.normalize();
         vector.multiply(p.one);
-                vector.add(new Vector(originX,originY,originZ));
+        vector.add(new Vector3d(originX,originY,originZ));
         return vector;
     }
 
-    public Vector collisionPoint(double dist) {
-        Vector vector = new Vector(directionX,directionY,directionZ);
+    public Vector3d collisionPoint(double dist) {
+        Vector3d vector = new Vector3d(directionX,directionY,directionZ);
         vector.normalize();
         vector.multiply(dist);
-        vector.add(new Vector(originX,originY,originZ));
+        vector.add(new Vector3d(originX,originY,originZ));
         return vector;
     }
-    
+
 }

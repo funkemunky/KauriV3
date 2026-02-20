@@ -1,10 +1,10 @@
 package dev.brighten.ac.data.obj;
 
+import dev.brighten.ac.handler.block.World;
 import dev.brighten.ac.utils.KLocation;
 import dev.brighten.ac.utils.world.types.SimpleCollisionBox;
 import lombok.Getter;
 import lombok.Setter;
-import org.bukkit.World;
 
 @Getter
 @Setter

@@ -1,59 +1,118 @@
 package dev.brighten.ac.handler;
 
+import com.github.retrooper.packetevents.protocol.potion.PotionType;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerFlying;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityEffect;
 import dev.brighten.ac.data.APlayer;
+import dev.brighten.ac.utils.KPotionEffect;
+import dev.brighten.ac.utils.KProperties;
 import io.github.retrooper.packetevents.util.SpigotConversionUtil;
-import org.bukkit.potion.PotionEffect;
-import org.bukkit.potion.PotionEffectType;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class PotionHandler {
     private final APlayer data;
 
-    public List<PotionEffect> potionEffects = new CopyOnWriteArrayList<>();
+    private final List<KPotionEffect> potionEffects = new ArrayList<>();
+    private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
-    public  PotionHandler(APlayer data) {
+    public PotionHandler(APlayer data) {
         this.data = data;
 
-        potionEffects.addAll(data.getBukkitPlayer().getActivePotionEffects());
+        lock.writeLock().lock();
+
+        try {
+            data.getBukkitPlayer().getActivePotionEffects().stream()
+                    .map(pe ->
+                            new KPotionEffect(
+                                    SpigotConversionUtil.fromBukkitPotionEffectType(pe.getType()),
+                                    KProperties.fromBukkit(pe)
+                            ))
+                    .forEach(potionEffects::add);
+        } finally {
+            lock.writeLock().unlock();
+        }
     }
 
     public void onFlying(WrapperPlayClientPlayerFlying packet) {
-        for (PotionEffect effect : potionEffects) {
-            if(data.getBukkitPlayer().hasPotionEffect(effect.getType())) continue;
+        lock.readLock().lock();
+        try {
+            for (KPotionEffect effect : potionEffects) {
+                lock.readLock().lock();
 
-            data.runKeepaliveAction(d -> data.getPotionHandler().potionEffects.remove(effect));
+                try {
+                    if (data.getBukkitPlayer().hasPotionEffect(SpigotConversionUtil.toBukkitPotionEffectType(effect.potionType()))) continue;
+
+                    data.runKeepaliveAction(d -> {
+                        lock.writeLock().lock();
+                        try {
+                            data.getPotionHandler().potionEffects.remove(effect);
+                        } finally {
+                            lock.writeLock().unlock();
+                        }
+                    });
+                } finally {
+                    lock.readLock().unlock();
+                }
+            }
+        } finally {
+            lock.readLock().unlock();
         }
     }
 
     public void onPotionEffect(WrapperPlayServerEntityEffect packet) {
         data.runKeepaliveAction(d -> {
-            var type = SpigotConversionUtil.toBukkitPotionEffectType(packet.getPotionType());
-            data.getPotionHandler().potionEffects.stream().filter(pe -> pe.getType().equals(type))
-                    .forEach(data.getPotionHandler().potionEffects::remove);
-            data.getPotionHandler().potionEffects
-                    .add(new PotionEffect(type, packet.getEffectDurationTicks(), packet.getEffectAmplifier(),
-                            packet.isAmbient()));
+            var type = packet.getPotionType();
+            lock.writeLock().lock();
+            try {
+                data.getPotionHandler().potionEffects.removeIf(pe -> pe.potionType().equals(type));
+                data.getPotionHandler().potionEffects
+                        .add(new KPotionEffect(type, new KProperties(packet.getEffectAmplifier()
+                                , packet.getEffectDurationTicks(),
+                                packet.isAmbient(), packet.isVisible(), packet.isShowIcon(), null)));
+            } finally {
+                lock.readLock().unlock();
+            }
         });
     }
 
-    public boolean hasPotionEffect(PotionEffectType type) {
-        for (PotionEffect potionEffect : potionEffects) {
-            if(potionEffect.getType().equals(type))
-                return true;
+    public boolean hasPotionEffect(PotionType type) {
+        lock.readLock().lock();
+        try {
+            for (KPotionEffect potionEffect : potionEffects) {
+                if (potionEffect.potionType().equals(type))
+                    return true;
+            }
+            return false;
+        } finally {
+            lock.readLock().unlock();
         }
-        return false;
     }
 
-    public Optional<PotionEffect> getEffectByType(PotionEffectType type) {
-        for (PotionEffect potionEffect : potionEffects) {
-            if(potionEffect.getType().equals(type))
-                return Optional.of(potionEffect);
+    public Optional<KPotionEffect> getEffectByType(PotionType type) {
+        lock.readLock().lock();
+        try {
+            for (KPotionEffect potionEffect : potionEffects) {
+                if (potionEffect.potionType().equals(type))
+                    return Optional.of(potionEffect);
+            }
+            return Optional.empty();
+        } finally {
+            lock.readLock().unlock();
         }
-        return Optional.empty();
+    }
+
+    public List<KPotionEffect> getPotionEffects() {
+        lock.readLock().lock();
+
+        try {
+            return new ArrayList<>(potionEffects);
+        } finally {
+            lock.readLock().unlock();
+        }
     }
 }
