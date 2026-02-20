@@ -24,13 +24,11 @@ import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerMu
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.utils.BlockUtils;
-import dev.brighten.ac.utils.LongHash;
 import dev.brighten.ac.utils.Materials;
 import dev.brighten.ac.utils.XMaterial;
 import dev.brighten.ac.utils.math.IntVector;
 import dev.brighten.ac.utils.world.types.RayCollision;
 import io.github.retrooper.packetevents.util.SpigotConversionUtil;
-import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import me.hydro.emulator.util.mcp.MathHelper;
@@ -45,7 +43,13 @@ import org.bukkit.block.BlockFace;
 @SuppressWarnings("unused")
 @RequiredArgsConstructor
 public class BlockUpdateHandler {
-    private final Long2ObjectOpenHashMap<KColumn> chunks = new Long2ObjectOpenHashMap<>(1000);
+    // Array dimensions: 64×64 covers a render distance of up to 32 chunks without
+    // collision. Index = (chunkX & MASK) * SIZE + (chunkZ & MASK); stored KColumn
+    // x/z are chunk coordinates and are validated on every lookup.
+    private static final int CHUNK_ARRAY_BITS = 6;                         // 2^6 = 64 per axis
+    private static final int CHUNK_ARRAY_SIZE = 1 << CHUNK_ARRAY_BITS;    // 64
+    private static final int CHUNK_ARRAY_MASK = CHUNK_ARRAY_SIZE - 1;     // 63
+    private final KColumn[] chunks = new KColumn[CHUNK_ARRAY_SIZE * CHUNK_ARRAY_SIZE];
 
     private final APlayer player;
 
@@ -54,7 +58,7 @@ public class BlockUpdateHandler {
      */
     public void onWorldChange() {
         synchronized (chunks) {
-            chunks.clear();
+            java.util.Arrays.fill(chunks, null);
         }
 
         setMinHeight(player.getDimensionType());
@@ -111,34 +115,47 @@ public class BlockUpdateHandler {
      * @return the chunk at the specified coordinates
      */
     public KColumn getChunk(int x, int z) {
+        int chunkX = x >> 4;
+        int chunkZ = z >> 4;
         synchronized (chunks) {
-            long hash = LongHash.toLong(x >> 4, z >> 4);
-            KColumn chunk = chunks.get(hash);
+            int index = chunkIndex(chunkX, chunkZ);
+            KColumn chunk = chunks[index];
 
-            // If the chunk is null, create a new one
-            if(chunk == null) {
+            // Validate that the stored entry belongs to this chunk position
+            if (chunk == null || chunk.x() != chunkX || chunk.z() != chunkZ) {
                 chunk = getBukkitColumn(player.getBukkitPlayer().getWorld(), x, z);
 
-                if(chunk == null) {
-                    return new KColumn(x, z, new BaseChunk[maxHeight / 16]);
+                if (chunk == null) {
+                    return new KColumn(chunkX, chunkZ, new BaseChunk[maxHeight / 16]);
                 }
-                chunks.put(hash, chunk);
+                chunks[index] = chunk;
             }
 
             return chunk;
         }
     }
 
+    private static int chunkIndex(int chunkX, int chunkZ) {
+        return (chunkX & CHUNK_ARRAY_MASK) * CHUNK_ARRAY_SIZE + (chunkZ & CHUNK_ARRAY_MASK);
+    }
+
     private KColumn getBukkitColumn(World world, int x, int z) {
-        Chunk chunk = BlockUtils.getChunkAsync(world, x >> 4, z >> 4).orElse(null);
+        int chunkX = x >> 4;
+        int chunkZ = z >> 4;
+        Chunk chunk = BlockUtils.getChunkAsync(world, chunkX, chunkZ).orElse(null);
 
         if(chunk == null) {
             // Handle loading on main thread
             Anticheat.INSTANCE.getRunUtils().task(() -> {
-                long hash = LongHash.toLong(x >> 4, z >> 4);
-
-                if(!chunks.containsKey(hash)) {
-                    chunks.put(hash, getBukkitColumn(world, x, z));
+                int index = chunkIndex(chunkX, chunkZ);
+                synchronized (chunks) {
+                    KColumn existing = chunks[index];
+                    if (existing == null || existing.x() != chunkX || existing.z() != chunkZ) {
+                        KColumn loaded = getBukkitColumn(world, x, z);
+                        if (loaded != null) {
+                            chunks[index] = loaded;
+                        }
+                    }
                 }
             });
             return null;
@@ -149,11 +166,11 @@ public class BlockUpdateHandler {
             levels[i] = create();
         }
 
-        int chunkX = chunk.getX() * 16;
-        int chunkZ = chunk.getZ() * 16;
+        int chunkBlockX = chunk.getX() * 16;
+        int chunkBlockZ = chunk.getZ() * 16;
 
-        for(int blockX = chunkX; blockX < chunkX + 16 ; blockX++) {
-            for(int blockZ = chunkZ; blockZ < chunkZ + 16 ; blockZ++) {
+        for(int blockX = chunkBlockX; blockX < chunkBlockX + 16 ; blockX++) {
+            for(int blockZ = chunkBlockZ; blockZ < chunkBlockZ + 16 ; blockZ++) {
                 for(int blockY = minHeight ; blockY < world.getMaxHeight() ; blockY++) {
                     Block block = chunk.getBlock(blockX, blockY, blockZ);
 
@@ -170,13 +187,13 @@ public class BlockUpdateHandler {
             }
         }
 
-        return new KColumn(x, z, levels);
+        return new KColumn(chunkX, chunkZ, levels);
     }
 
     private void updateChunk(Column chunk) {
         synchronized (chunks) {
-            KColumn column = new KColumn(chunk.getX(), chunk.getZ(), chunk.getChunks());
-            chunks.put(LongHash.toLong(column.x(), column.z()), column);
+            int index = chunkIndex(chunk.getX(), chunk.getZ());
+            chunks[index] = new KColumn(chunk.getX(), chunk.getZ(), chunk.getChunks());
         }
     }
 
