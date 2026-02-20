@@ -17,15 +17,14 @@ public class KABot extends Check {
         super(player);
     }
 
-    private int buffer = 0;
-    private float buffer2;
+    private float buffer, buffer2;
 
     @Bind
     WAction<WrapperPlayClientAnimation> arm = packet -> {
         // Lower both buffers on each arm swing to prevent false positives for legitimate players.
         // In vanilla 1.8.8, every attack is accompanied by a swing animation, so a legit player's
         // attack count and swing count should be roughly equal (net-zero buffer change).
-        if(buffer > 0) buffer--;
+        if(buffer > 0) buffer-=0.25f;
         if(buffer2 > 0) buffer2-= 0.25f;
     };
 
