@@ -129,6 +129,9 @@ public class Anticheat extends JavaPlugin {
     @ConfigSetting(path = "logging", name = "verbose")
     private static boolean verboseLogging = true;
 
+    @ConfigSetting(path = "packetevents", name = "debug")
+    public static boolean packetEventsDebug = false;
+
     private Configuration anticheatConfig;
 
     @Override
@@ -137,6 +140,7 @@ public class Anticheat extends JavaPlugin {
         getLogger().info("Loading Anticheat...");
         LibraryLoader.loadAll(INSTANCE);
 
+        loadConfig();
         PacketEventsRegister.register();
     }
 

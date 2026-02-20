@@ -10,7 +10,9 @@ import io.github.retrooper.packetevents.factory.spigot.SpigotPacketEventsBuilder
 public class PacketEventsRegister {
 
     public static void register() {
-        PacketEvents.setAPI(SpigotPacketEventsBuilder.build(Anticheat.INSTANCE, new PacketEventsSettings().debug(true).fullStackTrace(true).kickIfTerminated(false)));
+        boolean debug = Anticheat.INSTANCE.getAnticheatConfig()
+                .getBoolean("packetevents.debug", Anticheat.packetEventsDebug);
+        PacketEvents.setAPI(SpigotPacketEventsBuilder.build(Anticheat.INSTANCE, new PacketEventsSettings().debug(debug).fullStackTrace(true).kickIfTerminated(false)));
         PacketEvents.getAPI().load();
     }
 
