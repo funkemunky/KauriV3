@@ -9,6 +9,7 @@ import org.bukkit.Material;
 import java.util.HashMap;
 import java.util.Map;
 
+//TODO Refactor this system to use just packetevents instead of this class
 public class Materials {
     private static final Map<StateType, Integer> MATERIAL_FLAGS =  new HashMap<>();
 
@@ -31,11 +32,11 @@ public class Materials {
             int flag = MATERIAL_FLAGS.getOrDefault(mat, 0);
 
             //We use the one in BlockUtils also since we can't trust Material to include everything.
-            if (mat.isSolid() || mat.getName().contains("COMPARATOR") || mat.getName().contains("DIODE")) {
+            if (mat.isSolid() || mat.getName().contains("COMPARATOR") || mat.getName().contains("DIODE") || mat.isBlocking()) {
                 flag |= SOLID;
             }
 
-            if(!(BlockData.getData(mat).getDefaultBox() instanceof NoCollisionBox)) {
+            if(!(BlockData.getData(mat).getDefaultBox() instanceof NoCollisionBox) || mat.isBlocking()) {
                 flag |= COLLIDABLE;
             }
 

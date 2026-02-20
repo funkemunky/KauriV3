@@ -17,6 +17,8 @@ import dev.brighten.ac.handler.PacketHandler;
 import dev.brighten.ac.handler.entity.FakeEntityTracker;
 import dev.brighten.ac.handler.keepalive.KeepaliveProcessor;
 import dev.brighten.ac.handler.keepalive.actions.ActionManager;
+import dev.brighten.ac.handler.protocol.Protocol;
+import dev.brighten.ac.handler.protocol.impl.NoAPI;
 import dev.brighten.ac.logging.LoggerManager;
 import dev.brighten.ac.utils.*;
 import dev.brighten.ac.utils.annotation.ConfigSetting;
@@ -30,6 +32,7 @@ import dev.brighten.ac.utils.timer.impl.TickTimer;
 import dev.brighten.ac.utils.world.WorldInfo;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.experimental.PackagePrivate;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
@@ -115,6 +118,9 @@ public class Anticheat extends JavaPlugin {
     @PackagePrivate
     private final RollingAverageDouble tps = new RollingAverageDouble(4, 20);
     private final Map<UUID, WorldInfo> worldInfoMap = new HashMap<>();
+
+    @Setter
+    private Protocol protocol = new NoAPI();
 
     private final List<BaseCommand> commands = new ArrayList<>();
 
@@ -252,7 +258,7 @@ public class Anticheat extends JavaPlugin {
         } catch (IllegalStateException e) {
             Anticheat.INSTANCE.getLogger().log(Level.SEVERE, "Check ID unregister failed", e);
         }
-        commandManager.getScheduler().cancelLocaleTask();
+
         commandPropertiesManager = null;
 
         try {

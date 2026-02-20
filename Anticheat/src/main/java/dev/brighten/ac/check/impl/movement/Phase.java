@@ -1,6 +1,7 @@
 package dev.brighten.ac.check.impl.movement;
 
 import com.github.retrooper.packetevents.protocol.teleport.RelativeFlag;
+import com.github.retrooper.packetevents.util.Vector3d;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerFlying;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerPositionAndLook;
 import dev.brighten.ac.Anticheat;
@@ -18,7 +19,6 @@ import dev.brighten.ac.utils.annotation.Bind;
 import dev.brighten.ac.utils.objects.evicting.EvictingSet;
 import dev.brighten.ac.utils.world.types.SimpleCollisionBox;
 import org.bukkit.Location;
-import org.bukkit.util.Vector;
 
 import java.util.List;
 import java.util.Set;
@@ -31,7 +31,7 @@ public class Phase extends Check {
     }
 
     private int ticks;
-    private final Set<Vector> POSITIONS = new EvictingSet<>(10);
+    private final Set<Vector3d> POSITIONS = new EvictingSet<>(10);
     private Location teleportLoc = null;
 
     @Bind

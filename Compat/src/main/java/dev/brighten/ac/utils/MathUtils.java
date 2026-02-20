@@ -1,5 +1,6 @@
 package dev.brighten.ac.utils;
 
+import com.github.retrooper.packetevents.util.Vector3d;
 import lombok.val;
 import me.hydro.emulator.util.mcp.MathHelper;
 import org.bukkit.Location;
@@ -194,10 +195,6 @@ public class MathUtils {
         val rot = MathUtils.getRotation(loc1, loc2);
         Vector expectedRotation = new Vector(rot[0], rot[1], 0);
         return MathUtils.yawTo180D(playerRotation.getX() - expectedRotation.getX());
-    }
-
-    public static double getAngle(KLocation loc1, KLocation loc2) {
-        return getAngle(loc1.toLocation(null), loc2.toLocation(null));
     }
 
     public static float distanceBetweenAngles(float a, float b) {
@@ -544,16 +541,14 @@ public class MathUtils {
         return (short) num;
     }
 
-    /* Stolen from Bukkit */
-    public static Vector getDirection(KLocation loc) {
-        Vector vector = new Vector();
+    public static Vector3d getDirection(KLocation loc) {
+        Vector3d vector = new Vector3d();
         double rotX = loc.getYaw();
         double rotY = loc.getPitch();
-        vector.setY(-Math.sin(Math.toRadians(rotY)));
         double xz = Math.cos(Math.toRadians(rotY));
-        vector.setX(-xz * Math.sin(Math.toRadians(rotX)));
-        vector.setZ(xz * Math.cos(Math.toRadians(rotX)));
-        return vector;
+        return new Vector3d(-xz * Math.sin(Math.toRadians(rotX)),
+                -Math.sin(Math.toRadians(rotY)),
+                xz * Math.cos(Math.toRadians(rotX)));
     }
 
 
@@ -704,12 +699,12 @@ public class MathUtils {
         return squareRoot;
     }
 
-    public static Vector getDirection(float yaw, float pitch) {
+    public static Vector3d getDirection(float yaw, float pitch) {
         float f = MathHelper.cos(MathHelper.FastMathType.VANILLA, -yaw * 0.017453292F - (float)Math.PI);
         float f1 = MathHelper.sin(MathHelper.FastMathType.VANILLA, -yaw * 0.017453292F - (float)Math.PI);
         float f2 = -MathHelper.cos(MathHelper.FastMathType.VANILLA, -pitch * 0.017453292F);
         float f3 = MathHelper.sin(MathHelper.FastMathType.VANILLA, -pitch * 0.017453292F);
-        return new Vector(f1 * f2, f3, f * f2);
+        return new Vector3d(f1 * f2, f3, f * f2);
     }
 
     public static float sqrt(float number) {

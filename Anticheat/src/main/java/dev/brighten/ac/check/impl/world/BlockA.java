@@ -1,6 +1,7 @@
 package dev.brighten.ac.check.impl.world;
 
 import com.github.retrooper.packetevents.util.Vector3d;
+import com.github.retrooper.packetevents.util.Vector3i;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerBlockPlacement;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerFlying;
 import dev.brighten.ac.api.check.CheckType;
@@ -35,7 +36,7 @@ public class BlockA extends Check {
     WAction<WrapperPlayClientPlayerBlockPlacement> blockPlace = packet -> {
         Vector3d loc = packet.getBlockPosition().toVector3d();
 
-        WrappedBlock block = player.getBlockUpdateHandler().getBlock(loc);
+        WrappedBlock block = player.getWorldTracker().getBlock(new Vector3i(MathUtils.floor(loc.getX()), MathUtils.floor(loc.getY()), MathUtils.floor(loc.getZ())));
 
         CollisionBox box = BlockData.getData(block.getType()).getBox(player, block, player.getPlayerVersion());
 

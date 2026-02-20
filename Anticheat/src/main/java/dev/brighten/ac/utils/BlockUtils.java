@@ -2,19 +2,18 @@ package dev.brighten.ac.utils;
 
 import com.github.retrooper.packetevents.protocol.entity.type.EntityTypes;
 import com.github.retrooper.packetevents.protocol.item.type.ItemType;
+import com.github.retrooper.packetevents.protocol.item.type.ItemTypes;
 import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import com.github.retrooper.packetevents.protocol.world.states.type.StateType;
 import com.github.retrooper.packetevents.protocol.world.states.type.StateTypes;
+import com.github.retrooper.packetevents.util.Vector3i;
 import dev.brighten.ac.data.APlayer;
 import dev.brighten.ac.handler.block.WrappedBlock;
 import dev.brighten.ac.handler.entity.TrackedEntity;
-import dev.brighten.ac.utils.math.IntVector;
 import io.github.retrooper.packetevents.util.SpigotConversionUtil;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.Vehicle;
 
 import java.util.EnumMap;
 import java.util.EnumSet;
@@ -84,20 +83,20 @@ public class BlockUtils {
         return Optional.empty();
     }
 
-    public static Optional<WrappedBlock> getRelative(APlayer player, IntVector location, int modX, int modY, int modZ) {
-        return Optional.of(player.getBlockUpdateHandler()
-                .getRelative(new IntVector(location.getX(), location.getY(), location.getZ()),
+    public static Optional<WrappedBlock> getRelative(APlayer player, Vector3i location, int modX, int modY, int modZ) {
+        return Optional.of(player.getWorldTracker()
+                .getRelative(new Vector3i(location.getX(), location.getY(), location.getZ()),
                         modX, modY, modZ));
     }
 
-    public static Optional<WrappedBlock> getRelative(APlayer player, IntVector location,
+    public static Optional<WrappedBlock> getRelative(APlayer player, Vector3i location,
                                                      com.github.retrooper.packetevents.protocol.world
                                                              .BlockFace face, int distance) {
         return getRelative(player, location,
                 face.getModX() * distance, face.getModY() * distance, face.getModZ() * distance);
     }
 
-    public static Optional<WrappedBlock> getRelative(APlayer player, IntVector vector, BlockFace face) {
+    public static Optional<WrappedBlock> getRelative(APlayer player, Vector3i vector, BlockFace face) {
         return getRelative(player, vector,
                 face.getModX(), face.getModY(), face.getModZ());
     }
@@ -132,6 +131,12 @@ public class BlockUtils {
 
     public static boolean isUsable(Material material) {
         return isUsable(getXMaterial(material));
+    }
+
+    public static boolean isUsable(ClientVersion version, ItemType type) {
+        return type.hasAttribute(ItemTypes.ItemAttribute.EDIBLE)
+                || (version.isOlderThan(ClientVersion.V_1_9) && type.hasAttribute(ItemTypes.ItemAttribute.SWORD))
+                || type.equals(ItemTypes.SHIELD);
     }
 
     public static boolean isUsable(XMaterial xmaterial) {

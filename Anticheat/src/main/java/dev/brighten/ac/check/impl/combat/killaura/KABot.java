@@ -1,6 +1,5 @@
 package dev.brighten.ac.check.impl.combat.killaura;
 
-import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientAnimation;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientInteractEntity;
 import dev.brighten.ac.api.check.CheckType;
@@ -29,10 +28,10 @@ public class KABot extends Check {
 
     @Bind
     WAction<WrapperPlayClientInteractEntity> packet = packet -> {
-        val optional = player.getEntityLocationHandler().getTrackedEntity(packet.getEntityId());
+        val optional = player.getWorldTracker().getCurrentWorld().get().getTrackedEntity(packet.getEntityId());
 
         if(optional.isPresent()
-                && (player.getEntityLocationHandler().clientHasEntity.get()
+                && (player.getEntityTrackHandler().clientHasEntity.get()
                 || !optional.get().getFakeMobs().isEmpty()))  {
             if(++buffer > 3) {
                 flag("Attacked player without attacking bot!");

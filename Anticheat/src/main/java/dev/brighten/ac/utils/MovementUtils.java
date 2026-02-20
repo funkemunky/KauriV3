@@ -19,7 +19,7 @@ public class MovementUtils {
     public static double getJumpHeight(APlayer data) {
         float baseHeight = 0.42f;
 
-        baseHeight+= data.getInfo().groundJumpBoost.map(ef -> ef.getAmplifier() + 1)
+        baseHeight+= data.getInfo().groundJumpBoost.map(ef -> ef.properties().amplifier() + 1)
                 .orElse(0) * 0.1f;
 
         return baseHeight;
@@ -38,7 +38,7 @@ public class MovementUtils {
             int i = MathHelper.floor_double(data.getMovement().getTo().getLoc().getX());
             int j = MathHelper.floor_double(data.getMovement().getTo().getBox().minY);
             int k = MathHelper.floor_double(data.getMovement().getTo().getLoc().getZ());
-            WrappedBlock block = data.getBlockUpdateHandler().getBlock(i, j, k);
+            WrappedBlock block = data.getWorldTracker().getBlock(i, j, k);
 
             return Materials.checkFlag(block.getType(), Materials.LADDER);
 

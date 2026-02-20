@@ -1,6 +1,7 @@
 package dev.brighten.ac.check.impl.movement.speed;
 
 import com.github.retrooper.packetevents.protocol.player.ClientVersion;
+import com.github.retrooper.packetevents.protocol.potion.PotionTypes;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerFlying;
 import dev.brighten.ac.api.check.CheckType;
 import dev.brighten.ac.check.Check;
@@ -36,11 +37,11 @@ public class Speed extends Check {
 
             moveFactor+= (float) (moveFactor * 0.30000001192092896D);
 
-            if(player.getPotionHandler().hasPotionEffect(PotionEffectType.SPEED))
+            if(player.getPotionHandler().hasPotionEffect(PotionTypes.SPEED))
                 moveFactor += (float) ((PlayerUtils.getPotionEffectLevel(player.getBukkitPlayer(), PotionEffectType.SPEED)
                                         * (0.200000000298023224D)) * moveFactor);
 
-            if(player.getPotionHandler().hasPotionEffect(PotionEffectType.SLOW))
+            if(player.getPotionHandler().hasPotionEffect(PotionTypes.SLOWNESS))
                 moveFactor += (float) ((PlayerUtils.getPotionEffectLevel(player.getBukkitPlayer(), PotionEffectType.SLOW)
                                         * (-0.15000000596046448D)) * moveFactor);
 
