@@ -28,7 +28,10 @@ public class FakeMob {
     private List<APlayer> watching = Collections.emptyList();
 
     public FakeMob(EntityType type) {
-        entityId = ThreadLocalRandom.current().nextInt(15000, 20000);
+        // Use a very high ID range to avoid colliding with real server entity IDs.
+        // Real entity IDs start at 1 and increment; on a long-running server they can
+        // easily exceed 15 000, making the old [15000, 20000) range unsafe.
+        entityId = ThreadLocalRandom.current().nextInt(1_500_000_000, 2_000_000_000);
         this.type = type;
     }
 
