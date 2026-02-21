@@ -135,6 +135,7 @@ public class BlockUtils {
 
     public static boolean isUsable(ClientVersion version, ItemType type) {
         return type.hasAttribute(ItemTypes.ItemAttribute.EDIBLE)
+                || type == ItemTypes.POTION
                 || (version.isOlderThan(ClientVersion.V_1_9) && type.hasAttribute(ItemTypes.ItemAttribute.SWORD))
                 || type.equals(ItemTypes.SHIELD);
     }
