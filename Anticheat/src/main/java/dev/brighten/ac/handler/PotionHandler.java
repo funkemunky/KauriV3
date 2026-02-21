@@ -75,7 +75,7 @@ public class PotionHandler {
                                 , packet.getEffectDurationTicks(),
                                 packet.isAmbient(), packet.isVisible(), packet.isShowIcon(), null)));
             } finally {
-                lock.readLock().unlock();
+                lock.writeLock().unlock();
             }
         });
     }
