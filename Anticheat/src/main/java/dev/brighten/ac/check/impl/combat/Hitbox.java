@@ -122,7 +122,7 @@ public class Hitbox extends Check {
                             player.getMovement().getTo().getLoc().getYaw(),
                             player.getMovement().getTo().getLoc().getPitch()),
                     MathUtils.getDirection(player.getMovement().getFrom().getLoc().getYaw(),
-                            player.getMovement().getTo().getLoc().getPitch())));
+                            player.getMovement().getFrom().getLoc().getPitch())));
 
             if(!didSneakOrElytra) {
                 to.add(0, 1.62f, 0);
