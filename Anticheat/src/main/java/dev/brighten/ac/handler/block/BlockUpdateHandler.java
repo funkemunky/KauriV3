@@ -106,12 +106,13 @@ public class BlockUpdateHandler {
         int y = pos.getY();
         int z = pos.getZ();
 
-        if(place.getItemStack().isEmpty() || place.getItemStack().get().getType().getPlacedType() == null) {
+        var placedType = place.getItemStack().get().getType().getPlacedType();
+        if(place.getItemStack().isEmpty() || placedType == null) {
             return;
         }
 
         currentWorld.get().updateBlock(x, y, z,
-                WrappedBlockState.getDefaultState(place.getItemStack().get().getType().getPlacedType()));
+                WrappedBlockState.getDefaultState(placedType));
     }
 
     static final WrappedBlockState airBlockState = WrappedBlockState

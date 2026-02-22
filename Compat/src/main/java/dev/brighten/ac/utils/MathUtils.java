@@ -95,7 +95,7 @@ public class MathUtils {
     }
 
     public static boolean isScientificNotation(double value) {
-        return String.valueOf(value).contains("E");
+        return value < 0.0001 || value > 10000000;
     }
 
     public static double getDistanceWithoutRoot(KLocation one, KLocation two) {

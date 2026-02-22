@@ -1,6 +1,5 @@
 package dev.brighten.ac.check.impl.combat.autoclicker;
 
-import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import com.github.retrooper.packetevents.protocol.player.InteractionHand;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientAnimation;
 import dev.brighten.ac.api.check.CheckType;
@@ -22,7 +21,7 @@ public class AutoclickerC extends Check {
 
     private int lastPlace;
     private float buffer;
-    private final List<Integer> tickDeltas = new EvictingList<>(30);
+    private final List<Integer> tickDeltas = new EvictingList<>(50);
 
     @Bind
     WAction<WrapperPlayClientAnimation> action = (packet) -> {
@@ -34,7 +33,7 @@ public class AutoclickerC extends Check {
         int deltaPlace = currentTick - lastPlace;
 
         tickDeltas.add(deltaPlace);
-        if(tickDeltas.size() > 8) {
+        if(tickDeltas.size() > 14) {
             int max = -10000000, min = Integer.MAX_VALUE;
             double average = 0;
             int range, total = 0;

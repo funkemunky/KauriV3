@@ -14,11 +14,21 @@ import com.github.retrooper.packetevents.protocol.world.states.WrappedBlockState
 import com.github.retrooper.packetevents.protocol.world.states.type.StateTypes;
 import com.github.retrooper.packetevents.util.Vector3d;
 import com.github.retrooper.packetevents.util.Vector3i;
+import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.handler.entity.TrackedEntity;
+import dev.brighten.ac.utils.BlockUtils;
 import dev.brighten.ac.utils.KLocation;
+import dev.brighten.ac.utils.LongHash;
+import io.github.retrooper.packetevents.util.SpigotConversionUtil;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import lombok.Getter;
 import me.hydro.emulator.util.mcp.MathHelper;
+import org.bukkit.Bukkit;
+import org.bukkit.Chunk;
+import org.bukkit.Material;
+import org.bukkit.block.Block;
 
 import java.util.Map;
 import java.util.Optional;
@@ -26,13 +36,7 @@ import java.util.Optional;
 @Getter
 public class World {
     private final String name;
-    // Array dimensions: 64×64 covers a render distance of up to 32 chunks without
-    // collision. Index = (chunkX & MASK) * SIZE + (chunkZ & MASK); stored KColumn
-    // x/z are chunk coordinates and are validated on every lookup.
-    private static final int CHUNK_ARRAY_BITS = 6;                         // 2^6 = 64 per axis
-    private static final int CHUNK_ARRAY_SIZE = 1 << CHUNK_ARRAY_BITS;    // 64
-    private static final int CHUNK_ARRAY_MASK = CHUNK_ARRAY_SIZE - 1;     // 63
-    private final BlockUpdateHandler.KColumn[] chunks = new BlockUpdateHandler.KColumn[CHUNK_ARRAY_SIZE * CHUNK_ARRAY_SIZE];
+    private final Long2ObjectMap<BlockUpdateHandler.KColumn> chunks = new Long2ObjectOpenHashMap<>(256, 0.5f);
     private final Map<Integer, TrackedEntity> trackedEntities = new Int2ObjectOpenHashMap<>();
 
     public World(String name) {
@@ -40,6 +44,8 @@ public class World {
     }
 
     private int minHeight = 0, maxHeight = 256;
+
+    //TODO Get this setup
 
     public void setMinHeight(DimensionType type) {
         minHeight = type.getMinY();
@@ -53,30 +59,72 @@ public class World {
      * @return the chunk at the specified coordinates
      */
     public BlockUpdateHandler.KColumn getChunk(int x, int z) {
-        int chunkX = x >> 4;
-        int chunkZ = z >> 4;
         synchronized (chunks) {
-            int index = chunkIndex(chunkX, chunkZ);
-            BlockUpdateHandler.KColumn chunk = chunks[index];
+            long hash = LongHash.toLong(x >> 4, z >> 4);
+            BlockUpdateHandler.KColumn chunk = chunks.get(hash);
 
-            // Validate that the stored entry belongs to this chunk position
-            if (chunk == null || chunk.x() != chunkX || chunk.z() != chunkZ) {
-                chunk = new BlockUpdateHandler.KColumn(chunkX, chunkZ, new BaseChunk[maxHeight / 16]);
-                chunks[index] = chunk;
+            // If the chunk is null, create a new one
+            if(chunk == null) {
+                chunk = getBukkitColumn(Bukkit.getWorld(name), x, z);
+
+                if(chunk == null) {
+                    return new BlockUpdateHandler.KColumn(x, z, new BaseChunk[maxHeight / 16]);
+                }
+                chunks.put(hash, chunk);
             }
 
             return chunk;
         }
     }
 
-    private static int chunkIndex(int chunkX, int chunkZ) {
-        return ((chunkX & CHUNK_ARRAY_MASK) << CHUNK_ARRAY_BITS) | (chunkZ & CHUNK_ARRAY_MASK);
+    private BlockUpdateHandler.KColumn getBukkitColumn(org.bukkit.World world, int x, int z) {
+        Chunk chunk = BlockUtils.getChunkAsync(world, x >> 4, z >> 4).orElse(null);
+
+        if(chunk == null) {
+            // Handle loading on main thread
+            Anticheat.INSTANCE.getRunUtils().task(() -> {
+                long hash = LongHash.toLong(x >> 4, z >> 4);
+
+                if(!chunks.containsKey(hash)) {
+                    chunks.put(hash, getBukkitColumn(world, x, z));
+                }
+            });
+            return null;
+        }
+        BaseChunk[] levels = new BaseChunk[world.getMaxHeight() / 16];
+
+        for(int i = 0; i < levels.length; i++) {
+            levels[i] = create();
+        }
+
+        int chunkX = chunk.getX() * 16;
+        int chunkZ = chunk.getZ() * 16;
+
+        for(int blockX = chunkX; blockX < chunkX + 16 ; blockX++) {
+            for(int blockZ = chunkZ; blockZ < chunkZ + 16 ; blockZ++) {
+                for(int blockY = minHeight ; blockY < world.getMaxHeight() ; blockY++) {
+                    Block block = chunk.getBlock(blockX, blockY, blockZ);
+
+                    if(block.getType() == null || block.getType().equals(Material.AIR)) {
+                        continue; // Air
+                    }
+
+                    BaseChunk baseChunk = levels[blockY >> 4];
+
+                    WrappedBlockState state = SpigotConversionUtil.fromBukkitMaterialData(block.getState().getData());
+
+                    baseChunk.set(blockX & 15, blockY & 15, blockZ & 15, state);
+                }
+            }
+        }
+
+        return new BlockUpdateHandler.KColumn(x, z, levels);
     }
 
-    void updateChunk(Column chunk) {
+    public void updateChunk(Column chunk) {
         synchronized (chunks) {
-            int index = chunkIndex(chunk.getX(), chunk.getZ());
-            chunks[index] = new BlockUpdateHandler.KColumn(chunk.getX(), chunk.getZ(), chunk.getChunks());
+            BlockUpdateHandler.KColumn column = new BlockUpdateHandler.KColumn(chunk.getX(), chunk.getZ(), chunk.getChunks());
+            chunks.put(LongHash.toLong(column.x(), column.z()), column);
         }
     }
 
@@ -150,7 +198,7 @@ public class World {
             chunk = create();
             col.chunks()[offset >> 4] = chunk;
 
-            chunk.set(null, 0, 0, 0, 0);
+            chunk.set(PacketEvents.getAPI().getServerManager().getVersion().toClientVersion(), 0, 0, 0, 0);
         }
 
         chunk.set(x & 15, offset & 15, z & 15,
