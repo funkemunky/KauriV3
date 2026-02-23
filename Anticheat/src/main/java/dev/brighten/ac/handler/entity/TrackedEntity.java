@@ -17,7 +17,7 @@ import java.util.Set;
 
 @Getter
 @Setter
-public class TrackedEntity {
+public class TrackedEntity implements Cloneable {
     private final int entityId;
     private final EntityType entityType;
     private KLocation location;
@@ -64,5 +64,22 @@ public class TrackedEntity {
         attribute.updateAttribute(property);
 
         attributes.add(attribute);
+    }
+
+    public TrackedEntity clone() {
+        try {
+            TrackedEntity c = (TrackedEntity) super.clone();
+            // Perform deep cloning for mutable fields
+            c.location = location != null ? location.clone() : null;
+            c.oldEntityLocation = oldEntityLocation != null ? oldEntityLocation.clone() : null;
+            c.newEntityLocation = newEntityLocation != null ? newEntityLocation.clone() : null;
+            c.fakeMobs = new ArrayList<>(fakeMobs);
+            c.attributes = new HashSet<>(attributes);
+            c.pose = pose;
+            
+            return c;
+        } catch (CloneNotSupportedException e) {
+            throw new AssertionError("This should never happen", e);
+        }
     }
 }

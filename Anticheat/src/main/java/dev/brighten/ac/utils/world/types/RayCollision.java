@@ -143,7 +143,6 @@ public class RayCollision implements CollisionBox {
 
         KLocation[] locs = new KLocation[Math.max(2, amount)]; //We do a max to prevent NegativeArraySizeException.
         List<CollisionBox> boxes = new ArrayList<>();
-        ClientVersion version = PacketEvents.getAPI().getServerManager().getVersion().toClientVersion();
 
         for (int i = 0; i < locs.length; i++) {
             double ix = i / 2d;
@@ -158,9 +157,7 @@ public class RayCollision implements CollisionBox {
 
             final StateType type = block.getType();
 
-            if (!type.isBlocking()) continue;
-
-            CollisionBox box = BlockData.getData(type).getBox(player, block, version);
+            CollisionBox box = BlockData.getData(type).getBox(player, block, player.getPlayerVersion());
 
             if (!isCollided(box)) continue;
 
@@ -352,18 +349,12 @@ public class RayCollision implements CollisionBox {
         if (box==null||!intersect(this,box,p))
             return null;
         Vector3d vector = new Vector3d(directionX,directionY,directionZ);
-        vector.normalize();
-        vector.multiply(p.one);
-        vector.add(new Vector3d(originX,originY,originZ));
-        return vector;
+        return vector.normalize().multiply(p.one).add(new Vector3d(originX,originY,originZ));
     }
 
     public Vector3d collisionPoint(double dist) {
         Vector3d vector = new Vector3d(directionX,directionY,directionZ);
-        vector.normalize();
-        vector.multiply(dist);
-        vector.add(new Vector3d(originX,originY,originZ));
-        return vector;
+        return vector.normalize().multiply(dist).add(new Vector3d(originX,originY,originZ));
     }
 
 }

@@ -16,7 +16,6 @@ import dev.brighten.ac.utils.*;
 import dev.brighten.ac.utils.objects.evicting.EvictingList;
 import dev.brighten.ac.utils.timer.Timer;
 import dev.brighten.ac.utils.timer.impl.TickTimer;
-import dev.brighten.ac.utils.world.CollisionBox;
 import dev.brighten.ac.utils.world.types.RayCollision;
 import dev.brighten.ac.utils.world.types.SimpleCollisionBox;
 import io.github.retrooper.packetevents.util.SpigotConversionUtil;
@@ -56,7 +55,7 @@ public class MovementHandler {
     @Getter
     private final List<KLocation> posLocs = Collections.synchronizedList(new ArrayList<>());
     @Getter
-    private final List<CollisionBox> lookingAtBoxes = new ArrayList<>();
+    private final List<SimpleCollisionBox> lookingAtBoxes = Collections.synchronizedList(new ArrayList<>());
     @Getter
     private boolean checkMovement, accurateYawData, cinematic, jumped, inAir, lookingAtBlock;
     @Getter
@@ -408,18 +407,15 @@ public class MovementHandler {
 
             val origin = this.to.getLoc().clone();
 
-            origin.add(0, player.getInfo().isSneaking()
-                    ? (player.getPlayerVersion().isOlderThan(ClientVersion.V_1_14) ? 1.54 : 1.27f) : 1.62, 0);
+            origin.add(0, player.getEyeHeight(), 0);
 
             RayCollision collision = new RayCollision(origin.toVector(), MathUtils.getDirection(origin));
 
-            synchronized (lookingAtBoxes) {
-                lookingAtBoxes.clear();
-                lookingAtBoxes.addAll(collision
-                        .boxesOnRay(player,
-                                player.getBukkitPlayer().getGameMode().equals(GameMode.CREATIVE) ? 6.0 : 5.0));
-                lookingAtBlock = !lookingAtBoxes.isEmpty();
-            }
+            lookingAtBoxes.clear();
+            collision.boxesOnRay(player,
+                    player.getBukkitPlayer().getGameMode().equals(GameMode.CREATIVE) ? 6.0 : 5.0)
+                    .forEach(box -> lookingAtBoxes.addAll(box.downCast()));
+            lookingAtBlock = !lookingAtBoxes.isEmpty();
 
             if (lastTeleport.isPassed(1)) {
                 predictionHandling:
