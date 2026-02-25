@@ -24,6 +24,7 @@ import dev.brighten.ac.handler.entity.FakeMob;
 import dev.brighten.ac.handler.entity.TrackedEntity;
 import dev.brighten.ac.packet.PlayerCapabilities;
 import dev.brighten.ac.packet.TransactionClientWrapper;
+import dev.brighten.ac.packet.TransactionServerWrapper;
 import dev.brighten.ac.packet.WPacketPlayOutEntity;
 import dev.brighten.ac.utils.BlockUtils;
 import dev.brighten.ac.utils.KLocation;
@@ -118,8 +119,6 @@ public class PacketHandler {
             player.getInfo().setSprinting(packet.isSprint());
             player.getInfo().setSneaking(packet.isShift());
             player.getInfo().setPlayerInput(PlayerInput.getFromPacket(packet));
-
-            player.getBukkitPlayer().sendMessage("packet: " + packet.isForward());
         } else if (event.getPacketType().equals(PacketType.Play.Client.PLAYER_POSITION_AND_ROTATION) || event.getPacketType().equals(PacketType.Play.Client.PLAYER_POSITION) || event.getPacketType().equals(PacketType.Play.Client.PLAYER_ROTATION) || event.getPacketType().equals(PacketType.Play.Client.PLAYER_FLYING)) {
             WrapperPlayClientPlayerFlying packet = new WrapperPlayClientPlayerFlying(event);
             wrapped = packet;
@@ -289,6 +288,8 @@ public class PacketHandler {
 
                 player.getBukkitPlayer().sendMessage(String.format("total: %sms client-server: %sms server-client: %sms", totalFeedback, clientToServer, serverPing));
             }
+        } else if(event.getPacketType().equals(PacketType.Play.Client.KEEP_ALIVE)) {
+            wrapped = new WrapperPlayClientKeepAlive(event);
         } else {
             wrapped = new PacketWrapper<>(event);
         }
@@ -589,6 +590,11 @@ public class PacketHandler {
                 }
             }
 
+        } else if(event.getPacketType() == PacketType.Play.Server.PING || event.getPacketType() == PacketType.Play.Server.WINDOW_CONFIRMATION) {
+            wrapped = new TransactionServerWrapper(event);
+
+        } else if(event.getPacketType() == PacketType.Play.Server.KEEP_ALIVE) {
+            wrapped = new WrapperPlayServerKeepAlive(event);
         } else {
             wrapped = new PacketWrapper<>(event);
         }

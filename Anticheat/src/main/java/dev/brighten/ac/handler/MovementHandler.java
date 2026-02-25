@@ -84,7 +84,6 @@ public class MovementHandler {
     private final Timer lastCinematic = new TickTimer(2);
     private final Timer lastReset = new TickTimer(2);
     private final EvictingList<Integer> sensitivitySamples = new EvictingList<>(50);
-    private final boolean modernMovement;
 
     public MovementHandler(APlayer player) {
         this.player = player;
@@ -95,8 +94,6 @@ public class MovementHandler {
 
         // Setting from as same location as to
         from.setLoc(to);
-
-        modernMovement = PacketEvents.getAPI().getServerManager().getVersion().isNewerThanOrEquals(ServerVersion.V_1_21_5);
     }
 
     private final boolean[] IS_OR_NOT = new boolean[]{true, false};
@@ -170,29 +167,29 @@ public class MovementHandler {
                 for (int strafe : isZeroThree ? new int[]{0} : FULL_RANGE) {
                     for (boolean jumping : getJumpingIterations()) {
                         for (boolean sprinting : getSprintingIterations(forward)) {
-                            for (boolean usingItem : getUsingItemIterations(forward, strafe)) {
-                                for (boolean hitSlow : getHitSlowIterations()) {
-                                    for (FastMathType fastMath : getFastMathIterations(forward, strafe)) {
-                                        for (Vector3d possibleVector : possibleVelocity) {
-                                            IterationInput input = IterationInput.builder()
-                                                    .jumping(jumping)
-                                                    .forward(forward)
-                                                    .strafing(strafe)
-                                                    .sprinting(sprinting)
-                                                    .usingItem(usingItem)
-                                                    .modernMovement(modernMovement)
-                                                    .hitSlowdown(hitSlow)
-                                                    .aiMoveSpeed(player.getBukkitPlayer().getWalkSpeed() / 2)
-                                                    .fastMathType(fastMath)
-                                                    .sneaking(player.getInfo().sneaking)
-                                                    .ground(from.isOnGround())
-                                                    .to(new Vector(to.getX(), to.getY(), to.getZ()))
-                                                    .yaw(to.getYaw())
-                                                    .lastReportedBoundingBox(from.getBox().toNeo())
-                                                    .effectSpeed(EFFECTS[0])
-                                                    .effectSlow(EFFECTS[1])
-                                                    .waitingForTeleport(!posLocs.isEmpty())
-                                                    .effectJump(EFFECTS[2]).build();
+                                for (boolean usingItem : getUsingItemIterations(forward, strafe)) {
+                                    for (boolean hitSlow : getHitSlowIterations()) {
+                                        for (FastMathType fastMath : getFastMathIterations(forward, strafe)) {
+                                            for (Vector3d possibleVector : possibleVelocity) {
+                                                IterationInput input = IterationInput.builder()
+                                                        .jumping(jumping)
+                                                        .forward(forward)
+                                                        .strafing(strafe)
+                                                        .sprinting(sprinting)
+                                                        .usingItem(usingItem)
+                                                        .modernMovement(player.getPlayerVersion().isNewerThanOrEquals(ClientVersion.V_1_21_5))
+                                                        .hitSlowdown(hitSlow)
+                                                        .aiMoveSpeed(player.getBukkitPlayer().getWalkSpeed() / 2)
+                                                        .fastMathType(fastMath)
+                                                        .sneaking(player.getInfo().sneaking)
+                                                        .ground(from.isOnGround())
+                                                        .to(new Vector(to.getX(), to.getY(), to.getZ()))
+                                                        .yaw(to.getYaw())
+                                                        .lastReportedBoundingBox(from.getBox().toNeo())
+                                                        .effectSpeed(EFFECTS[0])
+                                                        .effectSlow(EFFECTS[1])
+                                                        .waitingForTeleport(!posLocs.isEmpty())
+                                                        .effectJump(EFFECTS[2]).build();
 
                                             boolean isVelocity = false;
                                             if (possibleVector != null) {

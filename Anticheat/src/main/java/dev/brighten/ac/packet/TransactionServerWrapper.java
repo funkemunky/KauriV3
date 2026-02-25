@@ -7,7 +7,9 @@ import com.github.retrooper.packetevents.protocol.packettype.PacketType;
 import com.github.retrooper.packetevents.wrapper.PacketWrapper;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPing;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerWindowConfirmation;
+import lombok.Getter;
 
+@Getter
 public class TransactionServerWrapper {
     private final short action;
     private final int id;
@@ -37,5 +39,14 @@ public class TransactionServerWrapper {
         } else {
             return new WrapperPlayServerPing(action);
         }
+    }
+
+
+    @Override
+    public String toString() {
+        return "TransactionServerWrapper{" +
+                "action=" + action +
+                ", id=" + id +
+                '}';
     }
 }
