@@ -85,7 +85,6 @@ public class MovementHandler {
     private final Timer lastCinematic = new TickTimer(2);
     private final Timer lastReset = new TickTimer(2);
     private final EvictingList<Integer> sensitivitySamples = new EvictingList<>(50);
-    private final boolean modernMovement;
 
     public MovementHandler(APlayer player) {
         this.player = player;
@@ -96,8 +95,6 @@ public class MovementHandler {
 
         // Setting from as same location as to
         from.setLoc(to);
-
-        modernMovement = PacketEvents.getAPI().getServerManager().getVersion().isNewerThanOrEquals(ServerVersion.V_1_21_5);
     }
 
     private final boolean[] IS_OR_NOT = new boolean[]{true, false};
@@ -177,7 +174,7 @@ public class MovementHandler {
                                                         .strafing(strafe)
                                                         .sprinting(sprinting)
                                                         .usingItem(usingItem)
-                                                        .modernMovement(modernMovement)
+                                                        .modernMovement(player.getPlayerVersion().isNewerThanOrEquals(ClientVersion.V_1_21_5))
                                                         .hitSlowdown(hitSlow)
                                                         .aiMoveSpeed(player.getBukkitPlayer().getWalkSpeed() / 2)
                                                         .fastMathType(fastMath)
