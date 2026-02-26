@@ -1,5 +1,6 @@
 package dev.brighten.ac.check.impl.movement;
 
+import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import com.github.retrooper.packetevents.protocol.teleport.RelativeFlag;
 import com.github.retrooper.packetevents.util.Vector3d;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerFlying;
@@ -139,7 +140,7 @@ public class Phase extends Check {
 
         double totalDelta = dx + dy + dz;
 
-        if(totalDelta > 0.0001) {
+        if(totalDelta > 0.0001 && (player.getPlayerVersion().isOlderThan(ClientVersion.V_1_21_5) || dy > 0.003 || (dx + dz) > 0.001)) {
             if(isCancellable()) {
                 Anticheat.INSTANCE.getRunUtils().task(() -> {
                     teleportLoc = calculatedTo

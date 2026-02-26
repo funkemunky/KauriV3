@@ -14,16 +14,18 @@ import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPl
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerDigging;
 import com.github.retrooper.packetevents.wrapper.play.server.*;
 import dev.brighten.ac.data.APlayer;
+import dev.brighten.ac.utils.Helper;
 import dev.brighten.ac.utils.KLocation;
 import dev.brighten.ac.utils.Materials;
+import dev.brighten.ac.utils.world.BlockData;
 import dev.brighten.ac.utils.world.types.RayCollision;
+import dev.brighten.ac.utils.world.types.SimpleCollisionBox;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicReference;
 
 @Slf4j
@@ -36,6 +38,9 @@ public class BlockUpdateHandler {
     private final Map<String, World> worlds = new HashMap<>();
     @Getter
     private AtomicReference<World> currentWorld = new AtomicReference<>();
+
+    @Getter
+    private final Queue<Runnable> blockUpdateQueue = new LinkedBlockingQueue<>(20);
 
     /**
      * Clear all chunks when the player changes worlds
@@ -89,7 +94,9 @@ public class BlockUpdateHandler {
                         block.getLocation().getX(),
                         block.getLocation().getY() + 1,
                         block.getLocation().getZ());
-            } else return;
+            } else {
+                return;
+            }
         } // Not an actual block place, just an interact
         else if (pos.getX() == -1 && (pos.getY() == 255 || pos.getY() == -1) && pos.getZ() == -1) {
             return;
@@ -111,8 +118,22 @@ public class BlockUpdateHandler {
             return;
         }
 
-        currentWorld.get().updateBlock(x, y, z,
-                WrappedBlockState.getDefaultState(placedType));
+        var blockBox = BlockData.getData(placedType).getBox(player, new Vector3i(x,y,z), player.getPlayerVersion());
+
+        var collision = Helper.getCollisions(player, blockBox);
+        var bukkitLoc = new SimpleCollisionBox(new KLocation(player.getBukkitPlayer().getLocation()), 0.6, 1.8);
+
+        if(!collision.isEmpty() || blockBox.isIntersected(bukkitLoc)) {
+            return;
+        }
+
+        blockUpdateQueue.add(() -> {
+            if(player.getMovement().getTo().getBox().isIntersected(blockBox)) {
+                return;
+            }
+            currentWorld.get().updateBlock(x, y, z,
+                    WrappedBlockState.getDefaultState(placedType));
+        });
     }
 
     static final WrappedBlockState airBlockState = WrappedBlockState

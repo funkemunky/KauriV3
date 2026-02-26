@@ -181,7 +181,7 @@ public class MovementHandler {
                                                         .hitSlowdown(hitSlow)
                                                         .aiMoveSpeed(player.getBukkitPlayer().getWalkSpeed() / 2)
                                                         .fastMathType(fastMath)
-                                                        .sneaking(player.getInfo().sneaking)
+                                                        .sneaking(player.getPlayerVersion().isNewerThanOrEquals(ClientVersion.V_1_21_5) ? player.getInfo().lsneaking : player.getInfo().sneaking)
                                                         .ground(from.isOnGround())
                                                         .to(new Vector(to.getX(), to.getY(), to.getZ()))
                                                         .yaw(to.getYaw())
@@ -298,7 +298,9 @@ public class MovementHandler {
     }
 
     private boolean[] getSprintingIterations(int forward) {
-        return forward <= 0 || player.getInfo().isSneaking() ? ALWAYS_FALSE : IS_OR_NOT;
+        return forward <= 0
+                || (player.getPlayerVersion().isOlderThan(ClientVersion.V_1_21_5)
+                && player.getInfo().isSneaking()) ? ALWAYS_FALSE : IS_OR_NOT;
     }
 
     private boolean[] getHitSlowIterations() {
@@ -554,6 +556,7 @@ it
                 || timeStamp - data.creation < 4000
                 || Kauri.INSTANCE.lastTickLag.isNotPassed(5);
          */
+        player.getInfo().lsneaking = player.getInfo().sneaking;
     }
 
     // generate a method that processes velocityHistory and compares to current deltaY.
@@ -843,5 +846,13 @@ it
 
         player.getInfo().setClientGroundTicks(packet.isOnGround() ? player.getInfo().getClientGroundTicks() + 1 : 0);
         player.getInfo().setClientAirTicks(!packet.isOnGround() ? player.getInfo().getClientAirTicks() + 1 : 0);
+
+        Runnable blockUpdate;
+
+        synchronized (player.getWorldTracker().getBlockUpdateQueue()) {
+            while((blockUpdate = player.getWorldTracker().getBlockUpdateQueue().poll()) != null) {
+                blockUpdate.run();
+            }
+        }
     }
 }

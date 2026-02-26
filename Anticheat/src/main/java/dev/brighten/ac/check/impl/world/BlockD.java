@@ -1,6 +1,5 @@
 package dev.brighten.ac.check.impl.world;
 
-import com.github.retrooper.packetevents.protocol.particle.type.ParticleTypes;
 import com.github.retrooper.packetevents.protocol.world.states.WrappedBlockState;
 import com.github.retrooper.packetevents.util.Vector3i;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerBlockPlacement;
@@ -81,8 +80,6 @@ public class BlockD extends Check {
             }
             WrappedBlock block = blockPlaceLocations.get(vector3i);
             var box = BlockData.getData(block.getType()).getBox(player, block, player.getPlayerVersion());
-
-            box.draw(ParticleTypes.FLAME, player);
 
             if(player.getMovement().getTo().getBox().expand(1, 0.001, 1).isCollided(box)
                     || player.getMovement().getFrom().getBox().expand(1, 0.001, 1).isCollided(box)) {

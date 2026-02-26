@@ -11,8 +11,6 @@ import com.github.retrooper.packetevents.protocol.world.states.type.StateType;
 import com.github.retrooper.packetevents.protocol.world.states.type.StateTypes;
 import com.github.retrooper.packetevents.util.Vector3d;
 import com.github.retrooper.packetevents.wrapper.PacketWrapper;
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
 import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.api.spigot.impl.LegacyPlayer;
 import dev.brighten.ac.api.spigot.impl.ModernPlayer;
@@ -169,18 +167,9 @@ public class APlayer {
             this.wrappedPlayer = new LegacyPlayer(getBukkitPlayer());
         } else this.wrappedPlayer = new ModernPlayer(getBukkitPlayer());
 
-        Cache<AxisAlignedBB, List<AxisAlignedBB>> collisionCache = CacheBuilder.newBuilder()
-                .maximumSize(200)
-                .expireAfterWrite(100, TimeUnit.MILLISECONDS)
-                .build();
-
         EMULATOR = new Emulator(new DataSupplier() {
             @Override
             public List<AxisAlignedBB> getCollidingBoxes(AxisAlignedBB bb) {
-
-                var cacheIfPresent = collisionCache.getIfPresent(bb);
-
-                if(cacheIfPresent != null) return cacheIfPresent;
 
                 SimpleCollisionBox sbc = new SimpleCollisionBox(bb.minX, bb.minY, bb.minZ, bb.maxX, bb.maxY, bb.maxZ);
 
@@ -198,8 +187,6 @@ public class APlayer {
                     axisAlignedBBs
                             .add(new AxisAlignedBB(bb2.minX, bb2.minY, bb2.minZ, bb2.maxX, bb2.maxY, bb2.maxZ));
                 }
-
-                collisionCache.put(bb, axisAlignedBBs);
 
                 return axisAlignedBBs;
             }

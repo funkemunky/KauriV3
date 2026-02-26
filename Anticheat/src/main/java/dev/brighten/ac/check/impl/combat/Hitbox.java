@@ -2,12 +2,10 @@ package dev.brighten.ac.check.impl.combat;
 
 import com.github.retrooper.packetevents.protocol.entity.type.EntityType;
 import com.github.retrooper.packetevents.protocol.entity.type.EntityTypes;
-import com.github.retrooper.packetevents.protocol.particle.type.ParticleTypes;
 import com.github.retrooper.packetevents.protocol.player.ClientVersion;
 import com.github.retrooper.packetevents.util.Vector3d;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientInteractEntity;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerFlying;
-import dev.brighten.ac.Anticheat;
 import dev.brighten.ac.api.check.CheckType;
 import dev.brighten.ac.check.Check;
 import dev.brighten.ac.check.CheckData;
@@ -171,7 +169,6 @@ public class Hitbox extends Check {
                             flag("d=%.3f>-3.0", distance);
                             buffer = Math.min(1, buffer);
                         }
-                        Anticheat.INSTANCE.getRunUtils().taskAsync(() -> boxes.forEach(box -> box.draw(ParticleTypes.FLAME, player)));
                     } else if (buffer > 0) buffer -= 0.02f;
 
                     if (hbuffer > 0) hbuffer--;

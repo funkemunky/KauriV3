@@ -102,11 +102,11 @@ public class Helper {
 
     }
 
-    public static List<SimpleCollisionBox> getCollisions(APlayer player, SimpleCollisionBox collisionBox) {
+    public static List<SimpleCollisionBox> getCollisions(APlayer player, CollisionBox collisionBox) {
         return getCollisions(player, collisionBox, -100);
     }
 
-    public static List<SimpleCollisionBox> getCollisions(APlayer player, SimpleCollisionBox collisionBox, int mask) {
+    public static List<SimpleCollisionBox> getCollisions(APlayer player, CollisionBox collisionBox, int mask) {
         List<SimpleCollisionBox> collisionBoxes = getCollisionsNoEntities(player, collisionBox, mask);
 
         if(player != null) {
@@ -125,13 +125,32 @@ public class Helper {
     }
 
     public static List<SimpleCollisionBox> getCollisionsNoEntities(APlayer player,
-                                                                   SimpleCollisionBox collisionBox, int mask) {
-        int x1 = (int) Math.floor(collisionBox.minX);
-        int y1 = (int) Math.floor(collisionBox.minY);
-        int z1 = (int) Math.floor(collisionBox.minZ);
-        int x2 = (int) Math.floor(collisionBox.maxX + 1);
-        int y2 = (int) Math.floor(collisionBox.maxY + 1);
-        int z2 = (int) Math.floor(collisionBox.maxZ + 1);
+                                                                   CollisionBox collisionBox, int mask) {
+        double minX = Double.MAX_VALUE, minY = Double.MAX_VALUE, minZ = Double.MAX_VALUE, maxX = Double.MIN_VALUE, maxY = Double.MIN_VALUE, maxZ = Double.MIN_VALUE;
+
+        if(collisionBox instanceof SimpleCollisionBox box) {
+            minX = box.minX;
+            minY = box.minY;
+            minZ = box.minZ;
+            maxX = box.maxX;
+            maxY = box.maxY;
+            maxZ = box.maxZ;
+        } else {
+            for (SimpleCollisionBox box : collisionBox.downCast()) {
+                minX = Math.min(minX, box.minX);
+                minY = Math.min(minY, box.minY);
+                minZ = Math.min(minZ, box.minZ);
+                maxX = Math.max(maxX, box.maxX);
+                maxY = Math.max(maxY, box.maxY);
+                maxZ = Math.max(maxZ, box.maxZ);
+            }
+        }
+        int x1 = (int) Math.floor(minX);
+        int y1 = (int) Math.floor(minY);
+        int z1 = (int) Math.floor(minZ);
+        int x2 = (int) Math.floor(maxX + 1);
+        int y2 = (int) Math.floor(maxY + 1);
+        int z2 = (int) Math.floor(maxZ + 1);
         List<SimpleCollisionBox> collisionBoxes = new ArrayList<>();
         for (int x = x1; x < x2; ++x)
             for (int y = y1 - 1; y < y2; ++y)
