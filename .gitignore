@@ -276,3 +276,7 @@ $RECYCLE.BIN/
 # End of https://www.toptal.com/developers/gitignore/api/java,maven,intellij+all,eclipse,linux,macos,windows
 *.iml
 API/API.iml
+
+# custom
+.mcsources/
+.gradle/
