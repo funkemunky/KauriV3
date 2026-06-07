@@ -31,5 +31,11 @@ public class TransactionClientWrapper {
         }
     }
 
-
+    @Override
+    public String toString() {
+        return "TransactionClientWrapper{" +
+                "action=" + action +
+                ", id=" + id +
+                '}';
+    }
 }
