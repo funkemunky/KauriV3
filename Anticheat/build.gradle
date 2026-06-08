@@ -1,0 +1,64 @@
+plugins {
+    id 'java-library'
+    id 'com.github.johnrengelman.shadow' version '8.1.1'
+}
+
+dependencies {
+    compileOnly 'org.projectlombok:lombok:1.18.38'
+    annotationProcessor 'org.projectlombok:lombok:1.18.38'
+    testCompileOnly 'org.projectlombok:lombok:1.18.38'
+    testAnnotationProcessor 'org.projectlombok:lombok:1.18.38'
+    compileOnly 'org.spigotmc:spigot-api:1.8.8-R0.1-SNAPSHOT'
+    compileOnly 'org.yaml:snakeyaml:2.2'
+    compileOnly 'com.viaversion:viaversion-api:latest.release'
+    compileOnly 'com.shevchik.protocolsupport:protocolsupport:1.8'
+    compileOnly 'org.dizitart:nitrite:4.3.0'
+    compileOnly 'org.dizitart:nitrite-mvstore-adapter:4.3.0'
+    compileOnly 'org.dizitart:nitrite-jackson-mapper:4.2.2'
+    compileOnly 'it.unimi.dsi:fastutil:8.5.11'
+
+    implementation project(':emulator')
+    implementation project(':API')
+    implementation project(':Compat')
+    implementation project(':LegacyAPI')
+    implementation project(':ModernAPI')
+
+    implementation 'com.google.guava:guava:33.4.0-jre'
+    implementation 'org.slf4j:slf4j-api:2.0.13'
+    implementation 'org.ow2.asm:asm:9.8'
+    implementation 'org.ow2.asm:asm-tree:9.8'
+    implementation 'org.ow2.asm:asm-commons:9.8'
+    implementation 'com.github.retrooper:packetevents-spigot:2.11.1'
+    implementation 'co.aikar:acf-bukkit:0.5.1-SNAPSHOT'
+}
+
+shadowJar {
+    archiveClassifier.set('')
+    minimize()
+    relocate 'co.aikar', 'dev.brighten.ac.libs.co.aikar'
+    relocate 'net.jodah', 'dev.brighten.ac.libs.net.jodah'
+    relocate 'com.github.retrooper', 'dev.brighten.ac.libs.com.github.retrooper'
+    relocate 'io.github.retrooper', 'dev.brighten.ac.libs.io.github.retrooper'
+    relocate 'net.kyori', 'dev.brighten.ac.libs.com.github.retrooper.packetevents.libs.net.kyori'
+    relocate 'com.google.common', 'dev.brighten.ac.libs.com.google.common'
+    relocate 'com.google.errorprone', 'dev.brighten.ac.libs.com.google.errorprone'
+    relocate 'com.google.j2objc', 'dev.brighten.ac.libs.com.google.j2objc'
+    relocate 'com.fasterxml', 'dev.brighten.ac.libs.com.fasterxml'
+    relocate 'javax.annotation', 'dev.brighten.ac.libs.javax.annotation'
+    relocate 'org.h2', 'dev.brighten.ac.libs.org.h2'
+    relocate 'org.checkerframework', 'dev.brighten.ac.libs.org.checkerframework'
+    relocate 'org.slf4j', 'dev.brighten.ac.libs.org.slf4j'
+    relocate 'me.hydro', 'dev.brighten.ac.libs.me.hydro'
+    relocate 'it.unimi', 'dev.brighten.ac.libs.it.unimi'
+    relocate 'org.objectweb', 'dev.brighten.ac.libs.org.objectweb'
+    relocate 'org.yaml.snakeyaml', 'dev.brighten.ac.libs.org.yaml.snakeyaml'
+    relocate 'org.dizitart', 'dev.brighten.ac.libs.org.dizitart'
+}
+
+tasks.named('jar') {
+    enabled = false
+}
+
+tasks.named('assemble') {
+    dependsOn tasks.named('shadowJar')
+}
