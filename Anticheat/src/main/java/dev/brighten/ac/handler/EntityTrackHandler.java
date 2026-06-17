@@ -203,6 +203,11 @@ public class EntityTrackHandler {
                 if(attributes.getEntityId() == data.getBukkitPlayer().getEntityId() && attribute == Attributes.MOVEMENT_SPEED) {
                     ValuedAttribute value = tracked.getAttribute(attribute);
 
+                    if(value == null) {
+                        value = new ValuedAttribute(attribute);
+                        tracked.getAttributes().add(value);
+                    }
+
                     value.updateAttribute(property);
                     data.getInfo().setWalkSpeed(value.getValue());
                 }

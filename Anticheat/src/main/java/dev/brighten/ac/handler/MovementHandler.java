@@ -176,7 +176,7 @@ public class MovementHandler {
                                                         .usingItem(usingItem)
                                                         .modernMovement(player.getPlayerVersion().isNewerThanOrEquals(ClientVersion.V_1_21_5))
                                                         .hitSlowdown(hitSlow)
-                                                        .aiMoveSpeed(player.getBukkitPlayer().getWalkSpeed() / 2)
+                                                        .aiMoveSpeed(player.getInfo().getWalkSpeed())
                                                         .fastMathType(fastMath)
                                                         .sneaking(player.getInfo().sneaking)
                                                         .ground(from.isOnGround())
@@ -235,7 +235,7 @@ public class MovementHandler {
                                                 if (minimum == null || minimum.getOffset() > result.getOffset()) {
                                                     minimum = result;
 
-                                                    if (minimum.getOffset() < 1E-26) {
+                                                    if (minimum.getOffset() < 1E-14) {
                                                         break iteration;
                                                     }
                                                 }
@@ -282,16 +282,12 @@ public class MovementHandler {
 
     private FastMathType[] getFastMathIterations(int strafe, int forward) {
         // Because no movement is being applied, there is no angle calculation being done
-        if (strafe == 0 && forward == 0) {
-            return new FastMathType[]{FastMathType.FAST_LEGACY};
-        }
-
         if (player.getPlayerVersion().isOlderThan(ClientVersion.V_1_16)) {
             return new FastMathType[]{
                     FastMathType.FAST_LEGACY,
                     FastMathType.VANILLA};
         } else {
-            return new FastMathType[]{FastMathType.VANILLA, FastMathType.FAST_NEW, FastMathType.MODERN_VANILLA};
+            return new FastMathType[]{FastMathType.FAST_NEW, FastMathType.MODERN_VANILLA};
         }
     }
 

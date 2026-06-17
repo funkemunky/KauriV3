@@ -1,3 +1,8 @@
+ext {
+    guavaVersion = '33.4.0-jre'
+    lombokVersion = '1.18.46'
+}
+
 subprojects {
     group = 'dev.brighten.ac'
     version = '3.0-SNAPSHOT'

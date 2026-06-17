@@ -30,6 +30,7 @@ import dev.brighten.ac.handler.VelocityHandler;
 import dev.brighten.ac.handler.block.BlockUpdateHandler;
 import dev.brighten.ac.handler.block.World;
 import dev.brighten.ac.handler.entity.FakeMob;
+import dev.brighten.ac.handler.entity.TrackedEntity;
 import dev.brighten.ac.handler.keepalive.KeepAlive;
 import dev.brighten.ac.messages.Messages;
 import dev.brighten.ac.packet.TransactionServerWrapper;
@@ -153,6 +154,9 @@ public class APlayer {
         creation.reset();
 
         playerVersion = ClientVersion.getById(Anticheat.INSTANCE.getProtocol().getPlayerVersion(this));
+
+        worldTracker.getCurrentWorld().get().getTrackedEntities().put(getBukkitPlayer().getEntityId(),
+                new TrackedEntity(getBukkitPlayer().getEntityId(), EntityTypes.PLAYER, new KLocation(getBukkitPlayer().getLocation())));
 
         Anticheat.INSTANCE.getScheduler().schedule(() -> {
             // Grabbing the protocol version of the player.

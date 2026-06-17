@@ -42,22 +42,16 @@ public class PotionHandler {
         lock.readLock().lock();
         try {
             for (KPotionEffect effect : potionEffects) {
-                lock.readLock().lock();
+                if (data.getBukkitPlayer().hasPotionEffect(SpigotConversionUtil.toBukkitPotionEffectType(effect.potionType()))) continue;
 
-                try {
-                    if (data.getBukkitPlayer().hasPotionEffect(SpigotConversionUtil.toBukkitPotionEffectType(effect.potionType()))) continue;
-
-                    data.runKeepaliveAction(d -> {
-                        lock.writeLock().lock();
-                        try {
-                            data.getPotionHandler().potionEffects.remove(effect);
-                        } finally {
-                            lock.writeLock().unlock();
-                        }
-                    });
-                } finally {
-                    lock.readLock().unlock();
-                }
+                data.runKeepaliveAction(d -> {
+                    lock.writeLock().lock();
+                    try {
+                        data.getPotionHandler().potionEffects.remove(effect);
+                    } finally {
+                        lock.writeLock().unlock();
+                    }
+                });
             }
         } finally {
             lock.readLock().unlock();
@@ -75,7 +69,7 @@ public class PotionHandler {
                                 , packet.getEffectDurationTicks(),
                                 packet.isAmbient(), packet.isVisible(), packet.isShowIcon(), null)));
             } finally {
-                lock.readLock().unlock();
+                lock.writeLock().unlock();
             }
         });
     }
