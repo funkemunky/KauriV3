@@ -163,7 +163,8 @@ public class MovementHandler {
             for (int forward : isZeroThree ? new int[]{0} : FULL_RANGE) {
                 for (int strafe : isZeroThree ? new int[]{0} : FULL_RANGE) {
                     for (boolean jumping : getJumpingIterations()) {
-                        for (boolean sprinting : getSprintingIterations(forward)) {
+                        for (double walkSpeed : getPossibleWalkSpeeds()) {
+                        for (boolean sprinting : IS_OR_NOT) {
                                 for (boolean usingItem : getUsingItemIterations(forward, strafe)) {
                                     for (boolean hitSlow : getHitSlowIterations()) {
                                         for (FastMathType fastMath : getFastMathIterations(forward, strafe)) {
@@ -176,7 +177,7 @@ public class MovementHandler {
                                                         .usingItem(usingItem)
                                                         .modernMovement(player.getPlayerVersion().isNewerThanOrEquals(ClientVersion.V_1_21_5))
                                                         .hitSlowdown(hitSlow)
-                                                        .aiMoveSpeed(player.getInfo().getWalkSpeed())
+                                                        .aiMoveSpeed(walkSpeed)
                                                         .fastMathType(fastMath)
                                                         .sneaking(player.getInfo().sneaking)
                                                         .ground(from.isOnGround())
@@ -208,7 +209,6 @@ public class MovementHandler {
                                                 if (isVelocity) {
                                                     result.getTags().add("velocity");
                                                 }
-
 
                                                 if (fastMath == FastMathType.FAST_LEGACY) {
                                                     result.getTags().add("fast_legacy");
@@ -242,6 +242,7 @@ public class MovementHandler {
                                             }
                                         }
                                     }
+                                }
                             }
                         }
                     }
@@ -291,12 +292,15 @@ public class MovementHandler {
         }
     }
 
-    private boolean[] getSprintingIterations(int forward) {
-        return forward <= 0 || player.getInfo().isSneaking() ? ALWAYS_FALSE : IS_OR_NOT;
-    }
-
     private boolean[] getHitSlowIterations() {
         return player.getInfo().lastAttack.isPassed(2) ? ALWAYS_FALSE : IS_OR_NOT;
+    }
+
+    private double[] getPossibleWalkSpeeds() {
+        if(player.getInfo().getOldWalkSpeed() == null) {
+            return new double[]{player.getInfo().getWalkSpeed()};
+        }
+        return new double[]{player.getInfo().getWalkSpeed(), player.getInfo().getOldWalkSpeed()};
     }
 
     private boolean[] getUsingItemIterations(int forward, int strafe) {

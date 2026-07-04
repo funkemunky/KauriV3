@@ -7,6 +7,7 @@ import com.github.retrooper.packetevents.protocol.entity.data.EntityDataTypes;
 import com.github.retrooper.packetevents.protocol.entity.type.EntityType;
 import com.github.retrooper.packetevents.protocol.entity.type.EntityTypes;
 import com.github.retrooper.packetevents.protocol.player.ClientVersion;
+import com.github.retrooper.packetevents.resources.ResourceLocation;
 import com.github.retrooper.packetevents.util.Vector3d;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerDestroyEntities;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityPositionSync;
@@ -190,31 +191,44 @@ public class EntityTrackHandler {
         });
     }
 
+    public static final UUID SPRINTING_MODIFIER_UUID = UUID.fromString("662A6B8D-DA3E-4C1C-8813-96EA6097278D");
     void updateAttributes(WrapperPlayServerUpdateAttributes attributes) {
-        data.runKeepaliveAction(ka -> {
-            TrackedEntity tracked = data.getWorldTracker().getCurrentWorld().get()
-                    .getTrackedEntity(attributes.getEntityId()).orElse(null);
+        TrackedEntity tracked = data.getWorldTracker().getCurrentWorld().get()
+                .getTrackedEntity(attributes.getEntityId()).orElse(null);
 
-            if(tracked == null) return;
+        if(tracked == null) return;
 
-            for (WrapperPlayServerUpdateAttributes.Property property : attributes.getProperties()) {
-                Attribute attribute = property.getAttribute();
+        for (WrapperPlayServerUpdateAttributes.Property property : attributes.getProperties()) {
+            Attribute attribute = property.getAttribute();
 
-                if(attributes.getEntityId() == data.getBukkitPlayer().getEntityId() && attribute == Attributes.MOVEMENT_SPEED) {
-                    ValuedAttribute value = tracked.getAttribute(attribute);
+            if(attributes.getEntityId() == data.getBukkitPlayer().getEntityId() && attribute == Attributes.MOVEMENT_SPEED) {
+                ValuedAttribute value = tracked.getAttribute(attribute);
 
-                    if(value == null) {
-                        value = new ValuedAttribute(attribute);
-                        tracked.getAttributes().add(value);
-                    }
-
-                    value.updateAttribute(property);
-                    data.getInfo().setWalkSpeed(value.getValue());
+                if(value == null) {
+                    value = new ValuedAttribute(attribute);
+                    tracked.getAttributes().add(value);
                 }
 
-                tracked.updateAttribute(property);
+                value.updateAttribute(property);
+
+                boolean found = false;
+                List<WrapperPlayServerUpdateAttributes.PropertyModifier> modifiers = property.getModifiers();
+                for (WrapperPlayServerUpdateAttributes.PropertyModifier modifier : modifiers) {
+                    final ResourceLocation name = modifier.getName();
+                    if (name.getKey().equals(SPRINTING_MODIFIER_UUID.toString()) || name.getKey().equals("sprinting")) {
+                        found = true;
+                        break;
+                    }
+                }
+
+                data.getInfo().setModifiedSprintAttribute(found);
+                data.getInfo().setOldWalkSpeed(data.getInfo().getWalkSpeed());
+                data.getInfo().setWalkSpeed(value.getValue());
             }
-        });
+
+            tracked.updateAttribute(property);
+        }
+        data.runKeepaliveAction(ka -> data.getInfo().setOldWalkSpeed(null),  1);
     }
 
     /**
