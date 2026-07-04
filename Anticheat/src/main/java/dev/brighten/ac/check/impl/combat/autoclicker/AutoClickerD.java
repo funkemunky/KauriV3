@@ -55,6 +55,7 @@ public class AutoClickerD extends Check {
         }
     };
 
+    @Bind
     WAction<WrapperPlayClientPlayerBlockPlacement> place = packet -> {
         if(packet.getItemStack().isEmpty()
                 || !BlockUtils.isSword(SpigotConversionUtil
