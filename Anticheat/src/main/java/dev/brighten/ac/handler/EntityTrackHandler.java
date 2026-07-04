@@ -221,6 +221,7 @@ public class EntityTrackHandler {
                     }
                 }
 
+                data.getInfo().setLastModifiedSprintAttribute(data.getInfo().isModifiedSprintAttribute());
                 data.getInfo().setModifiedSprintAttribute(found);
                 data.getInfo().setOldWalkSpeed(data.getInfo().getWalkSpeed());
                 data.getInfo().setWalkSpeed(value.getValue());
@@ -228,7 +229,10 @@ public class EntityTrackHandler {
 
             tracked.updateAttribute(property);
         }
-        data.runKeepaliveAction(ka -> data.getInfo().setOldWalkSpeed(null),  1);
+        data.runKeepaliveAction(ka -> {
+            data.getInfo().setOldWalkSpeed(null);
+            data.getInfo().setLastModifiedSprintAttribute(data.getInfo().isModifiedSprintAttribute());
+        },  1);
     }
 
     /**

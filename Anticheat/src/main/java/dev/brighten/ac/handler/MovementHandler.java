@@ -64,6 +64,7 @@ public class MovementHandler {
     private boolean excuseNextFlying;
 
     private boolean sentPositionUpdate;
+    private boolean packetPositionChanged;
 
     @Getter
     private final Timer lastTeleport = new TickTimer(), lastHighRate = new TickTimer(),
@@ -263,7 +264,7 @@ public class MovementHandler {
                 minimum.getTags().add("003");
             }
 
-            if (minimum.getOffset() > 1E-7 && !isZeroThree) {
+            if (minimum.getOffset() > 1E-7 && !isZeroThree && packetPositionChanged) {
                 minimum.getTags().add("bad_offset");
                 minimum.getMotion().setMotionX(deltaX);
                 minimum.getMotion().setMotionY(deltaY);
@@ -277,6 +278,8 @@ public class MovementHandler {
 
             if (minimum.getTags().contains("bad_offset")) {
                 player.EMULATOR.setLastReportedBoundingBox(getTo().getBox().toNeo());
+            } else {
+                player.EMULATOR.setLastReportedBoundingBox(null);
             }
         }
     }
@@ -316,6 +319,7 @@ public class MovementHandler {
 
 
     public void process(WrapperPlayClientPlayerFlying packet) {
+        this.packetPositionChanged = packet.hasPositionChanged();
 
         player.getPotionHandler().onFlying(packet);
 
@@ -339,6 +343,13 @@ public class MovementHandler {
         updateLocations(packet);
 
         runEmulation(to.getLoc(), false);
+
+        if (!packetPositionChanged && predicted != null) {
+            to.getLoc().setX(predicted.getX());
+            to.getLoc().setY(predicted.getY());
+            to.getLoc().setZ(predicted.getZ());
+            to.setBox(new SimpleCollisionBox(to.getLoc(), 0.6, 1.8));
+        }
 
         checkForTeleports(packet);
 

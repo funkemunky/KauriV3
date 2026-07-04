@@ -25,6 +25,12 @@ public class ValuedAttribute {
 
         double multiplier = 1, additional = 0, base = 0;
         for (WrapperPlayServerUpdateAttributes.PropertyModifier modifier : property.getModifiers()) {
+            if (modifier.getName() != null) {
+                String key = modifier.getName().getKey();
+                if (key.equalsIgnoreCase("662a6b8d-da3e-4c1c-8813-96ea6097278d") || key.equalsIgnoreCase("sprinting")) {
+                    continue;
+                }
+            }
             switch (modifier.getOperation()) {
                 case ADDITION -> additional += modifier.getAmount();
                 case MULTIPLY_BASE -> base +=  modifier.getAmount();

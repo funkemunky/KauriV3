@@ -48,7 +48,7 @@ public class GeneralInformation {
     private int clientGroundTicks, clientAirTicks;
     private double walkSpeed = 0.1f, flySpeed;
     private Double oldWalkSpeed;
-    private boolean modifiedSprintAttribute = false;
+    private boolean modifiedSprintAttribute = false, lastModifiedSprintAttribute = false;
     private PlayerInput playerInput = PlayerInput.NONE;
     private Pose pose;
 }
